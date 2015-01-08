@@ -211,4 +211,7 @@ interface IWindowSession {
      * The assumption is that this method will be called rather infrequently.
      */
     void pokeDrawLock(IBinder window);
+    
+    void hideWindowLayer(IWindow window, boolean visible);
+    void updatePositionAndSize(IWindow window,int x,int y,int widht,int height);
 }

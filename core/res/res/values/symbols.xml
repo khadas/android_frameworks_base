@@ -2329,4 +2329,7 @@
   <java-symbol type="bool" name="config_cameraDoubleTapPowerGestureEnabled" />
 
   <java-symbol type="drawable" name="platlogo_m" />
+
+  <java-symbol type="style" name="Animation.TranslucentLeft" />
+  <java-symbol type="style" name="Animation.TranslucentRight" />
 </resources>
