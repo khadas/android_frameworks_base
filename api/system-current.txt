@@ -1621,6 +1621,7 @@ package android {
     field public static final int ic_lock_idle_low_battery = 17301536; // 0x1080020
     field public static final int ic_lock_lock = 17301551; // 0x108002f
     field public static final int ic_lock_power_off = 17301552; // 0x1080030
+    field public static final int ic_lock_reboot = 17301662; // 0x108009e
     field public static final int ic_lock_silent_mode = 17301553; // 0x1080031
     field public static final int ic_lock_silent_mode_off = 17301554; // 0x1080032
     field public static final int ic_media_ff = 17301537; // 0x1080021

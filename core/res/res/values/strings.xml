@@ -4106,4 +4106,11 @@
         <item quantity="one"><xliff:g id="count" example="1">%1$d</xliff:g> selected</item>
         <item quantity="other"><xliff:g id="count" example="3">%1$d</xliff:g> selected</item>
     </plurals>
+
+    <string name="reboot">Reboot</string>
+    <string name="reboot_progress">Reboot\u2026</string>
+    <string name="reboot_confirm" product="tablet">Your tablet will reboot.</string>
+    <string name="reboot_confirm" product="default">Your phone will reboot.</string>
+    <!-- label for item that reboot in phone options dialog -->
+    <string name="global_action_reboot">Reboot</string>
 </resources>

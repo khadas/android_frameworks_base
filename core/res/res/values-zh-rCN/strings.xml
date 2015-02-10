@@ -1516,4 +1516,11 @@
       <item quantity="other">已选择 <xliff:g id="COUNT_1">%1$d</xliff:g> 项</item>
       <item quantity="one">已选择 <xliff:g id="COUNT_0">%1$d</xliff:g> 项</item>
     </plurals>
+    
+    <string name="reboot">重新启动</string>
+    <string name="reboot_progress">正在重启\u2026</string>
+    <string name="reboot_confirm" product="tablet">您的机器将重启.</string>
+    <string name="reboot_confirm" product="default">您的机器将重启.</string>
+    <!-- label for item that reboot in phone options dialog -->
+    <string name="global_action_reboot">重新启动</string> 
 </resources>

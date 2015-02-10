@@ -5654,6 +5654,11 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
+	@Override
+	public void reboot(){
+		ShutdownThread.reboot(mContext, null, true);
+	}
+
     // Called by window manager policy.  Not exposed externally.
     @Override
     public void switchKeyboardLayout(int deviceId, int direction) {
