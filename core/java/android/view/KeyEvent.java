@@ -772,7 +772,18 @@ public class KeyEvent extends InputEvent implements Parcelable {
      * Steps media backward, one frame at a time. */
     public static final int KEYCODE_MEDIA_STEP_BACKWARD = 275;
 
-    private static final int LAST_KEYCODE = KEYCODE_MEDIA_STEP_BACKWARD;
+    /** Key code constant: Tv controlloer left mouse key */
+    public static final int KEYCODE_TV_KEYMOUSE_LEFT = 280;
+    /** Key code constant: Tv controlloer right mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_RIGHT = 281;
+    /** Key code constant: Tv controlloer up mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_UP = 282;
+    /** Key code constant: Tv controlloer down mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_DOWN = 283;
+    /** Key code constant: Tv controlloer switch mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_MODE_SWITCH = 284;
+
+    private static final int LAST_KEYCODE = KEYCODE_TV_KEYMOUSE_MODE_SWITCH;
 
     // NOTE: If you add a new keycode here you must also add it to:
     //  isSystem()

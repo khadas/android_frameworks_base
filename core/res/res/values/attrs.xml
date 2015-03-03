@@ -1810,6 +1810,11 @@ i
         <enum name="KEYCODE_MEDIA_SKIP_BACKWARD" value="273" />
         <enum name="KEYCODE_MEDIA_STEP_FORWARD" value="274" />
         <enum name="KEYCODE_MEDIA_STEP_BACKWARD" value="275" />
+        <enum name="KEYCODE_TV_KEYMOUSE_LEFT" value="280" />
+        <enum name="KEYCODE_TV_KEYMOUSE_RIGHT" value="281" />
+        <enum name="KEYCODE_TV_KEYMOUSE_UP" value="282" />
+        <enum name="KEYCODE_TV_KEYMOUSE_DOWN" value="283" />
+        <enum name="KEYCODE_TV_KEYMOUSE_MODE_SWITCH" value="284" />
     </attr>
 
     <!-- ***************************************************************** -->
