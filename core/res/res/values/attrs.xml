@@ -1839,6 +1839,11 @@ i
         <enum name="KEYCODE_SYSTEM_NAVIGATION_DOWN" value="281" />
         <enum name="KEYCODE_SYSTEM_NAVIGATION_LEFT" value="282" />
         <enum name="KEYCODE_SYSTEM_NAVIGATION_RIGHT" value="283" />
+        <enum name="KEYCODE_TV_KEYMOUSE_LEFT" value="284" />
+        <enum name="KEYCODE_TV_KEYMOUSE_RIGHT" value="285" />
+        <enum name="KEYCODE_TV_KEYMOUSE_UP" value="286" />
+        <enum name="KEYCODE_TV_KEYMOUSE_DOWN" value="287" />
+        <enum name="KEYCODE_TV_KEYMOUSE_MODE_SWITCH" value="288" />
     </attr>
 
     <!-- ***************************************************************** -->

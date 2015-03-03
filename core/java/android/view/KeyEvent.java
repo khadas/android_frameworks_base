@@ -805,7 +805,18 @@ public class KeyEvent extends InputEvent implements Parcelable {
     /** Key code constant: Consumed by the system for navigation right */
     public static final int KEYCODE_SYSTEM_NAVIGATION_RIGHT = 283;
 
-    private static final int LAST_KEYCODE = KEYCODE_SYSTEM_NAVIGATION_RIGHT;
+    /** Key code constant: Tv controlloer left mouse key */
+    public static final int KEYCODE_TV_KEYMOUSE_LEFT = 284;
+    /** Key code constant: Tv controlloer right mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_RIGHT = 285;
+    /** Key code constant: Tv controlloer up mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_UP = 286;
+    /** Key code constant: Tv controlloer down mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_DOWN = 287;
+    /** Key code constant: Tv controlloer switch mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_MODE_SWITCH = 288;
+
+    private static final int LAST_KEYCODE = KEYCODE_TV_KEYMOUSE_MODE_SWITCH;
 
     // NOTE: If you add a new keycode here you must also add it to:
     //  isSystem()
