@@ -36,6 +36,7 @@
 #include <utils/Log.h>
 #include <utils/Looper.h>
 #include <utils/threads.h>
+#include <cutils/properties.h>
 
 #include <input/PointerController.h>
 #include <input/SpriteController.h>
@@ -307,6 +308,7 @@ NativeInputManager::NativeInputManager(jobject contextObj,
         mLocked.pointerSpeed = 0;
         mLocked.pointerGesturesEnabled = true;
         mLocked.showTouches = false;
+	char property[PROPERTY_VALUE_MAX];
     }
     mInteractive = true;
 
@@ -1375,6 +1377,9 @@ static void nativeMonitor(JNIEnv* /* env */, jclass /* clazz */, jlong ptr) {
     im->getInputManager()->getDispatcher()->monitor();
 }
 
+/*$_rbox_$_modify_$_zhangwen_20140219: this function is just for infrare mouse,*/
+//$_rbox_$_modify_$   make a function interface here to painter the mouse pointer
+//$_rbox_$_modify_$_begin
 static void android_server_InputManager_nativedispatchMouse(JNIEnv* env,
 		jclass clazz,jfloat x,jfloat y,jint w,jint h,jint ptr) {
     NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);
@@ -1382,10 +1387,10 @@ static void android_server_InputManager_nativedispatchMouse(JNIEnv* env,
     int mID;
     float mx, my;
     float screenWidth,screenHeight;
-    char *mgetID=new char[PROPERTY_VALUE_MAX];
-    char *mkeyMouseState=new char[PROPERTY_VALUE_MAX];
-    screenWidth=(float)w;
-    screenHeight=(float)h;
+    char *mgetID = new char[PROPERTY_VALUE_MAX];
+    char *mkeyMouseState = new char[PROPERTY_VALUE_MAX];
+    screenWidth = (float)w;
+    screenHeight = (float)h;
 
     property_get("sys.ID.mID",mgetID,0);
     mID=atoi(mgetID);
@@ -1416,7 +1421,13 @@ static void android_server_InputManager_nativedispatchMouse(JNIEnv* env,
 
     property_set("sys.keymouselimitstate",mkeyMouseState);
 }
+//$_rbox_$_modify_$_end
 
+
+/*$_rbox_$_modify_$_zhangwen_20140219: */
+//$_rbox_$_modify_$  make a function interface here to painter the mouse pointer
+//$_rbox_$_modify_$  by Coordinate rather than by Offset
+//$_rbox_$_modify_$_begin
 static void android_server_InputManager_nativedispatchMouseByCd(JNIEnv* env,
 jclass clazz,jfloat x,jfloat y,jint ptr) {
    NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);

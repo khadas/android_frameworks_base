@@ -118,7 +118,7 @@ public class InputManagerService extends IInputManager.Stub
     private static final int MSG_DELIVER_TABLET_MODE_CHANGED = 6;
 
     // Pointer to native input manager service object.
-    private final long mPtr;
+    private final int mPtr;
 
     private final Context mContext;
     private final InputManagerHandler mHandler;
@@ -164,7 +164,7 @@ public class InputManagerService extends IInputManager.Stub
     IInputFilter mInputFilter; // guarded by mInputFilterLock
     InputFilterHost mInputFilterHost; // guarded by mInputFilterLock
 
-    private static native long nativeInit(InputManagerService service,
+    private static native int nativeInit(InputManagerService service,
             Context context, MessageQueue messageQueue);
     private static native void nativeStart(long ptr);
     private static native void nativeSetDisplayViewport(long ptr, boolean external,
@@ -393,6 +393,17 @@ public class InputManagerService extends IInputManager.Stub
                 viewport.physicalFrame.right, viewport.physicalFrame.bottom,
                 viewport.deviceWidth, viewport.deviceHeight);
     }
+
+    /*$_rbox_$_modify_$_zhangwen_20140219: this function just for call the function in JNI*/
+    //$_rbox_$_modify_$_begin
+    public void dispatchMouse(float x, float y, int w, int h){
+	    nativedispatchMouse(x, y, w, h, mPtr);
+    }
+
+    public void dispatchMouseByCd(float x, float y){
+	    nativedispatchMouseByCd(x, y, mPtr);
+    }
+    //$_rbox_$_modify_$_end
 
     /**
      * Gets the current state of a key or button by key code.
