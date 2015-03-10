@@ -734,9 +734,29 @@ public class AudioManager {
                 if (event.getRepeatCount() == 0) {
                     MediaSessionLegacyHelper.getHelper(getContext())
                             .sendVolumeKeyEvent(event, false);
+                    isBox();
+                    if(isBox) {
+                        // TODO: Actually handle MUTE.
+                        if(getStreamVolume(STREAM_MUSIC) != 0) {
+                            mMusicVolume = getStreamVolume(STREAM_MUSIC);
+                            Log.d(TAG,"mMusicVolume = " + mMusicVolume);
+                            setStreamVolume(STREAM_MUSIC, 0, FLAG_SHOW_UI);
+                        } else {
+                            Log.d(TAG,"mMusicVolume = " + mMusicVolume);
+                            setStreamVolume(STREAM_MUSIC, mMusicVolume, FLAG_SHOW_UI);
+                        }
+                    }
                 }
                 break;
         }
+    }
+
+    private static boolean isBox;
+    private static int mMusicVolume;
+
+    private void isBox() {
+	String boxString = android.os.SystemProperties.get("ro.target.product");
+        isBox = "box".equals(boxString);
     }
 
     /**
