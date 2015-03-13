@@ -35256,6 +35256,11 @@ package android.view {
     field public static final int KEYCODE_TV_INPUT_HDMI_3 = 245; // 0xf5
     field public static final int KEYCODE_TV_INPUT_HDMI_4 = 246; // 0xf6
     field public static final int KEYCODE_TV_INPUT_VGA_1 = 251; // 0xfb
+    field public static final int KEYCODE_TV_KEYMOUSE_DOWN = 263; // 0x107
+    field public static final int KEYCODE_TV_KEYMOUSE_LEFT = 260; // 0x104
+    field public static final int KEYCODE_TV_KEYMOUSE_MODE_SWITCH = 264; // 0x108
+    field public static final int KEYCODE_TV_KEYMOUSE_RIGHT = 261; // 0x105
+    field public static final int KEYCODE_TV_KEYMOUSE_UP = 262; // 0x106
     field public static final int KEYCODE_TV_MEDIA_CONTEXT_MENU = 257; // 0x101
     field public static final int KEYCODE_TV_MEDIA_FAST_FORWARD = 289; // 0x121
     field public static final int KEYCODE_TV_MEDIA_MULT_BACKWARD = 292; // 0x124
