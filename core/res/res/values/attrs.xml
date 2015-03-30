@@ -1815,6 +1815,19 @@ i
         <enum name="KEYCODE_TV_KEYMOUSE_UP" value="282" />
         <enum name="KEYCODE_TV_KEYMOUSE_DOWN" value="283" />
         <enum name="KEYCODE_TV_KEYMOUSE_MODE_SWITCH" value="284" />
+<!--$_rbox_$_modify_$_zhangwen_20140224: for tv media controller-->
+<!--$_rbox_$_modify_$_begin-->
+        <enum name="KEYCODE_TV_MEDIA_PLAY_PAUSE" value="285" />
+        <enum name="KEYCODE_TV_MEDIA_STOP" value="286" />
+        <enum name="KEYCODE_TV_MEDIA_NEXT" value="287" />
+        <enum name="KEYCODE_TV_MEDIA_PREVIOUS" value="288" />
+        <enum name="KEYCODE_TV_MEDIA_FAST_FORWARD" value="289" />
+        <enum name="KEYCODE_TV_MEDIA_REWIND" value="290" />
+        <enum name="KEYCODE_TV_MEDIA_MULT_FORWARD" value="291" />
+        <enum name="KEYCODE_TV_MEDIA_MULT_BACKWARD" value="292" />
+        <enum name="KEYCODE_TV_MEDIA_PLAY" value="293" />
+        <enum name="KEYCODE_TV_MEDIA_PAUSE" value="294" />
+<!--$_rbox_$_modify_$_end-->
     </attr>
 
     <!-- ***************************************************************** -->
