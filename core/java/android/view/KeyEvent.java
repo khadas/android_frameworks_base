@@ -816,7 +816,21 @@ public class KeyEvent extends InputEvent implements Parcelable {
     /** Key code constant: Tv controlloer switch mouse key*/
     public static final int KEYCODE_TV_KEYMOUSE_MODE_SWITCH = 288;
 
-    private static final int LAST_KEYCODE = KEYCODE_TV_KEYMOUSE_MODE_SWITCH;
+    /*$_rbox_$_modify_$_zhangwen_20140224: for support Tv Media controller*/
+//$_rbox_$_modify_$_begin
+    public static final int KEYCODE_TV_MEDIA_PLAY_PAUSE = 295;
+    public static final int KEYCODE_TV_MEDIA_STOP = 296;
+    public static final int KEYCODE_TV_MEDIA_NEXT = 297;
+    public static final int KEYCODE_TV_MEDIA_PREVIOUS = 298;
+    public static final int KEYCODE_TV_MEDIA_FAST_FORWARD = 299;
+    public static final int KEYCODE_TV_MEDIA_REWIND = 300;
+    public static final int KEYCODE_TV_MEDIA_MULT_FORWARD = 301;
+    public static final int KEYCODE_TV_MEDIA_MULT_BACKWARD = 302;
+    public static final int KEYCODE_TV_MEDIA_PLAY = 303;
+    public static final int KEYCODE_TV_MEDIA_PAUSE = 304;
+//$_rbox_$_modify_$ end
+
+    private static final int LAST_KEYCODE = KEYCODE_TV_MEDIA_PAUSE;
 
     // NOTE: If you add a new keycode here you must also add it to:
     //  isSystem()
