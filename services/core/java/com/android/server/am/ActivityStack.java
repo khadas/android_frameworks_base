@@ -2233,6 +2233,8 @@ final class ActivityStack {
 
         if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "Resuming " + next);
 
+        adjustPackagePerformanceMode();
+
         // If we are currently pausing an activity, then don't do anything until that is done.
         if (!mStackSupervisor.allPausedActivitiesComplete()) {
             if (DEBUG_SWITCH || DEBUG_PAUSE || DEBUG_STATES) Slog.v(TAG_PAUSE,
@@ -5275,6 +5277,20 @@ final class ActivityStack {
     void onLockTaskPackagesUpdatedLocked() {
         for (int taskNdx = mTaskHistory.size() - 1; taskNdx >= 0; --taskNdx) {
             mTaskHistory.get(taskNdx).setLockTaskAuth();
+        }
+    }
+
+    private void adjustPackagePerformanceMode() {
+        if (mService.mUsePerformanceTunner) {
+            int mode = mService.getFrontActivityPerformanceModeLocked(false);
+            mService.mDevicePerformanceTunner.setPerformanceMode(mode);
+        }
+
+    }
+
+    public void forcePerformanceMode(int mode) {
+        if (mService.mUsePerformanceTunner) {
+            mService.mDevicePerformanceTunner.setPerformanceMode(mode);
         }
     }
 }

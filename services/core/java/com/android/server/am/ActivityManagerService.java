@@ -369,6 +369,9 @@ import static com.android.server.wm.AppTransition.TRANSIT_TASK_TO_FRONT;
 import static org.xmlpull.v1.XmlPullParser.END_DOCUMENT;
 import static org.xmlpull.v1.XmlPullParser.START_TAG;
 
+import com.android.server.power.DevicePerformanceTunner;
+import android.os.PowerManager;
+
 public final class ActivityManagerService extends ActivityManagerNative
         implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {
 
@@ -1433,6 +1436,9 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     WindowManagerService mWindowManager;
     final ActivityThread mSystemThread;
+
+    boolean mUsePerformanceTunner = false;
+    DevicePerformanceTunner mDevicePerformanceTunner;
 
     private final class AppDeathRecipient implements IBinder.DeathRecipient {
         final ProcessRecord mApp;
@@ -3958,6 +3964,25 @@ public final class ActivityManagerService extends ActivityManagerNative
                 }
             }
         }
+    }
+
+    public int getFrontActivityPerformanceModeLocked(boolean systemAppLimited) {
+        int mode = PowerManager.PERFORMANCE_MODE_NORMAL;
+        final ActivityStack mainStack = mStackSupervisor.getFocusedStack();
+        ActivityRecord r = mainStack.topRunningActivityLocked();
+        if (r != null) {
+            try {
+                mode = AppGlobals.getPackageManager().getPackagePerformanceMode(
+                        r.realActivity.toString());
+            } catch (RemoteException e) {
+            }
+        }
+        return mode;
+    }
+
+    public void forcePerformanceMode(int mode) {
+        final ActivityStack mainStack = mStackSupervisor.getFocusedStack();
+        mainStack.forcePerformanceMode(mode);
     }
 
     CompatibilityInfo compatibilityInfoForPackageLocked(ApplicationInfo ai) {
@@ -13040,6 +13065,13 @@ public final class ActivityManagerService extends ActivityManagerNative
             mRecentTasks.onSystemReadyLocked();
             mAppOpsService.systemReady();
             mSystemReady = true;
+
+            String value = SystemProperties.get("ro.hardware", "rk30board");
+            if (value.equals("rk30board") || value.equals("rk2928board") || value.equals("rk29board") || value.equals("sofiaboard")) {
+                Slog.d(TAG, "OK, system ready!");
+                mUsePerformanceTunner = true;
+                mDevicePerformanceTunner = DevicePerformanceTunner.getInstance(mContext);
+            }
         }
 
         ArrayList<ProcessRecord> procsToKill = null;

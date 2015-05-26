@@ -414,6 +414,16 @@ public final class PowerManager {
      */
     public static final String REBOOT_REQUESTED_BY_DEVICE_OWNER = "deviceowner";
 
+
+    /**
+     * @hide
+     */
+    public static final int PERFORMANCE_MODE_NORMAL = 0;
+    /**
+     * @hide
+     */
+    public static final int PERFORMANCE_MODE_PERFORMANCE = 1;
+
     /**
      * The 'reason' value used when rebooting in safe mode
      * @hide
@@ -1113,6 +1123,18 @@ public final class PowerManager {
             = "android.os.action.SCREEN_BRIGHTNESS_BOOST_CHANGED";
 
     /**
+     * Intent that is broadcast when the state of performance mode is changes.
+     * This broadcast is only sent to registered receivers.
+     *
+     * @hide
+     */
+    public static final String ACTION_PERFORMANCE_MODE_CHANGED
+            = "android.os.action.PERFORMANCE_MODE_CHANGED";
+
+    /** @hide */
+    public static final String EXTRA_PERFORMANCE_MODE = "mode";
+
+    /**
      * A wake lock is a mechanism to indicate that your application needs
      * to have the device stay on.
      * <p>
@@ -1357,6 +1379,21 @@ public final class PowerManager {
                     + Integer.toHexString(System.identityHashCode(this))
                     + " held=" + mHeld + ", refCount=" + mCount + "}";
             }
+        }
+    }
+
+
+    /**
+     * Set the current performance mode.
+     *
+     * @hide
+     */
+    public void setPerformanceMode(int mode) {
+        try {
+            if (mService != null) {
+                mService.setPerformanceMode(mode);
+            }
+        } catch (RemoteException e) {
         }
     }
 }

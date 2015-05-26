@@ -5827,4 +5827,14 @@ public abstract class PackageManager {
             }
         }
     }
+
+    /**
+     * @hide
+     */
+    public abstract int getPackagePerformanceMode(String pkgName);
+
+    /**
+     * @hide
+     */
+    public abstract void setPackagePerformanceMode(String pkgName, int mode);
 }
