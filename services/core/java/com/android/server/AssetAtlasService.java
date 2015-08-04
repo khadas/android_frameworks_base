@@ -407,7 +407,12 @@ public class AssetAtlasService extends IAssetAtlas.Stub {
                     results.size(), delay));
         }
 
-        WorkerResult result = results.get(0);
+        WorkerResult result;
+        if(results !=  null && results.size() != 0)
+            result = results.get(0);
+        else
+            return null;
+
         return new Configuration(result.type, result.width, result.height, result.count);
     }
 
