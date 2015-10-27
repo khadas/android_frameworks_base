@@ -54,6 +54,7 @@ import com.android.systemui.statusbar.policy.KeyButtonView;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import android.os.SystemProperties;
 
 public class NavigationBarView extends LinearLayout {
     final static boolean DEBUG = false;
@@ -69,6 +70,8 @@ public class NavigationBarView extends LinearLayout {
     int mBarSize;
     boolean mVertical;
     boolean mScreenOn;
+
+    private String isEnableShowVoiceIcon = SystemProperties.get("ro.rk.systembar.voiceicon","false");
 
     boolean mShowMenu;
     int mDisabledFlags = 0;
@@ -254,6 +257,14 @@ public class NavigationBarView extends LinearLayout {
         return mCurrentView.findViewById(R.id.ime_switcher);
     }
 
+    public View getVolumeAddButton() {
+        return mCurrentView.findViewById(R.id.volume_add);
+	}
+
+    public View getVolumeSubButton() {
+        return mCurrentView.findViewById(R.id.volume_sub);
+	}
+
     private void getIcons(Resources res) {
         mBackIcon = res.getDrawable(R.drawable.ic_sysbar_back);
         mBackLandIcon = res.getDrawable(R.drawable.ic_sysbar_back_land);
@@ -345,6 +356,27 @@ public class NavigationBarView extends LinearLayout {
         getBackButton()   .setVisibility(disableBack       ? View.INVISIBLE : View.VISIBLE);
         getHomeButton()   .setVisibility(disableHome       ? View.INVISIBLE : View.VISIBLE);
         getRecentsButton().setVisibility(disableRecent     ? View.INVISIBLE : View.VISIBLE);
+
+        if ("true".equals(isEnableShowVoiceIcon)) {
+             if(getVolumeSubButton()!=null)
+                 getVolumeSubButton().setVisibility(disableHome ? View.INVISIBLE : View.VISIBLE);
+             if(getVolumeAddButton()!=null)
+				 getVolumeAddButton().setVisibility(disableHome ? View.INVISIBLE : View.VISIBLE);
+             if((mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+					 && ((mContext.getResources().getConfiguration().screenHeightDp < 600)
+                          || (mContext.getResources().getConfiguration().screenWidthDp < 600))) {
+                     if(getVolumeSubButton()!=null)
+                         getVolumeSubButton().setVisibility(View.GONE);
+                     if(getVolumeAddButton()!=null)
+                         getVolumeAddButton().setVisibility(View.GONE);
+             }
+          } else {
+             if(getVolumeSubButton()!=null)
+                 getVolumeSubButton().setVisibility(View.GONE);
+             if(getVolumeSubButton()!=null)
+                 getVolumeAddButton().setVisibility(View.GONE);
+        }
+
     }
 
     private boolean inLockTask() {
