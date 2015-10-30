@@ -65,7 +65,15 @@ import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
+import android.os.SystemProperties;
+import android.os.UserHandle;
+import android.util.Log;
+import android.provider.Settings;
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import android.os.StatFs;
 /**
  * POD used in the AsyncTask which saves an image in the background.
  */
@@ -99,6 +107,8 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
     private static final String SCREENSHOTS_DIR_NAME = "Screenshots";
     private static final String SCREENSHOT_FILE_NAME_TEMPLATE = "Screenshot_%s.png";
     private static final String SCREENSHOT_SHARE_SUBJECT_TEMPLATE = "Screenshot (%s)";
+    private static final String SCREENSHOT_FILE_PATH_TEMPLATE = "%s/%s/%s/%s";
+    private static final String SCREENSHOT_FILE_PATH_TEMPLATE_UMS = "%s/%s/%s";
 
     private final int mNotificationId;
     private final NotificationManager mNotificationManager;
@@ -126,10 +136,19 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
         mImageTime = System.currentTimeMillis();
         String imageDate = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(mImageTime));
         mImageFileName = String.format(SCREENSHOT_FILE_NAME_TEMPLATE, imageDate);
+        String imageDir = Settings.System.getString(context.getContentResolver(), Settings.System.SCREENSHOT_LOCATION);
 
         mScreenshotDir = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), SCREENSHOTS_DIR_NAME);
-        mImageFilePath = new File(mScreenshotDir, mImageFileName).getAbsolutePath();
+//        mImageFilePath = new File(mScreenshotDir, mImageFileName).getAbsolutePath();
+        boolean hasUMS = "true".equals(SystemProperties.get("ro.factory.hasUMS", "false"));
+        if (!hasUMS) {
+            mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE, imageDir,UserHandle.myUserId(),
+                    SCREENSHOTS_DIR_NAME, mImageFileName);
+        } else {
+            mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE_UMS, imageDir,
+                    SCREENSHOTS_DIR_NAME, mImageFileName);
+        }
 
         // Create the large notification icon
         mImageWidth = data.image.getWidth();
@@ -137,6 +156,9 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
         int iconSize = data.iconSize;
         int previewWidth = data.previewWidth;
         int previewHeight = data.previewheight;
+        Log.d(">>>>>>>>>>>>>","imageDir="+imageDir);
+		Log.d(">>>>>>>>>>>>>","mImageFilePath="+mImageFilePath);
+		Log.d(">>>>>>>>>>>>>","mImageFileName="+mImageFileName);
 
         Canvas c = new Canvas();
         Paint paint = new Paint();
@@ -208,6 +230,29 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
         mNotificationStyle.bigLargeIcon((Bitmap) null);
     }
 
+    public void saveMyBitmap(Bitmap mBitmap ,String savePath ) throws Exception {
+        File f = new File(savePath);
+        if(!f.exists())
+            f.createNewFile();
+        FileOutputStream fOut = null;
+        try {
+                fOut = new FileOutputStream(f);
+        } catch (FileNotFoundException e) {
+                e.printStackTrace();
+        }
+        mBitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+        try {
+                fOut.flush();
+        } catch (IOException e) {
+                e.printStackTrace();
+        }
+        try {
+                fOut.close();
+        } catch (IOException e) {
+                e.printStackTrace();
+        }
+    }
+
     @Override
     protected SaveImageInBackgroundData doInBackground(SaveImageInBackgroundData... params) {
         if (params.length != 1) return null;
@@ -229,6 +274,19 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
             // Create screenshot directory if it doesn't exist
             mScreenshotDir.mkdirs();
 
+            String imageDir = Settings.System.getString(context.getContentResolver(), Settings.System.SCREENSHOT_LOCATION);
+            boolean hasUMS = "true".equals(SystemProperties.get("ro.factory.hasUMS", "false"));
+            File mScreenshotumsDir;
+            if (!hasUMS) {
+                mScreenshotumsDir = new File(String.format("%s/%s/%s", imageDir,UserHandle.myUserId(),SCREENSHOTS_DIR_NAME));
+            } else {
+                mScreenshotumsDir = new File(String.format("%s/%s", imageDir,SCREENSHOTS_DIR_NAME));
+            }
+            mScreenshotumsDir.mkdirs();
+            saveMyBitmap(image,mImageFilePath);
+            File f = new File(mImageFilePath);
+            long len=f.length();
+
             // media provider uses seconds for DATE_MODIFIED and DATE_ADDED, but milliseconds
             // for DATE_TAKEN
             long dateSeconds = mImageTime / 1000;
@@ -249,13 +307,14 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
             values.put(MediaStore.Images.ImageColumns.DATE_ADDED, dateSeconds);
             values.put(MediaStore.Images.ImageColumns.DATE_MODIFIED, dateSeconds);
             values.put(MediaStore.Images.ImageColumns.MIME_TYPE, "image/png");
+            values.put(MediaStore.Images.ImageColumns.SIZE, len);
             values.put(MediaStore.Images.ImageColumns.WIDTH, mImageWidth);
             values.put(MediaStore.Images.ImageColumns.HEIGHT, mImageHeight);
             values.put(MediaStore.Images.ImageColumns.SIZE, new File(mImageFilePath).length());
             Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
             // Create a share intent
-            String subjectDate = DateFormat.getDateTimeInstance().format(new Date(mImageTime));
+            String subjectDate = new SimpleDateFormat("hh:mma, MMM dd, yyyy").format(new Date(mImageTime));
             String subject = String.format(SCREENSHOT_SHARE_SUBJECT_TEMPLATE, subjectDate);
             Intent sharingIntent = new Intent(Intent.ACTION_SEND);
             sharingIntent.setType("image/png");

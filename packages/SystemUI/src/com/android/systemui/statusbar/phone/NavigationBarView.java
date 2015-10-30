@@ -265,6 +265,10 @@ public class NavigationBarView extends LinearLayout {
         return mCurrentView.findViewById(R.id.volume_sub);
 	}
 
+    public View getScreenshotButton(){
+        return mCurrentView.findViewById(R.id.screenshot);
+    }
+
     private void getIcons(Resources res) {
         mBackIcon = res.getDrawable(R.drawable.ic_sysbar_back);
         mBackLandIcon = res.getDrawable(R.drawable.ic_sysbar_back_land);
@@ -376,7 +380,6 @@ public class NavigationBarView extends LinearLayout {
              if(getVolumeSubButton()!=null)
                  getVolumeAddButton().setVisibility(View.GONE);
         }
-
     }
 
     private boolean inLockTask() {

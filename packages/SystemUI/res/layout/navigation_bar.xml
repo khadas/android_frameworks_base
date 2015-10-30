@@ -48,6 +48,16 @@
                 android:layout_weight="0"
                 android:visibility="invisible"
                 />
+            <com.android.systemui.statusbar.policy.KeyButtonView android:id="@+id/screenshot"
+                android:layout_width="80dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/capture"
+                android:layout_marginRight="0dp"
+                android:layout_marginStart="2dp"
+                android:layout_weight="0"
+                android:visibility="visible"
+                android:contentDescription="@string/accessibility_recent"
+                />
             <com.android.systemui.statusbar.policy.KeyButtonView android:id="@+id/volume_sub"
                 android:layout_width="120dp"
                 android:layout_height="match_parent"
@@ -241,15 +251,24 @@
                     android:visibility="invisible"
                     systemui:keyCode="82" />
             </FrameLayout>
-
-            <com.android.systemui.statusbar.policy.KeyButtonView android:id="@+id/volume_add"
+            <com.android.systemui.statusbar.policy.KeyButtonView android:id="@+id/screenshot"
+                android:layout_width="60dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/capture"
+                android:layout_marginRight="0dp"
+                android:layout_marginStart="2dp"
+                android:layout_weight="0"
+                android:visibility="visible"
+                android:contentDescription="@string/accessibility_recent"
+                />
+            <com.android.systemui.statusbar.policy.KeyButtonView android:id="@+id/volume_sub"
                   android:layout_width="84dp"
                   android:layout_height="match_parent"
                   android:layout_weight="0"
                   android:contentDescription="@string/accessibility_recent"
                   android:paddingLeft="0dp"
                   android:paddingRight="0dp"
-                  android:src="@drawable/ic_sysbar_volume_add"
+                  android:src="@drawable/ic_sysbar_volume_sub"
                   android:visibility="visible"
                   systemui:keyCode="24"
                   />
@@ -293,14 +312,14 @@
                 android:layout_weight="0"
                 android:contentDescription="@string/accessibility_back"
                 />
-            <com.android.systemui.statusbar.policy.KeyButtonView android:id="@+id/volume_sub"
+            <com.android.systemui.statusbar.policy.KeyButtonView android:id="@+id/volume_add"
                 android:layout_width="84dp"
                 android:layout_height="match_parent"
                 android:layout_weight="0"
                 android:contentDescription="@string/accessibility_recent"
                 android:paddingLeft="0dp"
                 android:paddingRight="0dp"
-                android:src="@drawable/ic_sysbar_volume_sub"
+                android:src="@drawable/ic_sysbar_volume_add"
                 android:visibility="visible"
                 systemui:keyCode="25"
                 />
