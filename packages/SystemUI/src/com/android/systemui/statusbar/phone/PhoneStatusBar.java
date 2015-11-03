@@ -666,26 +666,32 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         }
     };
     private void takeScreenshot() {
-		String imageDir=Settings.System.getString(mContext.getContentResolver(), Settings.System.SCREENSHOT_LOCATION);
-		File file=new File(imageDir+"/Screenshots");//+UserHandle.myUserId()
-        String text=null;
-        Log.e(">>>>>>", "imageDir=" + imageDir);
-
+        String screenshot_location = Settings.System.getString(mContext.getContentResolver(),
+                Settings.System.SCREENSHOT_LOCATION);
+        String image_dir = null;
+        if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_INTERNAL_SD)) {
+            image_dir = Environment.getExternalStorageDirectory().toString();
+        } else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_EXTERNAL_SD)) {
+            image_dir = "/mnt/external_sd";
+        } else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_USB)) {
+            image_dir = "/storage/usb";
+        }
+        Log.e("Screenshot", "screenshot_location " + screenshot_location + " image_dir=" + image_dir);
+		File file = new File(image_dir + "/Screenshots");//+UserHandle.myUserId()
         file.mkdir();
-
-        String internal_sdcard_path = Environment.getExternalStorageDirectory().toString();
-
-        if(!file.exists()){
-            if(imageDir.equals(internal_sdcard_path)){
+        if(!file.exists()) {
+            String text = null;
+            if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_INTERNAL_SD)){
                 text=mContext.getResources().getString(R.string.sdcard_unmount);
-            }else if(imageDir.equals("/mnt/external_sd")){
+            }else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_EXTERNAL_SD)){
                 text=mContext.getResources().getString(R.string.external_sd_unmount);
-            }else if(imageDir.equals("/mnt/usb_storage")){
+            }else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_USB)){
                 text=mContext.getResources().getString(R.string.usb_storage_unmount);
             }
             Toast.makeText(mContext, text, 3000).show();
             return;
         }
+
         synchronized (mScreenshotLock) {
             if (mScreenshotConnection != null) {
                 return;

@@ -60,6 +60,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import android.provider.Settings;
+
 /**
  * Legacy settings database helper class for {@link SettingsProvider}.
  *
@@ -2368,11 +2370,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
             // Set default tty mode
             loadSetting(stmt, Settings.System.TTY_MODE, 0);
+
             loadBooleanSetting(stmt, Settings.System.SCREENSHOT_BUTTON_SHOW,
                     R.bool.def_screenshot_button_show);
-
-            String sdcard_path = Environment.getExternalStorageDirectory().toString();
-            loadSetting(stmt, Settings.System.SCREENSHOT_LOCATION, sdcard_path);
+            loadSetting(stmt, Settings.System.SCREENSHOT_LOCATION,
+                    Settings.System.SCREENSHOT_LOCATION_INTERNAL_SD);
 
             loadIntegerSetting(stmt, Settings.System.SCREEN_BRIGHTNESS,
                     R.integer.def_screen_brightness);

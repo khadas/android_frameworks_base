@@ -136,7 +136,19 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
         mImageTime = System.currentTimeMillis();
         String imageDate = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(mImageTime));
         mImageFileName = String.format(SCREENSHOT_FILE_NAME_TEMPLATE, imageDate);
-        String imageDir = Settings.System.getString(context.getContentResolver(), Settings.System.SCREENSHOT_LOCATION);
+        String screenshot_location = Settings.System.getString(context.getContentResolver(),
+                Settings.System.SCREENSHOT_LOCATION);
+        String imageDir = null;
+        if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_INTERNAL_SD)) {
+            imageDir = Environment.getExternalStorageDirectory().toString();
+        } else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_EXTERNAL_SD)) {
+            imageDir = "/mnt/external_sd";
+        } else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_USB)) {
+            imageDir = "/storage/usb";
+        }
+        Log.e("Screenshot", "screenshot_location " + screenshot_location + " image_dir=" + imageDir);
+        File file = new File(imageDir + "/Screenshots");//+UserHandle.myUserId()
+        file.mkdir();
 
         mScreenshotDir = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), SCREENSHOTS_DIR_NAME);
