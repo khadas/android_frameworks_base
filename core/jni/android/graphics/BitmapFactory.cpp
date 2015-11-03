@@ -304,7 +304,7 @@ static jobject doDecode(JNIEnv* env, SkStreamRewindable* stream, jobject padding
 
     SkBitmap decodingBitmap;
     if (decoder->decode(stream, &decodingBitmap, prefColorType, decodeMode)
-                != SkImageDecoder::kSuccess) {
+                != true) {
         return nullObjectReturn("decoder->decode returned false");
     }
 
