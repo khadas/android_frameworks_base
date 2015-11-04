@@ -2143,16 +2143,34 @@ public final class Settings {
         public static final int ADVANCED_SETTINGS_DEFAULT = 0;
 
         /**
-         *Screenshot store location  add by dzy
+         *Screenshot store location
          * @hide
          */
-        public static final String SCREENSHOT_LOCATION="screenshot_location";
+        public static final String SCREENSHOT_LOCATION = "screenshot_location";
+
+        /**
+         *Screenshot store location
+         * @hide
+         */
+        public static final String SCREENSHOT_LOCATION_INTERNAL_SD = "screenshot_location_internal_sd";
+
+        /**
+         *Screenshot store location
+         * @hide
+         */
+        public static final String SCREENSHOT_LOCATION_EXTERNAL_SD = "screenshot_location_external_sd";
+
+        /**
+         *Screenshot store location
+         * @hide
+         */
+        public static final String SCREENSHOT_LOCATION_USB = "screenshot_usb";
 
         /**
          *scrrenshot button wether display
          * @hide
         */
-        public static final String SCREENSHOT_BUTTON_SHOW="screenshot_button_show";
+        public static final String SCREENSHOT_BUTTON_SHOW = "screenshot_button_show";
 
         /**
          * @deprecated Use {@link android.provider.Settings.Global#AIRPLANE_MODE_ON} instead
