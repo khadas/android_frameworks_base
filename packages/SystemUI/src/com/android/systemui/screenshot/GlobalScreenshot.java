@@ -44,6 +44,9 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Process;
+import android.os.storage.DiskInfo;
+import android.os.storage.StorageManager;
+import android.os.storage.VolumeInfo;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.view.Display;
@@ -74,6 +77,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import android.os.StatFs;
+
 /**
  * POD used in the AsyncTask which saves an image in the background.
  */
@@ -136,27 +140,16 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
         mImageTime = System.currentTimeMillis();
         String imageDate = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(mImageTime));
         mImageFileName = String.format(SCREENSHOT_FILE_NAME_TEMPLATE, imageDate);
-        String screenshot_location = Settings.System.getString(context.getContentResolver(),
-                Settings.System.SCREENSHOT_LOCATION);
-        String imageDir = null;
-        if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_INTERNAL_SD)) {
-            imageDir = Environment.getExternalStorageDirectory().toString();
-        } else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_EXTERNAL_SD)) {
-            imageDir = "/mnt/external_sd";
-        } else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_USB)) {
-            imageDir = "/storage/usb";
-        }
-        Log.e("Screenshot", "screenshot_location " + screenshot_location + " image_dir=" + imageDir);
-        File file = new File(imageDir + "/Screenshots");//+UserHandle.myUserId()
+        String imageDir = ScreenshotUtils.getScreenshotSavePath(context);
+        File file = new File(imageDir);//+UserHandle.myUserId()
         file.mkdir();
 
         mScreenshotDir = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), SCREENSHOTS_DIR_NAME);
-//        mImageFilePath = new File(mScreenshotDir, mImageFileName).getAbsolutePath();
         boolean hasUMS = "true".equals(SystemProperties.get("ro.factory.hasUMS", "false"));
         if (!hasUMS) {
-            mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE, imageDir,UserHandle.myUserId(),
-                    SCREENSHOTS_DIR_NAME, mImageFileName);
+            mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE, imageDir,
+                    UserHandle.myUserId(), SCREENSHOTS_DIR_NAME, mImageFileName);
         } else {
             mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE_UMS, imageDir,
                     SCREENSHOTS_DIR_NAME, mImageFileName);
@@ -283,21 +276,9 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
         Resources r = context.getResources();
 
         try {
-            // Create screenshot directory if it doesn't exist
-            mScreenshotDir.mkdirs();
-
-            String imageDir = Settings.System.getString(context.getContentResolver(), Settings.System.SCREENSHOT_LOCATION);
-            boolean hasUMS = "true".equals(SystemProperties.get("ro.factory.hasUMS", "false"));
-            File mScreenshotumsDir;
-            if (!hasUMS) {
-                mScreenshotumsDir = new File(String.format("%s/%s/%s", imageDir,UserHandle.myUserId(),SCREENSHOTS_DIR_NAME));
-            } else {
-                mScreenshotumsDir = new File(String.format("%s/%s", imageDir,SCREENSHOTS_DIR_NAME));
-            }
-            mScreenshotumsDir.mkdirs();
-            saveMyBitmap(image,mImageFilePath);
+            saveMyBitmap(image, mImageFilePath);
             File f = new File(mImageFilePath);
-            long len=f.length();
+            long len = f.length();
 
             // media provider uses seconds for DATE_MODIFIED and DATE_ADDED, but milliseconds
             // for DATE_TAKEN

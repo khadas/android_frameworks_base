@@ -195,6 +195,7 @@ import android.provider.Settings;
 import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
+import com.android.systemui.screenshot.ScreenshotUtils;
 
 public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         DragDownHelper.DragDownCallback, ActivityStarter, OnUnlockMethodChangedListener,
@@ -668,16 +669,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     private void takeScreenshot() {
         String screenshot_location = Settings.System.getString(mContext.getContentResolver(),
                 Settings.System.SCREENSHOT_LOCATION);
-        String image_dir = null;
-        if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_INTERNAL_SD)) {
-            image_dir = Environment.getExternalStorageDirectory().toString();
-        } else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_EXTERNAL_SD)) {
-            image_dir = "/mnt/external_sd";
-        } else if(screenshot_location.equals(Settings.System.SCREENSHOT_LOCATION_USB)) {
-            image_dir = "/storage/usb";
-        }
-        Log.e("Screenshot", "screenshot_location " + screenshot_location + " image_dir=" + image_dir);
-		File file = new File(image_dir + "/Screenshots");//+UserHandle.myUserId()
+        String imageDir = ScreenshotUtils.getScreenshotSavePath(mContext);
+		File file = new File(imageDir + "/Screenshots");//+UserHandle.myUserId()
         file.mkdir();
         if(!file.exists()) {
             String text = null;
