@@ -111,8 +111,6 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
     private static final String SCREENSHOTS_DIR_NAME = "Screenshots";
     private static final String SCREENSHOT_FILE_NAME_TEMPLATE = "Screenshot_%s.png";
     private static final String SCREENSHOT_SHARE_SUBJECT_TEMPLATE = "Screenshot (%s)";
-    private static final String SCREENSHOT_FILE_PATH_TEMPLATE = "%s/%s/%s/%s";
-    private static final String SCREENSHOT_FILE_PATH_TEMPLATE_UMS = "%s/%s/%s";
 
     private final int mNotificationId;
     private final NotificationManager mNotificationManager;
@@ -146,14 +144,7 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
 
         mScreenshotDir = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), SCREENSHOTS_DIR_NAME);
-        boolean hasUMS = "true".equals(SystemProperties.get("ro.factory.hasUMS", "false"));
-        if (!hasUMS) {
-            mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE, imageDir,
-                    UserHandle.myUserId(), SCREENSHOTS_DIR_NAME, mImageFileName);
-        } else {
-            mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE_UMS, imageDir,
-                    SCREENSHOTS_DIR_NAME, mImageFileName);
-        }
+        mImageFilePath = String.format("%s/%s/%s", imageDir, SCREENSHOTS_DIR_NAME, mImageFileName);
 
         // Create the large notification icon
         mImageWidth = data.image.getWidth();
