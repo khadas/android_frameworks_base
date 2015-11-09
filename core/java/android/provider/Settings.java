@@ -2468,6 +2468,13 @@ public final class Settings {
          */
         public static final String SCREEN_AUTO_BRIGHTNESS_ADJ = "screen_auto_brightness_adj";
 
+        //add for Hdmi
+        /**
+         * The hdmi lcd timeout seconds
+         *@hide
+         */
+        public static final String HDMI_LCD_TIMEOUT = "hdmi_lcd_timeout";
+
         private static final Validator SCREEN_AUTO_BRIGHTNESS_ADJ_VALIDATOR =
                 new InclusiveFloatRangeValidator(-1, 1);
 

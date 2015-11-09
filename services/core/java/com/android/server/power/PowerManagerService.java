@@ -435,6 +435,9 @@ public final class PowerManagerService extends SystemService
 
     // True if we are currently in device idle mode.
     private boolean mDeviceIdleMode;
+	
+    // True if hdmi is connect.
+    private boolean mHdmiConnect;
 
     // Set of app ids that we will always respect the wake locks for.
     int[] mDeviceIdleWhitelist = new int[0];
@@ -563,6 +566,10 @@ public final class PowerManagerService extends SystemService
             filter = new IntentFilter();
             filter.addAction(Intent.ACTION_DOCK_EVENT);
             mContext.registerReceiver(new DockReceiver(), filter, null, mHandler);
+		
+            filter=new IntentFilter();
+            filter.addAction("android.intent.action.HDMI_PLUG");
+            mContext.registerReceiver(new HdmiReceiver(), filter,null,mHandler);
 
             // Register for settings changes.
             final ContentResolver resolver = mContext.getContentResolver();
@@ -2785,7 +2792,23 @@ public final class PowerManagerService extends SystemService
             }
         }
     }
-
+	
+    private final class HdmiReceiver extends BroadcastReceiver{
+    	@Override
+    	public void onReceive(Context context, Intent intent) {
+    		// TODO Auto-generated method stub
+    		synchronized (mLock) {
+    			int state = intent.getIntExtra("state", 1);
+                        Slog.d(TAG,"----------------------HdmiReceiver  state= "+state);
+    			if(state==1){
+    				mHdmiConnect=true;
+    			}else{
+    				mHdmiConnect=false;
+    				setTemporaryScreenBrightnessSettingOverrideInternal(mScreenBrightnessSetting);
+    			}
+            }
+    	}
+    }
     private final class SettingsObserver extends ContentObserver {
         public SettingsObserver(Handler handler) {
             super(handler);
