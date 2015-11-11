@@ -29,6 +29,9 @@ import android.view.IWindowManager;
 import android.view.Display;
 import android.graphics.Rect;
 
+/**
+ * @hide
+ */
 public class DisplayOutputManager {
 	private static final String TAG = "DisplayOutputManager";
 	private final boolean DBG = true;
@@ -67,6 +70,10 @@ public class DisplayOutputManager {
 	private IDisplayDeviceManagementService mService;
 	private IWindowManager mWM;
 
+    /**
+     * @throws RemoteException
+     * @hide
+     */
 	public DisplayOutputManager() throws RemoteException {
 		IBinder b = ServiceManager.getService("display_device_management");
 		if(b == null) {
@@ -151,6 +158,11 @@ public class DisplayOutputManager {
 		return iface;
 	}
 
+    /**
+     *
+     * @return
+     * @hide
+     */
 	public int getDisplayNumber() {
 		int number = 0;
 
@@ -162,6 +174,12 @@ public class DisplayOutputManager {
 		return number;
 	}
 
+    /**
+     *
+     * @param display
+     * @return
+     * @hide
+     */
 	public int[] getIfaceList(int display) {
 		if(display == MAIN_DISPLAY)
 			return m_main_iface;
@@ -171,6 +189,12 @@ public class DisplayOutputManager {
 			return null;
 	}
 
+    /**
+     *
+     * @param display
+     * @return
+     * @hide
+     */
 	public int getCurrentInterface(int display) {
 		try {
 			String iface = mService.getCurrentInterface(display);
@@ -181,6 +205,13 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @param display
+     * @param type
+     * @return
+     * @hide
+     */
 	public String[] getModeList(int display, int type) {
 		String iface = typetoface(type);
 		if(iface.equals(null))
@@ -193,6 +224,13 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @param display
+     * @param type
+     * @return
+     * @hide
+     */
 	public String getCurrentMode(int display, int type) {
 		String iface = typetoface(type);
 		if(iface.equals(null))
@@ -206,6 +244,13 @@ public class DisplayOutputManager {
 	        }
 	}
 
+    /**
+     *
+     * @param display
+     * @param type
+     * @param enable
+     * @hide
+     */
 	public void setInterface(int display, int type, boolean enable ) {
 		try {
 			String iface = typetoface(type);
@@ -218,6 +263,13 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @param display
+     * @param type
+     * @param mode
+     * @hide
+     */
 	public void setMode(int display, int type, String mode) {
 		String iface = typetoface(type);
 		if(iface.equals(null))
@@ -260,6 +312,11 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @return
+     * @hide
+     */
 	public boolean getUtils() {
 		String enable;
 
@@ -275,6 +332,9 @@ public class DisplayOutputManager {
 			return false;
 	}
 
+    /**
+     * @hide
+     */
 	public void switchNextDisplayInterface() {
 		try {
 			mService.switchNextDisplayInterface(MAIN_DISPLAY);
@@ -284,6 +344,13 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @param display
+     * @param direction
+     * @param value
+     * @hide
+     */
 	public void setOverScan(int display, int direction, int value) {
 		try {
 			mService.setScreenScale(display, direction, value);
@@ -311,6 +378,12 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @param display
+     * @return
+     * @hide
+     */
 	public Rect getOverScan(int display) {
 		String OverScan;
 		if(display == MAIN_DISPLAY)
@@ -334,6 +407,13 @@ public class DisplayOutputManager {
 		return new Rect(100,100,100,100);
 	}
 
+    /**
+     *
+     * @param display
+     * @param width
+     * @param height
+     * @hide
+     */
 	public void setDisplaySize(int display, int width, int height)
 	{
 		String displaypolicy = SystemProperties.get("persist.sys.display.policy", "manual");
@@ -375,6 +455,13 @@ public class DisplayOutputManager {
 		return 0;
 	}
 
+    /**
+     *
+     * @param display
+     * @param type
+     * @return
+     * @hide
+     */
 	public int get3DModes(int display, int type)
 	{
 		String iface = typetoface(type);
@@ -389,6 +476,13 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @param display
+     * @param type
+     * @return
+     * @hide
+     */
 	public int getCur3DMode(int display, int type)
 	{
 		String iface = typetoface(type);
@@ -403,6 +497,13 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @param display
+     * @param type
+     * @param mode
+     * @hide
+     */
 	public void set3DMode(int display, int type, int mode)
 	{
 		String iface = typetoface(type);
@@ -417,6 +518,11 @@ public class DisplayOutputManager {
 		}
 	}
 
+    /**
+     *
+     * @return
+     * @hide
+     */
 	public int saveConfig()
 	{
 		try {
@@ -430,6 +536,13 @@ public class DisplayOutputManager {
 	/*
 	 * brightness: [-128, 127], default 0
 	 */
+    /**
+     *
+     * @param display
+     * @param brightness
+     * @return
+     * @hide
+     */
 	public int setBrightness(int display, int brightness)
 	{
 		if (brightness < -32 || brightness > 31) {
@@ -448,6 +561,13 @@ public class DisplayOutputManager {
 	/*
 	 * contrast: [0, 1.992], default 1;
 	 */
+    /**
+     *
+     * @param display
+     * @param contrast
+     * @return
+     * @hide
+     */
 	public int setContrast(int display, float contrast)
 	{
 		if (contrast < 0 || contrast > 1.992) {
@@ -466,6 +586,13 @@ public class DisplayOutputManager {
 	/*
 	 * saturation: [0, 1.992], default 1;
 	 */
+    /**
+     *
+     * @param display
+     * @param saturation
+     * @return
+     * @hide
+     */
 	public int setSaturation(int display, float saturation)
 	{	
 		if (saturation < 0 || saturation > 1.992) {
@@ -484,6 +611,13 @@ public class DisplayOutputManager {
 	/*
 	 * degree: [-30, 30], default 0
 	 */
+    /**
+     *
+     * @param display
+     * @param degree
+     * @return
+     * @hide
+     */
 	public int setHue(int display, float degree)
 	{
 		if (degree < -30 || degree > 30) {
