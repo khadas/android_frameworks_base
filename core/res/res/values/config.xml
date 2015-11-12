@@ -1741,7 +1741,7 @@
          * The remote submix module "audio.r_submix.default" must be installed on the device.
          * The device must be provisioned with HDCP keys (for protected content).
     -->
-    <bool name="config_enableWifiDisplay">false</bool>
+    <bool name="config_enableWifiDisplay">true</bool>
 
     <!-- The color transform values that correspond to each respective configuration mode for the
          built-in display, or -1 if the mode is unsupported by the device. The possible
