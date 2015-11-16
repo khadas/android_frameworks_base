@@ -70,6 +70,7 @@ public class ZygoteInit {
     private static final String TAG = "Zygote";
 
     private static final String PROPERTY_DISABLE_OPENGL_PRELOADING = "ro.zygote.disable_gl_preload";
+    private static final String PROPERTY_FIRST_TIME_BOOTING = "persist.sys.first_booting";
 
     private static final String ANDROID_SOCKET_PREFIX = "ANDROID_SOCKET_";
 
@@ -586,19 +587,28 @@ public class ZygoteInit {
             if (abiList == null) {
                 throw new RuntimeException("No ABI list supplied.");
             }
+	    registerZygoteSocket(socketName);
 
-            registerZygoteSocket(socketName);
-            EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
-                SystemClock.uptimeMillis());
-            preload();
-            EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
-                SystemClock.uptimeMillis());
+
+            // Finish profiling the zygote initialization.
+            boolean isFirstBooting = false;
+            //if first time booting or zygote restart or data encrypted,we need preload full class
+            if(Process.myPid() > 300 || SystemProperties.getBoolean(PROPERTY_FIRST_TIME_BOOTING, true)|| SystemProperties.get("ro.crypto.state").equals("encrypted")){
+            	EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
+            		SystemClock.uptimeMillis());
+                preload();
+                isFirstBooting = true;
+                EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
+                	SystemClock.uptimeMillis());
+            }
 
             // Finish profiling the zygote initialization.
             SamplingProfilerIntegration.writeZygoteSnapshot();
 
-            // Do an initial gc to clean up after startup
-            gcAndFinalize();
+	    if(isFirstBooting){
+            	// Do an initial gc to clean up after startup
+            	gcAndFinalize();
+	    }
 
             // Disable tracing so that forked processes do not inherit stale tracing tags from
             // Zygote.
@@ -609,6 +619,16 @@ public class ZygoteInit {
             }
 
             Log.i(TAG, "Accepting command socket connections");
+
+	    //not first boot
+            if(!isFirstBooting){
+            	EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
+            		SystemClock.uptimeMillis());
+                preload();
+                EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
+                	SystemClock.uptimeMillis());
+                gcAndFinalize();
+            }
             runSelectLoop(abiList);
 
             closeServerSocket();
