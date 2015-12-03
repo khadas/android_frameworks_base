@@ -24,6 +24,7 @@ import android.mtp.MtpConstants;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import android.os.SystemProperties;
 
 /**
  * MediaScanner helper class.
@@ -43,17 +44,22 @@ public class MediaFile {
     public static final int FILE_TYPE_AAC     = 8;
     public static final int FILE_TYPE_MKA     = 9;
     public static final int FILE_TYPE_FLAC    = 10;
+    public static final int FILE_TYPE_APE     = 11;
+    public static final int FILE_TYPE_3GP_AUDIO = 12;
     private static final int FIRST_AUDIO_FILE_TYPE = FILE_TYPE_MP3;
-    private static final int LAST_AUDIO_FILE_TYPE = FILE_TYPE_FLAC;
+    private static final int LAST_AUDIO_FILE_TYPE = FILE_TYPE_3GP_AUDIO;
 
     // MIDI file types
-    public static final int FILE_TYPE_MID     = 11;
-    public static final int FILE_TYPE_SMF     = 12;
-    public static final int FILE_TYPE_IMY     = 13;
+    public static final int FILE_TYPE_MID     = 13;
+    public static final int FILE_TYPE_SMF     = 14;
+    public static final int FILE_TYPE_IMY     = 15;
     private static final int FIRST_MIDI_FILE_TYPE = FILE_TYPE_MID;
     private static final int LAST_MIDI_FILE_TYPE = FILE_TYPE_IMY;
    
     // Video file types
+    public static final int FILE_TYPE_FLV     = 18;
+    public static final int FILE_TYPE_RM      = 19;
+    public static final int FILE_TYPE_MPG     = 20;
     public static final int FILE_TYPE_MP4     = 21;
     public static final int FILE_TYPE_M4V     = 22;
     public static final int FILE_TYPE_3GPP    = 23;
@@ -64,8 +70,8 @@ public class MediaFile {
     public static final int FILE_TYPE_MP2TS   = 28;
     public static final int FILE_TYPE_AVI     = 29;
     public static final int FILE_TYPE_WEBM    = 30;
-    private static final int FIRST_VIDEO_FILE_TYPE = FILE_TYPE_MP4;
-    private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_WEBM;
+    private static final int FIRST_VIDEO_FILE_TYPE = FILE_TYPE_FLV;
+    private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_MP2TS;
     
     // More video file types
     public static final int FILE_TYPE_MP2PS   = 200;
@@ -169,12 +175,17 @@ public class MediaFile {
     static {
         addFileType("MP3", FILE_TYPE_MP3, "audio/mpeg", MtpConstants.FORMAT_MP3);
         addFileType("MPGA", FILE_TYPE_MP3, "audio/mpeg", MtpConstants.FORMAT_MP3);
+        addFileType("MP1", FILE_TYPE_MP3, "audio/mpeg", MtpConstants.FORMAT_MP3);
+        addFileType("MP2", FILE_TYPE_MP3, "audio/mpeg",MtpConstants.FORMAT_MP3);
         addFileType("M4A", FILE_TYPE_M4A, "audio/mp4", MtpConstants.FORMAT_MPEG);
         addFileType("WAV", FILE_TYPE_WAV, "audio/x-wav", MtpConstants.FORMAT_WAV);
         addFileType("AMR", FILE_TYPE_AMR, "audio/amr");
         addFileType("AWB", FILE_TYPE_AWB, "audio/amr-wb");
-        if (isWMAEnabled()) {
+        //if (isWMAEnabled()) {
             addFileType("WMA", FILE_TYPE_WMA, "audio/x-ms-wma", MtpConstants.FORMAT_WMA);
+        //}
+        if (!("unknown".equals(SystemProperties.get("ro.target.product", "unknown")))) {
+            addFileType("APE", FILE_TYPE_APE, "audio/ape");
         }
         addFileType("OGG", FILE_TYPE_OGG, "audio/ogg", MtpConstants.FORMAT_OGG);
         addFileType("OGG", FILE_TYPE_OGG, "application/ogg", MtpConstants.FORMAT_OGG);
@@ -182,6 +193,10 @@ public class MediaFile {
         addFileType("AAC", FILE_TYPE_AAC, "audio/aac", MtpConstants.FORMAT_AAC);
         addFileType("AAC", FILE_TYPE_AAC, "audio/aac-adts", MtpConstants.FORMAT_AAC);
         addFileType("MKA", FILE_TYPE_MKA, "audio/x-matroska");
+        addFileType("3GP", FILE_TYPE_3GP_AUDIO, "audio/3gpp");			
+        addFileType("3GPP", FILE_TYPE_3GP_AUDIO, "audio/3gpp");
+        addFileType("3G2", FILE_TYPE_3GP_AUDIO, "audio/3gpp2");
+        addFileType("3GPP2", FILE_TYPE_3GP_AUDIO, "audio/3gpp2");
  
         addFileType("MID", FILE_TYPE_MID, "audio/midi");
         addFileType("MIDI", FILE_TYPE_MID, "audio/midi");
@@ -197,19 +212,32 @@ public class MediaFile {
         addFileType("MPG", FILE_TYPE_MP4, "video/mpeg", MtpConstants.FORMAT_MPEG);
         addFileType("MP4", FILE_TYPE_MP4, "video/mp4", MtpConstants.FORMAT_MPEG);
         addFileType("M4V", FILE_TYPE_M4V, "video/mp4", MtpConstants.FORMAT_MPEG);
+        addFileType("MOV", FILE_TYPE_MP4, "video/mp4",  MtpConstants.FORMAT_MPEG);
         addFileType("3GP", FILE_TYPE_3GPP, "video/3gpp",  MtpConstants.FORMAT_3GP_CONTAINER);
         addFileType("3GPP", FILE_TYPE_3GPP, "video/3gpp", MtpConstants.FORMAT_3GP_CONTAINER);
         addFileType("3G2", FILE_TYPE_3GPP2, "video/3gpp2", MtpConstants.FORMAT_3GP_CONTAINER);
         addFileType("3GPP2", FILE_TYPE_3GPP2, "video/3gpp2", MtpConstants.FORMAT_3GP_CONTAINER);
+        addFileType("FLV", FILE_TYPE_FLV, "video/flv");
+        addFileType("RMVB", FILE_TYPE_RM, "video/rmvb");
+        addFileType("RM", FILE_TYPE_RM, "video/rmvb");
+        addFileType("MPG", FILE_TYPE_MPG, "video/mpg"); 
+        //addFileType("DAT", FILE_TYPE_MPG, "video/mpg");
+        addFileType("VOB", FILE_TYPE_MPG, "video/mpg");
+        addFileType("MPEG", FILE_TYPE_MPG, "video/mpg");
         addFileType("MKV", FILE_TYPE_MKV, "video/x-matroska");
         addFileType("WEBM", FILE_TYPE_WEBM, "video/webm");
         addFileType("TS", FILE_TYPE_MP2TS, "video/mp2ts");
         addFileType("AVI", FILE_TYPE_AVI, "video/avi");
-
-        if (isWMVEnabled()) {
+        addFileType("TRP", FILE_TYPE_MP2TS, "video/mp2ts");
+        addFileType("M2TS", FILE_TYPE_MP2TS, "video/mp2ts");
+        if("box".equals(SystemProperties.get("ro.target.product",  "unknown")))
+        {
+            addFileType("ISO", FILE_TYPE_MP2TS, "video/iso");
+        }
+        //if (isWMVEnabled()) {
             addFileType("WMV", FILE_TYPE_WMV, "video/x-ms-wmv", MtpConstants.FORMAT_WMV);
             addFileType("ASF", FILE_TYPE_ASF, "video/x-ms-asf");
-        }
+        //}
 
         addFileType("JPG", FILE_TYPE_JPEG, "image/jpeg", MtpConstants.FORMAT_EXIF_JPEG);
         addFileType("JPEG", FILE_TYPE_JPEG, "image/jpeg", MtpConstants.FORMAT_EXIF_JPEG);
