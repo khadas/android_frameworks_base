@@ -318,6 +318,7 @@ public class UsbDeviceManager {
         private boolean mHostConnected;
         private boolean mConfigured;
         private boolean mUsbDataUnlocked;
+        private boolean mOldUsbDataUnlocked;
         private String mCurrentFunctions;
         private boolean mCurrentFunctionsApplied;
         private UsbAccessory mCurrentAccessory;
@@ -425,6 +426,7 @@ public class UsbDeviceManager {
         private void setUsbDataUnlocked(boolean enable) {
             if (DEBUG) Slog.d(TAG, "setUsbDataUnlocked: " + enable);
             mUsbDataUnlocked = enable;
+            mOldUsbDataUnlocked = enable;
             updateUsbNotification();
             updateUsbStateBroadcast();
             setEnabledFunctions(mCurrentFunctions, true);
@@ -582,6 +584,7 @@ public class UsbDeviceManager {
             intent.putExtra(UsbManager.USB_CONFIGURED, mConfigured);
             intent.putExtra(UsbManager.USB_DATA_UNLOCKED, isUsbTransferAllowed() && mUsbDataUnlocked);
 
+            if (DEBUG) Slog.d(TAG, "isUsbTransferAllowed ="+isUsbTransferAllowed() + ",mUsbDataUnlocked= "+mUsbDataUnlocked);
             if (mCurrentFunctions != null) {
                 String[] functions = mCurrentFunctions.split(",");
                 for (int i = 0; i < functions.length; i++) {
@@ -661,13 +664,19 @@ public class UsbDeviceManager {
                     }
                     updateUsbNotification();
                     updateAdbNotification();
+
+                    if (DEBUG) Slog.d(TAG, "mConfigured ="+mConfigured +", mUsbDataUnlocked="+mUsbDataUnlocked +",mCurrentFunction= "+mCurrentFunctions);
                     if (UsbManager.containsFunction(mCurrentFunctions,
                             UsbManager.USB_FUNCTION_ACCESSORY)) {
                         updateCurrentAccessory();
                     } else if (!mConnected) {
                         // restore defaults when USB is disconnected
-                        setEnabledFunctions(null, false);
+                        if (DEBUG) Slog.d(TAG, "restore defaults when USB is disconnected");
+                        //setEnabledFunctions(null, false);
+                    } else if (mConnected & mConfigured) {
+                        mUsbDataUnlocked = mOldUsbDataUnlocked;
                     }
+
                     if (mBootCompleted) {
                         updateUsbStateBroadcast();
                         updateUsbFunctions();
