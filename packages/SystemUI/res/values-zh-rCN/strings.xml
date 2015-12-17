@@ -434,4 +434,8 @@
     <string name="sdcard_unmount">内部存储正在使用中</string>
     <string name="external_sd_unmount">SD卡未挂载</string>
     <string name="usb_storage_unmount">USB存储未挂载</string>
+    
+    <string name="enable_bluetooth_title" msgid="5027037706500635269">"要开启蓝牙吗？"</string>
+    <string name="enable_bluetooth_message" msgid="9106595990708985385">"要将您的键盘连接到平板电脑，您必须先开启蓝牙。"</string>
+    <string name="enable_bluetooth_confirmation_ok" msgid="6258074250948309715">"开启"</string>
 </resources>
