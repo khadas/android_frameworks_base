@@ -949,6 +949,18 @@ class MountService extends IMountService.Stub
     }
 
     private boolean onEventLocked(int code, String raw, String[] cooked) {
+        if (DEBUG_EVENTS) {
+            StringBuilder builder = new StringBuilder();
+            builder.append("onEvent::");
+            builder.append(" raw= " + raw);
+            if (cooked != null) {
+                builder.append(" cooked = " );
+                for (String str : cooked) {
+                    builder.append(" " + str);
+                }
+            }
+            Slog.i(TAG, builder.toString());
+        }
         switch (code) {
             case VoldResponseCode.DISK_CREATED: {
                 if (cooked.length != 3) break;
