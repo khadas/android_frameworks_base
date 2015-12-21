@@ -71,7 +71,7 @@ public class MediaFile {
     public static final int FILE_TYPE_AVI     = 29;
     public static final int FILE_TYPE_WEBM    = 30;
     private static final int FIRST_VIDEO_FILE_TYPE = FILE_TYPE_FLV;
-    private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_MP2TS;
+    private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_WEBM;
     
     // More video file types
     public static final int FILE_TYPE_MP2PS   = 200;
@@ -219,7 +219,7 @@ public class MediaFile {
         addFileType("RMVB", FILE_TYPE_RM, "video/rmvb");
         addFileType("RM", FILE_TYPE_RM, "video/rmvb");
         addFileType("MPG", FILE_TYPE_MPG, "video/mpg"); 
-        //addFileType("DAT", FILE_TYPE_MPG, "video/mpg");
+        addFileType("DAT", FILE_TYPE_MPG, "video/mpg");
         addFileType("VOB", FILE_TYPE_MPG, "video/mpg");
         addFileType("MPEG", FILE_TYPE_MPG, "video/mpg");
         addFileType("MKV", FILE_TYPE_MKV, "video/x-matroska");
