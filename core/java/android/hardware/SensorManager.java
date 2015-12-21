@@ -1673,7 +1673,7 @@ public abstract class SensorManager {
                 delay = 20000;
                 break;
             case SENSOR_DELAY_UI:
-                delay = 66667;
+                delay = 20000;//66667;
                 break;
             case SENSOR_DELAY_NORMAL:
                 delay = 200000;

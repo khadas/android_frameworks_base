@@ -464,6 +464,9 @@ class ScreenRotationAnimation {
             }
         }
 
+        mRotateExitAnimation.setDuration(mRotateExitAnimation.getDuration()*2/3);
+        mRotateEnterAnimation.setDuration(mRotateEnterAnimation.getDuration()*2/3);
+
         // Initialize the animations.  This is a hack, redefining what "parent"
         // means to allow supplying the last and next size.  In this definition
         // "%p" is the original (let's call it "previous") size, and "%" is the

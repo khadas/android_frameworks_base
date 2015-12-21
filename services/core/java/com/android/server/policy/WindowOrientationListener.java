@@ -410,7 +410,7 @@ public abstract class WindowOrientationListener {
         // large or we can lose responsiveness.  Likewise we don't want to make it too
         // small or we do a poor job suppressing acceleration spikes.
         // Empirically, 100ms seems to be too small and 500ms is too large.
-        private static final float FILTER_TIME_CONSTANT_MS = 200.0f;
+        private static final float FILTER_TIME_CONSTANT_MS = 150.0f;
 
         /* State for orientation detection. */
 
@@ -440,7 +440,7 @@ public abstract class WindowOrientationListener {
         // Maximum absolute tilt angle at which to consider orientation data.  Beyond this (i.e.
         // when screen is facing the sky or ground), we completely ignore orientation data
         // because it's too unstable.
-        private static final int MAX_TILT = 80;
+        private static final int MAX_TILT = 90;
 
         // The tilt angle below which we conclude that the user is holding the device
         // overhead reading in bed and lock into that state.
@@ -866,6 +866,7 @@ public abstract class WindowOrientationListener {
          */
         private boolean isPredictedRotationAcceptableLocked(long now) {
             // The predicted rotation must have settled long enough.
+	    /*
             if (now < mPredictedRotationTimestampNanos + PROPOSAL_SETTLE_TIME_NANOS) {
                 return false;
             }
@@ -892,7 +893,7 @@ public abstract class WindowOrientationListener {
                     + PROPOSAL_MIN_TIME_SINCE_TOUCH_END_NANOS) {
                 return false;
             }
-
+	    */
             // Looks good!
             return true;
         }
