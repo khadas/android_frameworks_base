@@ -1,3 +1,4 @@
+
 /*
 **
 ** Copyright 2007, The Android Open Source Project
@@ -771,6 +772,13 @@ public class Am extends BaseCommand {
             return;
         }
         System.out.println("Starting service: " + intent);
+	if("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
+	{
+        	if((intent.toString().contains("com.qihoo"))||(intent.toString().contains("com.dragon.android.pandaspace"))||(intent.toString().contains("com.wandoujia.")))
+        	{
+               		return;
+        	}
+	}
         ComponentName cn = mAm.startService(null, intent, intent.getType(),
                 SHELL_PACKAGE_NAME, mUserId);
         if (cn == null) {
@@ -867,6 +875,13 @@ public class Am extends BaseCommand {
             IActivityManager.WaitResult result = null;
             int res;
             final long startTime = SystemClock.uptimeMillis();
+            if("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
+            {
+                if((intent.toString().contains("com.qihoo"))||(intent.toString().contains("com.dragon.android.pandaspace"))||(intent.toString().contains("com.wandoujia.")))
+                {
+                        return;
+                }
+            }
             if (mWaitOption) {
                 result = mAm.startActivityAndWait(null, null, intent, mimeType,
                             null, null, 0, mStartFlags, profilerInfo, null, mUserId);

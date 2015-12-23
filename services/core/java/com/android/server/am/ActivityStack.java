@@ -22,7 +22,7 @@ import static com.android.server.am.ActivityManagerDebugConfig.*;
 
 import static com.android.server.am.ActivityRecord.HOME_ACTIVITY_TYPE;
 import static com.android.server.am.ActivityRecord.APPLICATION_ACTIVITY_TYPE;
-
+import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_LOWMEM;
 import static com.android.server.am.ActivityStackSupervisor.HOME_STACK_ID;
 
 import android.util.ArraySet;
@@ -60,6 +60,7 @@ import android.os.Message;
 import android.os.PersistableBundle;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.service.voice.IVoiceInteractionSession;
@@ -206,6 +207,8 @@ final class ActivityStack {
      * can be warned they may not be in the activity they think they are.
      */
     ActivityRecord mLastStartedActivity = null;
+
+    static ActivityRecord mResumingActivity = null;
 
     // The topmost Activity passed to convertToTranslucent(). When non-null it means we are
     // waiting for all Activities in mUndrawnActivitiesBelowTopTranslucent to be removed as they
@@ -1038,6 +1041,34 @@ final class ActivityStack {
             // In that case go ahead and remove the freeze this activity has on the screen
             // since it is no longer visible.
             prev.stopFreezingScreenLocked(true /*force*/);
+	    if("true".equals(SystemProperties.get("ro.config.low_ram", "false")) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+   	    {
+		ActivityStack topStack = mStackSupervisor.getFocusedStack();
+		ActivityRecord next = topStack.topRunningActivityLocked(null);
+		if(next == null)
+			next = mResumingActivity; 
+
+
+		if(DEBUG_LOWMEM)Slog.d("xzj","-----------prev= "+prev+" next= "+next);
+		if((prev.task != next.task)&&(!prev.packageName.equals(next.packageName)))
+		{
+			String prevstring = prev.toString();
+			if(!shouldExcludePrevApp(prevstring))
+			{
+				String nextstring = next.toString();
+				if(!shouldExcludeNextApp(nextstring))
+				{
+					if(DEBUG_LOWMEM)Slog.d("xzj","------pause packages "+prevstring+" next = "+ nextstring);
+					mService.killAppAtUsersRequest(prev.app, null);
+				}
+			}
+		}
+		if(mService.mGameMap.get(prev.processName) != null)
+		{
+			mService.killAllBackgroundProcesses();
+			if(DEBUG_LOWMEM)Slog.v("xzj", "----clean memory for stop " + prev.processName);                                      
+		}
+	    }
             mPausingActivity = null;
         }
 
@@ -1558,7 +1589,42 @@ final class ActivityStack {
         return result;
     }
 
-    private boolean resumeTopActivityInnerLocked(ActivityRecord prev, Bundle options) {
+    boolean shouldExcludePrevApp(String prevApp) {
+	    if(prevApp == null)
+	    {
+		if(DEBUG_LOWMEM)Slog.d("xzj","---prevApp is null in shouldExcludePrevApp--");
+		return false;
+	    }
+            int N = mService.mExcludePrevApp.size();
+            for (int i=0; i<N; i++) {
+		if(prevApp.contains(mService.mExcludePrevApp.get(i)))
+		{
+			if(DEBUG_LOWMEM)Slog.d("xzj","------shouldExcludePrevApp prevApp= "+prevApp);
+			return true;
+		}
+            }
+	    return false;
+    }
+
+    boolean shouldExcludeNextApp(String nextApp) {
+            if(nextApp == null)
+            {
+                if(DEBUG_LOWMEM)Slog.d("xzj","---nextApp is null in shouldExcludeNextApp--");
+                return false;
+            }
+            int N = mService.mExcludeNextApp.size();
+            for (int i=0; i<N; i++) {
+                if(nextApp.contains(mService.mExcludeNextApp.get(i)))
+                {
+                        if(DEBUG_LOWMEM)Slog.d("xzj","------shouldExcludeNextApp nextApp= "+nextApp);
+                        return true;
+                }
+            }
+            return false;
+    }
+
+
+    final boolean resumeTopActivityInnerLocked(ActivityRecord prev, Bundle options) {
         if (DEBUG_LOCKSCREEN) mService.logLockScreen("");
 
         if (!mService.mBooting && !mService.mBooted) {
@@ -1681,6 +1747,7 @@ final class ActivityStack {
         mStackSupervisor.mWaitingVisibleActivities.remove(next);
 
         if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "Resuming " + next);
+	mResumingActivity = next;
 
         // If we are currently pausing an activity, then don't do anything
         // until that is done.
@@ -3684,7 +3751,6 @@ final class ActivityStack {
         } else {
             updateTransitLocked(AppTransition.TRANSIT_TASK_TO_FRONT, options);
         }
-
         mStackSupervisor.resumeTopActivitiesLocked();
         EventLog.writeEvent(EventLogTags.AM_TASK_TO_FRONT, tr.userId, tr.taskId);
 

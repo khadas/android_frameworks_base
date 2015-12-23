@@ -71,6 +71,7 @@ import android.util.EventLog;
 import android.util.Slog;
 import android.util.SparseArray;
 import android.util.TimeUtils;
+import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_LOWMEM;
 
 public final class ActiveServices {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ActiveServices" : TAG_AM;
@@ -82,6 +83,7 @@ public final class ActiveServices {
     private static final boolean DEBUG_DELAYED_STARTS = DEBUG_DELAYED_SERVICE;
 
     private static final boolean LOG_SERVICE_START_STOP = false;
+
 
     // How long we wait for a service to finish executing.
     static final int SERVICE_TIMEOUT = 20*1000;
@@ -310,14 +312,19 @@ public final class ActiveServices {
                 + " type=" + resolvedType + " args=" + service.getExtras());
 
         final boolean callerFg;
+	boolean callFromSystem = false;
         if (caller != null) {
             final ProcessRecord callerApp = mAm.getRecordForAppLocked(caller);
+	    if(DEBUG_LOWMEM)Slog.v("xzj", "startService: " + service + " callerApp ="+callerApp
+					                                                    + " type=" + resolvedType + " args=" + service.getExtras());
             if (callerApp == null) {
                 throw new SecurityException(
                         "Unable to find app for caller " + caller
                         + " (pid=" + Binder.getCallingPid()
                         + ") when starting service " + service);
             }
+	    if(callerApp.uid == 1000)
+	    	callFromSystem = true;
             callerFg = callerApp.setSchedGroup != Process.THREAD_GROUP_BG_NONINTERACTIVE;
         } else {
             callerFg = true;
@@ -352,6 +359,13 @@ public final class ActiveServices {
         r.delayedStop = false;
         r.pendingStarts.add(new ServiceRecord.StartItem(r, false, r.makeNextStartId(),
                 service, neededGrants));
+	if("true".equals(SystemProperties.get("ro.config.low_ram", "false")) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+	{
+		if(callFromSystem)//mark call from system
+			r.appInfo.flags |= ApplicationInfo.FLAG_MULTIARCH;
+		else
+			r.appInfo.flags &= ~ApplicationInfo.FLAG_MULTIARCH;
+	}
 
         final ServiceMap smap = getServiceMap(r.userId);
         boolean addToStarting = false;
@@ -701,6 +715,7 @@ public final class ActiveServices {
                 + " type=" + resolvedType + " conn=" + connection.asBinder()
                 + " flags=0x" + Integer.toHexString(flags));
         final ProcessRecord callerApp = mAm.getRecordForAppLocked(caller);
+	boolean callFromSystem = false;
         if (callerApp == null) {
             throw new SecurityException(
                     "Unable to find app for caller " + caller
@@ -708,6 +723,9 @@ public final class ActiveServices {
                     + ") when binding service " + service);
         }
 
+	if(DEBUG_LOWMEM)Slog.v("xzj", "bindService: " + service +"callerApp = "+callerApp
+				                + " type=" + resolvedType + " conn=" + connection.asBinder()
+						                + " flags=0x" + Integer.toHexString(flags));
         ActivityRecord activity = null;
         if (token != null) {
             activity = ActivityRecord.isInStackLocked(token);
@@ -737,6 +755,7 @@ public final class ActiveServices {
                     service = service.cloneFilter();
                 }
             }
+	    callFromSystem = true;
         }
 
         if ((flags&Context.BIND_TREAT_LIKE_ACTIVITY) != 0) {
@@ -756,6 +775,13 @@ public final class ActiveServices {
             return -1;
         }
         ServiceRecord s = res.record;
+	if("true".equals(SystemProperties.get("ro.config.low_ram", "false")) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+	{
+		if(callFromSystem)//mark call from system
+			s.appInfo.flags |= ApplicationInfo.FLAG_MULTIARCH;
+		else
+			s.appInfo.flags &= ~ApplicationInfo.FLAG_MULTIARCH;
+	}
 
         final long origId = Binder.clearCallingIdentity();
 
