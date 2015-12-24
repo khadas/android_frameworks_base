@@ -2306,12 +2306,14 @@ public class MediaPlayer implements SubtitleController.Listener
         TrackInfo[] tracks = getInbandTrackInfo();
         synchronized (mIndexTrackPairs) {
             for (int i = 0; i < tracks.length; i++) {
+                if (null == tracks[i]) {
+                    continue;
+                }
                 if (mInbandTrackIndices.get(i)) {
                     continue;
                 } else {
                     mInbandTrackIndices.set(i);
                 }
-
                 // newly appeared inband track
                 if (tracks[i].getTrackType() == TrackInfo.MEDIA_TRACK_TYPE_SUBTITLE) {
                     SubtitleTrack track = mSubtitleController.addTrack(
