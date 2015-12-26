@@ -1959,16 +1959,20 @@ public class MediaPlayer implements SubtitleController.Listener
 
         TrackInfo(Parcel in) {
             mTrackType = in.readInt();
-            // TODO: parcel in the full MediaFormat; currently we are using createSubtitleFormat
-            // even for audio/video tracks, meaning we only set the mime and language.
-            String mime = in.readString();
+            // TODO: parcel in the full MediaFormat
             String language = in.readString();
-            mFormat = MediaFormat.createSubtitleFormat(mime, language);
-
-            if (mTrackType == MEDIA_TRACK_TYPE_SUBTITLE) {
+            if (mTrackType == MEDIA_TRACK_TYPE_TIMEDTEXT) {
+                mFormat = MediaFormat.createSubtitleFormat(
+                    MEDIA_MIMETYPE_TEXT_SUBRIP, language);
+            } else if (mTrackType == MEDIA_TRACK_TYPE_SUBTITLE) {
+                String mime = in.readString();
+                mFormat = MediaFormat.createSubtitleFormat(mime, language);
                 mFormat.setInteger(MediaFormat.KEY_IS_AUTOSELECT, in.readInt());
                 mFormat.setInteger(MediaFormat.KEY_IS_DEFAULT, in.readInt());
                 mFormat.setInteger(MediaFormat.KEY_IS_FORCED_SUBTITLE, in.readInt());
+            } else {
+                mFormat = new MediaFormat();
+                mFormat.setString(MediaFormat.KEY_LANGUAGE, language);
             }
         }
 
