@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dalvik.system.DexFile;
+import android.os.SystemProperties;
 
 import static com.android.server.pm.InstructionSets.getAppDexInstructionSets;
 import static com.android.server.pm.InstructionSets.getDexCodeInstructionSets;
@@ -176,6 +177,11 @@ final class PackageDexOptimizer {
                             + pkg.applicationInfo.packageName + " isa=" + dexCodeInstructionSet
                             + " vmSafeMode=" + vmSafeMode + " debuggable=" + debuggable
                             + " oatDir = " + oatDir + " bootComplete=" + bootComplete);
+
+                    if(pkg.applicationInfo.packageName.contains("com.android.cts")||pkg.applicationInfo.packageName.contains("com.google.android.xts")){
+		    	SystemProperties.set("sys.cts_gts.status","true");
+		    }
+
                     final int sharedGid = UserHandle.getSharedAppGid(pkg.applicationInfo.uid);
                     final int ret = mPackageManagerService.mInstaller.dexopt(path, sharedGid,
                             !pkg.isForwardLocked(), pkg.packageName, dexCodeInstructionSet,
