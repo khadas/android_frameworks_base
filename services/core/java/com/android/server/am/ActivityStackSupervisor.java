@@ -486,7 +486,8 @@ public final class ActivityStackSupervisor implements DisplayListener {
 
         mHomeStack.moveHomeStackTaskToTop(homeStackTaskType);
 
-        final ActivityRecord top = getHomeActivity();
+        //final ActivityRecord top = getHomeActivity();
+        final ActivityRecord top = mHomeStack.topRunningActivityLocked(null);
         if (top == null) {
             return false;
         }
@@ -510,7 +511,8 @@ public final class ActivityStackSupervisor implements DisplayListener {
         }
 
         mHomeStack.moveHomeStackTaskToTop(homeStackTaskType);
-        ActivityRecord r = getHomeActivity();
+        //ActivityRecord r = getHomeActivity();
+        ActivityRecord r = mHomeStack.topRunningActivityLocked(null);
         if (r != null) {
             mService.setFocusedActivityLocked(r, reason);
             return resumeTopActivitiesLocked(mHomeStack, prev, null);
