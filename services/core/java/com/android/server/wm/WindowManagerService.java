@@ -11238,6 +11238,8 @@ public class WindowManagerService extends IWindowManager.Stub
 
     void dumpDisplayContentsLocked(PrintWriter pw, boolean dumpAll) {
         pw.println("WINDOW MANAGER DISPLAY CONTENTS (dumpsys window displays)");
+        //it's mid or box device
+	pw.println("android.hardware.type.watch = false");
         if (mDisplayReady) {
             final int numDisplays = mDisplayContents.size();
             for (int displayNdx = 0; displayNdx < numDisplays; ++displayNdx) {

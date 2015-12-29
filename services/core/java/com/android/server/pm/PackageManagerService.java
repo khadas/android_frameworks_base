@@ -3148,6 +3148,32 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     @Override
     public boolean hasSystemFeature(String name) {
+
+	    if((PackageManager.FEATURE_PRINTING.equals(name))&&("true".equals(SystemProperties.get("sys.cts_gts.status"))))
+	    {
+            	try {
+                	IActivityManager am = ActivityManagerNative.getDefault();
+                	if (am != null) {
+                    	List<ActivityManager.RunningAppProcessInfo> list = am
+                            .getRunningAppProcesses();
+                    	if (list != null && !list.isEmpty()) {
+                        	Iterator<ActivityManager.RunningAppProcessInfo> iterator = list
+                                	.iterator();
+                        	while (iterator.hasNext()) {
+                            		ActivityManager.RunningAppProcessInfo info = iterator
+                                    		.next();
+                            		if (info.processName.equals("com.android.cts.print")) {
+						return false;
+                            		}
+                        	}
+                    	}
+                	}
+            	} catch (RemoteException e) {
+                	e.printStackTrace();
+            	}
+	    }
+
+
         synchronized (mPackages) {
             return mAvailableFeatures.containsKey(name);
         }
