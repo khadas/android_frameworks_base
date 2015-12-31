@@ -61,10 +61,10 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
         super(service, HdmiDeviceInfo.DEVICE_PLAYBACK);
 
         mAutoTvOff = mService.readBooleanSetting(Global.HDMI_CONTROL_AUTO_DEVICE_OFF_ENABLED, false);
-
         // The option is false by default. Update settings db as well to have the right
         // initial setting on UI.
-        mService.writeBooleanSetting(Global.HDMI_CONTROL_AUTO_DEVICE_OFF_ENABLED, mAutoTvOff);
+        /* this setting updated will cause service die in first boot */
+        //mService.writeBooleanSetting(Global.HDMI_CONTROL_AUTO_DEVICE_OFF_ENABLED, mAutoTvOff);
     }
 
     @Override
