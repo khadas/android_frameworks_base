@@ -2813,9 +2813,10 @@ public class MediaPlayer implements SubtitleController.Listener
                     // send error message instead of crashing;
                     // send error message instead of inlining a call to onError
                     // to avoid code duplication.
-                    Message msg2 = obtainMessage(
-                            MEDIA_ERROR, MEDIA_ERROR_UNKNOWN, MEDIA_ERROR_UNSUPPORTED, null);
-                    sendMessage(msg2);
+                    // not send error message for some video cant play  --zyh@rock-chips.com
+                    // Message msg2 = obtainMessage(
+                    //        MEDIA_ERROR, MEDIA_ERROR_UNKNOWN,null, null);
+                    //sendMessage(msg2);
                 }
                 if (mOnPreparedListener != null)
                     mOnPreparedListener.onPrepared(mMediaPlayer);
