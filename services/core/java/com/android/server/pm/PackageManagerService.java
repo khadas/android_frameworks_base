@@ -2084,6 +2084,30 @@ public class PackageManagerService extends IPackageManager.Stub {
             scanDirLI(systemAppDir, PackageParser.PARSE_IS_SYSTEM
                     | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
 
+
+            File preinstallAppDir = new File(Environment.getRootDirectory(), "preinstall");
+            File preinstallAppDelDir = new File(Environment.getRootDirectory(),
+                    "preinstall_del");
+            if (!SystemProperties.getBoolean("persist.sys.preinstalled", false)) {
+                // mPreInstallObserver = new AppDirObserver(
+                // mPreinstallAppDir.getPath(), OBSERVER_EVENTS, false);
+                // mPreInstallObserver.startWatching();
+
+                if (preinstallAppDir.exists()) {
+                    // scanDirLI(mPreinstallAppDir, 0, scanMode, 0);
+                    copyPackagesToAppInstallDir(preinstallAppDir);
+                }
+
+                // mPreInstallDelObserver = new AppDirObserver(
+                // mPreinstallAppDelDir.getPath(), OBSERVER_EVENTS, false);
+                // mPreInstallDelObserver.startWatching();
+                if (preinstallAppDelDir.exists()) {
+                    copyPackagesToAppInstallDir(preinstallAppDelDir);
+                    deletePreinstallDir(preinstallAppDelDir);
+                }
+                SystemProperties.set("persist.sys.preinstalled", "1");
+            }//$_rockchip_$_modify_end
+
             // Collect all vendor packages.
             File vendorAppDir = new File("/vendor/app");
             try {
@@ -2347,7 +2371,112 @@ public class PackageManagerService extends IPackageManager.Stub {
         // Expose private service for system components to use.
         LocalServices.addService(PackageManagerInternal.class, new PackageManagerInternalImpl());
     }
+    //$_rockchip_$_modify_by huangjc add copyPackagesToAppInstallDir
+    private void copyPackagesToAppInstallDir(File srcDir) {
+        String[] files = srcDir.list();
+        if (files == null) {
+            Log.d(TAG, "No files in app dir " + srcDir);
+            return;
+        }
 
+        int i;
+        for (i = 0; i < files.length; i++) {
+            File srcFile = new File(srcDir, files[i]);
+            File destFile = new File(mAppInstallDir, files[i]);
+            Slog.d(TAG, "Copy " + srcFile.getPath() + " to " + destFile.getPath());
+     /*       //copy apk only
+            if (srcFile.isDirectory()) {
+             File[] prefiles = srcFile.listFiles();
+            for (final File f : prefiles) {
+              if (f.isFile()) {
+                  if (f.getName().endsWith(".apk")) {
+                   File FdesName = new File(mAppInstallDir,f.getName());
+                   Slog.d(TAG, "Copy " + f.getPath() + " to " + FdesName.getPath());
+                  if (!FileUtils.copyFile(f, FdesName)) {
+                   Slog.d(TAG, "Copy " + f.getPath() + " to " + FdesName.getPath() + " fail");
+                   continue;
+                  }
+            FileUtils.setPermissions(FdesName.getAbsolutePath(), 0755, -1, -1);
+
+                  }
+              }
+           }
+           }
+      */
+            //copy all Directory
+            if (copyDirectory(srcFile.getPath(),destFile.getPath()))
+            {
+                Slog.d(TAG,"Directory "+destFile.getPath()+" Copy Successfully!");
+            }
+            else
+            {
+                Slog.e(TAG,"Directory "+destFile.getPath()+" Copy fail!");
+            }
+            FileUtils.setPermissions(destFile.getAbsolutePath(), 0755, -1, -1);
+
+        }
+    }
+
+    public boolean copyDirectory(String SrcDirectoryPath, String DesDirectoryPath) {
+        try
+        {
+            //if directory is not exist create it
+            File F0 = new File(DesDirectoryPath);
+            if (!F0.exists()) {
+                if (!F0.mkdir())
+                {
+                    Slog.e(TAG,"mkdir fail!");
+                }
+            }
+            FileUtils.setPermissions(DesDirectoryPath, 0755, -1, -1);
+            File F = new File(SrcDirectoryPath);
+            File[] allFile = F.listFiles(); //get directory files
+            int totalNum = allFile.length; //get files number
+            String srcName = "";
+            String desName = "";
+            int currentFile = 0;
+            //copy file
+            for (currentFile = 0; currentFile < totalNum; currentFile++)
+            {
+                if (!allFile[currentFile].isDirectory())
+                {
+                    desName =DesDirectoryPath + "/" + allFile[currentFile].getName();
+                    File FdesName = new File(desName);
+                    if (!FileUtils.copyFile(allFile[currentFile], FdesName)) {
+                        Slog.d(TAG, "Copy " + allFile[currentFile].getPath() + " to " + FdesName.getPath() +
+                                " fail");
+                        continue;
+                    }
+                    FileUtils.setPermissions(FdesName.getAbsolutePath(), 0644, -1, -1);
+                }
+                else
+                {
+                    if (copyDirectory(allFile[currentFile].getPath().toString(),
+                            DesDirectoryPath + "/" +allFile[currentFile].getName().toString()))
+                    {
+                        //System.out.println("D Copy Successfully!");
+                    }
+                    else
+                    {
+                        System.out.println("SubDirectory Copy Error!");
+                    }
+                }
+            }
+            return true;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    private void deletePreinstallDir(File dir) {
+        String[] files = dir.list();
+        if (files != null) {
+            Slog.d(TAG, "Ready to cleanup preinstall");
+            SystemProperties.set("ctl.start", "preinst_clr");
+        }
+    }
     @Override
     public boolean isFirstBoot() {
         return !mRestoredSettings;
