@@ -1572,6 +1572,7 @@
   <java-symbol type="style" name="Theme.ExpandedMenu" />
   <java-symbol type="string" name="forward_intent_to_owner" />
   <java-symbol type="string" name="forward_intent_to_work" />
+  <java-symbol type="drawable" name="default_wallpaper_small" />
 
   <!-- From services -->
   <java-symbol type="anim" name="screen_rotate_0_enter" />
