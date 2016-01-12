@@ -949,6 +949,9 @@ static void android_media_MediaCodec_native_configure(
     if (jsurface != NULL) {
         sp<Surface> surface(android_view_Surface_getSurface(env, jsurface));
         if (surface != NULL) {
+            if (surface->fromSurfaceTexture) {
+                format->setInt32("4k-osd", 1);
+            }
             bufferProducer = surface->getIGraphicBufferProducer();
         } else {
             jniThrowException(

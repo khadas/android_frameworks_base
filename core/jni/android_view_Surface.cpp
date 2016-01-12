@@ -243,6 +243,7 @@ static jlong nativeCreateFromSurfaceTexture(JNIEnv* env, jclass clazz,
         return 0;
     }
 
+    surface->fromSurfaceTexture = true;
     surface->incStrong(&sRefBaseOwner);
     return jlong(surface.get());
 }

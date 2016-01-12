@@ -74,6 +74,8 @@ static SyncParams::fields_t gSyncParamsFields;
 
 static Mutex sLock;
 
+static bool mOsdVideo = false;
+
 // ----------------------------------------------------------------------------
 // ref-counted object for callbacks
 class JNIMediaPlayerListener: public MediaPlayerListener
@@ -314,6 +316,10 @@ setVideoSurface(JNIEnv *env, jobject thiz, jobject jsurface, jboolean mediaPlaye
     if (jsurface) {
         sp<Surface> surface(android_view_Surface_getSurface(env, jsurface));
         if (surface != NULL) {
+            if (surface->fromSurfaceTexture)
+                mOsdVideo = true;
+            else
+                mOsdVideo = false;
             new_st = surface->getIGraphicBufferProducer();
             if (new_st == NULL) {
                 jniThrowException(env, "java/lang/IllegalArgumentException",
@@ -385,6 +391,12 @@ android_media_MediaPlayer_start(JNIEnv *env, jobject thiz)
     if (mp == NULL ) {
         jniThrowException(env, "java/lang/IllegalStateException", NULL);
         return;
+    }
+
+    if (mOsdVideo) {
+        Parcel parcel;
+        parcel.writeString16(String16("osdvideo:1"));
+        mp->setParameter(/*KEY_PARAMETER_AML_PLAYER_ENABLE_OSDVIDEO*/8003, parcel);
     }
     process_media_player_call( env, thiz, mp->start(), NULL, NULL );
 }
