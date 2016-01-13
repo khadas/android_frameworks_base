@@ -33,23 +33,28 @@ import java.util.Locale;
 public class MediaFile {
 
     // Audio file types
-    public static final int FILE_TYPE_MP3     = 1;
-    public static final int FILE_TYPE_M4A     = 2;
-    public static final int FILE_TYPE_WAV     = 3;
-    public static final int FILE_TYPE_AMR     = 4;
-    public static final int FILE_TYPE_AWB     = 5;
-    public static final int FILE_TYPE_WMA     = 6;
-    public static final int FILE_TYPE_OGG     = 7;
-    public static final int FILE_TYPE_AAC     = 8;
-    public static final int FILE_TYPE_MKA     = 9;
-    public static final int FILE_TYPE_FLAC    = 10;
+    public static final int FILE_TYPE_MP3           = 1;
+    public static final int FILE_TYPE_M4A           = 2;
+    public static final int FILE_TYPE_WAV           = 3;
+    public static final int FILE_TYPE_AMR           = 4;
+    public static final int FILE_TYPE_AWB           = 5;
+    public static final int FILE_TYPE_WMA           = 6;
+    public static final int FILE_TYPE_OGG           = 7;
+    public static final int FILE_TYPE_AAC           = 8;
+    public static final int FILE_TYPE_MKA           = 9;
+    public static final int FILE_TYPE_APE           = 10;
+    public static final int FILE_TYPE_FLAC          = 11;
+    public static final int FILE_TYPE_AUDIO_3GPP    = 12;
+    public static final int FILE_TYPE_TTA           = 13;
+    public static final int FILE_TYPE_WV            = 14;
+    public static final int FILE_TYPE_AIFF          = 15;
     private static final int FIRST_AUDIO_FILE_TYPE = FILE_TYPE_MP3;
-    private static final int LAST_AUDIO_FILE_TYPE = FILE_TYPE_FLAC;
+    private static final int LAST_AUDIO_FILE_TYPE = FILE_TYPE_AIFF;
 
     // MIDI file types
-    public static final int FILE_TYPE_MID     = 11;
-    public static final int FILE_TYPE_SMF     = 12;
-    public static final int FILE_TYPE_IMY     = 13;
+    public static final int FILE_TYPE_MID           = 17;
+    public static final int FILE_TYPE_SMF           = 18;
+    public static final int FILE_TYPE_IMY           = 19;
     private static final int FIRST_MIDI_FILE_TYPE = FILE_TYPE_MID;
     private static final int LAST_MIDI_FILE_TYPE = FILE_TYPE_IMY;
    
@@ -68,9 +73,15 @@ public class MediaFile {
     private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_WEBM;
     
     // More video file types
-    public static final int FILE_TYPE_MP2PS   = 200;
+    public static final int FILE_TYPE_MP2PS         = 200;
+    public static final int FILE_TYPE_RMVB          = 201;
+    public static final int FILE_TYPE_TP            = 202;
+    public static final int FILE_TYPE_FLV           = 203;
+    public static final int FILE_TYPE_DAT           = 204;
+    public static final int FILE_TYPE_M2TS          = 205;
+    public static final int FILE_TYPE_MOV           = 206;
     private static final int FIRST_VIDEO_FILE_TYPE2 = FILE_TYPE_MP2PS;
-    private static final int LAST_VIDEO_FILE_TYPE2 = FILE_TYPE_MP2PS;
+    private static final int LAST_VIDEO_FILE_TYPE2 = FILE_TYPE_MOV;
 
     // Image file types
     public static final int FILE_TYPE_JPEG    = 31;
@@ -168,11 +179,16 @@ public class MediaFile {
 
     static {
         addFileType("MP3", FILE_TYPE_MP3, "audio/mpeg", MtpConstants.FORMAT_MP3);
+        addFileType("MP2", FILE_TYPE_MP3, "audio/mpeg", MtpConstants.FORMAT_MP3);
         addFileType("MPGA", FILE_TYPE_MP3, "audio/mpeg", MtpConstants.FORMAT_MP3);
         addFileType("M4A", FILE_TYPE_M4A, "audio/mp4", MtpConstants.FORMAT_MPEG);
         addFileType("WAV", FILE_TYPE_WAV, "audio/x-wav", MtpConstants.FORMAT_WAV);
         addFileType("AMR", FILE_TYPE_AMR, "audio/amr");
         addFileType("AWB", FILE_TYPE_AWB, "audio/amr-wb");
+        addFileType("APE", FILE_TYPE_APE, "audio/ape");
+        addFileType("AIFF", FILE_TYPE_AIFF, "audio/x-aiff");
+        addFileType("AIFC", FILE_TYPE_AIFF, "audio/x-aiff");
+        addFileType("AIF", FILE_TYPE_AIFF, "audio/x-aiff");
         if (isWMAEnabled()) {
             addFileType("WMA", FILE_TYPE_WMA, "audio/x-ms-wma", MtpConstants.FORMAT_WMA);
         }
@@ -181,8 +197,12 @@ public class MediaFile {
         addFileType("OGA", FILE_TYPE_OGG, "application/ogg", MtpConstants.FORMAT_OGG);
         addFileType("AAC", FILE_TYPE_AAC, "audio/aac", MtpConstants.FORMAT_AAC);
         addFileType("AAC", FILE_TYPE_AAC, "audio/aac-adts", MtpConstants.FORMAT_AAC);
+        addFileType("AAC", FILE_TYPE_AAC, "audio/aac-adif", MtpConstants.FORMAT_AAC);
         addFileType("MKA", FILE_TYPE_MKA, "audio/x-matroska");
- 
+        addFileType("3GPP", FILE_TYPE_AUDIO_3GPP, "video/3gpp");
+        addFileType("TTA", FILE_TYPE_TTA, "audio/tta");
+        addFileType("WV", FILE_TYPE_WV, "audio/wv");
+
         addFileType("MID", FILE_TYPE_MID, "audio/midi");
         addFileType("MIDI", FILE_TYPE_MID, "audio/midi");
         addFileType("XMF", FILE_TYPE_MID, "audio/midi");
@@ -240,6 +260,22 @@ public class MediaFile {
         addFileType("ZIP", FILE_TYPE_ZIP, "application/zip");
         addFileType("MPG", FILE_TYPE_MP2PS, "video/mp2p");
         addFileType("MPEG", FILE_TYPE_MP2PS, "video/mp2p");
+        addFileType("RMVB", FILE_TYPE_RMVB, "video/rmvb");
+        addFileType("RM", FILE_TYPE_RMVB, "video/rmvb");
+        addFileType("TP", FILE_TYPE_TP, "video/tp");
+        addFileType("FLV", FILE_TYPE_FLV, "video/flv");
+        addFileType("MOV", FILE_TYPE_MOV, "video/mov");
+        addFileType("VOB", FILE_TYPE_MP2PS, "video/mp2p");
+        addFileType("F4V", FILE_TYPE_FLV, "video/flv");
+        addFileType("DAT", FILE_TYPE_DAT, "video/dat");
+        addFileType("M2TS", FILE_TYPE_FLV, "video/m2ts");
+        addFileType("DIVX", FILE_TYPE_FLV, "video/divx");
+        addFileType("AVI", FILE_TYPE_AVI, "video/x-msvideo");
+        addFileType("RM", FILE_TYPE_RMVB, "video/*");
+        addFileType("FLV", FILE_TYPE_FLV, "application/x-shockwave-flash");
+        addFileType("MOV", FILE_TYPE_MOV, "video/*");
+        addFileType("RMVB", FILE_TYPE_RMVB, "video/*");
+        addFileType("MKV", FILE_TYPE_MKV, "video/*");
     }
 
     public static boolean isAudioFileType(int fileType) {
