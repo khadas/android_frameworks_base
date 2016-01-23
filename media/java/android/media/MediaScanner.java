@@ -33,6 +33,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.RemoteException;
 import android.os.SystemProperties;
+import android.os.storage.StorageManager;
+import android.os.storage.VolumeInfo;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio;
 import android.provider.MediaStore.Audio.Playlists;
@@ -61,6 +63,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Internal service helper that no-one should use directly.
@@ -386,6 +390,8 @@ public class MediaScanner
 
     private DrmManagerClient mDrmManagerClient = null;
 
+    private StorageManager mStorageManager;
+
     public MediaScanner(Context c) {
         native_setup();
         mContext = c;
@@ -398,6 +404,8 @@ public class MediaScanner
         mExternalStoragePath = Environment.getExternalStorageDirectory().getAbsolutePath();
         mExternalIsEmulated = Environment.isExternalStorageEmulated();
         //mClient.testGenreNameConverter();
+
+        mStorageManager = (StorageManager)c.getSystemService(Context.STORAGE_SERVICE);
     }
 
     private void setDefaultRingtoneFileNames() {
@@ -802,6 +810,26 @@ public class MediaScanner
             return map;
         }
 
+        private String getTransPath(String inPath) {
+            String outPath = inPath;
+
+            List<VolumeInfo> volumes = mStorageManager.getVolumes();
+            Collections.sort(volumes, VolumeInfo.getDescriptionComparator());
+            for (VolumeInfo vol : volumes) {
+                if (vol != null && vol.isMountedReadable() && vol.getType() == VolumeInfo.TYPE_PUBLIC) {
+                    String pathVol = vol.getPath().getAbsolutePath();
+                    int idx = inPath.indexOf(pathVol);
+                    if (idx != -1) {
+                        int len = pathVol.length();
+                        String pathLast = inPath.substring(idx + len);
+                        outPath = "/storage/" + mStorageManager.getBestVolumeDescription(vol) + pathLast;
+                    }
+                }
+            }
+
+            return outPath;
+        }
+
         private Uri endFile(FileEntry entry, boolean ringtones, boolean notifications,
                 boolean alarms, boolean music, boolean podcasts)
                 throws RemoteException {
@@ -820,7 +848,7 @@ public class MediaScanner
             }
             String album = values.getAsString(Audio.Media.ALBUM);
             if (MediaStore.UNKNOWN_STRING.equals(album)) {
-                album = values.getAsString(MediaStore.MediaColumns.DATA);
+                album = getTransPath(values.getAsString(MediaStore.MediaColumns.DATA));
                 // extract last path segment before file name
                 int lastSlash = album.lastIndexOf('/');
                 if (lastSlash >= 0) {
