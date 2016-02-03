@@ -725,7 +725,8 @@ public class AudioSystem
     public static int getPlatformType(Context context) {
         if (context.getResources().getBoolean(com.android.internal.R.bool.config_voice_capable)) {
             return PLATFORM_VOICE;
-        } else if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+        } else if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LIVE_TV)) {
             return PLATFORM_TELEVISION;
         } else {
             return PLATFORM_DEFAULT;

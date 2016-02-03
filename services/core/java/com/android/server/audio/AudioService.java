@@ -118,6 +118,7 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -167,6 +168,9 @@ public class AudioService extends IAudioService.Stub {
     private final Context mContext;
     private final ContentResolver mContentResolver;
     private final AppOpsManager mAppOps;
+
+    private Object mTvControlManager;
+    private boolean mSupportTvAudio;
 
     // the platform type affects volume and silent mode behavior
     private final int mPlatformType;
@@ -248,6 +252,7 @@ public class AudioService extends IAudioService.Stub {
     private SoundPool mSoundPool;
     private final Object mSoundEffectsLock = new Object();
     private static final int NUM_SOUNDPOOL_CHANNELS = 4;
+    private static final int MAX_MASTER_VOLUME = 100;
 
     /* Sound effect file names  */
     private static final String SOUND_EFFECTS_PATH = "/media/audio/ui/";
@@ -600,6 +605,10 @@ public class AudioService extends IAudioService.Stub {
             AudioSystem.DEFAULT_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] = (maxVolume * 3) / 4;
         }
 
+        if (mPlatformType == AudioSystem.PLATFORM_TELEVISION) {
+            AudioSystem.DEFAULT_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] = (MAX_MASTER_VOLUME * 3) / 10;
+        }
+
         sSoundEffectVolumeDb = context.getResources().getInteger(
                 com.android.internal.R.integer.config_soundEffectVolumeDb);
 
@@ -695,6 +704,20 @@ public class AudioService extends IAudioService.Stub {
         mSystemReady = true;
         sendMsg(mAudioHandler, MSG_LOAD_SOUND_EFFECTS, SENDMSG_QUEUE,
                 0, 0, null, 0);
+
+        if (isPlatformTelevision()) {
+            mSupportTvAudio = SystemProperties.getBoolean("ro.product.support.tvaudio", false);
+            if (mSupportTvAudio) {
+                try {
+                    Class<?> TvControlManagerClass = Class.forName(
+                            "com.droidlogic.app.tv.TvControlManager");
+                    mTvControlManager = TvControlManagerClass.newInstance();
+                    updateTvAudioStatus();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
         mKeyguardManager =
                 (KeyguardManager) mContext.getSystemService(Context.KEYGUARD_SERVICE);
@@ -1131,9 +1154,6 @@ public class AudioService extends IAudioService.Stub {
 
     private void adjustStreamVolume(int streamType, int direction, int flags,
             String callingPackage, String caller, int uid) {
-        if (mUseFixedVolume) {
-            return;
-        }
         if (DEBUG_VOL) Log.d(TAG, "adjustStreamVolume() stream=" + streamType + ", dir=" + direction
                 + ", flags=" + flags + ", caller=" + caller);
 
@@ -1143,6 +1163,38 @@ public class AudioService extends IAudioService.Stub {
         boolean isMuteAdjust = isMuteAdjust(direction);
 
         if (isMuteAdjust && !isStreamAffectedByMute(streamType)) {
+            return;
+        }
+
+        if (mUseFixedVolume) {
+            if (mSupportTvAudio) {
+                if (isMuteAdjust) {
+                    boolean ismute = false;
+                    if (direction == AudioManager.ADJUST_MUTE) {
+                        ismute = true;
+                    } else if (direction == AudioManager.ADJUST_UNMUTE) {
+                        ismute = false;
+                    } else if (direction == AudioManager.ADJUST_TOGGLE_MUTE) {
+                        ismute = !getAudioMuteKeyStatus();
+                    }
+                    setSystemAudioMute(ismute);
+                    return;
+                }
+                int curVolume = getCurAudioMasterVolume();
+                int adjustVolume = curVolume + direction;
+                if (adjustVolume > MAX_MASTER_VOLUME) {
+                    adjustVolume = MAX_MASTER_VOLUME;
+                } else if (adjustVolume < 0) {
+                    adjustVolume = 0;
+                }
+                setAudioMasterVolume(adjustVolume);
+                if ((curVolume == 0 && adjustVolume == 0)
+                        || (curVolume == MAX_MASTER_VOLUME && adjustVolume == MAX_MASTER_VOLUME)
+                        || (curVolume != adjustVolume)) {
+                    flags &= ~AudioManager.FLAG_SHOW_UI;
+                    sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, adjustVolume, flags);
+                }
+            }
             return;
         }
 
@@ -1332,6 +1384,11 @@ public class AudioService extends IAudioService.Stub {
     }
 
     private void setSystemAudioVolume(int oldVolume, int newVolume, int maxVolume, int flags) {
+        if (mSupportTvAudio) {
+            setAudioMasterVolume(newVolume);
+            sendVolumeUpdate(AudioSystem.STREAM_MUSIC, oldVolume, newVolume, flags);
+            return;
+        }
         if (mHdmiManager == null
                 || mHdmiTvClient == null
                 || oldVolume == newVolume
@@ -1405,6 +1462,12 @@ public class AudioService extends IAudioService.Stub {
     private void setStreamVolume(int streamType, int index, int flags, String callingPackage,
             String caller, int uid) {
         if (mUseFixedVolume) {
+            if (mSupportTvAudio) {
+                int curVolume = getCurAudioMasterVolume();
+                setAudioMasterVolume(index);
+                flags &= ~AudioManager.FLAG_SHOW_UI;
+                sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, index, flags);
+            }
             return;
         }
 
@@ -1579,6 +1642,10 @@ public class AudioService extends IAudioService.Stub {
     // If Hdmi-CEC system audio mode is on, we show volume bar only when TV
     // receives volume notification from Audio Receiver.
     private int updateFlagsForSystemAudio(int flags) {
+        if (mSupportTvAudio) {
+            flags |= AudioManager.FLAG_SHOW_UI;
+            return flags;
+        }
         if (mHdmiTvClient != null) {
             synchronized (mHdmiTvClient) {
                 if (mHdmiSystemAudioSupported &&
@@ -1635,6 +1702,10 @@ public class AudioService extends IAudioService.Stub {
     }
 
     private void setSystemAudioMute(boolean state) {
+        if (mSupportTvAudio) {
+            setAudioMuteKeyStatus(state);
+            return;
+        }
         if (mHdmiManager == null || mHdmiTvClient == null) return;
         synchronized (mHdmiManager) {
             if (!mHdmiSystemAudioSupported) return;
@@ -1651,6 +1722,9 @@ public class AudioService extends IAudioService.Stub {
 
     /** get stream mute state. */
     public boolean isStreamMute(int streamType) {
+        if (mSupportTvAudio) {
+            return getAudioMuteKeyStatus();
+        }
         if (streamType == AudioManager.USE_DEFAULT_STREAM_TYPE) {
             streamType = getActiveStreamType(streamType);
         }
@@ -1761,6 +1835,12 @@ public class AudioService extends IAudioService.Stub {
 
     private void setMasterMuteInternal(boolean mute, int flags, String callingPackage, int uid,
             int userId) {
+        if (mUseFixedVolume) {
+            if (mSupportTvAudio) {
+                setAudioMuteKeyStatus(mute);
+            }
+            return;
+        }
         // If we are being called by the system check for user we are going to change
         // so we handle user restrictions correctly.
         if (uid == android.os.Process.SYSTEM_UID) {
@@ -1799,6 +1879,9 @@ public class AudioService extends IAudioService.Stub {
 
     /** get master mute state. */
     public boolean isMasterMute() {
+        if (mSupportTvAudio) {
+            return getAudioMuteKeyStatus();
+        }
         return AudioSystem.getMasterMute();
     }
 
@@ -1809,6 +1892,9 @@ public class AudioService extends IAudioService.Stub {
 
     /** @see AudioManager#getStreamVolume(int) */
     public int getStreamVolume(int streamType) {
+        if (mSupportTvAudio) {
+            return getCurAudioMasterVolume();
+        }
         ensureValidStreamType(streamType);
         int device = getDeviceForStream(streamType);
         synchronized (VolumeStreamState.class) {
@@ -1826,6 +1912,109 @@ public class AudioService extends IAudioService.Stub {
         }
     }
 
+    /**
+     * @Function: SetAudioMasterVolume
+     * @Description: Set audio master volume
+     * @Param: value between 0 and 100
+     * @Return: void
+     */
+    private void setAudioMasterVolume(int volume) {
+        try {
+            mTvControlManager.getClass().getDeclaredMethod("SetAudioMasterVolume", new Class[] { int.class})
+                .invoke(mTvControlManager, new Object[] { volume });
+            saveCurAudioMasterVolume(volume);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * @Function: GetAudioMasterVolume
+     * @Description: Get audio master volume
+     * @Param:
+     * @Return: value between 0 and 100
+     */
+    private int getSaveAudioMasterVolume() {
+        try {
+            int i = (int) mTvControlManager.getClass().getDeclaredMethod("GetSaveAudioMasterVolume").invoke(mTvControlManager, null);
+            return i;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return (MAX_MASTER_VOLUME * 3) / 10;
+    }
+
+    /**
+     * @Function: saveCurAudioMasterVolume
+     * @Description: Save audio master volume(stored in flash)
+     * @Param: value between 0 and 100
+     * @Return: void
+     */
+    private void saveCurAudioMasterVolume(int volume) {
+        try {
+            mTvControlManager.getClass().getDeclaredMethod("SaveCurAudioMasterVolume", new Class[] { int.class})
+                .invoke(mTvControlManager, new Object[] { volume });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * @Function: getCurAudioMasterVolume
+     * @Description: Get audio master volume(stored in flash)
+     * @Param:
+     * @Return: value between 0 and 100
+     */
+    private int getCurAudioMasterVolume() {
+        try {
+            int i = (int) mTvControlManager.getClass().getDeclaredMethod("GetCurAudioMasterVolume").invoke(mTvControlManager, null);
+            return i;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return (MAX_MASTER_VOLUME * 3) / 10;
+    }
+
+    private void setAudioMuteKeyStatus(boolean state) {
+        try {
+            boolean muteKeyStatus = isMasterMute();
+            if (muteKeyStatus != state) {
+                if (!state) {
+                    setAudioMasterVolume(getCurAudioMasterVolume());
+                }
+                mTvControlManager.getClass().getDeclaredMethod("SetAudioMuteKeyStatus", new Class[] { int.class})
+                    .invoke(mTvControlManager, new Object[] { state ? 1 : 0 });
+                sendMasterMuteUpdate(state, 100);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean getAudioMuteKeyStatus() {
+        try {
+            int i = (int) mTvControlManager.getClass().getDeclaredMethod("GetAudioMuteKeyStatus").invoke(mTvControlManager, null);
+            return i == 1 ? true : false;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private void updateTvAudioStatus() {
+        if (getAudioMuteKeyStatus()) {
+            try {
+                mTvControlManager.getClass().getDeclaredMethod("SetAudioMuteKeyStatus", new Class[] { int.class})
+                    .invoke(mTvControlManager, new Object[] { 1 });
+                sendMasterMuteUpdate(true, 100);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            setAudioMasterVolume(getCurAudioMasterVolume());
+        }
+    }
+
     /** @see AudioManager#getStreamMaxVolume(int) */
     public int getStreamMaxVolume(int streamType) {
         ensureValidStreamType(streamType);
@@ -1840,6 +2029,10 @@ public class AudioService extends IAudioService.Stub {
 
     /** Get last audible volume before stream was muted. */
     public int getLastAudibleStreamVolume(int streamType) {
+        if (mSupportTvAudio) {
+            int i = getCurAudioMasterVolume();
+            return i;
+        }
         ensureValidStreamType(streamType);
         int device = getDeviceForStream(streamType);
         return (mStreamStates[streamType].getIndex(device) + 5) / 10;
@@ -3910,6 +4103,11 @@ public class AudioService extends IAudioService.Stub {
         }
 
         public void mute(boolean state) {
+            if (mSupportTvAudio) {
+                setAudioMuteKeyStatus(state);
+                mIsMuted = state;
+                return;
+            }
             boolean changed = false;
             synchronized (VolumeStreamState.class) {
                 if (state != mIsMuted) {
