@@ -2422,10 +2422,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     private void loadDefaultAnimationSettings(SQLiteStatement stmt) {
+	boolean lowmem =  !((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))));
         loadFractionSetting(stmt, Settings.System.WINDOW_ANIMATION_SCALE,
-                R.fraction.def_window_animation_scale, 1);
+                lowmem ? R.fraction.def_window_animation_scale:R.fraction.low_raw_window_transition_scale, 1);
         loadFractionSetting(stmt, Settings.System.TRANSITION_ANIMATION_SCALE,
-                R.fraction.def_window_transition_scale, 1);
+                lowmem ? R.fraction.def_window_transition_scale:R.fraction.low_raw_window_transition_scale, 1);
     }
 
     private void loadDefaultHapticSettings(SQLiteStatement stmt) {
@@ -2562,6 +2563,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             stmt = db.compileStatement("INSERT OR IGNORE INTO global(name,value)"
                     + " VALUES(?,?);");
 
+                loadDefaultAnimationSettings(stmt);
             // --- Previously in 'system'
             loadBooleanSetting(stmt, Settings.Global.AIRPLANE_MODE_ON,
                     R.bool.def_airplane_mode_on);
