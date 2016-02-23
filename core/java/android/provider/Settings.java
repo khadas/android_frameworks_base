@@ -2130,6 +2130,11 @@ public final class Settings {
         public static final String SCREENSHOT_LOCATION = "screenshot_location";
 
         /**
+         * launcher app start  add by lly
+         * @hide
+         */
+        public static final String LAUNCHER_CLICK_APP ="launcher.click.app";
+        /**
          *Screenshot store location
          * @hide
          */
