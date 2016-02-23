@@ -69,7 +69,7 @@ public final class DropBoxManagerService extends IDropBoxManagerService.Stub {
 
     // mHandler 'what' value.
     private static final int MSG_SEND_BROADCAST = 1;
-
+    private static final int MSG_ADD_OBJECT = 2;
     private static final boolean PROFILE_DUMP = false;
 
     // TODO: This implementation currently uses one file per entry, which is
@@ -161,7 +161,9 @@ public final class DropBoxManagerService extends IDropBoxManagerService.Stub {
                 if (msg.what == MSG_SEND_BROADCAST) {
                     mContext.sendBroadcastAsUser((Intent)msg.obj, UserHandle.OWNER,
                             android.Manifest.permission.READ_LOGS);
-                }
+                }else if(msg.what == MSG_ADD_OBJECT){
+					add(msg.obj);
+				}
             }
         };
 
@@ -176,95 +178,99 @@ public final class DropBoxManagerService extends IDropBoxManagerService.Stub {
 
     @Override
     public void add(DropBoxManager.Entry entry) {
-        File temp = null;
-        OutputStream output = null;
-        final String tag = entry.getTag();
-        try {
-            int flags = entry.getFlags();
-            if ((flags & DropBoxManager.IS_EMPTY) != 0) throw new IllegalArgumentException();
-
-            init();
-            if (!isTagEnabled(tag)) return;
-            long max = trimToFit();
-            long lastTrim = System.currentTimeMillis();
-
-            byte[] buffer = new byte[mBlockSize];
-            InputStream input = entry.getInputStream();
-
-            // First, accumulate up to one block worth of data in memory before
-            // deciding whether to compress the data or not.
-
-            int read = 0;
-            while (read < buffer.length) {
-                int n = input.read(buffer, read, buffer.length - read);
-                if (n <= 0) break;
-                read += n;
-            }
-
-            // If we have at least one block, compress it -- otherwise, just write
-            // the data in uncompressed form.
-
-            temp = new File(mDropBoxDir, "drop" + Thread.currentThread().getId() + ".tmp");
-            int bufferSize = mBlockSize;
-            if (bufferSize > 4096) bufferSize = 4096;
-            if (bufferSize < 512) bufferSize = 512;
-            FileOutputStream foutput = new FileOutputStream(temp);
-            output = new BufferedOutputStream(foutput, bufferSize);
-            if (read == buffer.length && ((flags & DropBoxManager.IS_GZIPPED) == 0)) {
-                output = new GZIPOutputStream(output);
-                flags = flags | DropBoxManager.IS_GZIPPED;
-            }
-
-            do {
-                output.write(buffer, 0, read);
-
-                long now = System.currentTimeMillis();
-                if (now - lastTrim > 30 * 1000) {
-                    max = trimToFit();  // In case data dribbles in slowly
-                    lastTrim = now;
-                }
-
-                read = input.read(buffer);
-                if (read <= 0) {
-                    FileUtils.sync(foutput);
-                    output.close();  // Get a final size measurement
-                    output = null;
-                } else {
-                    output.flush();  // So the size measurement is pseudo-reasonable
-                }
-
-                long len = temp.length();
-                if (len > max) {
-                    Slog.w(TAG, "Dropping: " + tag + " (" + temp.length() + " > " + max + " bytes)");
-                    temp.delete();
-                    temp = null;  // Pass temp = null to createEntry() to leave a tombstone
-                    break;
-                }
-            } while (read > 0);
-
-            long time = createEntry(temp, tag, flags);
-            temp = null;
-
-            final Intent dropboxIntent = new Intent(DropBoxManager.ACTION_DROPBOX_ENTRY_ADDED);
-            dropboxIntent.putExtra(DropBoxManager.EXTRA_TAG, tag);
-            dropboxIntent.putExtra(DropBoxManager.EXTRA_TIME, time);
-            if (!mBooted) {
-                dropboxIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-            }
-            // Call sendBroadcast after returning from this call to avoid deadlock. In particular
-            // the caller may be holding the WindowManagerService lock but sendBroadcast requires a
-            // lock in ActivityManagerService. ActivityManagerService has been caught holding that
-            // very lock while waiting for the WindowManagerService lock.
-            mHandler.sendMessage(mHandler.obtainMessage(MSG_SEND_BROADCAST, dropboxIntent));
-        } catch (IOException e) {
-            Slog.e(TAG, "Can't write: " + tag, e);
-        } finally {
-            try { if (output != null) output.close(); } catch (IOException e) {}
-            entry.close();
-            if (temp != null) temp.delete();
-        }
+        //mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_ADD_OBJECT, entry),1500);
     }
+    public void add(Object object){
+			File temp = null;
+			OutputStream output = null;
+			DropBoxManager.Entry entry = (DropBoxManager.Entry)object;
+			final String tag = entry.getTag();
+			try {
+				int flags = entry.getFlags();
+				if ((flags & DropBoxManager.IS_EMPTY) != 0) throw new IllegalArgumentException();
+	
+				init();
+				if (!isTagEnabled(tag)) return;
+				long max = trimToFit();
+				long lastTrim = System.currentTimeMillis();
+	
+				byte[] buffer = new byte[mBlockSize];
+				InputStream input = entry.getInputStream();
+	
+				// First, accumulate up to one block worth of data in memory before
+				// deciding whether to compress the data or not.
+	
+				int read = 0;
+				while (read < buffer.length) {
+					int n = input.read(buffer, read, buffer.length - read);
+					if (n <= 0) break;
+					read += n;
+				}
+	
+				// If we have at least one block, compress it -- otherwise, just write
+				// the data in uncompressed form.
+	
+				temp = new File(mDropBoxDir, "drop" + Thread.currentThread().getId() + ".tmp");
+				int bufferSize = mBlockSize;
+				if (bufferSize > 4096) bufferSize = 4096;
+				if (bufferSize < 512) bufferSize = 512;
+				FileOutputStream foutput = new FileOutputStream(temp);
+				output = new BufferedOutputStream(foutput, bufferSize);
+				if (read == buffer.length && ((flags & DropBoxManager.IS_GZIPPED) == 0)) {
+					output = new GZIPOutputStream(output);
+					flags = flags | DropBoxManager.IS_GZIPPED;
+				}
+	
+				do {
+					output.write(buffer, 0, read);
+	
+					long now = System.currentTimeMillis();
+					if (now - lastTrim > 30 * 1000) {
+						max = trimToFit();	// In case data dribbles in slowly
+						lastTrim = now;
+					}
+	
+					read = input.read(buffer);
+					if (read <= 0) {
+						FileUtils.sync(foutput);
+						output.close();  // Get a final size measurement
+						output = null;
+					} else {
+						output.flush();  // So the size measurement is pseudo-reasonable
+					}
+	
+					long len = temp.length();
+					if (len > max) {
+						Slog.w(TAG, "Dropping: " + tag + " (" + temp.length() + " > " + max + " bytes)");
+						temp.delete();
+						temp = null;  // Pass temp = null to createEntry() to leave a tombstone
+						break;
+					}
+				} while (read > 0);
+	
+				long time = createEntry(temp, tag, flags);
+				temp = null;
+	
+				final Intent dropboxIntent = new Intent(DropBoxManager.ACTION_DROPBOX_ENTRY_ADDED);
+				dropboxIntent.putExtra(DropBoxManager.EXTRA_TAG, tag);
+				dropboxIntent.putExtra(DropBoxManager.EXTRA_TIME, time);
+				if (!mBooted) {
+					dropboxIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+				}
+				// Call sendBroadcast after returning from this call to avoid deadlock. In particular
+				// the caller may be holding the WindowManagerService lock but sendBroadcast requires a
+				// lock in ActivityManagerService. ActivityManagerService has been caught holding that
+				// very lock while waiting for the WindowManagerService lock.
+				mHandler.sendMessage(mHandler.obtainMessage(MSG_SEND_BROADCAST, dropboxIntent));
+			} catch (IOException e) {
+				Slog.e(TAG, "Can't write: " + tag, e);
+			} finally {
+				try { if (output != null) output.close(); } catch (IOException e) {}
+				entry.close();
+				if (temp != null) temp.delete();
+			}
 
+	}
     public boolean isTagEnabled(String tag) {
         final long token = Binder.clearCallingIdentity();
         try {

@@ -63,7 +63,7 @@ public class TaskPersister {
     static final boolean DEBUG = false;
 
     /** When not flushing don't write out files faster than this */
-    private static final long INTER_WRITE_DELAY_MS = 500;
+    private static final long INTER_WRITE_DELAY_MS = 1000;
 
     /** When not flushing delay this long before writing the first file out. This gives the next
      * task being launched a chance to load its resources without this occupying IO bandwidth. */
