@@ -81,8 +81,7 @@ import com.android.internal.os.SomeArgs;
 import com.android.internal.policy.PhoneFallbackEventHandler;
 import com.android.internal.view.BaseSurfaceHolder;
 import com.android.internal.view.RootViewSurfaceTaker;
-import android.content.ContentResolver;
-import android.provider.Settings;
+
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -214,7 +213,6 @@ public final class ViewRootImpl implements ViewParent,
     boolean mApplyInsetsRequested;
     boolean mLayoutRequested;
     boolean mFirst;
-    boolean mEnableHardwareAcceleration;
     boolean mReportNextDraw;
     boolean mFullRedrawNeeded;
     boolean mNewSurfaceNeeded;
@@ -381,7 +379,6 @@ public final class ViewRootImpl implements ViewParent,
         mPreviousTransparentRegion = new Region();
         mFirst = true; // true for the first time the view is added
         mAdded = false;
-        mEnableHardwareAcceleration  = false;
         mAttachInfo = new View.AttachInfo(mWindowSession, mWindow, display, this, mHandler, this);
         mAccessibilityManager = AccessibilityManager.getInstance(context);
         mAccessibilityInteractionConnectionManager =
@@ -488,13 +485,6 @@ public final class ViewRootImpl implements ViewParent,
 
                 // If the application owns the surface, don't enable hardware acceleration
                 if (mSurfaceHolder == null) {
-		    String clickapp = SystemProperties.get(Settings.System.LAUNCHER_CLICK_APP, "");
-		    //Settings.System.getString(mView.getContext().getContentResolver(), Settings.System.LAUNCHER_CLICK_APP);
-                    if(clickapp!= null &&mView.getContext() != null&& clickapp.equals(mView.getContext().getPackageName())){
-                        mEnableHardwareAcceleration  = (attrs.flags &WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED )!=0;  
-                        //attrs.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-                        attrs.flags &= ~WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-                     }
                     enableHardwareAcceleration(attrs);
                 }
 
@@ -581,7 +571,7 @@ public final class ViewRootImpl implements ViewParent,
                             throw new WindowManager.BadTokenException(
                                     "Unable to add window -- token " + attrs.token
                                     + " is not for an application");
-			case WindowManagerGlobal.ADD_APP_EXITING:
+                        case WindowManagerGlobal.ADD_APP_EXITING:
                             throw new WindowManager.BadTokenException(
                                     "Unable to add window -- app for token " + attrs.token
                                     + " is exiting");
@@ -727,6 +717,7 @@ public final class ViewRootImpl implements ViewParent,
         // Try to enable hardware acceleration if requested
         final boolean hardwareAccelerated =
                 (attrs.flags & WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED) != 0;
+
         if (hardwareAccelerated) {
             if (!HardwareRenderer.isAvailable()) {
                 return;
@@ -3204,7 +3195,6 @@ public final class ViewRootImpl implements ViewParent,
     private final static int MSG_DISPATCH_WINDOW_SHOWN = 25;
     private final static int MSG_DISPATCH_WINDOW_ANIMATION_STOPPED = 26;
     private final static int MSG_DISPATCH_WINDOW_ANIMATION_STARTED = 27;
-    private final static int MSG_ENABLED_HARDWARE = 28;
 
     final class ViewRootHandler extends Handler {
         @Override
@@ -3258,8 +3248,6 @@ public final class ViewRootImpl implements ViewParent,
                     return "MSG_SYNTHESIZE_INPUT_EVENT";
                 case MSG_DISPATCH_WINDOW_SHOWN:
                     return "MSG_DISPATCH_WINDOW_SHOWN";
-                case MSG_ENABLED_HARDWARE:
-                     return "MSG_ENABLED_HARDWARE";
             }
             return super.getMessageName(message);
         }
@@ -3495,16 +3483,7 @@ public final class ViewRootImpl implements ViewParent,
             } break;
             case MSG_DISPATCH_WINDOW_SHOWN: {
                 handleDispatchWindowShown();
-            }break;
-            case MSG_ENABLED_HARDWARE:{
-                 //Settings.System.putString(mContext.getContentResolver(), Settings.System.LAUNCHER_CLICK_APP, "");
-		    SystemProperties.set(Settings.System.LAUNCHER_CLICK_APP, "");
-                    WindowManager.LayoutParams lp = mWindowAttributes;
-                    lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-                    die();
-                    enableHardwareAcceleration(lp);
-                    setLayoutParams(lp,false);
-            }break;
+            }
             }
         }
     }
@@ -5655,30 +5634,6 @@ public final class ViewRootImpl implements ViewParent,
         WindowManagerGlobal.getInstance().doRemoveView(this);
     }
 
-    void die(){
-         if (mAdded && !mFirst) {
-                destroyHardwareRenderer();
-
-                if (mView != null) {
-                    int viewVisibility = mView.getVisibility();
-                    boolean viewVisibilityChanged = mViewVisibility != viewVisibility;
-                    if (mWindowAttributesChanged || viewVisibilityChanged) {
-                        // If layout params have been changed, first give them
-                        // to the window manager to make sure it has the correct
-                        // animation info.
-                        try {
-                            if ((relayoutWindow(mWindowAttributes, viewVisibility, false)
-                                    & WindowManagerGlobal.RELAYOUT_RES_FIRST_TIME) != 0) {
-                                mWindowSession.finishDrawing(mWindow);
-                            }
-                        } catch (RemoteException e) {
-                        }
-                    }
-
-                    mSurface.release();
-                }
-            }
-    }
     public void requestUpdateConfiguration(Configuration config) {
         Message msg = mHandler.obtainMessage(MSG_UPDATE_CONFIGURATION, config);
         mHandler.sendMessage(msg);
@@ -6068,13 +6023,6 @@ public final class ViewRootImpl implements ViewParent,
         @Override
         public void onInputEvent(InputEvent event) {
             enqueueInputEvent(event, this, 0, true);
-            if(mEnableHardwareAcceleration && mContext != null){
-             	String clickapp = SystemProperties.get(Settings.System.LAUNCHER_CLICK_APP, "");
-		//Settings.System.getString(mContext.getContentResolver(), Settings.System.LAUNCHER_CLICK_APP);
-		if( mView != null &&clickapp!= null && mView.getContext() != null&& clickapp.equals(mView.getContext().getPackageName())){
-                    mHandler.sendEmptyMessage(MSG_ENABLED_HARDWARE);
-	     	}
-	     }
         }
 
         @Override

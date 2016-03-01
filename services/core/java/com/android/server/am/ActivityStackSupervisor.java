@@ -118,9 +118,6 @@ import com.android.server.LocalServices;
 import com.android.server.am.ActivityStack.ActivityState;
 import com.android.server.wm.WindowManagerService;
 
-import android.content.ContentResolver;
-import android.provider.Settings;
-import android.os.SystemProperties;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -173,7 +170,6 @@ public final class ActivityStackSupervisor implements DisplayListener {
     static final int CONTAINER_CALLBACK_TASK_LIST_EMPTY = FIRST_SUPERVISOR_STACK_MSG + 11;
     static final int LAUNCH_TASK_BEHIND_COMPLETE = FIRST_SUPERVISOR_STACK_MSG + 12;
     static final int SHOW_LOCK_TASK_ESCAPE_MESSAGE_MSG = FIRST_SUPERVISOR_STACK_MSG + 13;
-    static final int LAUNCH_APP_START = FIRST_SUPERVISOR_STACK_MSG + 14;
 
     private final static String VIRTUAL_DISPLAY_BASE_NAME = "ActivityViewVirtualDisplay";
 
@@ -941,13 +937,7 @@ public final class ActivityStackSupervisor implements DisplayListener {
 
         // Don't modify the client's object!
         intent = new Intent(intent);
-        boolean clickapp =  ((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))));
-      	if(clickapp /*&& callingPackage.equals("com.android.launcher3")*/ && intent.getComponent() != null){
-             final Message lockTaskMsg = Message.obtain();
-             lockTaskMsg.obj = intent.getComponent().getPackageName();
-             lockTaskMsg.what = LAUNCH_APP_START;
-              mHandler.sendMessage(lockTaskMsg);
-	}
+
         // Collect information about the target of the Intent.
         ActivityInfo aInfo =
                 resolveActivity(intent, resolvedType, startFlags, profilerInfo, userId);
@@ -4189,10 +4179,6 @@ public final class ActivityStackSupervisor implements DisplayListener {
                         }
                     }
                 } break;
-                case LAUNCH_APP_START:{
-                 SystemProperties.set(Settings.System.LAUNCHER_CLICK_APP, (String)msg.obj);
-                 //Settings.System.putString(mService.mContext.getContentResolver(), Settings.System.LAUNCHER_CLICK_APP, (String)msg.obj);
-                }break;
             }
         }
     }
