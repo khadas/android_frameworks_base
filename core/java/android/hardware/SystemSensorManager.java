@@ -50,6 +50,7 @@ public class SystemSensorManager extends SensorManager {
     private static native boolean nativeGetSensorAtIndex(long nativeInstance,
             Sensor sensor, int index);
     private static native boolean nativeIsDataInjectionEnabled(long nativeInstance);
+    private static native int nativeGetNextSensor(Sensor sensor, int next);
 
     private static boolean sSensorModuleInitialized = false;
     private static InjectEventQueue mInjectEventQueue = null;
@@ -57,7 +58,7 @@ public class SystemSensorManager extends SensorManager {
     private final Object mLock = new Object();
 
     private final ArrayList<Sensor> mFullSensorsList = new ArrayList<>();
-    private final SparseArray<Sensor> mHandleToSensor = new SparseArray<>();
+    private final static SparseArray<Sensor> mHandleToSensor = new SparseArray<>();
 
     // Listener list
     private final HashMap<SensorEventListener, SensorEventQueue> mSensorListeners =
@@ -231,7 +232,7 @@ public class SystemSensorManager extends SensorManager {
                            mRemoteSensorThread = null;
                            break;
                        }
-                       final Sensor sensorObject = sHandleToSensor.get(sensor);
+                       final Sensor sensorObject = mHandleToSensor.get(sensor);
                        if (sensorObject != null) {
                            // report the sensor event to all listeners that
                            // care about it.
@@ -439,36 +440,30 @@ static private void updateRemoteSensorStatus(){
                 nativeClassInit();
             }
 
-                // initialize the sensor list
-                final ArrayList<Sensor> fullList = sFullSensorsList;
-                int i = 0;
-                do {
-                    Sensor sensor = new Sensor();
-                    i = nativeGetNextSensor(sensor, i);
-                    if (i>=0) {
-                        //Log.d(TAG, "found sensor: " + sensor.getName() +
-                        //        ", handle=" + sensor.getHandle());
-                        fullList.add(sensor);
-                        sHandleToSensor.append(sensor.getHandle(), sensor);
-                    }
-                } while (i>0);
-	//$_rbox_$_modify_$_chenxiao_begin,add for remotecontrol
-			sPool = new SensorEventPool( sFullSensorsList.size()*2 );
-			sRemoteSensorThread = new RemoteSensorThread();
+            // initialize the sensor list
+            for (int index = 0;;++index) {
+                Sensor sensor = new Sensor();
+                if (!nativeGetSensorAtIndex(mNativeInstance, sensor, index)) break;
+                    mFullSensorsList.add(sensor);
+                    mHandleToSensor.append(sensor.getHandle(), sensor);
+            }
 
-			IWindowManager sWindowManager = IWindowManager.Stub.asInterface(
+	        //$_rbox_$_modify_$_chenxiao_begin,add for remotecontrol
+            sPool = new SensorEventPool( mFullSensorsList.size()*2 );
+            sRemoteSensorThread = new RemoteSensorThread();
+
+            IWindowManager sWindowManager = IWindowManager.Stub.asInterface(
                        ServiceManager.getService("window"));
-			if (sWindowManager != null) {
-				try {
-                      sSensorManager = sWindowManager.getRemoteSensorManager();
-				   Log.d(TAG,"aidl getSensorManager:"+sSensorManager);
-                   } catch (RemoteException e) {
-					// TODO: handle exception
-				}
+            if (sWindowManager != null) {
+                try {
+                    sSensorManager = sWindowManager.getRemoteSensorManager();
+                    Log.d(TAG,"aidl getSensorManager:"+sSensorManager);
+                } catch (RemoteException e) {
+                    // TODO: handle exception
+                }
 			}
                //$_rbox_$_modify_$_end
-           }
-       }
+        }
    }
 
     /** @hide */

@@ -1408,15 +1408,15 @@ static void android_server_InputManager_nativedispatchMouse(JNIEnv* env,
     //	x=0;y=0;
 
     if (mx == 0) {
-	    mkeyMouseState="left";
+        strcpy(mkeyMouseState, "left");
     } else if (mx>=(screenWidth-5.0f)) {
-	    mkeyMouseState="right";
+        strcpy(mkeyMouseState, "right");
     } else if (my == 0) {
-	    mkeyMouseState="up";
+        strcpy(mkeyMouseState, "up");
     } else if (my >= (screenHeight-5.0f)) {
-	    mkeyMouseState="down";
+        strcpy(mkeyMouseState, "down");
     } else {
-	    mkeyMouseState="Non-boundary";
+        strcpy(mkeyMouseState, "Non-boundary");
     }
 
     property_set("sys.keymouselimitstate",mkeyMouseState);

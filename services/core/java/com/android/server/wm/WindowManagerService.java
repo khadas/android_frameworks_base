@@ -29,8 +29,6 @@ import android.view.IWindowId;
 import android.view.IWindowSessionCallback;
 import android.view.WindowContentFrameStats;
 import com.android.internal.app.IBatteryStats;
-import com.android.internal.policy.PolicyManager;
-import com.android.internal.policy.impl.PhoneWindowManager;
 import com.android.internal.util.FastPrintWriter;
 import com.android.internal.view.IInputContext;
 import com.android.internal.view.IInputMethodClient;
