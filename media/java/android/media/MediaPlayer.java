@@ -2668,6 +2668,7 @@ public class MediaPlayer implements SubtitleController.Listener
                 mSubtitleController.selectTrack(null);
             } else {
                 Log.w(TAG, "trying to deselect track that was not selected");
+                throw new IllegalArgumentException("zzzz");
             }
             return;
         }
