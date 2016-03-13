@@ -128,7 +128,8 @@ public class KeyguardServiceDelegate {
                 resources.getString(com.android.internal.R.string.config_keyguardComponent));
         intent.setComponent(keyguardComponent);
 
-        if (!context.bindServiceAsUser(intent, mKeyguardConnection,
+        boolean isBox = isBox();
+        if (isBox || !context.bindServiceAsUser(intent, mKeyguardConnection,
                 Context.BIND_AUTO_CREATE, UserHandle.OWNER)) {
             Log.v(TAG, "*** Keyguard: can't bind to " + keyguardComponent);
             mKeyguardState.showing = false;
@@ -144,6 +145,12 @@ public class KeyguardServiceDelegate {
         } else {
             if (DEBUG) Log.v(TAG, "*** Keyguard started");
         }
+    }
+
+    private boolean isBox() {
+        String boxString = android.os.SystemProperties.get("ro.target.product");
+        boolean isBox = "box".equals(boxString);
+        return isBox;
     }
 
     private final ServiceConnection mKeyguardConnection = new ServiceConnection() {
