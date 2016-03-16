@@ -415,10 +415,17 @@ class TvInputHardwareManager implements TvInputHal.Callback {
     }
 
     private int findDeviceIdForInputIdLocked(String inputId) {
+        int key = 0;
+        if (inputId == null)
+            return -1;
+
         for (int i = 0; i < mConnections.size(); ++i) {
-            Connection connection = mConnections.get(i);
-            if (connection.getInfoLocked().getId().equals(inputId)) {
-                return i;
+            key = mConnections.keyAt(i);
+            Connection connection = mConnections.get(key);
+            if (connection != null) {
+                TvInputInfo mInfo = connection.getInfoLocked();
+                if (mInfo != null && inputId.equals(mInfo.getId()))
+                    return key;
             }
         }
         return -1;
@@ -444,6 +451,19 @@ class TvInputHardwareManager implements TvInputHal.Callback {
             }
         }
         return configsList;
+    }
+
+    public void setScreenCaptureFixSize(String inputId,int width, int height, int resolvedUserId){
+        synchronized (mLock) {
+            int deviceId = findDeviceIdForInputIdLocked(inputId);
+            if (deviceId < 0) {
+                Slog.e(TAG, "Invalid inputId : " + inputId+" deviceid:"+deviceId);
+                return ;
+            }
+            Connection connection = mConnections.get(deviceId);
+            final TvInputHardwareImpl hardwareImpl = connection.getHardwareImplLocked();
+            hardwareImpl.setScreenCaptureFixSize(width, height);
+        }
     }
 
     /**
@@ -932,7 +952,11 @@ class TvInputHardwareManager implements TvInputHal.Callback {
             // TODO(hdmi): mHdmiClient.sendKeyEvent(event);
             return false;
         }
-
+        private void setScreenCaptureFixSize(int width, int height){
+            synchronized (mImplLock) {
+                mHal.setScreenCaptureFixSize(width, height);
+            }
+        }
         private boolean startCapture(Surface surface, TvStreamConfig config) {
             synchronized (mImplLock) {
                 if (mReleased) {

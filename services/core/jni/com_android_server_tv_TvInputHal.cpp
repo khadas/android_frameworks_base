@@ -71,6 +71,7 @@ static struct {
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define CAPTURE_DELAY 10
 class BufferProducerThread : public Thread {
 public:
     BufferProducerThread(tv_input_device_t* device, int deviceId, const tv_stream_t* stream);
@@ -80,6 +81,8 @@ public:
     void setSurface(const sp<Surface>& surface);
     void onCaptured(uint32_t seq, bool succeeded);
     void shutdown();
+    uint32_t mRetryCount;
+    bool mShutdown;
 
 private:
     Mutex mLock;
@@ -95,8 +98,6 @@ private:
         RELEASED,
     } mBufferState;
     uint32_t mSeq;
-    bool mShutdown;
-
     virtual bool threadLoop();
 
     void setSurfaceLocked(const sp<Surface>& surface);
@@ -105,18 +106,20 @@ private:
 BufferProducerThread::BufferProducerThread(
         tv_input_device_t* device, int deviceId, const tv_stream_t* stream)
     : Thread(false),
+      mRetryCount(0u),
+      mShutdown(false),
       mDevice(device),
       mDeviceId(deviceId),
       mBuffer(NULL),
       mBufferState(RELEASED),
-      mSeq(0u),
-      mShutdown(false) {
+      mSeq(0u) {
     memcpy(&mStream, stream, sizeof(mStream));
 }
 
 status_t BufferProducerThread::readyToRun() {
     sp<ANativeWindow> anw(mSurface);
-    status_t err = native_window_set_usage(anw.get(), mStream.buffer_producer.usage);
+    //status_t err = native_window_set_usage(anw.get(), mStream.buffer_producer.usage);
+    status_t err = native_window_set_usage(anw.get(), GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN);
     if (err != NO_ERROR) {
         return err;
     }
@@ -125,7 +128,8 @@ status_t BufferProducerThread::readyToRun() {
     if (err != NO_ERROR) {
         return err;
     }
-    err = native_window_set_buffers_format(anw.get(), mStream.buffer_producer.format);
+    //err = native_window_set_buffers_format(anw.get(), mStream.buffer_producer.format);
+    err = native_window_set_buffers_format(anw.get(), HAL_PIXEL_FORMAT_YCrCb_420_SP);
     if (err != NO_ERROR) {
         return err;
     }
@@ -184,6 +188,10 @@ void BufferProducerThread::shutdown() {
 }
 
 bool BufferProducerThread::threadLoop() {
+    if (mShutdown && mBufferState != CAPTURED) {
+        ALOGE("threadLoop,mShutdown is true,exit!");
+        return false;
+    }
     Mutex::Autolock autoLock(&mLock);
 
     status_t err = NO_ERROR;
@@ -212,8 +220,12 @@ bool BufferProducerThread::threadLoop() {
         }
         mBuffer.clear();
         mBufferState = RELEASED;
+        /*add by wei.wang*/
+        mShutdown = true;
+        return false;
+        /*end*/
     }
-    if (mBuffer == NULL && !mShutdown && anw != NULL) {
+    if (mBuffer == NULL && anw != NULL) {
         ANativeWindowBuffer_t* buffer = NULL;
         err = native_window_dequeue_buffer_and_wait(anw.get(), &buffer);
         if (err != NO_ERROR) {
@@ -222,8 +234,21 @@ bool BufferProducerThread::threadLoop() {
         }
         mBuffer = buffer;
         mBufferState = CAPTURING;
-        mDevice->request_capture(mDevice, mDeviceId, mStream.stream_id,
-                                 buffer->handle, ++mSeq);
+
+        int ret = mDevice->request_capture(mDevice, mDeviceId, mStream.stream_id,
+                                 &(buffer->handle), ++mSeq);
+        if (ret != 0) {
+            mSeq --;
+            //err = anw->queueBuffer(anw.get(), mBuffer.get(), -1);
+            err = anw->cancelBuffer(anw.get(), mBuffer.get(), -1);
+            usleep(1000*CAPTURE_DELAY);
+            mRetryCount ++;
+            ALOGE("capture fail,retry:%d",mRetryCount);
+            if (mRetryCount == (50/CAPTURE_DELAY)) {
+                ALOGE("exit!!!!!");
+                return false;
+            }
+        }
     }
 
     return true;
@@ -236,6 +261,7 @@ public:
     ~JTvInputHal();
 
     static JTvInputHal* createInstance(JNIEnv* env, jobject thiz, const sp<Looper>& looper);
+    void setScreenCaptureFixSize(int width, int height);
 
     int addOrUpdateStream(int deviceId, int streamId, const sp<Surface>& surface);
     int removeStream(int deviceId, int streamId);
@@ -286,6 +312,8 @@ private:
     tv_input_device_t* mDevice;
     tv_input_callback_ops_t mCallback;
     sp<Looper> mLooper;
+    uint32_t mCaptureWidth;
+    uint32_t mCaptureHeight;
 
     KeyedVector<int, KeyedVector<int, Connection> > mConnections;
 };
@@ -332,6 +360,10 @@ JTvInputHal* JTvInputHal::createInstance(JNIEnv* env, jobject thiz, const sp<Loo
     return new JTvInputHal(env, thiz, device, looper);
 }
 
+void JTvInputHal ::setScreenCaptureFixSize(int width, int height){
+    mCaptureWidth = width;
+    mCaptureHeight = height;
+}
 int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>& surface) {
     KeyedVector<int, Connection>& connections = mConnections.editValueFor(deviceId);
     if (connections.indexOfKey(streamId) < 0) {
@@ -376,8 +408,14 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
         tv_stream_t stream;
         stream.stream_id = configs[configIndex].stream_id;
         if (connection.mStreamType == TV_STREAM_TYPE_BUFFER_PRODUCER) {
-            stream.buffer_producer.width = configs[configIndex].max_video_width;
-            stream.buffer_producer.height = configs[configIndex].max_video_height;
+             if (mCaptureWidth < configs[configIndex].max_video_width &&
+                 mCaptureHeight < configs[configIndex].max_video_height){
+                stream.buffer_producer.width = mCaptureWidth;
+                stream.buffer_producer.height = mCaptureHeight;
+            } else {
+                stream.buffer_producer.width = configs[configIndex].max_video_width;
+                stream.buffer_producer.height = configs[configIndex].max_video_height;
+            }
         }
         if (mDevice->open_stream(mDevice, deviceId, &stream) != 0) {
             ALOGE("Couldn't add stream");
@@ -389,9 +427,10 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
         } else if (connection.mStreamType == TV_STREAM_TYPE_BUFFER_PRODUCER) {
             if (connection.mThread != NULL) {
                 connection.mThread->shutdown();
+                connection.mThread.clear();
             }
             connection.mThread = new BufferProducerThread(mDevice, deviceId, &stream);
-            connection.mThread->run();
+            //connection.mThread->run();
         }
     }
     connection.mSurface = surface;
@@ -399,6 +438,7 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
         connection.mSurface->setSidebandStream(connection.mSourceHandle);
     } else if (connection.mStreamType == TV_STREAM_TYPE_BUFFER_PRODUCER) {
         connection.mThread->setSurface(surface);
+        connection.mThread->run();
     }
     return NO_ERROR;
 }
@@ -549,7 +589,7 @@ void JTvInputHal::onCaptured(int deviceId, int streamId, uint32_t seq, bool succ
         thread = connection.mThread;
     }
     thread->onCaptured(seq, succeeded);
-    if (seq == 0) {
+    if (seq == 1) {
         JNIEnv* env = AndroidRuntime::getJNIEnv();
         env->CallVoidMethod(
                 mThiz,
@@ -609,6 +649,11 @@ static jlong nativeOpen(JNIEnv* env, jobject thiz, jobject messageQueueObj) {
     return (jlong)JTvInputHal::createInstance(env, thiz, messageQueue->getLooper());
 }
 
+static void nativesetScreenCaptureFixSize(JNIEnv* env, jobject thiz,
+        jlong ptr, jint width, jint height){
+    JTvInputHal* tvInputHal = (JTvInputHal*)ptr;
+    tvInputHal->setScreenCaptureFixSize(width, height);
+}
 static int nativeAddOrUpdateStream(JNIEnv* env, jclass clazz,
         jlong ptr, jint deviceId, jint streamId, jobject jsurface) {
     JTvInputHal* tvInputHal = (JTvInputHal*)ptr;
@@ -674,6 +719,8 @@ static JNINativeMethod gTvInputHalMethods[] = {
             (void*) nativeGetStreamConfigs },
     { "nativeClose", "(J)V",
             (void*) nativeClose },
+    { "nativesetScreenCaptureFixSize", "(JII)V",
+            (void*) nativesetScreenCaptureFixSize },
 };
 
 #define FIND_CLASS(var, className) \
