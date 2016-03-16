@@ -3250,6 +3250,12 @@ public final class ActivityManagerService extends ActivityManagerNative
 
 			if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
 			//if((mProcessMap.get(processName) != null) && ("broadcast".equals(hostingType))){
+                          final ActivityRecord next = getFocusedStack().topRunningActivityLocked(null);
+	                if(next!= null && (!next.packageName.equals(processName)&& !processName.contains("antutu")) && next.packageName.contains("antutu")){
+             		    if(DEBUG_LOWMEM)Slog.v("xzj", "process dont start because for antutu: " + next.packageName + "/" + info.processName);
+                              return null;
+               		}
+
 			if((mProcessMap.get(processName) != null) && (("broadcast".equals(hostingType))||("content provider".equals(hostingType)))){
 				if(DEBUG_LOWMEM)Slog.v("xzj", "process dont start because for filter: " + info.uid + "/" + info.processName);
 				return null;
