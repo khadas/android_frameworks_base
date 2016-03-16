@@ -277,6 +277,8 @@ private:
 
         // Pointer controller singleton, created and destroyed as needed.
         wp<PointerController> pointerController;
+        
+        int hardwareRotation;
     } mLocked;
 
     std::atomic<bool> mInteractive;
@@ -308,7 +310,12 @@ NativeInputManager::NativeInputManager(jobject contextObj,
         mLocked.pointerSpeed = 0;
         mLocked.pointerGesturesEnabled = true;
         mLocked.showTouches = false;
+        mLocked.hardwareRotation = 0;
 	char property[PROPERTY_VALUE_MAX];
+        if (property_get("ro.sf.hwrotation", property, "0") > 0) {
+            mLocked.hardwareRotation = atoi(property) / 90;
+        }
+
     }
     mInteractive = true;
 
@@ -361,10 +368,15 @@ void NativeInputManager::setDisplayViewport(bool external, const DisplayViewport
     {
         AutoMutex _l(mLock);
 
+        DisplayViewport convertViewport;
+        convertViewport.copyFrom(viewport);
+    
+        convertViewport.orientation = (mLocked.hardwareRotation + convertViewport.orientation) % 4;
+
         DisplayViewport& v = external ? mLocked.externalViewport : mLocked.internalViewport;
-        if (v != viewport) {
+        if (v != convertViewport) {
             changed = true;
-            v = viewport;
+            v = convertViewport;
 
             if (!external) {
                 sp<PointerController> controller = mLocked.pointerController.promote();
@@ -372,7 +384,7 @@ void NativeInputManager::setDisplayViewport(bool external, const DisplayViewport
                     controller->setDisplayViewport(
                             viewport.logicalRight - viewport.logicalLeft,
                             viewport.logicalBottom - viewport.logicalTop,
-                            viewport.orientation);
+                            convertViewport.orientation);
                 }
             }
         }
