@@ -223,6 +223,7 @@ public:
     virtual status_t scanBDDirectory(const char* path, long long lastModified,
             long long fileSize)
     {
+        ALOGV("path:%s,lastModified:%ld,fileSize:%ld",path,lastModified,fileSize);
     		#ifdef BOX
         jstring pathStr;
         if ((pathStr = mEnv->NewStringUTF(path)) == NULL) {
