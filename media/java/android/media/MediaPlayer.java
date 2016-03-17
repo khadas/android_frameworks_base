@@ -74,6 +74,8 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.Vector;
 import java.lang.ref.WeakReference;
+import android.os.SystemProperties;
+import android.media.iso.ISOManager;
 
 /**
  * MediaPlayer class can be used to control playback
@@ -659,6 +661,158 @@ public class MediaPlayer extends PlayerBase
     private static final int INVOKE_ID_SET_VIDEO_SCALE_MODE = 6;
     private static final int INVOKE_ID_GET_SELECTED_TRACK = 7;
 
+    // add by hh@rock-chips for box
+    private static final int INVOKE_ID_SET_VIDEO_MODE = 8;
+    private static final int INVOKE_ID_GET_VIDEO_STREAM_NUMBER = 9;
+
+	// new API 
+	private static final int MEDIAPLAYER_GET_VIDEO_TRACK = 961;	
+	private static final int MEDIAPLAYER_GET_ALL_AUDIO_TRACK = 962;	
+	private static final int MEDIAPLAYER_GET_ALL_SUBTITLE_TRACK = 963;	
+	private static final int MEDIAPLAYER_GET_PLAYING_AUDIO = 964;	
+	private static final int MEDIAPLAYER_GET_PLAYING_SUBTITLE= 965;	
+	private static final int MEDIAPLAYER_SET_AUDIO_TRACK_INDEX = 966;	
+	private static final int MEDIAPLAYER_SET_SUBTITLE_TRACK_INDEX = 967;	
+	private static final int MEDIAPLAYER_GET_SUBTITLE_VISIBLE = 968;	
+	private static final int MEDIAPLAYER_SET_SUBTITLE_VISIBLE = 969;	
+	private static final int MEDIAPLAYER_SET_VIDEO_SURFACEVIEW_ZORDER = 970;	
+	private static final int MEDIAPLAYER_SET_MAX_QUEUE_SIZE = 971;	
+	private static final int MEDIAPLAYER_GET_WHETHER_DOBLY = 972;
+    /*
+    * add by hh for ffplayer
+    */
+    public void setSubtitleVisible(int visible){
+        Parcel request = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            request.writeInterfaceToken(IMEDIA_PLAYER);
+            request.writeInt(MEDIAPLAYER_SET_SUBTITLE_VISIBLE);
+	      request.writeInt(visible);
+            invoke(request, reply);
+        } finally {
+            request.recycle();
+            reply.recycle();
+        }
+    }
+
+    public VideoTrackInfor getVideoTrackInfor(){
+        Parcel request = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            request.writeInterfaceToken(IMEDIA_PLAYER);
+            request.writeInt(MEDIAPLAYER_GET_VIDEO_TRACK);
+            invoke(request, reply);
+	      VideoTrackInfor videoInfo[] = reply.createTypedArray(VideoTrackInfor.CREATOR);
+		if(videoInfo != null)
+		{
+			for(int i = 0; i < videoInfo.length; i++)
+			{
+				videoInfo[i].tostring();
+			}
+
+			return videoInfo[0];
+		}
+        } finally {
+            request.recycle();
+            reply.recycle();
+        }
+	  
+        return null;
+    }
+
+    public AudioTrackInfor[] getAudioTrackInfor(){
+        Parcel request = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            request.writeInterfaceToken(IMEDIA_PLAYER);
+            request.writeInt(MEDIAPLAYER_GET_ALL_AUDIO_TRACK);
+            invoke(request, reply);
+	      AudioTrackInfor audio[] = reply.createTypedArray(AudioTrackInfor.CREATOR);
+		if(audio != null)
+		{
+			for(int i = 0; i < audio.length; i++)
+			{
+				audio[i].tostring();
+			}
+
+			return audio;
+		}
+        } finally {
+            request.recycle();
+            reply.recycle();
+        }
+	  
+        return null;
+    }
+
+    public SubtitleTrackInfor[] getSubtitleTrackInfor(){
+        Parcel request = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            request.writeInterfaceToken(IMEDIA_PLAYER);
+            request.writeInt(MEDIAPLAYER_GET_ALL_SUBTITLE_TRACK);
+            invoke(request, reply);
+	      SubtitleTrackInfor subtitle[] = reply.createTypedArray(SubtitleTrackInfor.CREATOR);
+		if(subtitle != null)
+		{
+			for(int i = 0; i < subtitle.length; i++)
+			{
+				subtitle[i].tostring();
+			}
+
+			return subtitle;
+		}
+        } finally {
+            request.recycle();
+            reply.recycle();
+        }
+	  
+        return null;
+    }
+
+    public AudioTrackInfor getCurrentAudioTrackInfor(){
+        Parcel request = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            request.writeInterfaceToken(IMEDIA_PLAYER);
+            request.writeInt(MEDIAPLAYER_GET_PLAYING_AUDIO);
+            invoke(request, reply);
+	      AudioTrackInfor audio[] = reply.createTypedArray(AudioTrackInfor.CREATOR);
+		if(audio != null)
+		{
+			audio[0].tostring();
+
+			return audio[0];
+		}
+        } finally {
+            request.recycle();
+            reply.recycle();
+        }
+	  
+        return null;
+    }
+
+    public SubtitleTrackInfor getCurrentSubtitleTrackInfor(){
+        Parcel request = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            request.writeInterfaceToken(IMEDIA_PLAYER);
+            request.writeInt(MEDIAPLAYER_GET_PLAYING_SUBTITLE);
+            invoke(request, reply);
+	      SubtitleTrackInfor subitle[] = reply.createTypedArray(SubtitleTrackInfor.CREATOR);
+		if(subitle != null)
+		{
+			subitle[0].tostring();
+			return subitle[0];
+		}
+        } finally {
+            request.recycle();
+            reply.recycle();
+        }
+	  
+        return null;
+    }
+
     /**
      * Create a request parcel which can be routed to the native media
      * player using {@link #invoke(Parcel, Parcel)}. The Parcel
@@ -1081,6 +1235,16 @@ public class MediaPlayer extends PlayerBase
                 keys,
                 values);
             return;
+        }else{
+        	if("box".equals(SystemProperties.get("ro.target.product",  "unknown")))
+		{
+			boolean isBD = ISOManager.isBDDirectory(path);
+			if(isBD)
+			{
+				nativeSetDataSource(null,path,keys,values);
+				return;
+			}
+		}
         }
 
         final File file = new File(path);
@@ -1762,6 +1926,63 @@ public class MediaPlayer extends PlayerBase
      * {@hide}
      */
     private native boolean setParameter(int key, Parcel value);
+
+	/**
+     * Sets the parameter indicated by key.
+     * @param key key indicates the parameter to be set.
+     * @param value value of the parameter to be set.
+     * @return true if the parameter is set successfully, false otherwise
+     * {@hide}
+     */
+    private final static int KEY_PARAMETER_SET_SUBTITLE_OFFSET=2002;
+    public boolean setParameter(int key, int value) {
+        Parcel p = Parcel.obtain();
+        p.writeInt(value);
+
+        boolean ret = setParameter(key, p);
+        p.recycle();
+        return ret;
+    }
+
+	/*
+     * Gets the value of the parameter indicated by key.
+     * @param key key indicates the parameter to get.
+     * @param reply value of the parameter to get.
+     */
+    private native void getParameter(int key, Parcel reply);
+
+	public Parcel getParcelParameter(int key) {
+        Parcel p = Parcel.obtain();
+        getParameter(key, p);
+        return p;
+    }
+    /**
+     * Gets the value of the parameter indicated by key.
+     * @param key key indicates the parameter to get.
+     * @return value of the parameter.
+     * {@hide}
+     */
+    public String getStringParameter(int key) {
+        Parcel p = Parcel.obtain();
+        getParameter(key, p);
+        String ret = p.readString();
+        p.recycle();
+        return ret;
+    }
+
+    /**
+     * Gets the value of the parameter indicated by key.
+     * @param key key indicates the parameter to get.
+     * @return value of the parameter.
+     * {@hide}
+     */
+    public int getIntParameter(int key) {
+        Parcel p = Parcel.obtain();
+        getParameter(key, p);
+        int ret = p.readInt();
+        p.recycle();
+        return ret;
+    }
 
     /**
      * Sets the audio attributes for this MediaPlayer.
@@ -2733,6 +2954,53 @@ public class MediaPlayer extends PlayerBase
         }
         mSubtitleController.selectTrack(track);
     }
+	
+	/*hide inBand and outBand Subtitle*/
+	public void setSubtitleVisible(boolean visible){
+		int value = visible?1:0;
+		setSubtitleVisible(value);
+    }
+	
+//$_media_$_modify_$_hh@rock-chips.com for BOX
+    public int getVideoStreamNum()
+    {
+        Parcel request = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            request.writeInterfaceToken(IMEDIA_PLAYER);
+            request.writeInt(INVOKE_ID_GET_VIDEO_STREAM_NUMBER);
+            invoke(request, reply);
+	      int number = reply.readInt();
+	      return number;
+        } finally {
+            request.recycle();
+            reply.recycle();
+        }
+    }
+
+    public static final int MODE_2D = 0;
+    public static final int MODE_MVC_3D = 1;
+    public static final int MODE_SIDE_BY_SIDE_TO_3D = 2;
+    public static final int MODE_TOP_BOTTOM_TO_3D = 3;
+    public static final int MODE_SIDE_BY_SIDE_TO_2D = 4;
+    public static final int MODE_TOP_BOTTOM_TO_2D = 5;
+    public int set3DMode(int mode)
+    {
+        Parcel request = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        try {
+            request.writeInterfaceToken(IMEDIA_PLAYER);
+            request.writeInt(INVOKE_ID_SET_VIDEO_MODE);
+            request.writeInt(mode);
+            invoke(request, reply);
+	      int result = reply.readInt();
+            return result;
+        } finally {
+            request.recycle();
+            reply.recycle();
+        }
+    }
+    //$_media_$_modify_$_end
 
     private void selectOrDeselectInbandTrack(int index, boolean select)
             throws IllegalStateException {
