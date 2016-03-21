@@ -23,6 +23,7 @@ import android.net.IpConfiguration;
 import android.os.Handler;
 import android.os.Message;
 import android.os.RemoteException;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -37,6 +38,47 @@ public class EthernetManager {
 
     private final Context mContext;
     private final IEthernetManager mService;
+     /**
+     * @hide
+     */
+    public static final String ETHERNET_STATE_CHANGED_ACTION = "android.net.ethernet.ETHERNET_STATE_CHANGED";
+
+    /**
+     * @hide
+     */
+    public static final String EXTRA_ETHERNET_STATE = "ethernet_state";
+
+    /**
+     * @hide
+     */
+    public static final int ETHER_STATE_DISCONNECTED = 0;
+
+    /**
+     * @hide
+     */
+    public static final int ETHER_STATE_CONNECTING = 1;
+
+    /**
+     * @hide
+     */
+    public static final int ETHER_STATE_CONNECTED = 2;  
+   /**
+     * @hide
+     */
+    public static final String EXTRA_ETHERNET_IFACE_STATE = "ethernet_iface_state";
+    /**
+     * @hide
+     */
+    public static final String ETHERNET_IFACE_STATE_CHANGED_ACTION = "android.net.ethernet.ETHERNET_IFACE_STATE_CHANGED";
+    /**
+     * @hide
+     */
+    public static final int ETHER_IFACE_STATE_DOWN = 0;
+    /**
+     * @hide
+     */
+    public static final int ETHER_IFACE_STATE_UP = 1;
+
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -114,6 +156,15 @@ public class EthernetManager {
         }
     }
 
+    public boolean setEthernetEnabled(boolean enabled) {
+        Log.d(TAG,enabled ? "turn on Ethernet" : "turn off Ethernet");
+        try {
+            return mService.setEthernetEnabled(enabled);
+        } catch (RemoteException e) {
+            return false;
+        }
+    }
+
     /**
      * Adds a listener.
      * @param listener A {@link Listener} to add.
@@ -130,6 +181,24 @@ public class EthernetManager {
             } catch (NullPointerException | RemoteException e) {
             }
         }
+    }
+
+    public int getEthernetConnectState() {
+        Log.d(TAG,"getEthernetState() : Entered.");
+        try {
+            return mService.getEthernetConnectState();
+        } catch (RemoteException e) {
+            return EthernetManager.ETHER_STATE_DISCONNECTED;
+        }
+    }
+
+    public int getEthernetIfaceState() {
+       Log.d(TAG,"getEthernetIfaceState() : Entered.");
+       try {
+            return mService.getEthernetIfaceState();
+       } catch (RemoteException e) {
+            return EthernetManager.ETHER_IFACE_STATE_DOWN;
+       }
     }
 
     /**

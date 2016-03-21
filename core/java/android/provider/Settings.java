@@ -2237,6 +2237,59 @@ public final class Settings {
         public static final String MODE_RINGER = Global.MODE_RINGER;
 
         /**
+         * @hide
+         */
+        public static final String ETHERNET_ON = Secure.ETHERNET_ON;
+
+        /**
+         * Whether to use static IP and other static network attributes.
+         * @hide 
+         * Set to 1 for true and 0 for false.
+         *
+         */
+        public static final String ETHERNET_USE_STATIC_IP = "ethernet_use_static_ip";
+
+        /**
+         * The static IP address.
+         * Example: "192.168.1.51"
+         * @hide
+         */
+        public static final String ETHERNET_STATIC_IP = "ethernet_static_ip";
+
+        /**
+         * If using static IP, the gateway's IP address.
+         * Example: "192.168.1.1"
+         * @hide
+	 *
+         */
+
+        public static final String ETHERNET_STATIC_GATEWAY = "ethernet_static_gateway";
+
+        /**
+         * If using static IP, the net mask.
+         * Example: "192.168.1.1"
+         * @hide
+         */
+
+        public static final String ETHERNET_STATIC_NETMASK = "ethernet_static_netmask";
+
+        /**
+         * If using static IP, the dns1 
+         * Example: "192.168.1.1"
+         * @hide
+         */
+
+        public static final String ETHERNET_STATIC_DNS1 = "ethernet_static_dns1";
+
+        /**
+         * If using static IP, the dns2.
+         * @hide
+	 * Example: "192.168.1.1"
+         */
+        public static final String ETHERNET_STATIC_DNS2 = "ethernet_static_dns2";
+
+
+        /**
          * Whether to use static IP and other static network attributes.
          * <p>
          * Set to 1 for true and 0 for false.
@@ -4673,6 +4726,12 @@ public final class Settings {
          * Whether to speak passwords while in accessibility mode.
          */
         public static final String ACCESSIBILITY_SPEAK_PASSWORD = "speak_password";
+
+        /**
+         *
+         * @hide
+         */
+        public static final String ETHERNET_ON = "ethernet_on";
 
         /**
          * Whether to draw text with high contrast while in accessibility mode.
