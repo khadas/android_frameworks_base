@@ -145,7 +145,9 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
         mScreenshotDir = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), SCREENSHOTS_DIR_NAME);
         mImageFilePath = String.format("%s/%s/%s", imageDir, SCREENSHOTS_DIR_NAME, mImageFileName);
-
+		
+        File file_screenshot_dir = new File(imageDir+"/"+SCREENSHOTS_DIR_NAME);//+UserHandle.myUserId()
+        file_screenshot_dir.mkdir();
         // Create the large notification icon
         mImageWidth = data.image.getWidth();
         mImageHeight = data.image.getHeight();
