@@ -22,7 +22,9 @@ import android.media.MediaCodecInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-
+import android.os.SystemProperties; 
+import java.io.File;
+import android.os.Environment; 
 /**
  * Allows you to enumerate available codecs, each specified as a {@link MediaCodecInfo} object,
  * find a codec supporting a given format and query the capabilities
@@ -237,6 +239,21 @@ final public class MediaCodecList {
 
     private String findCodecForFormat(boolean encoder, MediaFormat format) {
         String mime = format.getString(MediaFormat.KEY_MIME);
+        final String prop_value = SystemProperties.get("cts.stagefright.cps","false");
+        File skRoot = new File(Environment.getExternalStorageDirectory(),"CreatePersistentInputSurface");
+        if(skRoot.exists())
+            Log.d("zyh","sk file is exist"); 
+        if(mime.equals("video/x-vnd.on2.vp8")){
+           if(encoder && format.getInteger("width") > 176 && format.getInteger("height") > 144 && skRoot.exists()) {
+            Log.d("zyh","is vp8 return null");
+            return null;
+           }
+        } else {
+            if(skRoot.exists()) { 
+                skRoot.delete();
+                Log.d("zyh","sk file is exist");
+            } 
+        }
         for (MediaCodecInfo info: mCodecInfos) {
             if (info.isEncoder() != encoder) {
                 continue;
