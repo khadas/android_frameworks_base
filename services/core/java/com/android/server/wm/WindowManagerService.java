@@ -7781,6 +7781,13 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     public boolean detectSafeMode() {
+ 	if("true".equals(SystemProperties.get("ro.safemode.disabled")))
+	{
+		 Slog.w(TAG,"safemode detected disabled by config");
+		 return false;
+	}
+
+
         if (!mInputMonitor.waitForInputDevicesReady(
                 INPUT_DEVICES_READY_FOR_SAFE_MODE_DETECTION_TIMEOUT_MILLIS)) {
             Slog.w(TAG, "Devices still not ready after waiting "
