@@ -1161,7 +1161,7 @@ public class AudioService extends IAudioService.Stub {
                 if ((curVolume == 0 && adjustVolume == 0)
                         || (curVolume == MAX_MASTER_VOLUME && adjustVolume == MAX_MASTER_VOLUME)
                         || (curVolume != adjustVolume)) {
-                    flags &= ~AudioManager.FLAG_SHOW_UI;
+                    flags |= AudioManager.FLAG_SHOW_UI;
                     sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, adjustVolume, flags);
                 }
             }
@@ -1435,7 +1435,7 @@ public class AudioService extends IAudioService.Stub {
             if (mSupportTvAudio) {
                 int curVolume = getCurAudioMasterVolume();
                 setAudioMasterVolume(index);
-                flags &= ~AudioManager.FLAG_SHOW_UI;
+                flags |= AudioManager.FLAG_SHOW_UI;
                 sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, index, flags);
             }
             return;
@@ -5076,6 +5076,8 @@ public class AudioService extends IAudioService.Stub {
                             if (mHdmiPlaybackClient != null) {
                                 mHdmiCecSink = false;
                                 mHdmiPlaybackClient.queryDisplayStatus(mHdmiDisplayStatusCallback);
+                            } else {
+                                setDeviceVolumeOnHDMIOutput();
                             }
                         }
                     }
@@ -5093,6 +5095,17 @@ public class AudioService extends IAudioService.Stub {
                 sendDeviceConnectionIntent(device, state, address, deviceName);
             }
         }
+    }
+
+    private void setDeviceVolumeOnHDMIOutput () {
+        final int device = getDeviceForStream(AudioManager.STREAM_MUSIC);
+        sendMsg(mAudioHandler,
+                MSG_SET_DEVICE_VOLUME,
+                SENDMSG_QUEUE,
+                device,
+                0,
+                mStreamStates[AudioManager.STREAM_MUSIC],
+                0);
     }
 
     private void configureHdmiPlugIntent(Intent intent, int state) {
@@ -5695,6 +5708,11 @@ public class AudioService extends IAudioService.Stub {
                         mFixedVolumeDevices &= ~AudioSystem.DEVICE_OUT_HDMI;
                     }
                     checkAllFixedVolumeDevices();
+
+                    // Television devices without CEC service apply software volume on HDMI output,set device volume
+                    if (isPlatformTelevision() && !mHdmiCecSink) {
+                        setDeviceVolumeOnHDMIOutput();
+                    }
                 }
             }
         }
