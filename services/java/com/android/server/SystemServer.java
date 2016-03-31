@@ -133,6 +133,8 @@ public final class SystemServer {
             "com.android.server.wifi.p2p.WifiP2pService";
     private static final String ETHERNET_SERVICE_CLASS =
             "com.android.server.ethernet.EthernetService";
+    private static final String PPPOE_SERVICE_CLASS =
+            "com.android.server.pppoe.PppoeService";
     private static final String JOB_SCHEDULER_SERVICE_CLASS =
             "com.android.server.job.JobSchedulerService";
     private static final String MOUNT_SERVICE_CLASS =
@@ -702,6 +704,16 @@ public final class SystemServer {
                 if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_ETHERNET) ||
                     mPackageManager.hasSystemFeature(PackageManager.FEATURE_USB_HOST)) {
                     mSystemServiceManager.startService(ETHERNET_SERVICE_CLASS);
+                }
+
+                String isCts = SystemProperties.get("net.pppoe.cts");
+                if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_PPPOE) && !"true".equals(isCts)) {
+                    try {
+                        Slog.i(TAG, "PppoeService");
+                        mSystemServiceManager.startService(PPPOE_SERVICE_CLASS);
+                    }catch (Throwable e) {
+                        reportWtf("start PppoeService error ", e);
+                    }
                 }
 
                 try {

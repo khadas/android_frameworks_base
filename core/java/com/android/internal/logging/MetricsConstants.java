@@ -265,6 +265,7 @@ public interface MetricsConstants {
 
     public static final int HDMI = 239;
     public static final int ETHERNET = 240;
+    public static final int PPPOE = 241;
 
     // These constants must match those in the analytic pipeline, do not edit.
     // Add temporary values to the top of MetricsLogger instead.

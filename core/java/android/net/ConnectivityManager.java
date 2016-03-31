@@ -45,6 +45,7 @@ import android.util.Log;
 import com.android.internal.telephony.ITelephony;
 import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.util.Protocol;
+import android.os.SystemProperties;
 
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -461,11 +462,14 @@ public class ConnectivityManager {
      */
     public static final int TYPE_VPN = 17;
 
-    /** {@hide} */
-    public static final int MAX_RADIO_TYPE   = TYPE_VPN;
+   /** {@hide} */
+    public static final int TYPE_PPPOE = 18;
 
     /** {@hide} */
-    public static final int MAX_NETWORK_TYPE = TYPE_VPN;
+    public static final int MAX_RADIO_TYPE   = TYPE_PPPOE;
+
+    /** {@hide} */
+    public static final int MAX_NETWORK_TYPE = TYPE_PPPOE;
 
     /**
      * If you want to set the default network preference,you can directly
@@ -514,7 +518,13 @@ public class ConnectivityManager {
      *             validate a network type.
      */
     public static boolean isNetworkTypeValid(int networkType) {
-        return networkType >= 0 && networkType <= MAX_NETWORK_TYPE;
+ 
+        String isCts = SystemProperties.get("net.pppoe.cts");
+        if("true".equals(isCts)) {
+            return networkType >= 0 && networkType <= TYPE_VPN;
+        } else {
+            return networkType >= 0 && networkType <= MAX_NETWORK_TYPE;
+        }
     }
 
     /**
@@ -563,6 +573,8 @@ public class ConnectivityManager {
                 return "PROXY";
             case TYPE_VPN:
                 return "VPN";
+            case TYPE_PPPOE:
+                return "PPPOE";
             default:
                 return Integer.toString(type);
         }

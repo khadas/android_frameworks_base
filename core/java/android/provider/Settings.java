@@ -2242,6 +2242,19 @@ public final class Settings {
         public static final String ETHERNET_ON = Secure.ETHERNET_ON;
 
         /**
+         * @hide
+         */
+        public static final String PPPOE_ON = Secure.PPPOE_ON;
+        /**
+         * @hide
+         */
+        public static final String PPPOE_USERNAME = Secure.PPPOE_USERNAME;
+        /**
+         * @hide
+         */
+        public static final String PPPOE_PSWD = Secure.PPPOE_PSWD;
+
+        /**
          * Whether to use static IP and other static network attributes.
          * @hide 
          * Set to 1 for true and 0 for false.
@@ -4726,6 +4739,22 @@ public final class Settings {
          * Whether to speak passwords while in accessibility mode.
          */
         public static final String ACCESSIBILITY_SPEAK_PASSWORD = "speak_password";
+
+         /**
+         * flag for pppoe auto connect 
+         * @hide
+         */
+        public static final String PPPOE_ON = "pppoe_on";
+        /**
+         * pppoe username  
+         * @hide
+         */
+        public static final String PPPOE_USERNAME = "pppoe_username";
+        /**
+         * pppoe password
+         * @hide
+         */
+        public static final String PPPOE_PSWD = "pppoe_pswd";
 
         /**
          *
