@@ -3375,7 +3375,7 @@ public class AudioService extends IAudioService.Stub {
      * indices on the stream states.
      */
     private int checkForRingerModeChange(int oldIndex, int direction, int step, boolean isMuted) {
-        final boolean isTv = mPlatformType == AudioSystem.PLATFORM_TELEVISION;
+        final boolean isTv = false;//mPlatformType == AudioSystem.PLATFORM_TELEVISION;
         int result = FLAG_ADJUST_VOLUME;
         int ringerMode = getRingerModeInternal();
 
