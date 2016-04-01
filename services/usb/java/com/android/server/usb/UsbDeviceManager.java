@@ -425,7 +425,11 @@ public class UsbDeviceManager {
 
         private void setUsbDataUnlocked(boolean enable) {
             if (DEBUG) Slog.d(TAG, "setUsbDataUnlocked: " + enable);
-            mUsbDataUnlocked = enable;
+            if("box".equals(SystemProperties.get("ro.target.product",  "unknown"))){
+                mUsbDataUnlocked = true;
+            }else{
+                mUsbDataUnlocked = enable;
+            }
             mOldUsbDataUnlocked = enable;
             updateUsbNotification();
             updateUsbStateBroadcast();
@@ -660,7 +664,11 @@ public class UsbDeviceManager {
                     mConfigured = (msg.arg2 == 1);
                     if (!mConnected) {
                         // When a disconnect occurs, relock access to sensitive user data
-                        mUsbDataUnlocked = false;
+                        if("box".equals(SystemProperties.get("ro.target.product",  "unknown"))){
+                            mUsbDataUnlocked = true;
+                        }else{
+                            mUsbDataUnlocked = false;
+                        }
                     }
                     updateUsbNotification();
                     updateAdbNotification();
@@ -674,7 +682,11 @@ public class UsbDeviceManager {
                         if (DEBUG) Slog.d(TAG, "restore defaults when USB is disconnected");
                         //setEnabledFunctions(null, false);
                     } else if (mConnected & mConfigured) {
-                        mUsbDataUnlocked = mOldUsbDataUnlocked;
+                        if("box".equals(SystemProperties.get("ro.target.product",  "unknown"))){
+                            mUsbDataUnlocked = true;
+                        }else{
+                            mUsbDataUnlocked = mOldUsbDataUnlocked;
+                        }
                     }
 
                     if (mBootCompleted) {
@@ -725,7 +737,11 @@ public class UsbDeviceManager {
                             Slog.v(TAG, "Current user switched to " + mCurrentUser
                                     + "; resetting USB host stack for MTP or PTP");
                             // avoid leaking sensitive data from previous user
-                            mUsbDataUnlocked = false;
+                            if("box".equals(SystemProperties.get("ro.target.product",  "unknown"))){
+                                mUsbDataUnlocked = true;
+                            }else{
+                                mUsbDataUnlocked = false;
+                            }
                             setEnabledFunctions(mCurrentFunctions, true);
                         }
                         mCurrentUser = msg.arg1;
