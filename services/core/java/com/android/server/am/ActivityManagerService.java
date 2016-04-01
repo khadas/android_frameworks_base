@@ -228,6 +228,8 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.text.TextUtils;
+
 
 import dalvik.system.VMRuntime;
 
@@ -3502,12 +3504,32 @@ public final class ActivityManagerService extends ActivityManagerNative
             ProcessRecord app = getProcessRecordLocked(aInfo.processName,
                     aInfo.applicationInfo.uid, true);
             if (app == null || app.instrumentationClass == null) {
+                if (startTvActivityLocked())
+                    return true;
                 intent.setFlags(intent.getFlags() | Intent.FLAG_ACTIVITY_NEW_TASK);
                 mStackSupervisor.startHomeActivity(intent, aInfo, reason);
             }
         }
 
         return true;
+    }
+
+    private boolean startTvActivityLocked() {
+        if (!SystemProperties.getBoolean("ro.platform.has.tvuimode", false))
+            return false;
+
+        final ContentResolver resolver = mContext.getContentResolver();
+        int select = Settings.System.getInt(resolver, "tv_start_up_enter_app", 0);
+        String app_name = Settings.System.getString(resolver, "tv_start_up_app_name");
+        if (select > 0 && !TextUtils.isEmpty(app_name)) {
+            Slog.d(TAG, "startTvActivityLocked");
+            Intent intent = new Intent();
+            intent.setComponent(ComponentName.unflattenFromString(app_name));
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+            return true;
+        }
+        return false;
     }
 
     private ActivityInfo resolveActivityInfo(Intent intent, int flags, int userId) {
