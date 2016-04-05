@@ -45,6 +45,10 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * UsbAlsaManager manages USB audio and MIDI devices.
@@ -58,6 +62,7 @@ public final class UsbAlsaManager {
     private final Context mContext;
     private IAudioService mAudioService;
     private final boolean mHasMidiFeature;
+    private int mUSBCardsCnt = 0;
 
     private final AlsaCardsParser mCardsParser = new AlsaCardsParser();
     private final AlsaDevicesParser mDevicesParser = new AlsaDevicesParser();
@@ -209,6 +214,44 @@ public final class UsbAlsaManager {
         } catch (RemoteException e) {
             Slog.e(TAG, "RemoteException in setWiredDeviceConnectionState");
         }
+    }
+
+    private boolean waitForAlsaUSBCards() {
+        final int kNumRetries = 10;
+        final int kSleepTime = 500; // ms
+        String cardsFilePath = "/proc/asound/cards";
+        File cardsFile = new File(cardsFilePath);
+
+        //Slog.i(TAG, "waitForAlsaUSBCards : mUSBCardsCnt: " + mUSBCardsCnt);
+        for (int retry = 0; retry < kNumRetries; retry++) {
+            int cnt = 0;
+            try {
+                FileReader reader = new FileReader(cardsFile);
+                BufferedReader bufferedReader = new BufferedReader(reader);
+                String line = "";
+                while ((line = bufferedReader.readLine()) != null) {
+                    // AML only record the USB audio card
+                    //Slog.d(TAG, "waitForAlsaUSBCards line:" + line);
+                    if (line.indexOf("]: USB-Audio") >= 0) {
+                        cnt++;
+                        if (cnt == mUSBCardsCnt)
+                            return true;
+                    }
+                }
+                reader.close();
+                //Slog.w(TAG, "waitForAlsaUSBCards : retry: " + retry);
+                Thread.sleep(kSleepTime);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (IllegalThreadStateException ex) {
+                Slog.d(TAG, "usb: IllegalThreadStateException while waiting for ALSA USB file.");
+            } catch (java.lang.InterruptedException ex) {
+                Slog.d(TAG, "usb: InterruptedException while waiting for ALSA USB file.");
+            }
+        }
+        return false;
     }
 
     private AlsaDevice waitForAlsaDevice(int card, int device, int type) {
@@ -365,8 +408,19 @@ public final class UsbAlsaManager {
             return;
         }
 
+        mUSBCardsCnt++;
+        Slog.i(TAG, "usbDeviceAdded: mUSBCardsCnt: " + mUSBCardsCnt);
+        if (!waitForAlsaUSBCards()) {
+            Slog.e(TAG, "Timeout: wait more than 5s for USB audio card ready." );
+            return;
+        }
+
         ArrayList<AlsaCardsParser.AlsaCardRecord> prevScanRecs = mCardsParser.getScanRecords();
         mCardsParser.scan();
+        if (DEBUG) {
+            String head = "cardsParser";
+            mCardsParser.Log(head);
+        }
 
         int addedCard = -1;
         ArrayList<AlsaCardsParser.AlsaCardRecord>
@@ -439,7 +493,12 @@ public final class UsbAlsaManager {
 
         UsbAudioDevice audioDevice = mAudioDevices.remove(usbDevice);
         if (audioDevice != null) {
-            if (audioDevice.mHasPlayback || audioDevice.mHasPlayback) {
+            mUSBCardsCnt--;
+            if (DEBUG) {
+                Slog.i(TAG, "deviceRemoved : mUSBCardsCnt: " + mUSBCardsCnt);
+            }
+
+            if (audioDevice.mHasPlayback || audioDevice.mHasCapture) {
                 notifyDeviceState(audioDevice, false);
 
                 // if there any external devices left, select one of them
