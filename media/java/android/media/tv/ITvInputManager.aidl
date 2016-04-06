@@ -94,7 +94,7 @@ interface ITvInputManager {
     boolean captureFrame(in String inputId, in Surface surface, in TvStreamConfig config,
             int userId);
     boolean isSingleSessionActive(int userId);
-
+    void setScreenCaptureFixSize(in String inputId, int width, int height, int userId);
     // For DVB device binding
     List<DvbDeviceInfo> getDvbDeviceList();
     ParcelFileDescriptor openDvbDevice(in DvbDeviceInfo info, int device);

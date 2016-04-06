@@ -1620,6 +1620,38 @@ public final class TvInputManagerService extends SystemService {
         }
 
         @Override
+        public void setScreenCaptureFixSize(String inputId, int width, int height, int userId)
+                throws RemoteException {
+            final long identity = Binder.clearCallingIdentity();
+            final int callingUid = Binder.getCallingUid();
+            final int resolvedUserId = resolveCallingUserId(Binder.getCallingPid(), callingUid,
+                    userId, "setScreenCaptureFixSize");
+            try {
+                String hardwareInputId = null;
+                synchronized (mLock) {
+                    UserState userState = getOrCreateUserStateLocked(resolvedUserId);
+                    if (userState.inputMap.get(inputId) == null) {
+                        Slog.e(TAG, "input not found for " + inputId);
+                        return ;
+                    }
+                    for (SessionState sessionState : userState.sessionStateMap.values()) {
+                        if (sessionState.info.getId().equals(inputId)
+                                && sessionState.hardwareSessionToken != null) {
+                            hardwareInputId = userState.sessionStateMap.get(
+                                    sessionState.hardwareSessionToken).info.getId();
+                            break;
+                        }
+                    }
+                }
+
+                mTvInputHardwareManager.setScreenCaptureFixSize((hardwareInputId != null) ? hardwareInputId : inputId,
+                        width, height, resolvedUserId);
+            } finally {
+                Binder.restoreCallingIdentity(identity);
+            }
+        }
+
+        @Override
         public boolean captureFrame(String inputId, Surface surface, TvStreamConfig config,
                 int userId)
                 throws RemoteException {

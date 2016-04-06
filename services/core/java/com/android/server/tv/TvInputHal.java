@@ -54,6 +54,7 @@ final class TvInputHal implements Handler.Callback {
     }
 
     private native long nativeOpen(MessageQueue queue);
+    private native void nativesetScreenCaptureFixSize(long ptr, int width, int height);
 
     private static native int nativeAddOrUpdateStream(long ptr, int deviceId, int streamId,
             Surface surface);
@@ -80,6 +81,12 @@ final class TvInputHal implements Handler.Callback {
         }
     }
 
+    public void setScreenCaptureFixSize(int width, int height){
+        synchronized (mLock) {
+            if (mPtr != 0)
+                nativesetScreenCaptureFixSize(mPtr, width, height);
+        }
+    }
     public int addOrUpdateStream(int deviceId, Surface surface, TvStreamConfig streamConfig) {
         synchronized (mLock) {
             if (mPtr == 0) {
@@ -145,8 +152,10 @@ final class TvInputHal implements Handler.Callback {
     }
 
     private void firstFrameCapturedFromNative(int deviceId, int streamId) {
-        mHandler.sendMessage(
-                mHandler.obtainMessage(EVENT_STREAM_CONFIGURATION_CHANGED, deviceId, streamId));
+        mHandler.sendMessageDelayed(
+                mHandler.obtainMessage(EVENT_FIRST_FRAME_CAPTURED, deviceId, streamId),5);
+        /*mHandler.sendMessage(
+                mHandler.obtainMessage(EVENT_STREAM_CONFIGURATION_CHANGED, deviceId, streamId));*/
     }
 
     // Handler.Callback implementation

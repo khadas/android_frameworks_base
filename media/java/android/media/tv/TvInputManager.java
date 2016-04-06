@@ -1204,6 +1204,19 @@ public final class TvInputManager {
     }
 
     /**
+     * Set the screen capture's size which should be matched with surfaceview's size
+     * @hide
+     */
+
+    @SystemApi
+    public void setScreenCaptureFixSize(String inputId, int width, int height) {
+        try {
+            mService.setScreenCaptureFixSize(inputId, width, height, mUserId);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    /**
      * Returns true if there is only a single TV input session.
      *
      * @hide
