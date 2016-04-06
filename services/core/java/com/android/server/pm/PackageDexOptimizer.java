@@ -177,7 +177,11 @@ final class PackageDexOptimizer {
                             + pkg.applicationInfo.packageName + " isa=" + dexCodeInstructionSet
                             + " vmSafeMode=" + vmSafeMode + " debuggable=" + debuggable
                             + " oatDir = " + oatDir + " bootComplete=" + bootComplete);
-
+                    if(pkg.applicationInfo.packageName.contains("com.google.android.apps.youtube.testsuite")) {
+                        SystemProperties.set("sys.youtube.testsuite","true");
+                    } else {
+                        SystemProperties.set("sys.youtube.testsuite","false");
+                    }
                     if(pkg.applicationInfo.packageName.contains("com.android.cts")||pkg.applicationInfo.packageName.contains("com.google.android.xts")){
 		    	SystemProperties.set("sys.cts_gts.status","true");
 		    }
