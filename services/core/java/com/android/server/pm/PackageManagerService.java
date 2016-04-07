@@ -14608,6 +14608,15 @@ public class PackageManagerService extends IPackageManager.Stub {
     public void setComponentEnabledSetting(ComponentName componentName,
             int newState, int flags, int userId) {
         if (!sUserManager.exists(userId)) return;
+        if(("com.google.android.setupwizard".equals(componentName.getPackageName())) && (COMPONENT_ENABLED_STATE_DISABLED == newState) 
+			&& ("true".equals(SystemProperties.get("ro.config.low_ram", "false"))))
+	{
+		if("true".equals(SystemProperties.get("sys.cts_gts.status", "false")))
+		{
+			Log.d("xzj","---com.google.android.setupwizard completed,disabled it---");
+			SystemProperties.set("sys.cts_gts.status","false");
+		}
+        }
         setEnabledSetting(componentName.getPackageName(),
                 componentName.getClassName(), newState, flags, userId, null);
     }

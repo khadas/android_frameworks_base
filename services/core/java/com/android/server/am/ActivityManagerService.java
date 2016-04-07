@@ -3284,6 +3284,15 @@ public final class ActivityManagerService extends ActivityManagerNative
 				if(DEBUG_LOWMEM)Slog.v("xzj", "----clean memory for start " + info.processName);	
 			}
 		}
+        if(("com.google.android.setupwizard".equals(processName)) && ("true".equals(SystemProperties.get("ro.config.low_ram", "false"))))
+	{
+		if(!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))
+		{
+			Log.d("xzj","--start com.google.android.setupwizard---");
+			SystemProperties.set("sys.cts_gts.status","true");
+		}
+	}
+
         // app launch boost for big.little configurations
         // use cpusets to migrate freshly launched tasks to big cores
         synchronized(ActivityManagerService.this) {
