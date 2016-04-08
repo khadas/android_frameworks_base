@@ -63,7 +63,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
+import android.hardware.hdmi.HdmiClient;
 /**
  * A helper class for TvInputManagerService to handle TV input hardware.
  *
@@ -950,6 +950,14 @@ class TvInputHardwareManager implements TvInputHal.Callback {
                 return false;
             }
             // TODO(hdmi): mHdmiClient.sendKeyEvent(event);
+            HdmiControlManager m = (HdmiControlManager) mContext.getSystemService(Context.HDMI_CONTROL_SERVICE);
+            HdmiClient client = m.getClient(HdmiDeviceInfo.DEVICE_TV);
+            if (client != null) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN)
+                    client.sendKeyEvent(event.getKeyCode(), true);
+                else
+                    client.sendKeyEvent(event.getKeyCode(), false);
+            }
             return false;
         }
         private void setScreenCaptureFixSize(int width, int height){
