@@ -2088,7 +2088,8 @@ public class PackageManagerService extends IPackageManager.Stub {
             File preinstallAppDir = new File(Environment.getRootDirectory(), "preinstall");
             File preinstallAppDelDir = new File(Environment.getRootDirectory(),
                     "preinstall_del");
-            if (!SystemProperties.getBoolean("persist.sys.preinstalled", false)) {
+            if ((!SystemProperties.getBoolean("persist.sys.preinstalled", false)) &&
+                (!"trigger_restart_min_framework".equals(SystemProperties.get("vold.decrypt", null)))) {
                 // mPreInstallObserver = new AppDirObserver(
                 // mPreinstallAppDir.getPath(), OBSERVER_EVENTS, false);
                 // mPreInstallObserver.startWatching();
