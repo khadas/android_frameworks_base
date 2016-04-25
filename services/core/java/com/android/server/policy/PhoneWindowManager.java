@@ -5192,14 +5192,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             case KeyEvent.KEYCODE_NETFLIX: {
                 result &= ~ACTION_PASS_TO_USER;
-                isWakeKey = false; // wake-up will be handled separately
+                //when the key do not interactive with user, so we think it's a wakeup key
+                if (!interactive)
+                    isWakeKey = true;
 
-                Log.i(TAG, "interceptKeyBeforeQueueing it's a netflix key");
+                Log.i(TAG, "interceptKeyBeforeQueueing it's a netflix key isWakeKey:" + isWakeKey + " interactive:" + interactive);
                 if (mContext.getPackageManager().hasSystemFeature("android.software.netflix")) {
                     if (down) {
                         Intent netflixIntent = new Intent();
                         netflixIntent.setAction("com.netflix.ninja.intent.action.NETFLIX_KEY");
-                        netflixIntent.putExtra("power_on", false);
+                        netflixIntent.putExtra("power_on", interactive?false:true);
                         netflixIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                         mContext.sendBroadcast(netflixIntent,"com.netflix.ninja.permission.NETFLIX_KEY");
                     }
