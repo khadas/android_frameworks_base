@@ -23,6 +23,7 @@ import android.graphics.Region;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.Surface.OutOfResourcesException;
+import android.os.SystemProperties;
 
 /**
  * SurfaceControl
@@ -40,6 +41,9 @@ public class SurfaceControl {
     private static native Bitmap nativeScreenshot(IBinder displayToken,
             Rect sourceCrop, int width, int height, int minLayer, int maxLayer,
             boolean allLayers, boolean useIdentityTransform, int rotation);
+    private static native Bitmap nativeScreenshot_t(IBinder displayToken,
+        Rect sourceCrop, int width, int height, int minLayer, int maxLayer,
+        boolean allLayers, boolean useIdentityTransform, int rotation);
     private static native void nativeScreenshot(IBinder displayToken, Surface consumer,
             Rect sourceCrop, int width, int height, int minLayer, int maxLayer,
             boolean allLayers, boolean useIdentityTransform);
@@ -720,8 +724,12 @@ public class SurfaceControl {
         // TODO: should take the display as a parameter
         IBinder displayToken = SurfaceControl.getBuiltInDisplay(
                 SurfaceControl.BUILT_IN_DISPLAY_ID_MAIN);
-        return nativeScreenshot(displayToken, sourceCrop, width, height,
-                minLayer, maxLayer, false, useIdentityTransform, rotation);
+        if (SystemProperties.getBoolean("ro.captureosd.default",true))
+            return nativeScreenshot(displayToken, sourceCrop, width, height,
+                    minLayer, maxLayer, false, useIdentityTransform, rotation);
+        else
+            return nativeScreenshot_t(displayToken, sourceCrop, width, height,
+                    minLayer, maxLayer, false, useIdentityTransform, rotation);
     }
 
     /**
