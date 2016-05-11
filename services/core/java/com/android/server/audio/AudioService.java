@@ -1136,8 +1136,17 @@ public class AudioService extends IAudioService.Stub {
             return;
         }
 
+        // use stream type alias here so that streams with same alias have the same behavior,
+        // including with regard to silent mode control (e.g the use of STREAM_RING below and in
+        // checkForRingerModeChange() in place of STREAM_RING or STREAM_NOTIFICATION)
+        int streamTypeAlias = mStreamVolumeAlias[streamType];
+
+        VolumeStreamState streamState = mStreamStates[streamTypeAlias];
+
         if (mUseFixedVolume) {
             if (mSupportTvAudio) {
+                int curVolume = getCurAudioMasterVolume();
+                int adjustVolume = curVolume + direction;
                 if (isMuteAdjust) {
                     boolean ismute = false;
                     if (direction == AudioManager.ADJUST_MUTE) {
@@ -1148,10 +1157,21 @@ public class AudioService extends IAudioService.Stub {
                         ismute = !getAudioMuteKeyStatus();
                     }
                     setSystemAudioMute(ismute);
+                    mStreamStates[AudioManager.STREAM_MUSIC].mute(ismute);
                     return;
+                } else if (streamState.mIsMuted) {
+                    // Unmute the stream if it was previously muted
+                    if (direction == AudioManager.ADJUST_RAISE) {
+                        // unmute immediately for volume up
+                        streamState.mute(false);
+                    } else if (direction == AudioManager.ADJUST_LOWER) {
+                        if (adjustVolume < 0) {
+                            adjustVolume = 0;
+                        }
+                        streamState.mute(true);
+                        setAudioMasterVolume(adjustVolume);
+                    }
                 }
-                int curVolume = getCurAudioMasterVolume();
-                int adjustVolume = curVolume + direction;
                 if (adjustVolume > MAX_MASTER_VOLUME) {
                     adjustVolume = MAX_MASTER_VOLUME;
                 } else if (adjustVolume < 0) {
@@ -1167,13 +1187,6 @@ public class AudioService extends IAudioService.Stub {
             }
             return;
         }
-
-        // use stream type alias here so that streams with same alias have the same behavior,
-        // including with regard to silent mode control (e.g the use of STREAM_RING below and in
-        // checkForRingerModeChange() in place of STREAM_RING or STREAM_NOTIFICATION)
-        int streamTypeAlias = mStreamVolumeAlias[streamType];
-
-        VolumeStreamState streamState = mStreamStates[streamTypeAlias];
 
         final int device = getDeviceForStream(streamTypeAlias);
 
@@ -1954,7 +1967,7 @@ public class AudioService extends IAudioService.Stub {
                 }
                 mTvControlManager.getClass().getDeclaredMethod("SetAudioMuteKeyStatus", new Class[] { int.class})
                     .invoke(mTvControlManager, new Object[] { state ? 1 : 0 });
-                sendMasterMuteUpdate(state, 100);
+                //sendMasterMuteUpdate(state, AudioManager.FLAG_FROM_KEY);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1976,7 +1989,7 @@ public class AudioService extends IAudioService.Stub {
             try {
                 mTvControlManager.getClass().getDeclaredMethod("SetAudioMuteKeyStatus", new Class[] { int.class})
                     .invoke(mTvControlManager, new Object[] { 1 });
-                sendMasterMuteUpdate(true, 100);
+                //sendMasterMuteUpdate(true, AudioManager.FLAG_FROM_KEY);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -4081,6 +4094,12 @@ public class AudioService extends IAudioService.Stub {
             if (mSupportTvAudio) {
                 setAudioMuteKeyStatus(state);
                 mIsMuted = state;
+                Intent intent = new Intent(AudioManager.STREAM_MUTE_CHANGED_ACTION);
+                intent.putExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, mStreamType);
+                intent.putExtra(AudioManager.EXTRA_STREAM_VOLUME_MUTED, state);
+                sendBroadcastToAll(intent);
+                int curVolume = getCurAudioMasterVolume();
+                sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, curVolume, AudioManager.FLAG_FROM_KEY);
                 return;
             }
             boolean changed = false;
