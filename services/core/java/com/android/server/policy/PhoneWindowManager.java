@@ -1473,7 +1473,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mShortPressOnSleepBehavior = mContext.getResources().getInteger(
                 com.android.internal.R.integer.config_shortPressOnSleepBehavior);
 
-        mUseTvRouting = AudioSystem.getPlatformType(mContext) == AudioSystem.PLATFORM_TELEVISION;
+        //mUseTvRouting = AudioSystem.getPlatformType(mContext) == AudioSystem.PLATFORM_TELEVISION;
+        mUseTvRouting = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
 
         readConfigurationDependentBehaviors();
 
