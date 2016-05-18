@@ -687,7 +687,7 @@ public final class InputEventConsistencyVerifier {
                     }
                 }
 
-                Log.d(mLogTag, mViolationMessage.toString());
+                //Log.d(mLogTag, mViolationMessage.toString());
 
                 // Taint the event so that we do not generate additional violations from it
                 // further downstream.
