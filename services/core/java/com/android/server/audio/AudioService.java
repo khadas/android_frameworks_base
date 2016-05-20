@@ -1144,50 +1144,51 @@ public class AudioService extends IAudioService.Stub {
         VolumeStreamState streamState = mStreamStates[streamTypeAlias];
 
         if (mUseFixedVolume) {
-            if (mSupportTvAudio) {
-                int curVolume = getCurAudioMasterVolume();
-                int adjustVolume = curVolume + direction;
-                if (isMuteAdjust) {
-                    boolean ismute = false;
-                    if (direction == AudioManager.ADJUST_MUTE) {
-                        ismute = true;
-                    } else if (direction == AudioManager.ADJUST_UNMUTE) {
-                        ismute = false;
-                    } else if (direction == AudioManager.ADJUST_TOGGLE_MUTE) {
-                        ismute = !getAudioMuteKeyStatus();
-                    }
-                    setSystemAudioMute(ismute);
-                    mStreamStates[AudioManager.STREAM_MUSIC].mute(ismute);
-                    return;
-                } else if (streamState.mIsMuted) {
-                    // Unmute the stream if it was previously muted
-                    if (direction == AudioManager.ADJUST_RAISE) {
-                        // unmute immediately for volume up
-                        streamState.mute(false);
-                    } else if (direction == AudioManager.ADJUST_LOWER) {
-                        if (adjustVolume < 0) {
-                            adjustVolume = 0;
+            if (!isUSBOrA2DPDeviceEnable()) {
+                if (mSupportTvAudio) {
+                    int curVolume = getCurAudioMasterVolume();
+                    int adjustVolume = curVolume + direction;
+                    if (isMuteAdjust) {
+                        boolean ismute = false;
+                        if (direction == AudioManager.ADJUST_MUTE) {
+                            ismute = true;
+                        } else if (direction == AudioManager.ADJUST_UNMUTE) {
+                            ismute = false;
+                        } else if (direction == AudioManager.ADJUST_TOGGLE_MUTE) {
+                            ismute = !getAudioMuteKeyStatus();
                         }
-                        streamState.mute(true);
-                        setAudioMasterVolume(adjustVolume);
+                        setSystemAudioMute(ismute);
+                        mStreamStates[AudioManager.STREAM_MUSIC].mute(ismute);
+                        return;
+                    } else if (streamState.mIsMuted) {
+                        // Unmute the stream if it was previously muted
+                        if (direction == AudioManager.ADJUST_RAISE) {
+                            // unmute immediately for volume up
+                            streamState.mute(false);
+                        } else if (direction == AudioManager.ADJUST_LOWER) {
+                            if (adjustVolume < 0) {
+                                adjustVolume = 0;
+                            }
+                            streamState.mute(true);
+                            setAudioMasterVolume(adjustVolume);
+                        }
+                    }
+                    if (adjustVolume > MAX_MASTER_VOLUME) {
+                        adjustVolume = MAX_MASTER_VOLUME;
+                    } else if (adjustVolume < 0) {
+                        adjustVolume = 0;
+                    }
+                    setAudioMasterVolume(adjustVolume);
+                    if ((curVolume == 0 && adjustVolume == 0)
+                            || (curVolume == MAX_MASTER_VOLUME && adjustVolume == MAX_MASTER_VOLUME)
+                            || (curVolume != adjustVolume)) {
+                        flags |= AudioManager.FLAG_SHOW_UI;
+                        sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, adjustVolume, flags);
                     }
                 }
-                if (adjustVolume > MAX_MASTER_VOLUME) {
-                    adjustVolume = MAX_MASTER_VOLUME;
-                } else if (adjustVolume < 0) {
-                    adjustVolume = 0;
-                }
-                setAudioMasterVolume(adjustVolume);
-                if ((curVolume == 0 && adjustVolume == 0)
-                        || (curVolume == MAX_MASTER_VOLUME && adjustVolume == MAX_MASTER_VOLUME)
-                        || (curVolume != adjustVolume)) {
-                    flags |= AudioManager.FLAG_SHOW_UI;
-                    sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, adjustVolume, flags);
-                }
+                return;
             }
-            return;
         }
-
         final int device = getDeviceForStream(streamTypeAlias);
 
         int aliasIndex = streamState.getIndex(device);
@@ -1368,9 +1369,11 @@ public class AudioService extends IAudioService.Stub {
 
     private void setSystemAudioVolume(int oldVolume, int newVolume, int maxVolume, int flags) {
         if (mSupportTvAudio) {
-            setAudioMasterVolume(newVolume);
-            sendVolumeUpdate(AudioSystem.STREAM_MUSIC, oldVolume, newVolume, flags);
-            return;
+            if (!isUSBOrA2DPDeviceEnable()) {
+                setAudioMasterVolume(newVolume);
+                sendVolumeUpdate(AudioSystem.STREAM_MUSIC, oldVolume, newVolume, flags);
+                return;
+            }
         }
         if (mHdmiManager == null
                 || mHdmiTvClient == null
@@ -1445,11 +1448,13 @@ public class AudioService extends IAudioService.Stub {
     private void setStreamVolume(int streamType, int index, int flags, String callingPackage,
             String caller, int uid) {
         if (mUseFixedVolume) {
-            if (mSupportTvAudio) {
-                int curVolume = getCurAudioMasterVolume();
-                setAudioMasterVolume(index);
-                flags |= AudioManager.FLAG_SHOW_UI;
-                sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, index, flags);
+            if (!isUSBOrA2DPDeviceEnable()) {
+                if (mSupportTvAudio) {
+                    int curVolume = getCurAudioMasterVolume();
+                    setAudioMasterVolume(index);
+                    flags |= AudioManager.FLAG_SHOW_UI;
+                    sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, index, flags);
+                }
             }
             return;
         }
@@ -1625,10 +1630,6 @@ public class AudioService extends IAudioService.Stub {
     // If Hdmi-CEC system audio mode is on, we show volume bar only when TV
     // receives volume notification from Audio Receiver.
     private int updateFlagsForSystemAudio(int flags) {
-        if (mSupportTvAudio) {
-            flags |= AudioManager.FLAG_SHOW_UI;
-            return flags;
-        }
         if (mHdmiTvClient != null) {
             synchronized (mHdmiTvClient) {
                 if (mHdmiSystemAudioSupported &&
@@ -1686,8 +1687,10 @@ public class AudioService extends IAudioService.Stub {
 
     private void setSystemAudioMute(boolean state) {
         if (mSupportTvAudio) {
-            setAudioMuteKeyStatus(state);
-            return;
+            if (!isUSBOrA2DPDeviceEnable()) {
+                setAudioMuteKeyStatus(state);
+                return;
+            }
         }
         if (mHdmiManager == null || mHdmiTvClient == null) return;
         synchronized (mHdmiManager) {
@@ -1706,7 +1709,9 @@ public class AudioService extends IAudioService.Stub {
     /** get stream mute state. */
     public boolean isStreamMute(int streamType) {
         if (mSupportTvAudio) {
-            return getAudioMuteKeyStatus();
+            if (!isUSBOrA2DPDeviceEnable()) {
+                return getAudioMuteKeyStatus();
+            }
         }
         if (streamType == AudioManager.USE_DEFAULT_STREAM_TYPE) {
             streamType = getActiveStreamType(streamType);
@@ -1819,10 +1824,12 @@ public class AudioService extends IAudioService.Stub {
     private void setMasterMuteInternal(boolean mute, int flags, String callingPackage, int uid,
             int userId) {
         if (mUseFixedVolume) {
-            if (mSupportTvAudio) {
-                setAudioMuteKeyStatus(mute);
+            if (!isUSBOrA2DPDeviceEnable()) {
+                if (mSupportTvAudio) {
+                    setAudioMuteKeyStatus(mute);
+                }
+                return;
             }
-            return;
         }
         // If we are being called by the system check for user we are going to change
         // so we handle user restrictions correctly.
@@ -1863,7 +1870,9 @@ public class AudioService extends IAudioService.Stub {
     /** get master mute state. */
     public boolean isMasterMute() {
         if (mSupportTvAudio) {
-            return getAudioMuteKeyStatus();
+            if (!isUSBOrA2DPDeviceEnable()) {
+                return getAudioMuteKeyStatus();
+            }
         }
         return AudioSystem.getMasterMute();
     }
@@ -1876,7 +1885,9 @@ public class AudioService extends IAudioService.Stub {
     /** @see AudioManager#getStreamVolume(int) */
     public int getStreamVolume(int streamType) {
         if (mSupportTvAudio) {
-            return getCurAudioMasterVolume();
+            if (!isUSBOrA2DPDeviceEnable()) {
+                return getCurAudioMasterVolume();
+            }
         }
         ensureValidStreamType(streamType);
         int device = getDeviceForStream(streamType);
@@ -1998,6 +2009,27 @@ public class AudioService extends IAudioService.Stub {
         }
     }
 
+    private boolean isUSBOrA2DPDeviceEnable () {
+        return (isBluetoothA2dpOn() || (isUSBOrA2DPDevice(getDeviceForStream(AudioSystem.STREAM_MUSIC))));
+    }
+
+    private boolean isUSBOrA2DPDevice(int device) {
+        if (device == AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP
+                || device == AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES
+                || device == AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER
+                || device == AudioSystem.DEVICE_OUT_BLUETOOTH_SCO
+                || device == AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_CARKIT
+                || device == AudioSystem.DEVICE_OUT_BLUETOOTH_SCO_HEADSET
+                || device == AudioSystem.DEVICE_OUT_USB_ACCESSORY
+                || device == AudioSystem.DEVICE_OUT_USB_DEVICE
+                || device == AudioSystem.DEVICE_OUT_WIRED_HEADPHONE
+                || device == AudioSystem.DEVICE_OUT_WIRED_HEADSET
+                || device == AudioSystem.DEVICE_OUT_HDMI_ARC) {
+            return true;
+        }
+        return false;
+    }
+
     /** @see AudioManager#getStreamMaxVolume(int) */
     public int getStreamMaxVolume(int streamType) {
         ensureValidStreamType(streamType);
@@ -2013,8 +2045,10 @@ public class AudioService extends IAudioService.Stub {
     /** Get last audible volume before stream was muted. */
     public int getLastAudibleStreamVolume(int streamType) {
         if (mSupportTvAudio) {
-            int i = getCurAudioMasterVolume();
-            return i;
+            if (!isUSBOrA2DPDeviceEnable()) {
+                int i = getCurAudioMasterVolume();
+                return i;
+            }
         }
         ensureValidStreamType(streamType);
         int device = getDeviceForStream(streamType);
@@ -3718,16 +3752,20 @@ public class AudioService extends IAudioService.Stub {
     private int getDeviceForStream(int stream) {
         int device = getDevicesForStream(stream);
         if ((device & (device - 1)) != 0) {
+            mHdmiSystemAudioSupported = false;
             // Multiple device selection is either:
             //  - speaker + one other device: give priority to speaker in this case.
             //  - one A2DP device + another device: happens with duplicated output. In this case
             // retain the device on the A2DP output as the other must not correspond to an active
             // selection if not the speaker.
             //  - HDMI-CEC system audio mode only output: give priority to available item in order.
-            if ((device & AudioSystem.DEVICE_OUT_SPEAKER) != 0) {
-                device = AudioSystem.DEVICE_OUT_SPEAKER;
+            if ((device & AudioSystem.DEVICE_OUT_USB_DEVICE) != 0) {
+                device = AudioSystem.DEVICE_OUT_USB_DEVICE;
             } else if ((device & AudioSystem.DEVICE_OUT_HDMI_ARC) != 0) {
                 device = AudioSystem.DEVICE_OUT_HDMI_ARC;
+                mHdmiSystemAudioSupported = true;
+            } else if ((device & AudioSystem.DEVICE_OUT_SPEAKER) != 0) {
+                device = AudioSystem.DEVICE_OUT_SPEAKER;
             } else if ((device & AudioSystem.DEVICE_OUT_SPDIF) != 0) {
                 device = AudioSystem.DEVICE_OUT_SPDIF;
             } else if ((device & AudioSystem.DEVICE_OUT_AUX_LINE) != 0) {
@@ -3894,8 +3932,8 @@ public class AudioService extends IAudioService.Stub {
             synchronized (VolumeStreamState.class) {
                 // force maximum volume on all streams if fixed volume property is set
                 if (mUseFixedVolume) {
-                    mIndexMap.put(AudioSystem.DEVICE_OUT_DEFAULT, mIndexMax);
-                    return;
+                    //mIndexMap.put(AudioSystem.DEVICE_OUT_DEFAULT, mIndexMax);
+                    //return;
                 }
                 // do not read system stream volume from settings: this stream is always aliased
                 // to another stream type and its volume is never persisted. Values in settings can
@@ -3933,7 +3971,7 @@ public class AudioService extends IAudioService.Stub {
                         continue;
                     }
 
-                    mIndexMap.put(device, getValidIndex(10 * index));
+                    mIndexMap.put(device, getValidIndex(10 * index, device));
                 }
             }
         }
@@ -3992,7 +4030,7 @@ public class AudioService extends IAudioService.Stub {
             int oldIndex;
             synchronized (VolumeStreamState.class) {
                 oldIndex = getIndex(device);
-                index = getValidIndex(index);
+                index = getValidIndex(index, device);
                 synchronized (mCameraSoundForced) {
                     if ((mStreamType == AudioSystem.STREAM_SYSTEM_ENFORCED) && mCameraSoundForced) {
                         index = mIndexMax;
@@ -4092,15 +4130,17 @@ public class AudioService extends IAudioService.Stub {
 
         public void mute(boolean state) {
             if (mSupportTvAudio) {
-                setAudioMuteKeyStatus(state);
-                mIsMuted = state;
-                Intent intent = new Intent(AudioManager.STREAM_MUTE_CHANGED_ACTION);
-                intent.putExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, mStreamType);
-                intent.putExtra(AudioManager.EXTRA_STREAM_VOLUME_MUTED, state);
-                sendBroadcastToAll(intent);
-                int curVolume = getCurAudioMasterVolume();
-                sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, curVolume, AudioManager.FLAG_FROM_KEY);
-                return;
+                if (!isUSBOrA2DPDeviceEnable()) {
+                    setAudioMuteKeyStatus(state);
+                    mIsMuted = state;
+                    Intent intent = new Intent(AudioManager.STREAM_MUTE_CHANGED_ACTION);
+                    intent.putExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, mStreamType);
+                    intent.putExtra(AudioManager.EXTRA_STREAM_VOLUME_MUTED, state);
+                    sendBroadcastToAll(intent);
+                    int curVolume = getCurAudioMasterVolume();
+                    sendVolumeUpdate(AudioSystem.STREAM_MUSIC, curVolume, curVolume, AudioManager.FLAG_FROM_KEY);
+                    return;
+                }
             }
             boolean changed = false;
             synchronized (VolumeStreamState.class) {
@@ -4141,7 +4181,9 @@ public class AudioService extends IAudioService.Stub {
                         int index = mIndexMap.valueAt(i);
                         if (((device & mFullVolumeDevices) != 0)
                                 || (((device & mFixedVolumeDevices) != 0) && index != 0)) {
-                            mIndexMap.put(device, mIndexMax);
+                            if (!isUSBOrA2DPDevice(device)) {
+                                mIndexMap.put(device, mIndexMax);
+                            }
                         }
                         applyDeviceVolume_syncVSS(device);
                     }
@@ -4149,10 +4191,13 @@ public class AudioService extends IAudioService.Stub {
             }
         }
 
-        private int getValidIndex(int index) {
+        private int getValidIndex(int index, int device) {
             if (index < mIndexMin) {
                 return mIndexMin;
             } else if (mUseFixedVolume || index > mIndexMax) {
+                if (isUSBOrA2DPDevice(device)) {
+                    return index;
+                }
                 return mIndexMax;
             }
 
@@ -4278,10 +4323,14 @@ public class AudioService extends IAudioService.Stub {
 
         private void persistVolume(VolumeStreamState streamState, int device) {
             if (mUseFixedVolume) {
-                return;
+                if (!isUSBOrA2DPDeviceEnable()) {
+                    return;
+                }
             }
             if (isPlatformTelevision() && (streamState.mStreamType != AudioSystem.STREAM_MUSIC)) {
-                return;
+                if (!isUSBOrA2DPDeviceEnable()) {
+                    return;
+                }
             }
             System.putIntForUser(mContentResolver,
                       streamState.getSettingNameForDevice(device),
@@ -5096,9 +5145,20 @@ public class AudioService extends IAudioService.Stub {
                                 mHdmiCecSink = false;
                                 mHdmiPlaybackClient.queryDisplayStatus(mHdmiDisplayStatusCallback);
                             } else {
-                                setDeviceVolumeOnHDMIOutput();
+                                setDeviceVolumeOutput();
                             }
                         }
+                    }
+                }
+
+                // Television devices withCEC service apply software volume on HDMI ARC output
+                if (device == AudioSystem.DEVICE_OUT_HDMI_ARC) {
+                    mHdmiSystemAudioSupported = true;
+                    setDeviceVolumeOutput();
+                } else {
+                    mHdmiSystemAudioSupported = false;
+                    if (isUsb) {
+                        setDeviceVolumeOutput();
                     }
                 }
             } else {
@@ -5116,7 +5176,7 @@ public class AudioService extends IAudioService.Stub {
         }
     }
 
-    private void setDeviceVolumeOnHDMIOutput () {
+    private void setDeviceVolumeOutput () {
         final int device = getDeviceForStream(AudioManager.STREAM_MUSIC);
         sendMsg(mAudioHandler,
                 MSG_SET_DEVICE_VOLUME,
@@ -5730,7 +5790,7 @@ public class AudioService extends IAudioService.Stub {
 
                     // Television devices without CEC service apply software volume on HDMI output,set device volume
                     if (isPlatformTelevision() && !mHdmiCecSink) {
-                        setDeviceVolumeOnHDMIOutput();
+                        setDeviceVolumeOutput();
                     }
                 }
             }
