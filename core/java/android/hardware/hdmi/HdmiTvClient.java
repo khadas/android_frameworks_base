@@ -436,4 +436,12 @@ public final class HdmiTvClient extends HdmiClient {
             Log.e(TAG, "failed to send vendor command: ", e);
         }
     }
+
+    public void setArcMode(boolean enable) {
+        try {
+            mService.setArcMode(enable);
+        } catch (RemoteException e) {
+            Log.e(TAG, "failed to set arc mode: ", e);
+        }
+    }
 }
