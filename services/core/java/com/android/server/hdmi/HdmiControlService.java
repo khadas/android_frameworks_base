@@ -1468,6 +1468,7 @@ public final class HdmiControlService extends SystemService {
                         Slog.w(TAG, "Local tv device not available to change arc mode.");
                         return;
                     }
+                    tv.startArcAction(enabled);
                 }
             });
         }
