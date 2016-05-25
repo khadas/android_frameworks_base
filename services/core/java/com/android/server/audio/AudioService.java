@@ -1168,8 +1168,10 @@ public class AudioService extends IAudioService.Stub {
                         } else if (direction == AudioManager.ADJUST_LOWER) {
                             if (adjustVolume < 0) {
                                 adjustVolume = 0;
+                                streamState.mute(true);
+                            } else {
+                                streamState.mute(false);
                             }
-                            streamState.mute(true);
                             setAudioMasterVolume(adjustVolume);
                         }
                     }
