@@ -3761,7 +3761,9 @@ public class AudioService extends IAudioService.Stub {
             // retain the device on the A2DP output as the other must not correspond to an active
             // selection if not the speaker.
             //  - HDMI-CEC system audio mode only output: give priority to available item in order.
-            if ((device & AudioSystem.DEVICE_OUT_USB_DEVICE) != 0) {
+            if ((device & AudioSystem.DEVICE_OUT_ALL_A2DP) != 0) {
+                device &= AudioSystem.DEVICE_OUT_ALL_A2DP;
+            } else if ((device & AudioSystem.DEVICE_OUT_USB_DEVICE) != 0) {
                 device = AudioSystem.DEVICE_OUT_USB_DEVICE;
             } else if ((device & AudioSystem.DEVICE_OUT_HDMI_ARC) != 0) {
                 device = AudioSystem.DEVICE_OUT_HDMI_ARC;
