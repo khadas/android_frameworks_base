@@ -252,7 +252,8 @@ LOCAL_SHARED_LIBRARIES := \
     libminikin \
     libprocessgroup \
     libnativebridge \
-    libradio_metadata
+    libradio_metadata \
+    libhardware
 
 LOCAL_SHARED_LIBRARIES += \
     libhwui \

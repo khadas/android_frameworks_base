@@ -45,6 +45,17 @@
 
 #include "SkTemplates.h"
 
+#include <linux/videodev2.h>
+#include <hardware/hardware.h>
+#include <hardware/aml_screen.h>
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <sched.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <cutils/properties.h>
+
 // ----------------------------------------------------------------------------
 
 namespace android {
@@ -117,6 +128,121 @@ static void nativeDestroy(JNIEnv* env, jclass clazz, jlong nativeObject) {
     ctrl->decStrong((void *)nativeCreate);
 }
 
+static jobject nativeScreenshotBitmap_t(JNIEnv* env, jclass clazz,
+        jobject displayTokenObj, jobject sourceCropObj, jint width, jint height,
+        jint minLayer, jint maxLayer, bool allLayers, bool useIdentityTransform,
+        int rotation) {
+    sp<IBinder> displayToken = ibinderForJavaObject(env, displayTokenObj);
+    if (displayToken == NULL) {
+        return NULL;
+    }
+
+    int left = env->GetIntField(sourceCropObj, gRectClassInfo.left);
+    int top = env->GetIntField(sourceCropObj, gRectClassInfo.top);
+    int right = env->GetIntField(sourceCropObj, gRectClassInfo.right);
+    int bottom = env->GetIntField(sourceCropObj, gRectClassInfo.bottom);
+    ALOGD("[%s %d]", __FUNCTION__, __LINE__);
+    int CAPTURE_MAX_BITMAP_W = 1920;
+    int CAPTURE_MAX_BITMAP_H = 1080;
+    ALOGD("rect size: %d, %d, %d, %d", left, top, right, bottom);
+
+    if (left < 0 || top < 0 || right < 0 || bottom <0 || left > right || top > bottom) {
+        ALOGE("wrong rect size!!!");
+        return NULL ;
+    }
+    if (width <= 0 || height <= 0) {
+        ALOGE("wrong bitmap size!!!");
+        return NULL ;
+    }
+
+    jobject ret1 = NULL;
+    int customW = 0;
+    int customH = 0;
+
+    //-----------------getVideoBuffer--------------//
+    aml_screen_module_t* screenModule = NULL;
+    aml_screen_device_t* screenDev = NULL;
+    if (!screenModule)
+        hw_get_module(AML_SCREEN_HARDWARE_MODULE_ID, (const hw_module_t **)&screenModule);
+
+    if (screenModule)
+        screenModule->common.methods->open((const hw_module_t *)screenModule, "1",
+                (struct hw_device_t **)&screenDev);
+
+    if (screenDev) {
+        customW = width > 0 ? width : CAPTURE_MAX_BITMAP_W;
+        customH = height > 0 ? height : CAPTURE_MAX_BITMAP_H;
+        screenDev->ops.set_format(screenDev, customW, customH, V4L2_PIX_FMT_RGB565X); // V4L2_PIX_FMT_NV21 ,V4L2_PIX_FMT_RGB24
+        screenDev->ops.set_port_type(screenDev, (int)0x1000C000); //TVIN_PORT_HDMI0 = 0x4000
+        if (left < right && top < bottom)
+            screenDev->ops.set_amlvideo2_crop(screenDev, left, top,(right-left), (bottom-top));
+        screenDev->ops.start_v4l2_device(screenDev);
+
+        aml_screen_buffer_info_t buff_info;
+        int ret = 0;
+
+        int framecount = 0;
+        long *src = NULL;
+#if 0
+        char propBuf[PROPERTY_VALUE_MAX];
+        int dumpfd ;
+#endif
+        while (framecount < 10) {
+            ret = screenDev->ops.aquire_buffer(screenDev, &buff_info);
+            ALOGD("ret = %d",ret);
+            if (ret != 0 || (buff_info.buffer_mem == 0)) {
+                framecount++;
+                ALOGD("Get V4l2 buffer failed,retry,sleep 10ms");
+                usleep(10000);
+                continue;
+            } else {
+                ALOGD("get buffer finish!");
+                src = (long *)buff_info.buffer_mem;
+#if 0
+            property_get("debug.loadcapturedatatofile", propBuf, "");
+            if (strcmp(propBuf, "true") == 0) {
+                ALOGD("--create /data/data/capture \n");
+                dumpfd = open("/data/data/capture", O_CREAT | O_RDWR | O_TRUNC, 0644);
+                write(dumpfd, src , customW*customH*2);// V4L2_PIX_FMT_NV21:*3/2  ; V4L2_PIX_FMT_RGB24: *3
+                ALOGD("--write finish\n");
+                close(dumpfd);
+            }
+#endif
+                break;
+            }
+        }
+
+        //------------------create bitmap-------------------//
+        if (src) {
+            SkBitmap result;
+            SkBitmap *createdBitmap = new SkBitmap();//createFrameBitmap();
+
+            if (createdBitmap != NULL) {
+                //-----------------setPinxels for bitmap--------------//
+                ALOGD("final bitmap size: %dX%d",customW,customH);
+                SkImageInfo info = SkImageInfo::Make(customW, customH,kRGB_565_SkColorType,kPremul_SkAlphaType); //  kRGBA_8888_SkColorType
+
+                createdBitmap->setInfo(info);
+                createdBitmap->setPixels(src);
+
+                JavaPixelAllocator  allocator(env);
+                if (createdBitmap->copyTo(&result, &allocator)) {
+                    Bitmap* bitmap = allocator.getStorageObjAndReset();
+                    if (bitmap != NULL)
+                        ret1 = GraphicsJNI::createBitmap(env, bitmap, false);
+                }
+            }
+        }
+
+        if (framecount < 10 && src != NULL )
+            screenDev->ops.release_buffer(screenDev,src);
+        screenDev->ops.stop_v4l2_device(screenDev);
+        screenDev->common.close((hw_device_t*)screenDev);
+    }
+    ALOGD("nativeScreenshotBitmap finish");
+    return ret1;
+}
+
 static jobject nativeScreenshotBitmap(JNIEnv* env, jclass clazz,
         jobject displayTokenObj, jobject sourceCropObj, jint width, jint height,
         jint minLayer, jint maxLayer, bool allLayers, bool useIdentityTransform,
@@ -186,6 +312,7 @@ static jobject nativeScreenshotBitmap(JNIEnv* env, jclass clazz,
     return GraphicsJNI::createBitmap(env, bitmap,
             GraphicsJNI::kBitmapCreateFlag_Premultiplied, NULL);
 }
+
 
 static void nativeScreenshot(JNIEnv* env, jclass clazz, jobject displayTokenObj,
         jobject surfaceObj, jobject sourceCropObj, jint width, jint height,
@@ -588,6 +715,8 @@ static JNINativeMethod sSurfaceControlMethods[] = {
             (void*)nativeDestroy },
     {"nativeScreenshot", "(Landroid/os/IBinder;Landroid/graphics/Rect;IIIIZZI)Landroid/graphics/Bitmap;",
             (void*)nativeScreenshotBitmap },
+    {"nativeScreenshot_t", "(Landroid/os/IBinder;Landroid/graphics/Rect;IIIIZZI)Landroid/graphics/Bitmap;",
+            (void*)nativeScreenshotBitmap_t },
     {"nativeScreenshot", "(Landroid/os/IBinder;Landroid/view/Surface;Landroid/graphics/Rect;IIIIZZ)V",
             (void*)nativeScreenshot },
     {"nativeOpenTransaction", "()V",
