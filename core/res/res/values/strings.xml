@@ -4116,4 +4116,6 @@
     <string name="reboot_confirm" product="default">Your phone will reboot.</string>
     <!-- label for item that reboot in phone options dialog -->
     <string name="global_action_reboot">Reboot</string>
+    <string name="reboot2linux">Reboot to Linux OS</string>
+    <string name="reboot2linux_progress" >System switching...</string>
 </resources>

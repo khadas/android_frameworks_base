@@ -446,6 +446,7 @@ public interface WindowManagerPolicy {
 
         public void rebootSafeMode(boolean confirm);
 
+        public void rebootLinuxOS(boolean confirm);
         /**
          * Return the window manager lock needed to correctly call "Lw" methods.
          */

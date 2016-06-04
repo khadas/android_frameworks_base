@@ -182,6 +182,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static public final String SYSTEM_DIALOG_REASON_RECENT_APPS = "recentapps";
     static public final String SYSTEM_DIALOG_REASON_HOME_KEY = "homekey";
     static public final String SYSTEM_DIALOG_REASON_ASSIST = "assist";
+    static public final String SYSTEM_DIALOG_REBOOT2LINUX = "com.geekbox.poweroff";
 
     /**
      * These are the system UI flags that, when changing, can cause the layout
@@ -1368,6 +1369,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         filter = new IntentFilter();
         filter.addAction(Intent.ACTION_DREAMING_STARTED);
         filter.addAction(Intent.ACTION_DREAMING_STOPPED);
+        filter.addAction(SYSTEM_DIALOG_REBOOT2LINUX);
         context.registerReceiver(mDreamReceiver, filter);
 
         // register for multiuser-relevant broadcasts
@@ -5231,6 +5233,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (mKeyguardDelegate != null) {
                     mKeyguardDelegate.onDreamingStopped();
                 }
+            } else if (SYSTEM_DIALOG_REBOOT2LINUX.equals(intent.getAction())) {
+                showGlobalActions();
             }
         }
     };
