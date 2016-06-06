@@ -5198,7 +5198,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     isWakeKey = true;
 
                 Log.i(TAG, "interceptKeyBeforeQueueing it's a netflix key isWakeKey:" + isWakeKey + " interactive:" + interactive);
-                if (mContext.getPackageManager().hasSystemFeature("android.software.netflix")) {
+                if (mContext.getPackageManager().hasSystemFeature("droidlogic.software.netflix")) {
                     if (down) {
                         Intent netflixIntent = new Intent();
                         netflixIntent.setAction("com.netflix.ninja.intent.action.NETFLIX_KEY");
