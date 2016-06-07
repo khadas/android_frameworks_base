@@ -306,6 +306,8 @@ abstract class HdmiCecLocalDevice {
                 return handleTimerStatus(message);
             case Constants.MESSAGE_RECORD_STATUS:
                 return handleRecordStatus(message);
+            case Constants.MESSAGE_REPORT_SHORT_AUDIO_DESCRIPTOR:
+                return handleReportShortAudioDescriptor(message);
             default:
                 return false;
         }
@@ -430,6 +432,10 @@ abstract class HdmiCecLocalDevice {
     }
 
     protected boolean handleReportAudioStatus(HdmiCecMessage message) {
+        return false;
+    }
+
+    protected boolean handleReportShortAudioDescriptor(HdmiCecMessage message) {
         return false;
     }
 

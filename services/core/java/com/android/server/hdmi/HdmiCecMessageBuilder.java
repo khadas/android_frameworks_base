@@ -244,6 +244,17 @@ public class HdmiCecMessageBuilder {
     }
 
     /**
+     * Build &lt;Request Short Audio Descriptor&gt;
+     *
+     * @param src source address of command
+     * @param dest destination address of command
+     * @return newly created {@link HdmiCecMessage}
+     */
+    static HdmiCecMessage buildRequestShortAudioDescriptor(int src, int dest, byte[] params) {
+        return buildCommand(src, dest, Constants.MESSAGE_REQUEST_SHORT_AUDIO_DESCRIPTOR, params);
+    }
+
+    /**
      * Build &lt;Text View On&gt; command.
      *
      * @param src source address of command

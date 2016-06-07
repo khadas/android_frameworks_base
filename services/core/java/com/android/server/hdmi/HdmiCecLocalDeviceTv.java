@@ -72,6 +72,13 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     private boolean mArcEstablished = false;
 
+    // Whether tv is requesting audio descriptor from ARC.
+    @ServiceThreadOnly
+    private boolean isRequestingAudioDes = false;
+
+    //All audio data block about ARC. Each Short Audio Descriptor is 3-bytes long.
+    private String mArcAudioDesData = "";
+
     // Stores whether ARC feature is enabled per port. True by default for all the ARC-enabled ports.
     private final SparseBooleanArray mArcFeatureEnabled = new SparseBooleanArray();
 
@@ -785,6 +792,17 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     @Override
     @ServiceThreadOnly
+    protected boolean handleReportShortAudioDescriptor(HdmiCecMessage message) {
+        assertRunOnServiceThread();
+        if (isRequestingAudioDes) {
+            setArcStatus(true);
+            isRequestingAudioDes = false;
+        }
+        return true;
+    }
+
+    @Override
+    @ServiceThreadOnly
     protected boolean handleTextViewOn(HdmiCecMessage message) {
         assertRunOnServiceThread();
         if (mService.isPowerStandbyOrTransient() && mAutoWakeup) {
@@ -958,6 +976,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         assertRunOnServiceThread();
 
         HdmiLogger.debug("Set Arc Status[old:%b new:%b]", mArcEstablished, enabled);
+
+        if (questAudioDescriptor(enabled)) {
+            return false;
+        }
+
         boolean oldStatus = mArcEstablished;
         // 1. Enable/disable ARC circuit.
         setAudioReturnChannel(enabled);
@@ -966,6 +989,25 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         // 3. Update arc status;
         mArcEstablished = enabled;
         return oldStatus;
+    }
+
+    /**
+     * This function which gets the audio parameters about ARC
+     * is invoked when start ARC.
+     */
+    private boolean questAudioDescriptor(boolean enabled) {
+        if (!isRequestingAudioDes && enabled && !mArcEstablished
+            && !hasAction(ShortAudioDescriptorAction.class)) {
+            isRequestingAudioDes = true;
+            addAndStartAction(new ShortAudioDescriptorAction(this, Constants.ADDR_AUDIO_SYSTEM));
+            return true;
+        }
+        return false;
+    }
+
+    @ServiceThreadOnly
+    void setArcAudioDescriptor(String data) {
+        mArcAudioDesData = data;
     }
 
     /**
@@ -1011,9 +1053,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     private void notifyArcStatusToAudioService(boolean enabled) {
         // Note that we don't set any name to ARC.
+        Slog.d(TAG, "mArcAudioDesData = " + mArcAudioDesData);
         mService.getAudioManager().setWiredDeviceConnectionState(
                 AudioSystem.DEVICE_OUT_HDMI_ARC,
-                enabled ? 1 : 0, "", "");
+                enabled ? 1 : 0, mArcAudioDesData, "");
     }
 
     /**
