@@ -551,6 +551,11 @@ public final class HdmiControlService extends SystemService {
     private void initializeCec(int initiatedBy) {
         mAddressAllocated = false;
         mCecController.setOption(OPTION_CEC_SERVICE_CONTROL, ENABLED);
+        /* update language for simplified chinese */
+        Locale l = Locale.getDefault();
+        if (l.equals(Locale.CHINA) || l.equals(Locale.CHINESE)) {
+            mLanguage = "chi";
+        }
         mCecController.setOption(OPTION_CEC_SET_LANGUAGE, HdmiUtils.languageToInt(mLanguage));
         initializeLocalDevices(initiatedBy);
     }

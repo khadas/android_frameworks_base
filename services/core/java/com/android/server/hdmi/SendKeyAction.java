@@ -168,7 +168,8 @@ final class SendKeyAction extends HdmiCecFeatureAction {
                 // The first key press lasts long enough to start press-and-hold.
                 mActionTimer.clearTimerMessage();
                 mState = STATE_PROCESSING_KEYCODE;
-                sendKeyDown(mLastKeycode);
+                /* will send a key twice, so clear this sentence */
+                /* sendKeyDown(mLastKeycode); */
                 mLastSendKeyTime = getCurrentTime();
                 addTimer(mState, AWAIT_RELEASE_KEY_MS);
                 break;

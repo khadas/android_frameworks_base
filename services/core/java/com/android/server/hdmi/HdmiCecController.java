@@ -22,6 +22,7 @@ import android.os.Looper;
 import android.os.MessageQueue;
 import android.util.Slog;
 import android.util.SparseArray;
+import android.hardware.hdmi.HdmiDeviceInfo;
 
 import com.android.internal.util.IndentingPrintWriter;
 import com.android.internal.util.Predicate;
@@ -101,6 +102,9 @@ final class HdmiCecController {
     // Stores the local CEC devices in the system. Device type is used for key.
     private final SparseArray<HdmiCecLocalDevice> mLocalDevices = new SparseArray<>();
 
+    // if Local device has child
+    private boolean mHasChild = false;
+
     // Private constructor.  Use HdmiCecController.create().
     private HdmiCecController(HdmiControlService service) {
         mService = service;
@@ -138,6 +142,9 @@ final class HdmiCecController {
     void addLocalDevice(int deviceType, HdmiCecLocalDevice device) {
         assertRunOnServiceThread();
         mLocalDevices.put(deviceType, device);
+        if (deviceType == HdmiDeviceInfo.DEVICE_TV) {
+            mHasChild = true;
+        }
     }
 
     /**
@@ -581,6 +588,20 @@ final class HdmiCecController {
                 final int finalError = errorCode;
                 if (finalError != Constants.SEND_RESULT_SUCCESS) {
                     Slog.w(TAG, "Failed to send " + cecMessage);
+                }
+                /* remove device if not ack */
+                if (finalError == Constants.SEND_RESULT_NAK) {
+                    if (mHasChild && !sendPollMessage(cecMessage.getSource(), cecMessage.getDestination(), 2)) {
+                        runOnServiceThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Slog.d(TAG, "Lost CEC connection with: " + cecMessage.getDestination() + ", remove it");
+                                HdmiCecLocalDeviceTv tv = (HdmiCecLocalDeviceTv)getLocalDevice(HdmiDeviceInfo.DEVICE_TV);
+                                if (tv != null)
+                                    tv.cleanCecDevice(cecMessage.getDestination());
+                            }
+                        });
+                    }
                 }
                 if (callback != null) {
                     runOnServiceThread(new Runnable() {

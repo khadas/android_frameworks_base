@@ -51,6 +51,7 @@ public class PowerStatusMonitorAction extends HdmiCecFeatureAction {
     // If this is non-empty when timeout for STATE_WAIT_FOR_REPORT_POWER_STATUS happens,
     // updates power status of all remaining devices into POWER_STATUS_UNKNOWN.
     private final SparseIntArray mPowerStatus = new SparseIntArray();
+    private boolean mQueryStarted = false;
 
     PowerStatusMonitorAction(HdmiCecLocalDevice source) {
         super(source);
@@ -111,7 +112,7 @@ public class PowerStatusMonitorAction extends HdmiCecFeatureAction {
         }
     }
 
-    private void queryPowerStatus() {
+    void queryPowerStatus() {
         List<HdmiDeviceInfo> deviceInfos = tv().getDeviceInfoList(false);
         resetPowerStatus(deviceInfos);
         for (HdmiDeviceInfo info : deviceInfos) {
@@ -133,8 +134,10 @@ public class PowerStatusMonitorAction extends HdmiCecFeatureAction {
         mState = STATE_WAIT_FOR_REPORT_POWER_STATUS;
 
         // Add both timers, monitoring and timeout.
-        addTimer(STATE_WAIT_FOR_NEXT_MONITORING, MONITIROING_INTERNAL_MS);
+        if (!mQueryStarted)
+            addTimer(STATE_WAIT_FOR_NEXT_MONITORING, MONITIROING_INTERNAL_MS);
         addTimer(STATE_WAIT_FOR_REPORT_POWER_STATUS, REPORT_POWER_STATUS_TIMEOUT_MS);
+        mQueryStarted = true;
     }
 
     private void updatePowerStatus(int logicalAddress, int newStatus, boolean remove) {

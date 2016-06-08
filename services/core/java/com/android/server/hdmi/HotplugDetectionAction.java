@@ -36,9 +36,11 @@ import java.util.List;
 final class HotplugDetectionAction extends HdmiCecFeatureAction {
     private static final String TAG = "HotPlugDetectionAction";
 
-    private static final int POLLING_INTERVAL_MS = 5000;
-    private static final int TIMEOUT_COUNT = 3;
-    private static final int AVR_COUNT_MAX = 3;
+    private static final int POLLING_INTERVAL_MS = 20000;
+    private static final int POLLING_INTERVAL_MS_QUICK = 5000;
+    private static final int POLLING_INTERVAL_MS_FILTER = 1500;
+    private static final int TIMEOUT_COUNT = 4;
+    private static final int AVR_COUNT_MAX = 2;
 
     // State in which waits for next polling
     private static final int STATE_WAIT_FOR_NEXT_POLLING = 1;
@@ -54,6 +56,8 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     // This is a workaround to deal with it, by removing the device only if the removal
     // is detected {@code AVR_COUNT_MAX} times in a row.
     private int mAvrStatusCount = 0;
+
+    private boolean mInPolling = false;
 
     /**
      * Constructor
@@ -73,7 +77,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
 
         // Start timer without polling.
         // The first check for all devices will be initiated 15 seconds later.
-        addTimer(mState, POLLING_INTERVAL_MS);
+        addTimer(mState, POLLING_INTERVAL_MS_QUICK);
         return true;
     }
 
@@ -104,16 +108,17 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
 
         mTimeoutCount = 0;
         mState = STATE_WAIT_FOR_NEXT_POLLING;
-        pollAllDevices();
 
-        addTimer(mState, POLLING_INTERVAL_MS);
+        addTimer(mState, POLLING_INTERVAL_MS_FILTER);
     }
 
     // This method is called every 5 seconds.
     private void pollDevices() {
-        // All device check called every 15 seconds.
-        if (mTimeoutCount == 0) {
+        // quickly poll 2 times then slow down
+        if (mTimeoutCount < AVR_COUNT_MAX) {
             pollAllDevices();
+            addTimer(mState, POLLING_INTERVAL_MS_QUICK);
+            return;
         } else {
             if (tv().isSystemAudioActivated()) {
                 pollAudioSystem();
@@ -124,24 +129,32 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     }
 
     private void pollAllDevices() {
+        if (mInPolling) // don't poll again if is in polling
+            return ;
         Slog.v(TAG, "Poll all devices.");
 
+        mInPolling = true;
         pollDevices(new DevicePollingCallback() {
             @Override
             public void onPollingFinished(List<Integer> ackedAddress) {
                 checkHotplug(ackedAddress, false);
+                mInPolling = false;
             }
         }, Constants.POLL_ITERATION_IN_ORDER
                 | Constants.POLL_STRATEGY_REMOTES_DEVICES, HdmiConfig.HOTPLUG_DETECTION_RETRY);
     }
 
     private void pollAudioSystem() {
+        if (mInPolling) // don't poll again if is in polling
+            return ;
         Slog.v(TAG, "Poll audio system.");
 
+        mInPolling = true;
         pollDevices(new DevicePollingCallback() {
             @Override
             public void onPollingFinished(List<Integer> ackedAddress) {
                 checkHotplug(ackedAddress, true);
+                mInPolling = false;
             }
         }, Constants.POLL_ITERATION_IN_ORDER
                 | Constants.POLL_STRATEGY_SYSTEM_AUDIO, HdmiConfig.HOTPLUG_DETECTION_RETRY);
@@ -165,8 +178,6 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
                     }
                 }
             }
-            Slog.v(TAG, "Remove device by hot-plug detection:" + index);
-            removeDevice(index);
         }
 
         // Reset the counter if the ack is returned from AVR.

@@ -478,14 +478,17 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         int physicalAddress = HdmiUtils.twoBytesToInt(message.getParams());
         HdmiDeviceInfo info = getCecDeviceInfo(logicalAddress);
         if (info == null) {
+            Slog.d(TAG, "Device info " + logicalAddress +" not found; buffering the command");
             if (!handleNewDeviceAtTheTailOfActivePath(physicalAddress)) {
-                HdmiLogger.debug("Device info %X not found; buffering the command", logicalAddress);
                 mDelayedMessageBuffer.add(message);
             }
+            // start a device discovery if get new device
+            mService.sendCecCommand(HdmiCecMessageBuilder.buildGivePhysicalAddress(mAddress, logicalAddress));
         } else if (!isInputReady(info.getId())) {
-            HdmiLogger.debug("Input not ready for device: %X; buffering the command", info.getId());
+            Slog.d(TAG, "Input not ready for device:" + logicalAddress +", buffering the command");
             mDelayedMessageBuffer.add(message);
         } else {
+            Slog.d(TAG, "Active source:" + physicalAddress);
             updateDevicePowerStatus(logicalAddress, HdmiControlManager.POWER_STATUS_ON);
             ActiveSource activeSource = ActiveSource.of(logicalAddress, physicalAddress);
             ActiveSourceHandler.create(this, null).process(activeSource, info.getDeviceType());
@@ -1433,6 +1436,30 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     final void addCecDevice(HdmiDeviceInfo info) {
         assertRunOnServiceThread();
+        /* check if devices has same physical address */
+        if ((info.getPhysicalAddress() == mService.getPhysicalAddress()) &&
+            (mDeviceInfos.size() != 0) &&
+            info.getLogicalAddress() != mAddress) {
+            Slog.d(TAG, "has same physical address with local device:" + info + ", local size:" + mDeviceInfos.size());
+            return ;
+        }
+        for (int i = 0; i < mDeviceInfos.size(); i++) {
+            HdmiDeviceInfo dev = mDeviceInfos.valueAt(i);
+            /* check if old dev with same phy address is exist */
+            if (info.getPhysicalAddress() == dev.getPhysicalAddress() && info.getLogicalAddress() != dev.getLogicalAddress()) {
+                Slog.d(TAG, "found devices with same physical addr:" + info + ", dev:" + dev);
+                HdmiCecMessage msg = HdmiCecMessageBuilder.buildGivePhysicalAddress(mAddress, dev.getLogicalAddress());
+                mService.sendCecCommand(msg, new SendMessageCallback() {
+                    @Override
+                    public void onSendCompleted(int error) {
+                        if (error != Constants.SEND_RESULT_SUCCESS) {
+                            Slog.d(TAG, "send GivePhysicalAddress failed:\n" + error);
+                        }
+                    }
+                });
+            }
+        }
+
         HdmiDeviceInfo old = addDeviceInfo(info);
         if (info.getLogicalAddress() == mAddress) {
             // The addition of TV device itself should not be notified.
@@ -1560,17 +1587,95 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         assertRunOnServiceThread();
 
         if (!connected) {
+            removePortDevices(portId);
             removeCecSwitches(portId);
         }
         // Tv device will have permanent HotplugDetectionAction.
         List<HotplugDetectionAction> hotplugActions = getActions(HotplugDetectionAction.class);
-        if (!hotplugActions.isEmpty()) {
+
+        /* only poll devices when connected */
+        if (!hotplugActions.isEmpty() && connected) {
             // Note that hotplug action is single action running on a machine.
             // "pollAllDevicesNow" cleans up timer and start poll action immediately.
             // It covers seq #40, #43.
             hotplugActions.get(0).pollAllDevicesNow();
         }
         updateArcFeatureStatus(portId, connected);
+    }
+
+    /* check if a device is child of a port */
+    private boolean isDevice(int devAddr, int parentAddr) {
+        int bitMask = 0xf000, a = 0, b = 0;
+        if (parentAddr == devAddr)
+            return true;
+
+        for (int i = 0; i < 4; i++) {
+            a = devAddr & bitMask;
+            b = parentAddr & bitMask;
+            if (a != b)
+                break;
+            bitMask >>= 4;
+        }
+        if (b == 0)
+            return true;
+        return false;
+    }
+
+    /* remove all devices related to a port id */
+    private void removePortDevices(int portId) {
+        int localAddress;
+        localAddress = mService.portIdToPath(portId);
+        for (int i = 0; i < mDeviceInfos.size(); ++i) {
+            HdmiDeviceInfo info = mDeviceInfos.valueAt(i);
+            int logicalAddr = info.getLogicalAddress();
+            if (isDevice(info.getPhysicalAddress(), localAddress)) {
+                Slog.d(TAG, "Plug out, remove HdimInfo:" + info);
+                cleanCecDevice(logicalAddr);
+            }
+        }
+    }
+
+    public void cleanCecDevice(int logicalAddr) {
+        HdmiDeviceInfo info = mDeviceInfos.get(logicalAddr);
+
+        if (info == null)
+            return ;
+        /* remove source path */
+        handleRemoveActiveRoutingPath(info.getPhysicalAddress());
+        if (mActiveSource.equals(logicalAddr, info.getPhysicalAddress())) {
+            Slog.d(TAG, "cleanCecDevice");
+            mActiveSource.invalidate();
+        }
+
+        /* remove device select */
+        List<DeviceSelectAction> actions = getActions(DeviceSelectAction.class);
+        if (!actions.isEmpty()) {
+            // Should have only one Device Select Action
+            DeviceSelectAction action = actions.get(0);
+            if (action.getTargetAddress() == logicalAddr) {
+                removeAction(DeviceSelectAction.class);
+            }
+        }
+
+        /* remove one touch record action */
+        List<OneTouchRecordAction> Oneactions = getActions(OneTouchRecordAction.class);
+        for (OneTouchRecordAction action : Oneactions) {
+            if (action.getRecorderAddress() == logicalAddr) {
+                removeAction(action);
+            }
+        }
+
+        /* remove audio related status */
+        if (HdmiUtils.getTypeFromAddress(logicalAddr) == HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM) {
+            // Turn off system audio mode and update settings.
+            setSystemAudioMode(false, true);
+            if (isArcEstablished()) {
+                setAudioReturnChannel(false);
+                addAndStartAction(new RequestArcTerminationAction(this, logicalAddr));
+            }
+        }
+
+        removeCecDevice(logicalAddr);
     }
 
     private void removeCecSwitches(int portId) {
@@ -1865,6 +1970,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         HdmiDeviceInfo newInfo = HdmiUtils.cloneHdmiDeviceInfo(info, newPowerStatus);
         // addDeviceInfo replaces old device info with new one if exists.
         addDeviceInfo(newInfo);
+        Slog.d(TAG, "update device:" + newInfo);
 
         invokeDeviceEventListener(newInfo, HdmiControlManager.DEVICE_EVENT_UPDATE_DEVICE);
     }

@@ -239,6 +239,7 @@ final class HdmiCecKeycode {
     private static final KeycodeEntry[] KEYCODE_ENTRIES = new KeycodeEntry[] {
             new KeycodeEntry(KeyEvent.KEYCODE_DPAD_CENTER, CEC_KEYCODE_SELECT),
             new KeycodeEntry(KeyEvent.KEYCODE_DPAD_UP, CEC_KEYCODE_UP),
+            new KeycodeEntry(KeyEvent.KEYCODE_ENTER, CEC_KEYCODE_SELECT),
             new KeycodeEntry(KeyEvent.KEYCODE_DPAD_DOWN, CEC_KEYCODE_DOWN),
             new KeycodeEntry(KeyEvent.KEYCODE_DPAD_LEFT, CEC_KEYCODE_LEFT),
             new KeycodeEntry(KeyEvent.KEYCODE_DPAD_RIGHT, CEC_KEYCODE_RIGHT),
