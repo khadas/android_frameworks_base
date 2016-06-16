@@ -64,7 +64,7 @@ static int usb_device_added(const char *devname, void* client_data) {
         ALOGE("usb_device_open failed\n");
         return 0;
     }
-
+    usleep(1000*10);
     JNIEnv* env = AndroidRuntime::getJNIEnv();
     jobject thiz = (jobject)client_data;
     const usb_device_descriptor* deviceDesc = usb_device_get_device_descriptor(device);
