@@ -15,7 +15,6 @@
  */
 
 package com.android.server.policy;
-
 import android.app.ActivityManager;
 import android.app.ActivityManagerInternal;
 import android.app.ActivityManagerInternal.SleepToken;
@@ -316,6 +315,50 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int[] mNavigationBarHeightForRotation = new int[4];
     int[] mNavigationBarWidthForRotation = new int[4];
 
+
+    private int screenWidth;
+    private int screenHeight;
+	private String mstate = null;
+	private float mdeltax, mdeltay;
+	boolean keydown;
+
+	public Handler mKeyMouseHandler = new Handler() {
+		public void handleMessage(Message msg) {
+			switch(msg.what){
+				case KeyEvent.KEYCODE_TV_KEYMOUSE_LEFT:
+					mdeltax = -1.0f;
+                    mdeltay = 0;
+					break;
+			    case KeyEvent.KEYCODE_TV_KEYMOUSE_RIGHT:
+				    mdeltax = 1.0f;
+				    mdeltay = 0 ;
+					break;
+				case KeyEvent.KEYCODE_TV_KEYMOUSE_UP:
+				    mdeltax = 0 ;
+				    mdeltay = -1.0f;
+					break;
+				case KeyEvent.KEYCODE_TV_KEYMOUSE_DOWN:
+				    mdeltax = 0;
+				    mdeltay = 1.0f;
+				    break;
+				case KeyEvent.KEYCODE_TV_KEYMOUSE_MODE_SWITCH:
+				    mdeltax = 0;
+				    mdeltay =0;
+				    break;
+			   default:
+					break;
+			}
+			try {
+				mWindowManager.dispatchMouse(mdeltax,mdeltay,screenWidth,screenHeight);
+			}catch (Exception e){
+				e.printStackTrace();
+			}
+			if(keydown){
+
+			 mKeyMouseHandler.sendEmptyMessageDelayed(msg.what,30);
+			}
+         }
+	 };
     boolean mBootMessageNeedsHiding;
     KeyguardServiceDelegate mKeyguardDelegate;
     final Runnable mWindowManagerDrawCallback = new Runnable() {
@@ -1571,6 +1614,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mWindowManagerInternal.registerAppTransitionListener(
                 mStatusBarController.getAppTransitionListener());
+
+		WindowManager wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
+		DisplayMetrics displayMetrics = new DisplayMetrics();
+		wm.getDefaultDisplay().getMetrics(displayMetrics);
+		screenWidth = displayMetrics.widthPixels;
+		screenHeight = displayMetrics.heightPixels;
     }
 
     /**
@@ -2678,6 +2727,28 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     + repeatCount + " keyguardOn=" + keyguardOn + " mHomePressed=" + mHomePressed
                     + " canceled=" + canceled);
         }
+
+		mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
+		Log.d(TAG,"sys.KeyMouse.mKeyMouseState= "+mstate);
+		if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_LEFT)
+					|| (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_RIGHT)
+					|| (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_UP)
+					|| (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_DOWN)
+					|| (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_MODE_SWITCH))){
+            if(down){
+				keydown = true;;
+		    } else{
+
+			    keydown = false;
+		    }
+           mKeyMouseHandler.sendEmptyMessage(keyCode);
+
+		}
+
+		if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_ENTER)
+					||(keyCode == KeyEvent.KEYCODE_DPAD_CENTER))) {
+			return -1;
+		}
 
         // If we think we might have a volume down & power key chord on the way
         // but we're not sure, then tell the dispatcher to wait a little while and
