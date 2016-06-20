@@ -23,6 +23,7 @@ import static com.android.server.hdmi.Constants.ENABLED;
 import static com.android.server.hdmi.Constants.OPTION_CEC_AUTO_WAKEUP;
 import static com.android.server.hdmi.Constants.OPTION_CEC_ENABLE;
 import static com.android.server.hdmi.Constants.OPTION_CEC_SERVICE_CONTROL;
+import static com.android.server.hdmi.Constants.OPTION_CEC_AUTO_DEVICE_OFF;
 import static com.android.server.hdmi.Constants.OPTION_CEC_SET_LANGUAGE;
 import static com.android.server.hdmi.Constants.OPTION_MHL_ENABLE;
 import static com.android.server.hdmi.Constants.OPTION_MHL_INPUT_SWITCHING;
@@ -415,7 +416,6 @@ public final class HdmiControlService extends SystemService {
             IntentFilter filter = new IntentFilter();
             filter.addAction(Intent.ACTION_SCREEN_OFF);
             filter.addAction(Intent.ACTION_SCREEN_ON);
-            filter.addAction(Intent.ACTION_SHUTDOWN);
             filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
             getContext().registerReceiver(mHdmiControlBroadcastReceiver, filter);
 
@@ -463,6 +463,7 @@ public final class HdmiControlService extends SystemService {
 
         if (isTvDeviceEnabled()) {
             mCecController.setOption(OPTION_CEC_AUTO_WAKEUP, toInt(tv().getAutoWakeup()));
+            mCecController.setOption(OPTION_CEC_AUTO_DEVICE_OFF, toInt(tv().getAutoDeviceOff()));
         }
         int reason = -1;
         switch (initiatedBy) {
@@ -522,7 +523,11 @@ public final class HdmiControlService extends SystemService {
                         HdmiCecLocalDevice localDevice = mCecController.getLocalDevice(type);
                         localDevice.setAutoDeviceOff(enabled);
                     }
-                    // No need to propagate to HAL.
+                    /*
+                     * TV shut down is so slow and if user wake up device quickly
+                     * TV won't be wake up, so do this by uboot
+                     */
+                    setCecOption(OPTION_CEC_AUTO_DEVICE_OFF, toInt(enabled));
                     break;
                 case Global.MHL_INPUT_SWITCHING_ENABLED:
                     setMhlInputChangeEnabled(enabled);

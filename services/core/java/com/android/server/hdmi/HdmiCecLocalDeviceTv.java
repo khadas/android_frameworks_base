@@ -1696,6 +1696,12 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     }
 
     @ServiceThreadOnly
+    boolean getAutoDeviceOff() {
+        assertRunOnServiceThread();
+        return mAutoDeviceOff;
+    }
+
+    @ServiceThreadOnly
     void setAutoWakeup(boolean enabled) {
         assertRunOnServiceThread();
         mAutoWakeup = enabled;
