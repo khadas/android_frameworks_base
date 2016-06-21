@@ -7208,6 +7208,18 @@ package android.bluetooth {
     field public static final int TYPE_SCO = 2; // 0x2
   }
 
+  public abstract interface IBluetoothRtkbt implements android.os.IInterface {
+    method public abstract int GenericCommand(int, int, byte[], int) throws android.os.RemoteException;
+    method public abstract int GetFeature(int) throws android.os.RemoteException;
+  }
+
+  public static abstract class IBluetoothRtkbt.Stub extends android.os.Binder implements android.bluetooth.IBluetoothRtkbt {
+    ctor public IBluetoothRtkbt.Stub();
+    method public android.os.IBinder asBinder();
+    method public static android.bluetooth.IBluetoothRtkbt asInterface(android.os.IBinder);
+    method public boolean onTransact(int, android.os.Parcel, android.os.Parcel, int) throws android.os.RemoteException;
+  }
+
 }
 
 package android.bluetooth.le {

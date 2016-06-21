@@ -414,6 +414,11 @@ LOCAL_SRC_FILES += \
 	packages/services/Proxy/com/android/net/IProxyCallback.aidl \
 	packages/services/Proxy/com/android/net/IProxyPortListener.aidl \
 
+#BOARD_HAVE_BLUETOOTH_RTK Begin#
+LOCAL_SRC_FILES += \
+	core/java/android/bluetooth/IBluetoothRtkbt.aidl
+#BOARD_HAVE_BLUETOOTH_RTK End#
+
 # FRAMEWORKS_BASE_JAVA_SRC_DIRS comes from build/core/pathmap.mk
 LOCAL_AIDL_INCLUDES += $(FRAMEWORKS_BASE_JAVA_SRC_DIRS)
 
@@ -619,7 +624,12 @@ aidl_files := \
 	frameworks/base/core/java/android/bluetooth/le/ScanFilter.aidl \
 	frameworks/base/core/java/android/bluetooth/le/ScanResult.aidl \
 	frameworks/base/core/java/android/bluetooth/BluetoothDevice.aidl \
-	frameworks/base/core/java/android/database/CursorWindow.aidl \
+	frameworks/base/core/java/android/database/CursorWindow.aidl
+
+#BOARD_HAVE_BLUETOOTH_RTK Begin#
+aidl_files += \
+	frameworks/base/core/java/android/bluetooth/IBluetoothRtkbt.aidl
+#BOARD_HAVE_BLUETOOTH_RTK End#
 
 gen := $(TARGET_OUT_COMMON_INTERMEDIATES)/framework.aidl
 $(gen): PRIVATE_SRC_FILES := $(aidl_files)
