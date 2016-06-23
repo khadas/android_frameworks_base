@@ -175,6 +175,7 @@ final class DeviceSelectAction extends HdmiCecFeatureAction {
         sendCommand(HdmiCecMessageBuilder.buildSetStreamPath(
                 getSourceAddress(), mTarget.getPhysicalAddress()));
         invokeCallback(HdmiControlManager.RESULT_SUCCESS);
+        tv().setSelectAddr(getTargetAddress());
         finish();
     }
 

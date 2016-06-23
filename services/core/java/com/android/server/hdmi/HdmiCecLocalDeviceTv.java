@@ -131,6 +131,9 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     // handle.
     private final DelayedMessageBuffer mDelayedMessageBuffer = new DelayedMessageBuffer(this);
 
+    // don't send key if select Addr is invalid
+    private int mSelectAddr = Constants.ADDR_INVALID;
+
     // Defines the callback invoked when TV input framework is updated with input status.
     // We are interested in the notification for HDMI input addition event, in order to
     // process any CEC commands that arrived before the input is added.
@@ -251,6 +254,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         HdmiDeviceInfo targetDevice = mDeviceInfos.get(id);
         if (targetDevice == null) {
             invokeCallback(callback, HdmiControlManager.RESULT_TARGET_NOT_AVAILABLE);
+            mSelectAddr = Constants.ADDR_INVALID;
             return;
         }
         int targetAddress = targetDevice.getLogicalAddress();
@@ -258,6 +262,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (targetDevice.getDevicePowerStatus() == HdmiControlManager.POWER_STATUS_ON
                 && active.isValid()
                 && targetAddress == active.logicalAddress) {
+            mSelectAddr = active.logicalAddress;
             invokeCallback(callback, HdmiControlManager.RESULT_SUCCESS);
             return;
         }
@@ -267,15 +272,22 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             setActiveSource(targetAddress, mService.getPhysicalAddress());
             setActivePath(mService.getPhysicalAddress());
             invokeCallback(callback, HdmiControlManager.RESULT_SUCCESS);
+            mSelectAddr = targetAddress;
             return;
         }
         if (!mService.isControlEnabled()) {
             setActiveSource(targetDevice);
             invokeCallback(callback, HdmiControlManager.RESULT_INCORRECT_MODE);
+            mSelectAddr = Constants.ADDR_INVALID;
             return;
         }
         removeAction(DeviceSelectAction.class);
         addAndStartAction(new DeviceSelectAction(this, targetDevice, callback));
+    }
+
+    @ServiceThreadOnly
+    protected void setSelectAddr(int addr) {
+        mSelectAddr = addr;
     }
 
     @ServiceThreadOnly
@@ -428,6 +440,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (!HdmiCecKeycode.isSupportedKeycode(keyCode)) {
             Slog.w(TAG, "Unsupported key: " + keyCode);
             return;
+        }
+        if (mSelectAddr == Constants.ADDR_INVALID) {
+            Slog.w(TAG, "Discard key event due to no device is selected");
+            return ;
         }
         List<SendKeyAction> action = getActions(SendKeyAction.class);
         int logicalAddress = findKeyReceiverAddress();
@@ -1976,7 +1992,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         HdmiDeviceInfo newInfo = HdmiUtils.cloneHdmiDeviceInfo(info, newPowerStatus);
         // addDeviceInfo replaces old device info with new one if exists.
         addDeviceInfo(newInfo);
-        Slog.d(TAG, "update device:" + newInfo);
 
         invokeDeviceEventListener(newInfo, HdmiControlManager.DEVICE_EVENT_UPDATE_DEVICE);
     }
@@ -2026,6 +2041,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         pw.println("mAutoWakeup: " + mAutoWakeup);
         pw.println("mSkipRoutingControl: " + mSkipRoutingControl);
         pw.println("mPrevPortId: " + mPrevPortId);
+        pw.println("mSelectAddr: " + mSelectAddr);
         pw.println("CEC devices:");
         pw.increaseIndent();
         for (HdmiDeviceInfo info : mSafeAllDeviceInfos) {

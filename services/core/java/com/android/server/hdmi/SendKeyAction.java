@@ -19,6 +19,7 @@ import static com.android.server.hdmi.HdmiConfig.IRT_MS;
 
 import android.util.Slog;
 import android.view.KeyEvent;
+import com.android.server.hdmi.HdmiControlService.SendMessageCallback;
 
 /**
  * Feature action that transmits remote control key command (User Control Press/
@@ -64,6 +65,8 @@ final class SendKeyAction extends HdmiCecFeatureAction {
     // The time stamp when the last CEC key command was sent. Used to determine the press-and-hold
     // operation.
     private long mLastSendKeyTime;
+
+    private boolean mKeySendOk = false;
 
     /**
      * Constructor.
@@ -134,20 +137,29 @@ final class SendKeyAction extends HdmiCecFeatureAction {
         } else {
             // Key release event indicates that the action shall be finished. Send UCR
             // command and terminate the action. Other release events are ignored.
-            if (keycode == mLastKeycode) {
+            if (keycode == mLastKeycode && mKeySendOk) {
                 sendKeyUp();
                 finish();
             }
         }
     }
 
+    private SendMessageCallback mMsgCallback = new SendMessageCallback() {
+        @Override
+        public void onSendCompleted(int error) {
+            mKeySendOk = true;
+            finish();
+        }
+    };
+
     private void sendKeyDown(int keycode) {
         byte[] cecKeycodeAndParams = HdmiCecKeycode.androidKeyToCecKey(keycode);
         if (cecKeycodeAndParams == null) {
             return;
         }
+        mKeySendOk = false;
         sendCommand(HdmiCecMessageBuilder.buildUserControlPressed(getSourceAddress(),
-                mTargetAddress, cecKeycodeAndParams));
+                mTargetAddress, cecKeycodeAndParams), mMsgCallback);
     }
 
     private void sendKeyUp() {
