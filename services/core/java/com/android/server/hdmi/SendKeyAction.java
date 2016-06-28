@@ -66,7 +66,14 @@ final class SendKeyAction extends HdmiCecFeatureAction {
     // operation.
     private long mLastSendKeyTime;
 
-    private boolean mKeySendOk = false;
+
+    private static final int KEY_STAGE_START = 0;
+    private static final int KEY_STAGE_REPEAT = 1;
+    private static final int KEY_STAGE_SEND_KEY_DOWN = 2;
+    private static final int KEY_STAGE_SEND_KEY_UP = 3;
+
+    private int mKeyStage = KEY_STAGE_START;
+    private boolean mKeyReleased = false;
 
     /**
      * Constructor.
@@ -114,6 +121,8 @@ final class SendKeyAction extends HdmiCecFeatureAction {
         if (isPressed) {
             // A new key press event that comes in with a key code different from the last
             // one becomes a new key code to be used for press-and-hold operation.
+            mKeyStage = KEY_STAGE_REPEAT;
+            mKeyReleased = false;
             if (keycode != mLastKeycode) {
                 sendKeyDown(keycode);
                 mLastSendKeyTime = getCurrentTime();
@@ -137,17 +146,29 @@ final class SendKeyAction extends HdmiCecFeatureAction {
         } else {
             // Key release event indicates that the action shall be finished. Send UCR
             // command and terminate the action. Other release events are ignored.
-            if (keycode == mLastKeycode && mKeySendOk) {
+            if (keycode == mLastKeycode && mKeyStage >= KEY_STAGE_SEND_KEY_DOWN) {
                 sendKeyUp();
                 finish();
+            } else {
+                mKeyReleased = true;
             }
         }
     }
 
-    private SendMessageCallback mMsgCallback = new SendMessageCallback() {
+    private SendMessageCallback mKeyDownCallback = new SendMessageCallback() {
         @Override
         public void onSendCompleted(int error) {
-            mKeySendOk = true;
+            mKeyStage = KEY_STAGE_SEND_KEY_DOWN;
+            if (mKeyReleased) {
+                sendKeyUp();
+            }
+        }
+    };
+
+    private SendMessageCallback mKeyUpCallback = new SendMessageCallback() {
+        @Override
+        public void onSendCompleted(int error) {
+            mKeyStage = KEY_STAGE_SEND_KEY_UP;
             finish();
         }
     };
@@ -157,14 +178,13 @@ final class SendKeyAction extends HdmiCecFeatureAction {
         if (cecKeycodeAndParams == null) {
             return;
         }
-        mKeySendOk = false;
         sendCommand(HdmiCecMessageBuilder.buildUserControlPressed(getSourceAddress(),
-                mTargetAddress, cecKeycodeAndParams), mMsgCallback);
+                mTargetAddress, cecKeycodeAndParams), mKeyDownCallback);
     }
 
     private void sendKeyUp() {
         sendCommand(HdmiCecMessageBuilder.buildUserControlReleased(getSourceAddress(),
-                mTargetAddress));
+                mTargetAddress), mKeyUpCallback);
     }
 
     @Override
