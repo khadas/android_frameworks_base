@@ -36,9 +36,9 @@ import java.util.List;
 final class HotplugDetectionAction extends HdmiCecFeatureAction {
     private static final String TAG = "HotPlugDetectionAction";
 
-    private static final int POLLING_INTERVAL_MS = 20000;
+    private static final int POLLING_INTERVAL_MS = 50000;
     private static final int POLLING_INTERVAL_MS_QUICK = 5000;
-    private static final int POLLING_INTERVAL_MS_FILTER = 1500;
+    private static final int POLLING_INTERVAL_MS_FILTER = 5000;
     private static final int TIMEOUT_COUNT = 4;
     private static final int AVR_COUNT_MAX = 2;
 
@@ -58,6 +58,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     private int mAvrStatusCount = 0;
 
     private boolean mInPolling = false;
+    private boolean mNewDeviceComming = false;
 
     /**
      * Constructor
@@ -94,8 +95,8 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
         }
 
         if (mState == STATE_WAIT_FOR_NEXT_POLLING) {
-            mTimeoutCount = (mTimeoutCount + 1) % TIMEOUT_COUNT;
             pollDevices();
+            mTimeoutCount = (mTimeoutCount + 1) % TIMEOUT_COUNT;
         }
     }
 
@@ -107,15 +108,23 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
         mActionTimer.clearTimerMessage();
 
         mTimeoutCount = 0;
+        mNewDeviceComming = false;
         mState = STATE_WAIT_FOR_NEXT_POLLING;
 
         addTimer(mState, POLLING_INTERVAL_MS_FILTER);
     }
 
+    void setNewDeviceComming(boolean come) {
+        mNewDeviceComming = come;
+        Slog.d(TAG, "New device comming:" + mNewDeviceComming);
+    }
+
     // This method is called every 5 seconds.
     private void pollDevices() {
-        // quickly poll 2 times then slow down
-        if (mTimeoutCount < AVR_COUNT_MAX) {
+        /*
+         * don't poll device if newDevice is found during FILTER time
+         */
+        if (mTimeoutCount < AVR_COUNT_MAX && !mNewDeviceComming) {
             pollAllDevices();
             addTimer(mState, POLLING_INTERVAL_MS_QUICK);
             return;

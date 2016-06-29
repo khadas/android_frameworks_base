@@ -141,6 +141,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         @Override
         public void onInputAdded(String inputId) {
             TvInputInfo tvInfo = mService.getTvInputManager().getTvInputInfo(inputId);
+            if (tvInfo == null) {
+                Slog.w(TAG, "Get TvInputInfo(null) when add cec device !!!!!");
+                return;
+            }
             HdmiDeviceInfo info = tvInfo.getHdmiDeviceInfo();
             if (info == null) return;
             addTvInput(inputId, info.getId());
@@ -239,6 +243,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (mService.isPowerStandby() && mStandbyHandler.handleCommand(message)) {
             return true;
         }
+        checkMessageSource(message);
         return super.onMessage(message);
     }
 
@@ -486,6 +491,55 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         }
     }
 
+    /*
+     * check if message source is a new device
+     */
+    protected boolean checkMessageSource(HdmiCecMessage message) {
+        int source = message.getSource();
+        HdmiDeviceInfo device = getCecDeviceInfo(source);
+        if (device == null) {
+            Slog.d(TAG, "found new device:" + source);
+            List<HotplugDetectionAction> hotplugActions = getActions(HotplugDetectionAction.class);
+            /* only poll devices when connected */
+            if (!hotplugActions.isEmpty()) {
+                hotplugActions.get(0).setNewDeviceComming(true);
+                // start a device discovery if get new device
+                mService.sendCecCommand(HdmiCecMessageBuilder.buildGivePhysicalAddress(mAddress, source));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean addNewDevFromActiveSource(int logicalAddress, int physicalAddress) {
+        assertRunOnServiceThread();
+        int type = HdmiUtils.getTypeFromAddress(logicalAddress);
+
+        if (updateCecSwitchInfo(logicalAddress, type, physicalAddress)) {
+            Slog.d(TAG, "pure CEC switch found:" + physicalAddress);
+            return false;
+        }
+
+        // Ignore if [Device Discovery Action] is going on.
+        if (hasAction(DeviceDiscoveryAction.class)) {
+            Slog.i(TAG, "Ignored while Device Discovery Action is in progress");
+            return false;
+        }
+
+        if (!isInDeviceList(logicalAddress, physicalAddress)) {
+            handleNewDeviceAtTheTailOfActivePath(physicalAddress);
+        }
+
+        // Add the device ahead with default information to handle <Active Source>
+        // promptly, rather than waiting till the new device action is finished.
+        HdmiDeviceInfo deviceInfo = new HdmiDeviceInfo(logicalAddress, physicalAddress, getPortId(physicalAddress), type,
+                Constants.UNKNOWN_VENDOR_ID, HdmiUtils.getDefaultDeviceName(logicalAddress));
+        addCecDevice(deviceInfo);
+        startNewDeviceAction(ActiveSource.of(logicalAddress, physicalAddress), type);
+        Slog.d(TAG, "addNewDevFromActiveSource:" + deviceInfo);
+        return true;
+    }
+
     @Override
     @ServiceThreadOnly
     protected boolean handleActiveSource(HdmiCecMessage message) {
@@ -498,8 +552,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             if (!handleNewDeviceAtTheTailOfActivePath(physicalAddress)) {
                 mDelayedMessageBuffer.add(message);
             }
-            // start a device discovery if get new device
-            mService.sendCecCommand(HdmiCecMessageBuilder.buildGivePhysicalAddress(mAddress, logicalAddress));
+            addNewDevFromActiveSource(logicalAddress, physicalAddress);
         } else if (!isInputReady(info.getId())) {
             Slog.d(TAG, "Input not ready for device:" + logicalAddress +", buffering the command");
             mDelayedMessageBuffer.add(message);
@@ -1277,6 +1330,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         assertRunOnServiceThread();
         HdmiDeviceInfo deviceInfo = mDeviceInfos.get(id);
         if (deviceInfo != null) {
+            if (mSelectAddr == deviceInfo.getLogicalAddress())
+                mSelectAddr = Constants.ADDR_INVALID;
             mDeviceInfos.remove(id);
         }
         updateSafeDeviceInfoList();
@@ -1482,10 +1537,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             return;
         }
         if (old == null) {
+            Slog.d(TAG, "Add:" + info);
             invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
         } else if (!old.equals(info)) {
-            invokeDeviceEventListener(old, HdmiControlManager.DEVICE_EVENT_REMOVE_DEVICE);
-            invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
+            Slog.d(TAG, "Update:" + info);
+            invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_UPDATE_DEVICE);
         }
     }
 
