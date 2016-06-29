@@ -134,8 +134,10 @@ final class LogicalDisplay {
                 mInfo.overscanBottom = mOverrideDisplayInfo.overscanBottom;
                 mInfo.rotation = mOverrideDisplayInfo.rotation;
                 mInfo.logicalDensityDpi = mOverrideDisplayInfo.logicalDensityDpi;
-                mInfo.physicalXDpi = mOverrideDisplayInfo.physicalXDpi;
-                mInfo.physicalYDpi = mOverrideDisplayInfo.physicalYDpi;
+                // Always use physicalXDpi from mBaseDisplayInfo, which
+                // reflects the updated info after HDMI hot-plug
+                //mInfo.physicalXDpi = mOverrideDisplayInfo.physicalXDpi;
+                //mInfo.physicalYDpi = mOverrideDisplayInfo.physicalYDpi;
             }
         }
         return mInfo;

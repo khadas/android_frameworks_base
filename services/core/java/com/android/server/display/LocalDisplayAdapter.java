@@ -610,9 +610,13 @@ final class LocalDisplayAdapter extends DisplayAdapter {
      */
     private static final class DisplayModeRecord {
         public final Display.Mode mMode;
+        public final float mXDpi;
+        public final float mYDpi;
 
         public DisplayModeRecord(SurfaceControl.PhysicalDisplayInfo phys) {
             mMode = createMode(phys.width, phys.height, phys.refreshRate);
+            mXDpi = phys.xDpi;
+            mYDpi = phys.yDpi;
         }
 
         /**
@@ -627,11 +631,13 @@ final class LocalDisplayAdapter extends DisplayAdapter {
             int displayInfoRefreshRate = Float.floatToIntBits(info.refreshRate);
             return mMode.getPhysicalWidth() == info.width
                     && mMode.getPhysicalHeight() == info.height
-                    && modeRefreshRate == displayInfoRefreshRate;
+                    && modeRefreshRate == displayInfoRefreshRate
+                    && mXDpi == info.xDpi
+                    && mYDpi == info.yDpi;
         }
 
         public String toString() {
-            return "DisplayModeRecord{mMode=" + mMode + "}";
+            return "DisplayModeRecord{mMode=" + mMode + " mXDpi=" + mXDpi + " mYDpi=" + mYDpi + "}";
         }
     }
 
