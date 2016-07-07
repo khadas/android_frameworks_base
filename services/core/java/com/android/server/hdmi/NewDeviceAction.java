@@ -20,6 +20,7 @@ import android.util.Slog;
 
 import com.android.server.hdmi.HdmiCecLocalDevice.ActiveSource;
 import java.io.UnsupportedEncodingException;
+import android.hardware.hdmi.HdmiControlManager;
 
 /**
  * Feature action that discovers the information of a newly found logical device.
@@ -41,9 +42,13 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
     // that contains the name of the device for display on screen.
     static final int STATE_WAITING_FOR_SET_OSD_NAME = 1;
 
+    // State in which the action sent <Give Device Power Status> and is waiting for
+    // <Report Power Status> that contains the power status of the device.
+    static final int STATE_WAITING_FOR_POWER_STATUS = 2;
+
     // State in which the action sent <Give Device Vendor ID> and is waiting for
     // <Device Vendor ID> that contains the vendor ID of the device.
-    static final int STATE_WAITING_FOR_DEVICE_VENDOR_ID = 2;
+    static final int STATE_WAITING_FOR_DEVICE_VENDOR_ID = 3;
 
     private final int mDeviceLogicalAddress;
     private final int mDevicePhysicalAddress;
@@ -52,6 +57,7 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
     private int mVendorId;
     private String mDisplayName;
     private int mTimeoutRetry;
+    private int mPowerStatus;
 
     /**
      * Constructor.
@@ -68,6 +74,7 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
         mDevicePhysicalAddress = devicePhysicalAddress;
         mDeviceType = deviceType;
         mVendorId = Constants.UNKNOWN_VENDOR_ID;
+        mPowerStatus = HdmiControlManager.POWER_STATUS_UNKNOWN;
     }
 
     @Override
@@ -111,11 +118,35 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
                 } catch (UnsupportedEncodingException e) {
                     Slog.e(TAG, "Failed to get OSD name: " + e.getMessage());
                 }
-                requestVendorId(true);
+                requestPowerStatus(true);
                 return true;
             } else if (opcode == Constants.MESSAGE_FEATURE_ABORT) {
                 int requestOpcode = params[0] & 0xFF;
                 if (requestOpcode == Constants.MESSAGE_GIVE_OSD_NAME) {
+                    requestPowerStatus(true);
+                    return true;
+                }
+            }
+        } else if (mState == STATE_WAITING_FOR_POWER_STATUS) {
+            if (opcode == Constants.MESSAGE_REPORT_POWER_STATUS) {
+                int sourceAddress = cmd.getSource();
+                int newStatus = cmd.getParams()[0] & 0xFF;
+                if (sourceAddress != mDeviceLogicalAddress) {
+                    Slog.d(TAG, "ignore power status:" + sourceAddress);
+                    return false;
+                }
+                mPowerStatus = newStatus;
+                Slog.d(TAG, "power status:" + mPowerStatus);
+                requestVendorId(true);
+                return true;
+            } else if (opcode == Constants.MESSAGE_FEATURE_ABORT) {
+                int requestOpcode = params[0] & 0xFF;
+                int sourceAddress = cmd.getSource();
+                if (sourceAddress != mDeviceLogicalAddress) {
+                    Slog.d(TAG, "ignore power status abort:" + sourceAddress);
+                    return false;
+                }
+                if (requestOpcode == Constants.MESSAGE_REPORT_POWER_STATUS) {
                     requestVendorId(true);
                     return true;
                 }
@@ -144,6 +175,22 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
             return processCommand(message);
         }
         return false;
+    }
+
+    private void requestPowerStatus(boolean firstTry) {
+        if (firstTry) {
+            mTimeoutRetry = 0;
+        }
+        // At first, transit to waiting status for <Give Device Power Status>.
+        mState = STATE_WAITING_FOR_POWER_STATUS;
+        // If the message is already in cache, process it.
+        if (mayProcessCommandIfCached(mDeviceLogicalAddress,
+                Constants.MESSAGE_REPORT_POWER_STATUS)) {
+            return;
+        }
+        sendCommand(HdmiCecMessageBuilder.buildGiveDevicePowerStatus(getSourceAddress(),
+                mDeviceLogicalAddress));
+        addTimer(mState, HdmiConfig.TIMEOUT_MS);
     }
 
     private void requestVendorId(boolean firstTry) {
@@ -175,14 +222,15 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
         HdmiDeviceInfo deviceInfo = new HdmiDeviceInfo(
                 mDeviceLogicalAddress, mDevicePhysicalAddress,
                 tv().getPortId(mDevicePhysicalAddress),
-                mDeviceType, mVendorId, mDisplayName);
+                mDeviceType, mVendorId, mDisplayName, mPowerStatus);
         tv().addCecDevice(deviceInfo);
 
         // Consume CEC messages we already got for this newly found device.
         tv().processDelayedMessages(mDeviceLogicalAddress);
 
         if (HdmiUtils.getTypeFromAddress(mDeviceLogicalAddress)
-                == HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM) {
+                == HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM &&
+            mPowerStatus == HdmiControlManager.POWER_STATUS_ON) {
             tv().onNewAvrAdded(deviceInfo);
         }
     }
@@ -197,7 +245,13 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
                 requestOsdName(false);
                 return;
             }
-            // Osd name request timed out. Try vendor id
+            // Osd name request timed out. Try power status
+            requestPowerStatus(true);
+        } else if (state == STATE_WAITING_FOR_POWER_STATUS) {
+            if (++mTimeoutRetry < HdmiConfig.TIMEOUT_RETRY) {
+                requestPowerStatus(false);
+                return;
+            }
             requestVendorId(true);
         } else if (state == STATE_WAITING_FOR_DEVICE_VENDOR_ID) {
             if (++mTimeoutRetry < HdmiConfig.TIMEOUT_RETRY) {

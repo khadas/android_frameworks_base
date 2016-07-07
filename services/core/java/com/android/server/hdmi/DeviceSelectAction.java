@@ -176,6 +176,14 @@ final class DeviceSelectAction extends HdmiCecFeatureAction {
                 getSourceAddress(), mTarget.getPhysicalAddress()));
         invokeCallback(HdmiControlManager.RESULT_SUCCESS);
         tv().setSelectAddr(getTargetAddress());
+        if (HdmiUtils.getTypeFromAddress(mTarget.getLogicalAddress()) == HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM) {
+            /*
+             * some types of ARC device did not report any status of it-self
+             * after bring out of standby state. So we need to query system
+             * audio status again
+             */
+            tv().onNewAvrAdded(mTarget);
+        }
         finish();
     }
 
