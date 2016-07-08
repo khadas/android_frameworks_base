@@ -113,12 +113,18 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
         // 1) physical address of the active source
         // 2) active routing path
         // 3) physical address of TV
+        if (tv().getActivePath() == tv().getAvrDeviceInfo().getPhysicalAddress()) {
+            /*
+             * current ARC device is active soure, we should use self-physical address
+             */
+            return localDevice().getService().getPhysicalAddress();
+        }
         if (tv().getActiveSource().isValid()) {
             return tv().getActiveSource().physicalAddress;
         }
         int param = tv().getActivePath();
         return param != Constants.INVALID_PHYSICAL_ADDRESS
-                ? param : Constants.PATH_INTERNAL;
+                ? param : localDevice().getService().getPhysicalAddress();
     }
 
     private void handleSendSystemAudioModeRequestTimeout() {

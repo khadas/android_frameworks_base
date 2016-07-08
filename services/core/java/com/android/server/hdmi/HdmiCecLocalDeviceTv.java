@@ -940,7 +940,12 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     }
 
     boolean getSystemAudioModeSetting() {
-        return mService.readBooleanSetting(Global.HDMI_SYSTEM_AUDIO_ENABLED, false);
+        /*
+         * some types of ARC devices don't report system audio mode status
+         * during device discovery stage, so force true to enable system
+         * audio mode polling of ARC device
+         */
+        return true;
     }
 
     /**
