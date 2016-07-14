@@ -1378,8 +1378,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         assertRunOnServiceThread();
         HdmiDeviceInfo deviceInfo = mDeviceInfos.get(id);
         if (deviceInfo != null) {
-            if (mSelectAddr == deviceInfo.getLogicalAddress())
-                mSelectAddr = Constants.ADDR_INVALID;
             mDeviceInfos.remove(id);
         }
         updateSafeDeviceInfoList();
@@ -1604,6 +1602,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         HdmiDeviceInfo info = removeDeviceInfo(HdmiDeviceInfo.idForCecDevice(address));
 
         mCecMessageCache.flushMessagesFrom(address);
+        if (info != null && mSelectAddr == info.getLogicalAddress())
+            mSelectAddr = Constants.ADDR_INVALID;
         invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_REMOVE_DEVICE);
     }
 
