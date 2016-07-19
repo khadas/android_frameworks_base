@@ -1560,6 +1560,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             Slog.d(TAG, "has same physical address with local device:" + info + ", local size:" + mDeviceInfos.size());
             return ;
         }
+        if (info.getLogicalAddress() == Constants.ADDR_UNREGISTERED) {
+            Slog.d(TAG, "ignore info with UNREGISTERED address:" + info);
+            return ;
+        }
         for (int i = 0; i < mDeviceInfos.size(); i++) {
             HdmiDeviceInfo dev = mDeviceInfos.valueAt(i);
             /* check if old dev with same phy address is exist */
