@@ -1681,6 +1681,7 @@ public class MediaPlayer implements SubtitleController.Listener
             mTimeProvider = null;
         }
         mOnSubtitleDataListener = null;
+        mOnBlurayInfoListener = null;
         _release();
     }
 
@@ -2788,6 +2789,7 @@ public class MediaPlayer implements SubtitleController.Listener
     private static final int MEDIA_INFO = 200;
     private static final int MEDIA_SUBTITLE_DATA = 201;
     private static final int MEDIA_META_DATA = 202;
+    private static final int MEDIA_BLURAY_INFO = 203;
 
     private TimeProvider mTimeProvider;
 
@@ -2955,6 +2957,12 @@ public class MediaPlayer implements SubtitleController.Listener
                     parcel.recycle();
                     mOnSubtitleDataListener.onSubtitleData(mMediaPlayer, data);
                 }
+                return;
+
+            case MEDIA_BLURAY_INFO:
+                if (mOnBlurayInfoListener == null)
+                    return;
+                mOnBlurayInfoListener.onBlurayInfo(mMediaPlayer, msg.arg1, msg.arg2, msg.obj);
                 return;
 
             case MEDIA_META_DATA:
@@ -3244,6 +3252,36 @@ public class MediaPlayer implements SubtitleController.Listener
     }
 
     private OnTimedMetaDataAvailableListener mOnTimedMetaDataAvailableListener;
+
+    /**
+     * Interface definition of a callback to be invoked when a
+     * bluray infomation is available for update.
+     */
+    public interface OnBlurayListener
+    {
+        /**
+         * Called to indicate an avaliable bluray info
+         *
+         * @param mp             the MediaPlayer associated with this callback
+         * @param ext1           the bluray info message arg1
+         * @param ext2           the bluray info message arg2
+         * @param obj            the bluray info message obj
+         */
+        public void onBlurayInfo(MediaPlayer mp, int ext1, int ext2, Object obj);
+    }
+
+    /**
+     * Register a callback to be invoked when a bluray info is available
+     * for update.
+     *
+     * @param listener the callback that will be run
+     */
+    public void setOnBlurayInfoListener(OnBlurayListener listener)
+    {
+        mOnBlurayInfoListener = listener;
+    }
+
+    private OnBlurayListener mOnBlurayInfoListener;
 
     /* Do not change these values without updating their counterparts
      * in include/media/mediaplayer.h!
