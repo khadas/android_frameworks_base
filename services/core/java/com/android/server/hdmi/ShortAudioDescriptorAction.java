@@ -46,13 +46,13 @@ class ShortAudioDescriptorAction extends HdmiCecFeatureAction {
     // State in which waits for ARC response.
     private static final int STATE_WAITING_REPORT = 1;
 
-    private int QUERY_FORMAT_START = AUDIO_FORMAT_AC_3;
+    private int mFormatStart;
 
     // Logical address of AV Receiver.
     private final int mDevAddr;
     private int mState = 0;
 
-    private String mAudioDataBlock = "";
+    private String mAudioDataBlock;
 
     /**
      * @Constructor
@@ -73,29 +73,26 @@ class ShortAudioDescriptorAction extends HdmiCecFeatureAction {
     @Override
     boolean start() {
         mState = STATE_WAITING_REPORT;
+        mFormatStart = AUDIO_FORMAT_LINEAR_PCM;
+        mAudioDataBlock = "";
         SendAudioDescriptorQueryMsg();
         return true;
     }
 
     private boolean SendAudioDescriptorQueryMsg() {
         byte[] params;
-        if (QUERY_FORMAT_START < AUDIO_FORMAT_WMA_PRO) {
-            params = new byte[] {
-                (byte)(QUERY_FORMAT_START & 0xFF),
-                (byte)((QUERY_FORMAT_START + 1) & 0xFF),
-                (byte)((QUERY_FORMAT_START + 2) & 0xFF),
-                (byte)((QUERY_FORMAT_START + 3) & 0xFF)
-            };
-            QUERY_FORMAT_START += 4;
-        } else if (QUERY_FORMAT_START < AUDIO_FORMAT_RESERVED1) {
-            params = new byte[] {(byte)((QUERY_FORMAT_START) & 0xFF)};
-            QUERY_FORMAT_START += 1;
+        if (mFormatStart < AUDIO_FORMAT_RESERVED1) {
+            params = new byte[] {(byte)((mFormatStart) & 0xFF)};
+            mFormatStart += 1;
         } else {
-            tv().setArcAudioDescriptor(mAudioDataBlock);
-            return false;
+            exitAction();
+            return true;
         }
 
+        mActionTimer.clearTimerMessage();
+        mState = STATE_WAITING_REPORT;
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
+
         HdmiCecMessage command = HdmiCecMessageBuilder.
                                     buildRequestShortAudioDescriptor(getSourceAddress(),
                                         mDevAddr, params);
@@ -111,6 +108,10 @@ class ShortAudioDescriptorAction extends HdmiCecFeatureAction {
         return true;
     }
 
+    private void exitAction() {
+        tv().setArcAudioDescriptor(mAudioDataBlock);
+    }
+
     @Override
     boolean processCommand(HdmiCecMessage cmd) {
         if (mState != STATE_WAITING_REPORT) {
@@ -122,7 +123,7 @@ class ShortAudioDescriptorAction extends HdmiCecFeatureAction {
             case Constants.MESSAGE_FEATURE_ABORT:
                 int originalOpcode = cmd.getParams()[0] & 0xFF;;
                 if (originalOpcode == Constants.MESSAGE_REQUEST_SHORT_AUDIO_DESCRIPTOR) {
-                    HdmiLogger.debug("Feature aborted for <ShortAudioDescriptorAction>");
+                    Slog.d(TAG, "Feature aborted for <ShortAudioDescriptorAction>");
                     return SendAudioDescriptorQueryMsg();
                 }
                 break;

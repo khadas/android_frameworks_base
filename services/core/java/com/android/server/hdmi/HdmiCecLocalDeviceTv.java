@@ -74,7 +74,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     // Whether tv is requesting audio descriptor from ARC.
     @ServiceThreadOnly
-    private boolean isRequestingAudioDes = false;
+    private boolean isQueryingAudioDescriptor = false;
 
     //All audio data block about ARC. Each Short Audio Descriptor is 3-bytes long.
     private String mArcAudioDesData = "";
@@ -794,9 +794,9 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     protected boolean handleReportShortAudioDescriptor(HdmiCecMessage message) {
         assertRunOnServiceThread();
-        if (isRequestingAudioDes) {
+        if (isQueryingAudioDescriptor) {
             setArcStatus(true);
-            isRequestingAudioDes = false;
+            isQueryingAudioDescriptor = false;
         }
         return true;
     }
@@ -977,10 +977,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
         HdmiLogger.debug("Set Arc Status[old:%b new:%b]", mArcEstablished, enabled);
 
-        if (questAudioDescriptor(enabled)) {
-            return false;
-        }
-
         boolean oldStatus = mArcEstablished;
         // 1. Enable/disable ARC circuit.
         setAudioReturnChannel(enabled);
@@ -995,11 +991,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
      * This function which gets the audio parameters about ARC
      * is invoked when start ARC.
      */
-    private boolean questAudioDescriptor(boolean enabled) {
-        if (!isRequestingAudioDes && enabled && !mArcEstablished
+    private boolean questAudioDescriptor() {
+        if (!isQueryingAudioDescriptor && !mArcEstablished
             && !hasAction(ShortAudioDescriptorAction.class)) {
-            isRequestingAudioDes = true;
             addAndStartAction(new ShortAudioDescriptorAction(this, Constants.ADDR_AUDIO_SYSTEM));
+            isQueryingAudioDescriptor = true;
             return true;
         }
         return false;
@@ -1007,7 +1003,18 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     @ServiceThreadOnly
     void setArcAudioDescriptor(String data) {
+        Slog.d(TAG, "setArcAudioDescriptor, data = " + data);
         mArcAudioDesData = data;
+
+        if (hasAction(ShortAudioDescriptorAction.class)) {
+            removeAction(ShortAudioDescriptorAction.class);
+        }
+
+        SetArcTransmissionStateAction action = new SetArcTransmissionStateAction(this,
+            Constants.ADDR_AUDIO_SYSTEM, true);
+        addAndStartAction(action);
+
+        isQueryingAudioDescriptor = false;
     }
 
     /**
@@ -1216,6 +1223,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         // In case where <Initiate Arc> is started by <Request ARC Initiation>
         // need to clean up RequestArcInitiationAction.
         removeAction(RequestArcInitiationAction.class);
+
+        if (questAudioDescriptor()) {
+            return true;
+        }
         SetArcTransmissionStateAction action = new SetArcTransmissionStateAction(this,
                 message.getSource(), true);
         addAndStartAction(action);
