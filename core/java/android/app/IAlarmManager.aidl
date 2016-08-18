@@ -34,6 +34,7 @@ interface IAlarmManager {
     void setTimeZone(String zone);
     void remove(in PendingIntent operation);
     long getNextWakeFromIdleTime();
+	void cancelPoweroffAlarm(String name);
     AlarmManager.AlarmClockInfo getNextAlarmClock(int userId);
 }
 
