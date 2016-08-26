@@ -171,6 +171,7 @@ public class AudioService extends IAudioService.Stub {
 
     private Object mTvControlManager;
     private boolean mSupportTvAudio;
+    private boolean mIsTvProduct;
 
     // the platform type affects volume and silent mode behavior
     private final int mPlatformType;
@@ -695,6 +696,7 @@ public class AudioService extends IAudioService.Stub {
                 0, 0, null, 0);
 
         if (isPlatformTelevision()) {
+            mIsTvProduct = SystemProperties.getBoolean("ro.platform.has.tvuimode", false);
             mSupportTvAudio = SystemProperties.getBoolean("ro.product.support.tvaudio", false);
             if (mSupportTvAudio) {
                 try {
@@ -5142,7 +5144,9 @@ public class AudioService extends IAudioService.Stub {
                 // Television devices without CEC service apply software volume on HDMI output
                 if (isPlatformTelevision() && ((device & AudioSystem.DEVICE_OUT_HDMI) != 0)) {
                     mFixedVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
-                    checkAllFixedVolumeDevices();
+                    if (mIsTvProduct) {
+                        checkAllFixedVolumeDevices();
+                    }
                     if (mHdmiManager != null) {
                         synchronized (mHdmiManager) {
                             if (mHdmiPlaybackClient != null) {
@@ -5790,7 +5794,9 @@ public class AudioService extends IAudioService.Stub {
                     if (isPlatformTelevision() && !mHdmiCecSink) {
                         mFixedVolumeDevices &= ~AudioSystem.DEVICE_OUT_HDMI;
                     }
-                    checkAllFixedVolumeDevices();
+                    if (mIsTvProduct) {
+                        checkAllFixedVolumeDevices();
+                    }
 
                     // Television devices without CEC service apply software volume on HDMI output,set device volume
                     if (isPlatformTelevision() && !mHdmiCecSink) {
