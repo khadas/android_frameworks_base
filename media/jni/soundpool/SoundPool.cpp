@@ -253,6 +253,7 @@ int SoundPool::play(int sampleID, float leftVolume, float rightVolume,
             sampleID, leftVolume, rightVolume, priority, loop, rate);
     SoundChannel* channel;
     int channelID;
+    int count = 20;
 
     Mutex::Autolock lock(&mLock);
 
@@ -261,11 +262,18 @@ int SoundPool::play(int sampleID, float leftVolume, float rightVolume,
     }
     // is sample ready?
     sp<Sample> sample(findSample_l(sampleID));
-    if ((sample == 0) || (sample->state() != Sample::READY)) {
-        ALOGW("  sample %d not READY", sampleID);
+    if (sample == 0) {
+        ALOGW("  sample not found");
         return 0;
     }
 
+    while (sample->state() != Sample::READY) {
+        usleep(50000);
+        if (count-- == 0) {
+            ALOGW("  sample %d not READY", sampleID);
+            return 0;
+        }
+    }
     dump();
 
     // allocate a channel
