@@ -346,6 +346,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
                     Settings.Secure.WIFI_NETWORKS_AVAILABLE_REPEAT_DELAY,
                     Settings.Secure.WIFI_NUM_OPEN_NETWORKS_KEPT,
                     Settings.Secure.WIFI_ON,
+                    Settings.Secure.WIFI_AP_ON,
                     Settings.Secure.WIFI_WATCHDOG_ACCEPTABLE_PACKET_LOSS_PERCENTAGE,
                     Settings.Secure.WIFI_WATCHDOG_AP_COUNT,
                     Settings.Secure.WIFI_WATCHDOG_BACKGROUND_CHECK_DELAY_MS,
@@ -2594,6 +2595,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
             loadBooleanSetting(stmt, Settings.Global.WIFI_ON,
                     R.bool.def_wifi_on);
+
+            loadBooleanSetting(stmt, Settings.Global.WIFI_AP_ON,
+                    R.bool.def_wifi_ap_on);
 
             loadBooleanSetting(stmt, Settings.Global.WIFI_NETWORKS_AVAILABLE_NOTIFICATION_ON,
                     R.bool.def_networks_available_notification_on);

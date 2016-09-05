@@ -1478,6 +1478,7 @@ public final class Settings {
             MOVED_TO_SECURE.add(Secure.WIFI_NETWORKS_AVAILABLE_REPEAT_DELAY);
             MOVED_TO_SECURE.add(Secure.WIFI_NUM_OPEN_NETWORKS_KEPT);
             MOVED_TO_SECURE.add(Secure.WIFI_ON);
+            MOVED_TO_SECURE.add(Secure.WIFI_AP_ON);
             MOVED_TO_SECURE.add(Secure.WIFI_WATCHDOG_ACCEPTABLE_PACKET_LOSS_PERCENTAGE);
             MOVED_TO_SECURE.add(Secure.WIFI_WATCHDOG_AP_COUNT);
             MOVED_TO_SECURE.add(Secure.WIFI_WATCHDOG_BACKGROUND_CHECK_DELAY_MS);
@@ -3676,7 +3677,11 @@ public final class Settings {
          */
         @Deprecated
         public static final String WIFI_ON = Global.WIFI_ON;
-
+        /**
+         * @deprecated Use {@link android.provider.Settings.Global#WIFI_AP_ON} instead
+         */
+        @Deprecated
+        public static final String WIFI_AP_ON = Global.WIFI_AP_ON;
         /**
          * @deprecated Use
          * {@link android.provider.Settings.Secure#WIFI_WATCHDOG_ACCEPTABLE_PACKET_LOSS_PERCENTAGE}
@@ -3874,6 +3879,7 @@ public final class Settings {
             MOVED_TO_GLOBAL.add(Settings.Global.WIFI_NETWORKS_AVAILABLE_REPEAT_DELAY);
             MOVED_TO_GLOBAL.add(Settings.Global.WIFI_NUM_OPEN_NETWORKS_KEPT);
             MOVED_TO_GLOBAL.add(Settings.Global.WIFI_ON);
+            MOVED_TO_GLOBAL.add(Settings.Global.WIFI_AP_ON);
             MOVED_TO_GLOBAL.add(Settings.Global.WIFI_P2P_DEVICE_NAME);
             MOVED_TO_GLOBAL.add(Settings.Global.WIFI_SAVED_STATE);
             MOVED_TO_GLOBAL.add(Settings.Global.WIFI_SUPPLICANT_SCAN_INTERVAL_MS);
@@ -5090,6 +5096,13 @@ public final class Settings {
          */
         @Deprecated
         public static final String WIFI_ON = Global.WIFI_ON;
+
+        /**
+         * @deprecated Use {@link android.provider.Settings.Global#WIFI_AP_ON}
+         * instead.
+         */
+        @Deprecated
+        public static final String WIFI_AP_ON = Global.WIFI_AP_ON;
 
         /**
          * The acceptable packet loss percentage (range 0 - 100) before trying
@@ -6807,6 +6820,10 @@ public final class Settings {
         */
        public static final String WIFI_ON = "wifi_on";
 
+       /**
+        *Whether the Hot-Spot should be on.
+        */
+       public static final String WIFI_AP_ON = "wifi_ap_on";
        /**
         * Setting to allow scans to be enabled even wifi is turned off for connectivity.
         * @hide
