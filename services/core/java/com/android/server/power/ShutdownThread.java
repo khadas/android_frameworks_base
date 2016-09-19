@@ -525,7 +525,8 @@ public final class ShutdownThread extends Thread {
                     bluetoothOff = bluetooth == null || !bluetooth.isEnabled();
                     if (!bluetoothOff) {
                         Log.w(TAG, "Disabling Bluetooth...");
-                        bluetooth.disable(false);  // disable but don't persist new state
+                        //bluetooth.disable(false);  // disable but don't persist new state
+                        Log.w(TAG, "not disable Bluetooth for BT wakeup");
                     }
                 } catch (RemoteException ex) {
                     Log.e(TAG, "RemoteException during bluetooth shutdown", ex);
@@ -553,14 +554,14 @@ public final class ShutdownThread extends Thread {
                         status += PACKAGE_MANAGER_STOP_PERCENT;
                         sInstance.setRebootProgress(status, null);
                     }
-
                     if (!bluetoothOff) {
-                        try {
-                            bluetoothOff = !bluetooth.isEnabled();
+                     /*    try {
+                            bluetoothOff = true;//!bluetooth.isEnabled();
                         } catch (RemoteException ex) {
                             Log.e(TAG, "RemoteException during bluetooth shutdown", ex);
                             bluetoothOff = true;
-                        }
+                        } */
+                        bluetoothOff = true;
                         if (bluetoothOff) {
                             Log.i(TAG, "Bluetooth turned off.");
                         }
