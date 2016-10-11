@@ -738,18 +738,6 @@ public class AlarmManager {
         }
     }
 
-	/**
-	  *for cancel the powerOffAlarm
-	  *@hide
-	  *@internal
-	  */
-	public void cancelPoweroffAlarm(String name) {
-		try {
-			mService.cancelPoweroffAlarm(name);
-		 } catch (RemoteException ex) {
-		 }
-	}
-
     /** @hide */
     public long getNextWakeFromIdleTime() {
         try {

@@ -44,7 +44,6 @@ import android.os.UserHandle;
 import android.os.WorkSource;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.text.format.Time;
 import android.text.format.DateFormat;
 import android.util.ArrayMap;
 import android.util.KeyValueListParser;
@@ -66,7 +65,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Random;
@@ -118,9 +116,6 @@ class AlarmManagerService extends SystemService {
     final LocalLog mLog = new LocalLog(TAG);
 
     final Object mLock = new Object();
-
-	private Object mPowerOffAlarmLock = new Object();
-	private final ArrayList<Alarm> mPoweroffAlarms = new ArrayList<Alarm>();
 
     long mNativeData;
     private long mNextWakeup;
@@ -1198,11 +1193,6 @@ class AlarmManagerService extends SystemService {
             }
         }
 
-		@Override
-	    public void cancelPoweroffAlarm(String name) {
-           // cancelPoweroffAlarmImpl(name);
-		}
-
         @Override
         public void remove(PendingIntent operation) {
             removeImpl(operation);
@@ -1888,7 +1878,6 @@ class AlarmManagerService extends SystemService {
     private native int waitForAlarm(long nativeData);
     private native int setKernelTime(long nativeData, long millis);
     private native int setKernelTimezone(long nativeData, int minuteswest);
-  //  private native boolean bootFromAlarm(int fd);
 
     boolean triggerAlarmsLocked(ArrayList<Alarm> triggerList, final long nowELAPSED,
             final long nowRTC) {
@@ -2526,10 +2515,8 @@ class AlarmManagerService extends SystemService {
                     pkgList = intent.getStringArrayExtra(Intent.EXTRA_PACKAGES);
                     for (String packageName : pkgList) {
                         if (lookForPackageLocked(packageName)) {
-							if (!"android".equals(packageName)){
                             setResultCode(Activity.RESULT_OK);
                             return;
-							}
                         }
                     }
                     return;
@@ -2561,9 +2548,6 @@ class AlarmManagerService extends SystemService {
                 }
                 if (pkgList != null && (pkgList.length > 0)) {
                     for (String pkg : pkgList) {
-                            if ("android".equals(pkg)) {
-                                continue;
-                            }
                         removeLocked(pkg);
                         mPriorities.remove(pkg);
                         for (int i=mBroadcastStats.size()-1; i>=0; i--) {
@@ -2659,222 +2643,6 @@ class AlarmManagerService extends SystemService {
                     }
                 }
             }
-         }
-	  }
-    /**
-     *For PowerOffalarm feature, to query if boot from alarm
-     */
-    private boolean isBootFromAlarm(int fd) {
-       // return bootFromAlarm(fd);
-		return false;
-    }
-
-    /**
-     *For PowerOffalarm feature, to update Poweroff Alarm
-     */
-    private void updatePoweroffAlarm(long nowRTC) {
-
-        synchronized (mPowerOffAlarmLock) {
-
-            if (mPoweroffAlarms.size() == 0) {
-
-                return;
-            }
-
-            if (mPoweroffAlarms.get(0).when > nowRTC) {
-
-                return;
-            }
-
-            Iterator<Alarm> it = mPoweroffAlarms.iterator();
-
-            while (it.hasNext())
-            {
-                Alarm alarm = it.next();
-
-                if (alarm.when > nowRTC) {
-                    // don't fire alarms in the future
-                    break;
-                }
-                Slog.w(TAG, "power off alarm update deleted");
-                // remove the alarm from the list
-                it.remove();
-            }
-
-            if (mPoweroffAlarms.size() > 0) {
-                resetPoweroffAlarm(mPoweroffAlarms.get(0));
-            }
         }
     }
-
-    private int addPoweroffAlarmLocked(Alarm alarm) {
-        ArrayList<Alarm> alarmList = mPoweroffAlarms;
-
-        int index = Collections.binarySearch(alarmList, alarm, sIncreasingTimeOrder);
-        if (index < 0) {
-            index = 0 - index - 1;
-        }
-        if (localLOGV) Slog.v(TAG, "Adding alarm " + alarm + " at " + index);
-        alarmList.add(index, alarm);
-
-        if (localLOGV) {
-            // Display the list of alarms for this alarm type
-            Slog.v(TAG, "alarms: " + alarmList.size() + " type: " + alarm.type);
-            int position = 0;
-            for (Alarm a : alarmList) {
-                Time time = new Time();
-                time.set(a.when);
-                String timeStr = time.format("%b %d %I:%M:%S %p");
-                Slog.v(TAG, position + ": " + timeStr
-                        + " " + a.operation.getTargetPackage());
-                position += 1;
-            }
-        }
-
-        return index;
-    }
-
-    private void removePoweroffAlarmLocked(String packageName) {
-        ArrayList<Alarm> alarmList = mPoweroffAlarms;
-        if (alarmList.size() <= 0) {
-            return;
-        }
-
-        // iterator over the list removing any it where the intent match
-        Iterator<Alarm> it = alarmList.iterator();
-
-        while (it.hasNext()) {
-            Alarm alarm = it.next();
-            if (alarm.operation.getTargetPackage().equals(packageName)) {
-                it.remove();
-            }
-        }
-    }
-
-    /**
-     *For PowerOffalarm feature, this function is used for AlarmManagerService
-     * to set the latest alarm registered
-     */
-    private void resetPoweroffAlarm(Alarm alarm) {
-
-        String setPackageName = alarm.operation.getTargetPackage();
-        long latestTime = alarm.when;
-
-        // [Note] Power off Alarm +
-        if (mNativeData != 0 && mNativeData != -1) {
-            if (setPackageName.equals("com.android.deskclock")) {
-                Slog.i(TAG, "mBootPackage = " + setPackageName + " set Prop 1");
-                SystemProperties.set("persist.sys.bootpackage", "1"); // for
-                                                                  // deskclock
-                set(mNativeData, 6, latestTime / 1000, (latestTime % 1000) * 1000 * 1000);
-            } else if (setPackageName.equals("com.khadas.schpwronoff")) {
-                Slog.i(TAG, "mBootPackage = " + setPackageName + " set Prop 2");
-                SystemProperties.set("persist.sys.bootpackage", "2"); // for
-                                                                  // settings
-                set(mNativeData, 7, latestTime / 1000, (latestTime % 1000) * 1000 * 1000);
-            // For settings to test powronoff
-            } else if (setPackageName.equals("com.mediatek.poweronofftest")) {
-                Slog.i(TAG, "mBootPackage = " + setPackageName + " set Prop 2");
-                SystemProperties.set("persist.sys.bootpackage", "2"); // for
-                                                                  // poweronofftest
-                set(mNativeData, 7, latestTime / 1000, (latestTime % 1000) * 1000 * 1000);
-            } else {
-                Slog.w(TAG, "unknown package (" + setPackageName + ") to set power off alarm");
-            }
-        // [Note] Power off Alarm -
-
-            Slog.i(TAG, "reset power off alarm is " + setPackageName);
-            SystemProperties.set("sys.power_off_alarm", Long.toString(latestTime / 1000));
-            } else {
-            Slog.i(TAG, " do not set alarm to RTC when fd close ");
-	}
-
-    }
-
-    /**
-     * For PowerOffalarm feature, this function is used for APP to
-     * cancelPoweroffAlarm
-     */
-    public void cancelPoweroffAlarmImpl(String name) {
-        Slog.i(TAG, "remove power off alarm pacakge name " + name);
-        // not need synchronized
-        synchronized (mPowerOffAlarmLock) {
-            removePoweroffAlarmLocked(name);
-            // AlarmPair tempAlarmPair = mPoweroffAlarms.remove(name);
-            // it will always to cancel the alarm in alarm driver
-            String bootReason = SystemProperties.get("persist.sys.bootpackage");
-            if (bootReason != null && mNativeData != 0 && mNativeData != -1) {
-                if (bootReason.equals("1") && name.equals("com.android.deskclock")) {
-                    set(mNativeData, 6, 0, 0);
-                    SystemProperties.set("sys.power_off_alarm", Long.toString(0));
-                } else if (bootReason.equals("2") && (name.equals("com.mediatek.schpwronoff")
-                           || name.equals("com.mediatek.poweronofftest"))) {
-                    set(mNativeData, 7, 0, 0);
-                    SystemProperties.set("sys.power_off_alarm", Long.toString(0));
-                }
-            }
-            if (mPoweroffAlarms.size() > 0) {
-                resetPoweroffAlarm(mPoweroffAlarms.get(0));
-            }
-        }
-    }
-
-    /**
-     * For IPO feature, this function is used for reset alarm when shut down
-     */
-    private void shutdownCheckPoweroffAlarm() {
-        Slog.i(TAG, "into shutdownCheckPoweroffAlarm()!!");
-        String setPackageName = null;
-        long latestTime;
-        long nowTime = System.currentTimeMillis();
-        synchronized (mPowerOffAlarmLock) {
-            Iterator<Alarm> it = mPoweroffAlarms.iterator();
-            ArrayList<Alarm> mTempPoweroffAlarms = new ArrayList<Alarm>();
-            while (it.hasNext()) {
-                Alarm alarm = it.next();
-                latestTime = alarm.when;
-                setPackageName = alarm.operation.getTargetPackage();
-
-                if ((latestTime - 30 * 1000) <= nowTime) {
-                    Slog.i(TAG, "get target latestTime < 30S!!");
-                    mTempPoweroffAlarms.add(alarm);
-                }
-            }
-            Iterator<Alarm> tempIt = mTempPoweroffAlarms.iterator();
-            while (tempIt.hasNext()) {
-                Alarm alarm = tempIt.next();
-                latestTime = alarm.when;
-                    //set(alarm.type, (latestTime + 60 * 1000), 0, 0, alarm.operation, null);
-                if (mNativeData != 0 && mNativeData != -1) {
-                    set(mNativeData, alarm.type, latestTime / 1000, (latestTime % 1000) * 1000 * 1000);
-                }
-            }
-        }
-        Slog.i(TAG, "away shutdownCheckPoweroffAlarm()!!");
-    }
-
-    /**
-     * For LCA project,AMS can remove alrms
-     */
-    public void removeFromAmsImpl(String packageName) {
-        if (packageName == null) {
-            return;
-        }
-        synchronized (mLock) {
-            removeLocked(packageName);
-        }
-    }
-
-    /**
-     * For LCA project,AMS can query alrms
-     */
-    public boolean lookForPackageFromAmsImpl(String packageName) {
-        if (packageName == null) {
-            return false;
-        }
-        synchronized (mLock) {
-            return lookForPackageLocked(packageName);
-        }
-	  }
-
 }
