@@ -69,6 +69,7 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.Vibrator;
@@ -450,6 +451,15 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         }
     };
 
+    final private ContentObserver screenshotShowObserver = new ContentObserver(mHandler) {
+        @Override
+        public void onChange(boolean selfChange) {
+            boolean isShow = Settings.System.getInt(mContext.getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 1) == 1;
+            ButtonDispatcher screenshotButton = mNavigationBarView.getScreenshotButton();
+            screenshotButton.setVisibility(isShow ? View.VISIBLE : View.GONE);
+        }
+    };
+
     private int mInteractingWindows;
     private boolean mAutohideSuspended;
     private int mStatusBarMode;
@@ -694,6 +704,10 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
         mScreenPinningRequest = new ScreenPinningRequest(mContext);
         mFalsingManager = FalsingManager.getInstance(mContext);
+        
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.SCREENSHOT_BUTTON_SHOW), true,
+                screenshotShowObserver);
     }
 
     protected void createIconController() {
@@ -1234,6 +1248,26 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         return mNaturalBarHeight;
     }
 
+    private View.OnClickListener mScreenshotClickListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            Intent intent=new Intent("android.intent.action.SCREENSHOT");
+            mContext.sendBroadcast(intent);
+        }
+    };
+
+    private View.OnTouchListener mScreenshotTouchListener = new View.OnTouchListener() {
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            // TODO Auto-generated method stub
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                Intent intent = new Intent("android.intent.action.SCREENSHOT");
+                mContext.sendBroadcast(intent);
+            }
+            return false;
+        }
+    };
+    
     private View.OnClickListener mRecentsClickListener = new View.OnClickListener() {
         public void onClick(View v) {
             awakenDreams();
@@ -1336,7 +1370,34 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         ButtonDispatcher homeButton = mNavigationBarView.getHomeButton();
         homeButton.setOnTouchListener(mHomeActionListener);
         homeButton.setOnLongClickListener(mLongPressHomeListener);
+ 
+        ButtonDispatcher screenshotButton=mNavigationBarView.getScreenshotButton();
+        screenshotButton.setOnClickListener(mScreenshotClickListener);
+        screenshotButton.setOnTouchListener(mScreenshotTouchListener);
+        screenshotButton.setVisibility(View.VISIBLE);
+        boolean isShow=Settings.System.getInt(mContext.getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 1)==1;
+        if(isShow){
+            screenshotButton.setVisibility(View.VISIBLE);
+        }else{
+            screenshotButton.setVisibility(View.GONE);
+        }
 
+        ButtonDispatcher volumeAddButton=mNavigationBarView.getVolumeAddButton();
+        ButtonDispatcher volumeSubButton=mNavigationBarView.getVolumeSubButton();
+        boolean isShowVolumeButton="true".equals(SystemProperties.get("ro.rk.systembar.voiceicon","true"));
+        if(isShowVolumeButton){
+            volumeAddButton.setVisibility(View.VISIBLE);
+            volumeSubButton.setVisibility(View.VISIBLE);
+        }else{
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
+        if ((mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+                && ((mContext.getResources().getConfiguration().screenHeightDp < 600)
+                || (mContext.getResources().getConfiguration().screenWidthDp < 600))) {
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
         mAssistManager.onConfigurationChanged();
     }
 

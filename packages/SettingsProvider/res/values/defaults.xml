@@ -216,4 +216,9 @@
 
     <!-- Default setting for ability to add users from the lock screen -->
     <bool name="def_add_users_from_lockscreen">false</bool>
+
+    <!-- should show the screenshot button default -->
+    <integer name="def_screenshot_button_show">1</integer>
+    <!-- the store location of screen capture by default-->
+    <string name="def_screenshot_location">internal_storage</string>
 </resources>

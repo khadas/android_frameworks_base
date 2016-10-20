@@ -198,6 +198,9 @@ public class NavigationBarView extends LinearLayout {
         mButtonDisatchers.put(R.id.recent_apps, new ButtonDispatcher(R.id.recent_apps));
         mButtonDisatchers.put(R.id.menu, new ButtonDispatcher(R.id.menu));
         mButtonDisatchers.put(R.id.ime_switcher, new ButtonDispatcher(R.id.ime_switcher));
+        mButtonDisatchers.put(R.id.screenshot, new ButtonDispatcher(R.id.screenshot));
+        mButtonDisatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
+        mButtonDisatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
     }
 
     public BarTransitions getBarTransitions() {
@@ -241,6 +244,18 @@ public class NavigationBarView extends LinearLayout {
 
     public View[] getAllViews() {
         return mRotatedViews;
+    }
+
+    public ButtonDispatcher getScreenshotButton() {
+        return mButtonDisatchers.get(R.id.screenshot);
+    }
+
+    public ButtonDispatcher getVolumeAddButton() {
+        return mButtonDisatchers.get(R.id.volume_add);
+    }
+
+    public ButtonDispatcher getVolumeSubButton() {
+        return mButtonDisatchers.get(R.id.volume_sub);
     }
 
     public ButtonDispatcher getRecentsButton() {
@@ -724,7 +739,7 @@ public class NavigationBarView extends LinearLayout {
         dumpButton(pw, "home", getHomeButton());
         dumpButton(pw, "rcnt", getRecentsButton());
         dumpButton(pw, "menu", getMenuButton());
-
+        dumpButton(pw, "screenshot", getScreenshotButton());
         pw.println("    }");
     }
 

@@ -67,8 +67,23 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
+import android.os.SystemProperties;
+import android.os.UserHandle;
+import android.util.Log;
+import android.provider.Settings;
+import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import android.os.storage.DiskInfo;
+import android.os.storage.StorageManager;
+import android.os.storage.VolumeInfo;
+import android.os.storage.StorageVolume;
 /**
  * POD used in the AsyncTask which saves an image in the background.
  */
@@ -112,6 +127,15 @@ class SaveImageInBackgroundTask extends AsyncTask<Void, Void, Void> {
     private final int mImageWidth;
     private final int mImageHeight;
 
+    private static final String SCREENSHOT_FILE_PATH_TEMPLATE = "%s/%s/%s";
+    private static final String SCREENSHOT_FILE_PATH_TEMPLATE_UMS = "%s/%s/%s";
+    private static final String INTERNAL_STORAGE="internal_storage";
+    private static final String EXTERNAL_SD_STORAGE="external_sd_storage";
+    private static final String EXTERNAL_USB_STORAGE="internal_usb_storage";
+    private String externalSDPath=null;
+    private String externalUSBPath=null;
+    private static final String TAG="GlobalScreenshot";
+
     // WORKAROUND: We want the same notification across screenshots that we update so that we don't
     // spam a user's notification drawer.  However, we only show the ticker for the saving state
     // and if the ticker text is the same as the previous notification, then it will not show. So
@@ -120,7 +144,7 @@ class SaveImageInBackgroundTask extends AsyncTask<Void, Void, Void> {
     private static boolean mTickerAddSpace;
 
     SaveImageInBackgroundTask(Context context, SaveImageInBackgroundData data,
-            NotificationManager nManager) {
+                              NotificationManager nManager) {
         Resources r = context.getResources();
 
         // Prepare all the output metadata
@@ -129,9 +153,28 @@ class SaveImageInBackgroundTask extends AsyncTask<Void, Void, Void> {
         String imageDate = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(mImageTime));
         mImageFileName = String.format(SCREENSHOT_FILE_NAME_TEMPLATE, imageDate);
 
-        mScreenshotDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), SCREENSHOTS_DIR_NAME);
-        mImageFilePath = new File(mScreenshotDir, mImageFileName).getAbsolutePath();
+        //mScreenshotDir = new File(Environment.getExternalStoragePublicDirectory(
+        //        Environment.DIRECTORY_PICTURES), SCREENSHOTS_DIR_NAME);
+        //mImageFilePath = new File(mScreenshotDir, mImageFileName).getAbsolutePath();
+        String screenshotLocation = Settings.System.getString(
+                context.getContentResolver(),
+                Settings.System.SCREENSHOT_LOCATION);
+        String imageDir = null;
+        initStoragePath(context);
+        if (screenshotLocation.equals(INTERNAL_STORAGE)) {
+            imageDir = Environment.getExternalStorageDirectory().getPath();
+        } else if (screenshotLocation.equals(EXTERNAL_SD_STORAGE)) {
+            imageDir = externalSDPath;
+        } else if (screenshotLocation.equals(EXTERNAL_USB_STORAGE)) {
+            imageDir = externalUSBPath;
+        }
+        mScreenshotDir = new File(imageDir, SCREENSHOTS_DIR_NAME);
+        mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE, imageDir,
+                SCREENSHOTS_DIR_NAME, mImageFileName);
+        Log.d(TAG, "imageDir=" + imageDir + " externalSDPath=" + externalSDPath
+                + " externalUSBPath=" + externalUSBPath);
+        Log.d(TAG, "mImageFilePath=" + mImageFilePath);
+        Log.d(TAG, "mImageFileName=" + mImageFileName);
 
         // Create the large notification icon
         mImageWidth = data.image.getWidth();
@@ -214,6 +257,32 @@ class SaveImageInBackgroundTask extends AsyncTask<Void, Void, Void> {
         mNotificationBuilder.setLargeIcon(icon.createAshmemBitmap());
         // But we still don't set it for the expanded view, allowing the smallIcon to show here.
         mNotificationStyle.bigLargeIcon((Bitmap) null);
+    }
+
+    private void initStoragePath(Context context) {
+        StorageManager mStorageManager = context
+                .getSystemService(StorageManager.class);
+        final List<VolumeInfo> volumes = mStorageManager.getVolumes();
+        Collections.sort(volumes, VolumeInfo.getDescriptionComparator());
+        for (VolumeInfo vol : volumes) {
+            if (vol.getType() == VolumeInfo.TYPE_PUBLIC) {
+                DiskInfo disk = vol.getDisk();
+                if (disk != null) {
+                    if (disk.isSd()) {
+                        // sdcard dir
+                        StorageVolume sv = vol.buildStorageVolume(context,
+                                context.getUserId(), false);
+                        externalSDPath = sv.getPath();
+                    } else if (disk.isUsb()) {
+                        // usb dir
+                        StorageVolume sv = vol.buildStorageVolume(context,
+                                context.getUserId(), false);
+                        externalUSBPath = sv.getPath();
+                        // usbPaths.add(sv.getPath());
+                    }
+                }
+            }
+        }
     }
 
     @Override
