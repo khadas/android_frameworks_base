@@ -31,6 +31,7 @@ import android.transition.TransitionManager;
 import android.util.ArrayMap;
 import android.util.SuperNotCalledException;
 import android.widget.Toolbar;
+import android.widget.Toast;
 
 import com.android.internal.app.IVoiceInteractor;
 import com.android.internal.app.WindowDecorActionBar;
@@ -69,6 +70,7 @@ import android.os.Looper;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.StrictMode;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
@@ -2391,6 +2393,18 @@ public class Activity extends ContextThemeWrapper
      * @see android.view.KeyEvent
      */
     public boolean onKeyDown(int keyCode, KeyEvent event)  {
+        String mstate=null;
+        int scanCode = -1;
+        mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
+        scanCode = event.getScanCode();
+        if ((scanCode == KeyEvent.KEYCODE_SYM)) {
+            if ("on".equals(mstate)) {
+                Toast.makeText(Activity.this, "Mouse mode", Toast.LENGTH_LONG).show();
+            } else if ("off".equals(mstate)) {
+                Toast.makeText(Activity.this, "Button mode", Toast.LENGTH_LONG).show();
+            }
+        }
+
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (getApplicationInfo().targetSdkVersion
                     >= Build.VERSION_CODES.ECLAIR) {
