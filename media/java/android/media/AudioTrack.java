@@ -741,6 +741,17 @@ public class AudioTrack
                     + "Hz is not a supported sample rate.");
         }
         mSampleRate = sampleRateInHz;
+        // IEC61937 is based on stereo. We could coerce it to stereo.
+        // But the application needs to know the stream is stereo so that
+        // it is encoded and played correctly. So better to just reject it.
+        //changed by amlogic for ENCODING_IEC61937 kodi  HD audio pass through
+/*
+        if (audioFormat == AudioFormat.ENCODING_IEC61937
+                && channelConfig != AudioFormat.CHANNEL_OUT_STEREO) {
+            throw new IllegalArgumentException(
+                    "ENCODING_IEC61937 must be configured as CHANNEL_OUT_STEREO");
+        }
+*/
 
         //--------------
         // channel config

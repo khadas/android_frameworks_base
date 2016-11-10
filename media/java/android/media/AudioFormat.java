@@ -251,6 +251,15 @@ public class AudioFormat {
      * @hide
      * */
     public static final int ENCODING_AAC_HE_V2 = 12;
+    /** Audio data format: compressed audio wrapped in PCM for HDMI
+     * or S/PDIF passthrough.
+     * IEC61937 uses a stereo stream of 16-bit samples as the wrapper.
+     * So the channel mask for the track must be {@link #CHANNEL_OUT_STEREO}.
+     * Data should be written to the stream in a short[] array.
+     * If the data is written in a byte[] array then there may be endian problems
+     * on some platforms when converting to short internally.
+     */
+    public static final int ENCODING_IEC61937 = 13;
 
     /** Invalid audio channel configuration */
     /** @deprecated Use {@link #CHANNEL_INVALID} instead.  */
@@ -418,6 +427,7 @@ public class AudioFormat {
         case ENCODING_PCM_8BIT:
             return 1;
         case ENCODING_PCM_16BIT:
+        case ENCODING_IEC61937:
         case ENCODING_DEFAULT:
             return 2;
         case ENCODING_PCM_FLOAT:
@@ -443,6 +453,7 @@ public class AudioFormat {
         case ENCODING_AAC_LC:
         case ENCODING_AAC_HE_V1:
         case ENCODING_AAC_HE_V2:
+        case ENCODING_IEC61937:
             return true;
         default:
             return false;
@@ -460,6 +471,7 @@ public class AudioFormat {
         case ENCODING_E_AC3:
         case ENCODING_DTS:
         case ENCODING_DTS_HD:
+        case ENCODING_IEC61937:
             return true;
         default:
             return false;
@@ -483,6 +495,7 @@ public class AudioFormat {
         case ENCODING_AAC_LC:
         case ENCODING_AAC_HE_V1:
         case ENCODING_AAC_HE_V2:
+        case ENCODING_IEC61937: // wrapped in PCM but compressed
             return false;
         case ENCODING_INVALID:
         default:
@@ -715,6 +728,7 @@ public class AudioFormat {
                 case ENCODING_E_AC3:
                 case ENCODING_DTS:
                 case ENCODING_DTS_HD:
+                case ENCODING_IEC61937:
                     mEncoding = encoding;
                     break;
                 case ENCODING_INVALID:
@@ -859,7 +873,8 @@ public class AudioFormat {
         ENCODING_AC3,
         ENCODING_E_AC3,
         ENCODING_DTS,
-        ENCODING_DTS_HD
+        ENCODING_DTS_HD,
+        ENCODING_IEC61937
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Encoding {}
