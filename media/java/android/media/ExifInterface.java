@@ -1723,10 +1723,9 @@ public class ExifInterface {
      */
     public double getAltitude(double defaultValue) {
         double altitude = getAttributeDouble(TAG_GPS_ALTITUDE, -1);
-        int ref = getAttributeInt(TAG_GPS_ALTITUDE_REF, -1);
 
-        if (altitude >= 0 && ref >= 0) {
-            return (altitude * ((ref == 1) ? -1 : 1));
+        if (altitude >= 0) {
+            return altitude;
         } else {
             return defaultValue;
         }
