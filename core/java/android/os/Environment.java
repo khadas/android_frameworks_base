@@ -40,6 +40,8 @@ public class Environment {
     private static final String ENV_OEM_ROOT = "OEM_ROOT";
     private static final String ENV_ODM_ROOT = "ODM_ROOT";
     private static final String ENV_VENDOR_ROOT = "VENDOR_ROOT";
+    private static final String ENV_PREBUNDLED_UNINSTALL_BACK_ROOT = "PREBUNDLED_UNINSTALL_BACK_ROOT";
+    private static final String ENV_PREBUNDLED_UNINSTALL_GONE_ROOT = "PREBUNDLED_UNINSTALL_GONE_ROOT";
 
     /** {@hide} */
     public static final String DIR_ANDROID = "Android";
@@ -61,6 +63,10 @@ public class Environment {
     private static final File DIR_OEM_ROOT = getDirectory(ENV_OEM_ROOT, "/oem");
     private static final File DIR_ODM_ROOT = getDirectory(ENV_ODM_ROOT, "/odm");
     private static final File DIR_VENDOR_ROOT = getDirectory(ENV_VENDOR_ROOT, "/vendor");
+    private static final File DIR_PREBUNDLED_UNINSTALL_BACK_ROOT = getDirectory(
+            ENV_PREBUNDLED_UNINSTALL_BACK_ROOT,"/system/vendor/bundled_uninstall_back-app");
+    private static final File DIR_PREBUNDLED_UNINSTALL_GONE_ROOT = getDirectory(
+            ENV_PREBUNDLED_UNINSTALL_GONE_ROOT,"/system/vendor/bundled_uninstall_gone-app");
 
     private static UserEnvironment sCurrentUser;
     private static boolean sUserRequired;
@@ -940,6 +946,22 @@ public class Environment {
 
     private static boolean isStorageDisabled() {
         return SystemProperties.getBoolean("config.disable_storage", false);
+    }
+
+    /**
+     * Return the root directory for "prebundled" apps.  These apps will be installed directly
+     * from this partition but will not be marked as system apps and will hence be uninstallable.
+     * @hide
+     */
+    public static File getPrebundledUninstallBackDirectory() {
+        return DIR_PREBUNDLED_UNINSTALL_BACK_ROOT;
+    }
+
+    /**
+     * @hide
+     */
+    public static File getPrebundledUninstallGoneDirectory() {
+        return DIR_PREBUNDLED_UNINSTALL_GONE_ROOT;
     }
 
     /**

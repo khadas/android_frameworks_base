@@ -53,6 +53,7 @@ import static android.content.pm.PackageManager.INSTALL_FAILED_VERSION_DOWNGRADE
 import static android.content.pm.PackageManager.INSTALL_FORWARD_LOCK;
 import static android.content.pm.PackageManager.INSTALL_INTERNAL;
 import static android.content.pm.PackageManager.INSTALL_PARSE_FAILED_INCONSISTENT_CERTIFICATES;
+import static android.content.pm.PackageManager.INSTALL_FAILED_UNINSTALLED_PREBUNDLE;
 import static android.content.pm.PackageManager.INTENT_FILTER_DOMAIN_VERIFICATION_STATUS_ALWAYS;
 import static android.content.pm.PackageManager.INTENT_FILTER_DOMAIN_VERIFICATION_STATUS_ALWAYS_ASK;
 import static android.content.pm.PackageManager.INTENT_FILTER_DOMAIN_VERIFICATION_STATUS_ASK;
@@ -75,6 +76,8 @@ import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.content.pm.PackageParser.PARSE_IS_PRIVILEGED;
 import static android.content.pm.PackageParser.isApkFile;
+import static android.content.pm.PackageParser.isDeleteApk;
+import static android.content.pm.PackageParser.readDeleteFile;
 import static android.os.Trace.TRACE_TAG_PACKAGE_MANAGER;
 import static android.system.OsConstants.O_CREAT;
 import static android.system.OsConstants.O_RDWR;
@@ -107,6 +110,7 @@ import android.app.ResourcesManager;
 import android.app.admin.IDevicePolicyManager;
 import android.app.admin.SecurityLog;
 import android.app.backup.IBackupManager;
+import android.app.PackageInstallObserver;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -264,6 +268,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -273,6 +278,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -457,6 +463,13 @@ public class PackageManagerService extends IPackageManager.Stub {
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
 
     private static final String VENDOR_OVERLAY_DIR = "/vendor/overlay";
+
+    private static final String VENDOR_BUNDLED_PERSIST_DIR = "/system/vendor/bundled_persist-app";
+
+    private static final String VENDOR_BUNDLED_UNINSTALL_GONE_DIR =
+        "/system/vendor/bundled_uninstall_gone-app";
+
+    private static final String DELETE_APK_FILE = "/cache/deleteApkFile.dat";
 
     private static int DEFAULT_EPHEMERAL_HASH_PREFIX_MASK = 0xFFFFF000;
     private static int DEFAULT_EPHEMERAL_HASH_PREFIX_COUNT = 5;
@@ -2297,6 +2310,22 @@ public class PackageManagerService extends IPackageManager.Stub {
             scanDirTracedLI(oemAppDir, mDefParseFlags
                     | PackageParser.PARSE_IS_SYSTEM
                     | PackageParser.PARSE_IS_SYSTEM_DIR, scanFlags, 0);
+
+            // Collect bundled app packages which can be uninstalled
+            scanDirTracedLI(Environment.getPrebundledUninstallGoneDirectory(),
+                    mDefParseFlags | PackageParser.PARSE_IS_PREBUNDLED_DIR,
+                    scanFlags,0);
+
+            scanDirTracedLI(Environment.getPrebundledUninstallBackDirectory(),
+                    mDefParseFlags | PackageParser.PARSE_IS_PREBUNDLED_DIR,
+                    scanFlags,0);
+
+            // Collect bundled app packages which can not be uninstalled
+            File vendorBundledPersistDir = new File(VENDOR_BUNDLED_PERSIST_DIR);
+            scanDirTracedLI(vendorBundledPersistDir,mDefParseFlags |
+                    PackageParser.PARSE_IS_SYSTEM |
+                    PackageParser.PARSE_IS_PREINSTALL |
+                    PackageParser.PARSE_IS_SYSTEM_DIR,scanFlags,0);
 
             // Prune any system packages that no longer exist.
             final List<String> possiblyDeletedUpdatedSystemApps = new ArrayList<String>();
@@ -6533,6 +6562,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     private void scanDirLI(File dir, final int parseFlags, int scanFlags, long currentTime) {
         final File[] files = dir.listFiles();
+        ArrayList<String> list = new ArrayList<String>();
         if (ArrayUtils.isEmpty(files)) {
             Log.d(TAG, "No files in app dir " + dir);
             return;
@@ -6543,6 +6573,20 @@ public class PackageManagerService extends IPackageManager.Stub {
                     + " flags=0x" + Integer.toHexString(parseFlags));
         }
 
+        boolean isPrebundled = (parseFlags & PackageParser.PARSE_IS_PREBUNDLED_DIR) != 0;
+        if (isPrebundled) {
+            synchronized (mPackages) {
+                mSettings.readPrebundledPackagesLPr();
+            }
+        }
+
+        if (dir.getAbsolutePath().contains(VENDOR_BUNDLED_UNINSTALL_GONE_DIR)) {
+            if (!readDeleteFile(list)) {
+                Log.e(TAG,"read data failed");
+                return;
+            }
+        }
+
         for (File file : files) {
             final boolean isPackage = (isApkFile(file) || file.isDirectory())
                     && !PackageInstallerService.isStageName(file.getName());
@@ -6550,9 +6594,29 @@ public class PackageManagerService extends IPackageManager.Stub {
                 // Ignore entries which are not packages
                 continue;
             }
+            if (file.getAbsolutePath().contains(VENDOR_BUNDLED_UNINSTALL_GONE_DIR)) {
+                if (list != null && list.size() > 0) {
+                    final boolean isdeleteApk = isDeleteApk(file,parseFlags,list);
+                    if (isdeleteApk) {
+                        // Ignore deleted bundled apps
+                        continue;
+                    }
+                }
+            }
             try {
                 scanPackageTracedLI(file, parseFlags | PackageParser.PARSE_MUST_BE_APK,
                         scanFlags, currentTime, null);
+                if (isPrebundled) {
+                    final PackageParser.Package pkg;
+                    try {
+                        pkg = new PackageParser().parsePackage(file, parseFlags);
+                    } catch (PackageParserException e) {
+                        throw PackageManagerException.from(e);
+                    }
+                    synchronized (mPackages) {
+                        mSettings.markPrebundledPackageInstalledLPr(pkg.packageName);
+                    }
+                }
             } catch (PackageManagerException e) {
                 Slog.w(TAG, "Failed to parse " + file + ": " + e.getMessage());
 
@@ -6562,6 +6626,11 @@ public class PackageManagerService extends IPackageManager.Stub {
                     logCriticalInfo(Log.WARN, "Deleting invalid package at " + file);
                     removeCodePathLI(file);
                 }
+            }
+        }
+        if (isPrebundled) {
+            synchronized (mPackages) {
+                mSettings.writePrebundledPackagesLPr();
             }
         }
     }
@@ -6737,6 +6806,30 @@ public class PackageManagerService extends IPackageManager.Stub {
     private PackageParser.Package scanPackageInternalLI(PackageParser.Package pkg, File scanFile,
             int policyFlags, int scanFlags, long currentTime, UserHandle user)
             throws PackageManagerException {
+        if ((policyFlags & PackageParser.PARSE_IS_PREBUNDLED_DIR) != 0) {
+            synchronized (mPackages) {
+                PackageSetting existingSettings = mSettings.peekPackageLPr(pkg.packageName);
+                if (mSettings.wasPrebundledPackageInstalledLPr(pkg.packageName) &&
+                        existingSettings == null) {
+                    // The prebundled app was installed at some point in time, but now it is
+                    // gone.  Assume that the user uninstalled it intentionally: do not reinstall.
+                    throw new PackageManagerException(INSTALL_FAILED_UNINSTALLED_PREBUNDLE,
+                            "skip reinstall for " + pkg.packageName);
+                } else if (existingSettings != null
+                        && existingSettings.versionCode >= pkg.mVersionCode
+                        && !existingSettings.codePathString.contains(
+                            Environment.getPrebundledUninstallBackDirectory().getPath())
+                        && !existingSettings.codePathString.contains(
+                            Environment.getPrebundledUninstallGoneDirectory().getPath())) {
+                    // This app is installed in a location that is not the prebundled location 
+                    // and has a higher (or same) version as the prebundled one.  Skip
+                    // installing the prebundled version.
+                    Slog.d(TAG, pkg.packageName + " already installed at " +
+                            existingSettings.codePathString);
+                    return null; // return null so we still mark package as installed
+                }
+            }
+        }
         PackageSetting ps = null;
         PackageSetting updatedPkg;
         // reader
@@ -8280,7 +8373,7 @@ public class PackageManagerService extends IPackageManager.Stub {
         final String cpuAbiOverride = deriveAbiOverride(pkg.cpuAbiOverride, pkgSetting);
 
         if ((scanFlags & SCAN_NEW_INSTALL) == 0) {
-            derivePackageAbi(pkg, scanFile, cpuAbiOverride, true /* extract libs */);
+            derivePackageAbi(pkg, scanFile, cpuAbiOverride, true /* extract libs */,policyFlags);
 
             // Some system apps still use directory structure for native libraries
             // in which case we might end up not detecting abi solely based on apk
@@ -8288,7 +8381,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (isSystemApp(pkg) && !pkg.isUpdatedSystemApp() &&
                     pkg.applicationInfo.primaryCpuAbi == null) {
                 setBundledAppAbisAndRoots(pkg, pkgSetting);
-                setNativeLibraryPaths(pkg);
+                setNativeLibraryPaths(pkg,policyFlags);
             }
 
         } else {
@@ -8304,7 +8397,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             // ABIs we've determined above. For non-moves, the path will be updated based on the
             // ABIs we determined during compilation, but the path will depend on the final
             // package path (after the rename away from the stage path).
-            setNativeLibraryPaths(pkg);
+            setNativeLibraryPaths(pkg,policyFlags);
         }
 
         // This is a special case for the "system" package, where the ABI is
@@ -8926,7 +9019,7 @@ public class PackageManagerService extends IPackageManager.Stub {
      * If {@code extractLibs} is true, native libraries are extracted from the app if required.
      */
     private void derivePackageAbi(PackageParser.Package pkg, File scanFile,
-                                 String cpuAbiOverride, boolean extractLibs)
+                                 String cpuAbiOverride, boolean extractLibs,int parseFlags)
             throws PackageManagerException {
         // TODO: We can probably be smarter about this stuff. For installed apps,
         // we can calculate this information at install time once and for all. For
@@ -8935,7 +9028,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         // Give ourselves some initial paths; we'll come back for another
         // pass once we've determined ABI below.
-        setNativeLibraryPaths(pkg);
+        setNativeLibraryPaths(pkg,parseFlags);
 
         // We would never need to extract libs for forward-locked and external packages,
         // since the container service will do it for us. We shouldn't attempt to
@@ -9061,7 +9154,7 @@ public class PackageManagerService extends IPackageManager.Stub {
 
         // Now that we've calculated the ABIs and determined if it's an internal app,
         // we will go ahead and populate the nativeLibraryPath.
-        setNativeLibraryPaths(pkg);
+        setNativeLibraryPaths(pkg,parseFlags);
     }
 
     /**
@@ -9241,7 +9334,7 @@ public class PackageManagerService extends IPackageManager.Stub {
      * Derive and set the location of native libraries for the given package,
      * which varies depending on where and how the package was installed.
      */
-    private void setNativeLibraryPaths(PackageParser.Package pkg) {
+    private void setNativeLibraryPaths(PackageParser.Package pkg,int parseFlags) {
         final ApplicationInfo info = pkg.applicationInfo;
         final String codePath = pkg.codePath;
         final File codeFile = new File(codePath);
@@ -9288,7 +9381,16 @@ public class PackageManagerService extends IPackageManager.Stub {
             info.nativeLibraryDir = info.nativeLibraryRootDir;
         } else {
             // Cluster install
-            info.nativeLibraryRootDir = new File(codeFile, LIB_DIR_NAME).getAbsolutePath();
+            if ((parseFlags & PackageParser.PARSE_IS_PREBUNDLED_DIR) != 0) {
+                // mAppLib32InstallDir is the directory /data/app-lib which is used to store native
+                // libs for apps from the system paritition.  It isn't really specific to 32bit info
+                // any way except for the variable name, the system will use the primary/secondary
+                // ABI computed below.
+                info.nativeLibraryRootDir = new File(mAppLib32InstallDir,
+                        pkg.packageName).getAbsolutePath();
+            } else {
+                info.nativeLibraryRootDir = new File(codeFile, LIB_DIR_NAME).getAbsolutePath();
+            }
             info.nativeLibraryRootRequiresIsa = true;
 
             info.nativeLibraryDir = new File(info.nativeLibraryRootDir,
@@ -15010,7 +15112,7 @@ public class PackageManagerService extends IPackageManager.Stub {
                 String abiOverride = (TextUtils.isEmpty(pkg.cpuAbiOverride) ?
                     args.abiOverride : pkg.cpuAbiOverride);
                 derivePackageAbi(pkg, new File(pkg.codePath), abiOverride,
-                        true /* extract libs */);
+                        true /* extract libs */,parseFlags);
             } catch (PackageManagerException pme) {
                 Slog.e(TAG, "Error deriving application ABI", pme);
                 res.setError(INSTALL_FAILED_INTERNAL_ERROR, "Error deriving application ABI");
@@ -16099,6 +16201,38 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (DEBUG_REMOVE) Slog.d(TAG, "Removing non-system package: " + ps.name);
             ret = deleteInstalledPackageLIF(ps, deleteCodeAndResources, flags, allUserHandles,
                     outInfo, writeSettings, replacingPackage);
+            if (ps.pkg.codePath.contains(VENDOR_BUNDLED_UNINSTALL_GONE_DIR)) {
+                File deleteApkFile = new File(DELETE_APK_FILE);
+                if(!deleteApkFile.exists()) {
+                    try {
+                        deleteApkFile.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Slog.w (TAG,"create file failed: " + DELETE_APK_FILE);
+                        return false;
+                    }
+                }
+                BufferedWriter fileWriter  = null;
+                try {
+                    fileWriter = new BufferedWriter(new FileWriter(deleteApkFile,true));
+                    fileWriter.append(ps.pkg.packageName);
+                    fileWriter.newLine();
+                    fileWriter.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Slog.w(TAG,"write file failed: " + DELETE_APK_FILE);
+                } finally {
+                    if (fileWriter != null) {
+                        try {
+                            fileWriter.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return false;
+                        }
+                        fileWriter = null;
+                    }
+                }
+            }
         }
 
         // Take a note whether we deleted the package for all users

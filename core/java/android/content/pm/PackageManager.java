@@ -1147,6 +1147,15 @@ public abstract class PackageManager {
      */
     public static final int INSTALL_FAILED_EPHEMERAL_INVALID = -116;
 
+
+    /**
+     * Used for prebundles
+     * Installation failed for a prebundled app because the user previously uninstalled it
+     * and we don't want to bring it back
+     * @hide
+     */
+    public static final int INSTALL_FAILED_UNINSTALLED_PREBUNDLE = -403;
+
     /** @hide */
     @IntDef(flag = true, value = {
             DELETE_KEEP_DATA,
