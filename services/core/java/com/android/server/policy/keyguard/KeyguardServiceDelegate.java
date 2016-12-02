@@ -122,6 +122,12 @@ public class KeyguardServiceDelegate {
         mScrim = createScrim(context, mScrimHandler);
     }
 
+    private boolean isBox() {
+        String boxString = android.os.SystemProperties.get("ro.target.product");
+        boolean isBox = "box".equals(boxString);
+        return isBox;
+    }
+
     public void bindService(Context context) {
         Intent intent = new Intent();
         final Resources resources = context.getApplicationContext().getResources();
@@ -131,7 +137,9 @@ public class KeyguardServiceDelegate {
         intent.addFlags(Intent.FLAG_DEBUG_TRIAGED_MISSING);
         intent.setComponent(keyguardComponent);
 
-        if (!context.bindServiceAsUser(intent, mKeyguardConnection,
+        boolean isBox = isBox();
+
+        if (isBox || !context.bindServiceAsUser(intent, mKeyguardConnection,
                 Context.BIND_AUTO_CREATE, mScrimHandler, UserHandle.SYSTEM)) {
             Log.v(TAG, "*** Keyguard: can't bind to " + keyguardComponent);
             mKeyguardState.showing = false;
