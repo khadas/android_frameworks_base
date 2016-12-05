@@ -74,8 +74,8 @@ import java.util.StringJoiner;
  * @hide
  */
 public class IpManager extends StateMachine {
-    private static final boolean DBG = false;
-    private static final boolean VDBG = false;
+    private static final boolean DBG = true;
+    private static final boolean VDBG = true;
 
     // For message logging.
     private static final Class[] sMessageClasses = { IpManager.class, DhcpClient.class };
