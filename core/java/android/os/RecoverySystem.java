@@ -75,6 +75,7 @@ public class RecoverySystem {
     private static final File LOG_FILE = new File(RECOVERY_DIR, "log");
     private static final File LAST_INSTALL_FILE = new File(RECOVERY_DIR, "last_install");
     private static final String LAST_PREFIX = "last_";
+    private static String RECOVERY_PREFIX = "Recovery_";
 
     /**
      * The recovery image uses this file to identify the location (i.e. blocks)
@@ -840,6 +841,7 @@ public class RecoverySystem {
         String[] names = RECOVERY_DIR.list();
         for (int i = 0; names != null && i < names.length; i++) {
             if (names[i].startsWith(LAST_PREFIX)) continue;
+            if (names[i].startsWith(RECOVERY_PREFIX)) continue;
             if (reservePackage && names[i].equals(BLOCK_MAP_FILE.getName())) continue;
             if (reservePackage && names[i].equals(UNCRYPT_PACKAGE_FILE.getName())) continue;
 
