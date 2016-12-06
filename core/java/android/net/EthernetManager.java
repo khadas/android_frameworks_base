@@ -140,6 +140,62 @@ public class EthernetManager {
         }
     }
 
+    public int getEthernetCarrierState(String ifname) {
+        try {
+            return mService.getEthernetCarrierState(ifname);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String getEthernetMacAddress(String ifname) {
+        try {
+            return mService.getEthernetMacAddress(ifname);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public int getEthernetConnectState() {
+        try {
+            return mService.getEthernetConnectState();
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String getIpAddress() {
+        try {
+            return mService.getIpAddress();
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String getNetmask() {
+        try {
+            return mService.getNetmask();
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String getGateway() {
+        try {
+            return mService.getGateway();
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String getDns() {
+        try {
+            return mService.getDns();
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
     /**
      * Adds a listener.
      * @param listener A {@link Listener} to add.

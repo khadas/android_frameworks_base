@@ -29,6 +29,13 @@ interface IEthernetManager
     IpConfiguration getConfiguration();
     void setConfiguration(in IpConfiguration config);
     boolean isAvailable();
+    int getEthernetCarrierState(String ifname);
+    String getEthernetMacAddress(String ifname);
+    int getEthernetConnectState();
+    String getIpAddress();
+    String getNetmask();
+    String getGateway();
+    String getDns();
     void addListener(in IEthernetServiceListener listener);
     void removeListener(in IEthernetServiceListener listener);
 }
