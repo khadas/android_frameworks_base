@@ -227,6 +227,8 @@ class WindowStateAnimator {
 
     int mAttrType;
 
+	boolean mSurfaceHidden;
+
     static final long PENDING_TRANSACTION_FINISH_WAIT_TIME = 100;
     long mDeferTransactionUntilFrame = -1;
     long mDeferTransactionTime = -1;
@@ -580,6 +582,9 @@ class WindowStateAnimator {
     }
 
     void hide(String reason) {
+		if(mSurfaceHidden){
+		    return;
+		}
         if (!mLastHidden) {
             //dump();
             mLastHidden = true;

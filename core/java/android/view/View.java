@@ -15479,6 +15479,22 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         return Math.max(vis1, vis2);
     }
 
+	/**
+     * Add this for MediaFloat
+     *@hide
+     */
+    public IWindowSession getRootWindowSession(){
+	return mAttachInfo != null ? mAttachInfo.mSession : null;
+    }
+
+    /**
+     * Add this for MediaFloat
+     * @hide
+     */
+    public IWindow getWindow(){
+	return mAttachInfo != null ? mAttachInfo.mWindow : null;
+    }
+
     /**
      * @param info the {@link android.view.View.AttachInfo} to associated with
      *        this view

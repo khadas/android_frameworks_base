@@ -264,4 +264,8 @@ interface IWindowSession {
     boolean startMovingTask(IWindow window, float startX, float startY);
 
     void updatePointerIcon(IWindow window);
+
+    
+    void hideWindowLayer(IWindow window, boolean visible);
+    void updatePositionAndSize(IWindow window,int x,int y,int widht,int height);
 }

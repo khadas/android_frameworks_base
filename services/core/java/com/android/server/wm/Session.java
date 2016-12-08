@@ -594,4 +594,60 @@ final class Session extends IWindowSession.Stub
     public String toString() {
         return mStringName;
     }
+
+	public void hideWindowLayer(IWindow window, boolean flag){
+		long origId = Binder.clearCallingIdentity();
+		synchronized(mService.mWindowMap) {
+			WindowState win = mService.windowForClientLocked(this, window, false);
+			if (win == null) {
+			return;
+			}
+
+			SurfaceControl.openTransaction();
+			if(win.mWinAnimator.mSurfaceController != null){
+				if (flag){
+					win.mWinAnimator.mSurfaceController.setShown(false);
+					win.mWinAnimator.mSurfaceController.mSurfaceControl.hide();
+					win.mWinAnimator.mLastHidden = false;
+					win.mWinAnimator.mSurfaceHidden = true;
+				} else {
+					win.mWinAnimator.mSurfaceController.setShown(true);
+					win.mWinAnimator.mSurfaceController.mSurfaceControl.show();
+					win.mWinAnimator.mSurfaceHidden = false;
+				}
+			}
+
+			SurfaceControl.closeTransaction();
+		}
+
+		Binder.restoreCallingIdentity(origId);
+    }
+
+    public void updatePositionAndSize(IWindow window,int x,int y,int width,int height){
+	long origId = Binder.clearCallingIdentity();
+        synchronized(mService.mWindowMap) {
+	    WindowState win = mService.windowForClientLocked(this, window, false);
+            if (win == null) {
+		return;
+            }
+
+	    win.mWinAnimator.mLastHidden = true;
+	    if(win.mAttachedWindow != null){
+		win.mAttachedWindow.mWinAnimator.mLastHidden = true;
+	    }
+		Slog.d("ljh","------------x="+x+",y="+y+"----------------");
+	    SurfaceControl.openTransaction();
+	    if(win.mWinAnimator.mSurfaceController != null){
+		win.mWinAnimator.mSurfaceController.mSurfaceControl.setPosition(x,y);
+		win.mWinAnimator.mSurfaceController.mSurfaceControl.setSize(width,height);
+		win.mWinAnimator.mSurfaceController.mSurfaceControl.setWindowCrop(new Rect(0,0,width,height));
+		win.mRequestedWidth = width;
+		win.mRequestedHeight = height;
+	    }
+	    SurfaceControl.closeTransaction();
+	}
+
+	Binder.restoreCallingIdentity(origId);
+    }
+
 }
