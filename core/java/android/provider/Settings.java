@@ -2535,6 +2535,23 @@ public final class Settings {
         public static final String MODE_RINGER = Global.MODE_RINGER;
 
         /**
+         * @hide
+         */
+        public static final String PPPOE_ON = Secure.PPPOE_ON;
+        /**
+         * @hide
+         */
+        public static final String PPPOE_USERNAME = Secure.PPPOE_USERNAME;
+        /**
+         * @hide
+         */
+        public static final String PPPOE_PSWD = Secure.PPPOE_PSWD;
+        /**
+         * @hide
+         */
+        public static final String PPPOE_PHY_IFACE = Secure.PPPOE_PHY_IFACE;
+
+        /**
          * Whether to use static IP and other static network attributes.
          * <p>
          * Set to 1 for true and 0 for false.
@@ -5037,6 +5054,27 @@ public final class Settings {
          * Whether to speak passwords while in accessibility mode.
          */
         public static final String ACCESSIBILITY_SPEAK_PASSWORD = "speak_password";
+
+        /**
+         * flag for pppoe auto connect 
+         * @hide
+         */
+        public static final String PPPOE_ON = "pppoe_on";
+        /**
+         * pppoe username  
+         * @hide
+         */
+        public static final String PPPOE_USERNAME = "pppoe_username";
+        /**
+         * pppoe password
+         * @hide
+         */
+        public static final String PPPOE_PSWD = "pppoe_pswd";
+        /**
+         * pppoe phy iface
+         * @hide
+         */
+        public static final String PPPOE_PHY_IFACE = "pppoe_phy_iface";
 
         /**
          * Whether to draw text with high contrast while in accessibility mode.

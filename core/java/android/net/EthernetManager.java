@@ -60,6 +60,11 @@ public class EthernetManager {
      */
     public static final int ETHER_STATE_CONNECTED = 2;
 
+    /**
+     * @hide
+     */
+    public static final int ETHER_STATE_DISCONNECTING = 3;
+
     private final Context mContext;
     private final IEthernetManager mService;
     private final Handler mHandler = new Handler() {
@@ -191,6 +196,30 @@ public class EthernetManager {
     public String getDns() {
         try {
             return mService.getDns();
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String dumpCurrentState(int state) {
+        try {
+            return mService.dumpCurrentState(state);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public void reconnect(String iface) {
+        try {
+            mService.reconnect(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public void disconnect(String iface) {
+        try {
+            mService.disconnect(iface);
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
         }

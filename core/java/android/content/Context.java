@@ -3179,6 +3179,18 @@ public abstract class Context {
 
     /**
      * Use with {@link #getSystemService} to retrieve a {@link
+     * android.net.PppoeManager} for handling management of
+     * Ethernet access.
+     *
+     * @see #getSystemService
+     * @see android.net.PppoeManager
+     * 
+     *@hide
+     */
+    public static final String PPPOE_SERVICE = "pppoe";
+
+    /**
+     * Use with {@link #getSystemService} to retrieve a {@link
      * android.net.nsd.NsdManager} for handling management of network service
      * discovery
      *

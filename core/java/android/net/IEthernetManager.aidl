@@ -36,6 +36,9 @@ interface IEthernetManager
     String getNetmask();
     String getGateway();
     String getDns();
+    String dumpCurrentState(int state);
+    void reconnect(String iface);
+    void disconnect(String iface);
     void addListener(in IEthernetServiceListener listener);
     void removeListener(in IEthernetServiceListener listener);
 }

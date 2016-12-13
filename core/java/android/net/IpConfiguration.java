@@ -35,6 +35,8 @@ public class IpConfiguration implements Parcelable {
         STATIC,
         /* Use dynamically configured IP settigns */
         DHCP,
+        /* Use pppoe settigns */
+        PPPOE,
         /* no IP details are assigned, this is used to indicate
          * that any existing IP settings should be retained */
         UNASSIGNED
@@ -63,34 +65,42 @@ public class IpConfiguration implements Parcelable {
 
     public ProxyInfo httpProxy;
 
+    public String pppoeAccount;
+    public String pppoePassword;
+
     private void init(IpAssignment ipAssignment,
                       ProxySettings proxySettings,
                       StaticIpConfiguration staticIpConfiguration,
-                      ProxyInfo httpProxy) {
+                      ProxyInfo httpProxy,
+                      String pppoeAccount,
+                      String pppoePassword) {
         this.ipAssignment = ipAssignment;
         this.proxySettings = proxySettings;
         this.staticIpConfiguration = (staticIpConfiguration == null) ?
                 null : new StaticIpConfiguration(staticIpConfiguration);
         this.httpProxy = (httpProxy == null) ?
                 null : new ProxyInfo(httpProxy);
+        this.pppoeAccount = pppoeAccount;
+        this.pppoePassword = pppoePassword;
     }
 
     public IpConfiguration() {
-        init(IpAssignment.UNASSIGNED, ProxySettings.UNASSIGNED, null, null);
+        init(IpAssignment.UNASSIGNED, ProxySettings.UNASSIGNED, null, null, "", "");
     }
 
     public IpConfiguration(IpAssignment ipAssignment,
                            ProxySettings proxySettings,
                            StaticIpConfiguration staticIpConfiguration,
                            ProxyInfo httpProxy) {
-        init(ipAssignment, proxySettings, staticIpConfiguration, httpProxy);
+        init(ipAssignment, proxySettings, staticIpConfiguration, httpProxy, "", "");
     }
 
     public IpConfiguration(IpConfiguration source) {
         this();
         if (source != null) {
             init(source.ipAssignment, source.proxySettings,
-                 source.staticIpConfiguration, source.httpProxy);
+                 source.staticIpConfiguration, source.httpProxy,
+                 source.pppoeAccount, source.pppoePassword);
         }
     }
 
@@ -141,6 +151,10 @@ public class IpConfiguration implements Parcelable {
             sbuf.append("HTTP proxy: " + httpProxy.toString());
             sbuf.append("\n");
         }
+        if (ipAssignment == IpAssignment.PPPOE) {
+            sbuf.append("Pppoe settings: " + pppoeAccount + ", " + pppoePassword);
+            sbuf.append("\n");
+        }
 
         return sbuf.toString();
     }
@@ -159,7 +173,9 @@ public class IpConfiguration implements Parcelable {
         return this.ipAssignment == other.ipAssignment &&
                 this.proxySettings == other.proxySettings &&
                 Objects.equals(this.staticIpConfiguration, other.staticIpConfiguration) &&
-                Objects.equals(this.httpProxy, other.httpProxy);
+                Objects.equals(this.httpProxy, other.httpProxy) &&
+                this.pppoeAccount.equals(other.pppoeAccount) &&
+                this.pppoePassword.equals(other.pppoePassword);
     }
 
     @Override
@@ -179,6 +195,8 @@ public class IpConfiguration implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(ipAssignment.name());
         dest.writeString(proxySettings.name());
+        dest.writeString(pppoeAccount);
+        dest.writeString(pppoePassword);
         dest.writeParcelable(staticIpConfiguration, flags);
         dest.writeParcelable(httpProxy, flags);
     }
@@ -190,6 +208,8 @@ public class IpConfiguration implements Parcelable {
                 IpConfiguration config = new IpConfiguration();
                 config.ipAssignment = IpAssignment.valueOf(in.readString());
                 config.proxySettings = ProxySettings.valueOf(in.readString());
+                config.pppoeAccount = in.readString();
+                config.pppoePassword = in.readString();
                 config.staticIpConfiguration = in.readParcelable(null);
                 config.httpProxy = in.readParcelable(null);
                 return config;

@@ -55,6 +55,8 @@ public class IpConfigStore {
     protected static final String PROXY_PORT_KEY = "proxyPort";
     protected static final String PROXY_PAC_FILE = "proxyPac";
     protected static final String EXCLUSION_LIST_KEY = "exclusionList";
+    protected static final String PPPOE_ACCOUNT_KEY = "pppoeAccount";
+    protected static final String PPPOE_PASSWORD_KEY = "pppoePassword";
     protected static final String EOS = "eos";
 
     protected static final int IPCONFIG_FILE_VERSION = 2;
@@ -100,6 +102,15 @@ public class IpConfigStore {
                 case DHCP:
                     out.writeUTF(IP_ASSIGNMENT_KEY);
                     out.writeUTF(config.ipAssignment.toString());
+                    written = true;
+                    break;
+                case PPPOE:
+                    out.writeUTF(IP_ASSIGNMENT_KEY);
+                    out.writeUTF(config.ipAssignment.toString());
+                    out.writeUTF(PPPOE_ACCOUNT_KEY);
+                    out.writeUTF(config.pppoeAccount);
+                    out.writeUTF(PPPOE_PASSWORD_KEY);
+                    out.writeUTF(config.pppoePassword);
                     written = true;
                     break;
                 case UNASSIGNED:
@@ -194,6 +205,8 @@ public class IpConfigStore {
                 String pacFileUrl = null;
                 int proxyPort = -1;
                 String exclusionList = null;
+                String pppoeAccount = null;
+                String pppoePassword = null;
                 String key;
 
                 do {
@@ -253,6 +266,10 @@ public class IpConfigStore {
                             pacFileUrl = in.readUTF();
                         } else if (key.equals(EXCLUSION_LIST_KEY)) {
                             exclusionList = in.readUTF();
+                        } else if (key.equals(PPPOE_ACCOUNT_KEY)) {
+                            pppoeAccount = in.readUTF();
+                        } else if (key.equals(PPPOE_PASSWORD_KEY)) {
+                            pppoePassword = in.readUTF();
                         } else if (key.equals(EOS)) {
                             break;
                         } else {
@@ -274,6 +291,11 @@ public class IpConfigStore {
                             break;
                         case DHCP:
                             config.ipAssignment = ipAssignment;
+                            break;
+                        case PPPOE:
+                            config.ipAssignment = ipAssignment;
+                            config.pppoeAccount = pppoeAccount;
+                            config.pppoePassword = pppoePassword;
                             break;
                         case UNASSIGNED:
                             loge("BUG: Found UNASSIGNED IP on file, use DHCP");
