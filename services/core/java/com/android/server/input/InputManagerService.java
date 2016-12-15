@@ -230,8 +230,8 @@ public class InputManagerService extends IInputManager.Stub
     private static native void nativeSetPointerIconType(long ptr, int iconId);
     private static native void nativeReloadPointerIcons(long ptr);
     private static native void nativeSetCustomPointerIcon(long ptr, PointerIcon icon);
-    private static native void nativedispatchMouse(float x, float y, int w, int h, int ptr);
-    private static native void nativedispatchMouseByCd(float x, float y, int ptr);
+    private static native void nativedispatchMouse(float x, float y, int w, int h, long ptr);
+    private static native void nativedispatchMouseByCd(float x, float y, long ptr);
 
     // Input event injection constants defined in InputDispatcher.h.
     private static final int INPUT_EVENT_INJECTION_SUCCEEDED = 0;
@@ -425,6 +425,17 @@ public class InputManagerService extends IInputManager.Stub
                 viewport.physicalFrame.right, viewport.physicalFrame.bottom,
                 viewport.deviceWidth, viewport.deviceHeight);
     }
+
+    /*$_rbox_$_modify_$_zhangwen_20140219: this function just for call the function in JNI*/
+    //$_rbox_$_modify_$_begin
+    public void dispatchMouse(float x, float y, int w, int h){
+        nativedispatchMouse(x, y, w, h, mPtr);
+    }   
+
+    public void dispatchMousebyCd(float x, float y){
+        nativedispatchMouseByCd(x, y, mPtr);
+    }
+    //$_rbox_$_modify_$_end
 
     /**
      * Gets the current state of a key or button by key code.

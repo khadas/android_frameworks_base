@@ -36,6 +36,7 @@
 #include <utils/Log.h>
 #include <utils/Looper.h>
 #include <utils/threads.h>
+#include <cutils/properties.h>
 
 #include <input/PointerController.h>
 #include <input/SpriteController.h>
@@ -1480,7 +1481,7 @@ static void nativeSetCustomPointerIcon(JNIEnv* env, jclass /* clazz */,
 }
 
 static void android_server_InputManager_nativedispatchMouse(JNIEnv* env,
-		jclass clazz,jfloat x,jfloat y,jint w,jint h,jint ptr) {
+		jclass clazz,jfloat x,jfloat y,jint w,jint h,jlong ptr) {
     NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);
 
     int mID;
@@ -1507,22 +1508,22 @@ static void android_server_InputManager_nativedispatchMouse(JNIEnv* env,
     //	x=0;y=0;
 
     if (mx == 0) {
-	    mkeyMouseState="left";
+	    strcpy(mkeyMouseState, "left");
     } else if (mx>=(screenWidth-5.0f)) {
-	    mkeyMouseState="right";
+	    strcpy(mkeyMouseState, "right");
     } else if (my == 0) {
-	    mkeyMouseState="up";
+	    strcpy(mkeyMouseState, "up");
     } else if (my >= (screenHeight-5.0f)) {
-	    mkeyMouseState="down";
+	    strcpy(mkeyMouseState, "down");
     } else {
-	    mkeyMouseState="Non-boundary";
+	    strcpy(mkeyMouseState, "Non-boundary");
     }
 
     property_set("sys.keymouselimitstate",mkeyMouseState);
 }
 
 static void android_server_InputManager_nativedispatchMouseByCd(JNIEnv* env,
-jclass clazz,jfloat x,jfloat y,jint ptr) {
+jclass clazz,jfloat x,jfloat y,jlong ptr) {
    NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);
    int mID;
    char *mgetID=new char[PROPERTY_VALUE_MAX];
@@ -1606,9 +1607,9 @@ static const JNINativeMethod gInputManagerMethods[] = {
             (void*) nativeReloadPointerIcons },
     { "nativeSetCustomPointerIcon", "(JLandroid/view/PointerIcon;)V",
             (void*) nativeSetCustomPointerIcon },
-    { "nativedispatchMouse", "(FFIII)V",
+    { "nativedispatchMouse", "(FFIIJ)V",
 	    (void*) android_server_InputManager_nativedispatchMouse },
-    { "nativedispatchMouseByCd", "(FFI)V",
+    { "nativedispatchMouseByCd", "(FFJ)V",
 	    (void*) android_server_InputManager_nativedispatchMouseByCd },
 };
 
