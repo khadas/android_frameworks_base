@@ -220,6 +220,7 @@ public:
         return checkAndClearExceptionFromCallback(mEnv, "setMimeType");
     }
 
+#ifdef BOX
     virtual status_t scanBDDirectory(const char* path, long long lastModified,
             long long fileSize)
     {
@@ -237,6 +238,7 @@ public:
         #endif
         return 0;
     }
+#endif
 private:
     JNIEnv *mEnv;
     jobject mClient;
