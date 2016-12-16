@@ -804,6 +804,8 @@ public class KeyEvent extends InputEvent implements Parcelable {
     public static final int KEYCODE_SYSTEM_NAVIGATION_LEFT = 282;
     /** Key code constant: Consumed by the system for navigation right */
     public static final int KEYCODE_SYSTEM_NAVIGATION_RIGHT = 283;
+    public static final int KEYCODE_FLYMODE = 311;
+    public static final int KEYCODE_MICMUTE = 312;
 
     /** Key code constant: Tv controlloer left mouse key */
     public static final int KEYCODE_TV_KEYMOUSE_LEFT = 284;

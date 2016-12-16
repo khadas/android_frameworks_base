@@ -1857,6 +1857,8 @@ i
         <enum name="KEYCODE_TV_MEDIA_PLAY" value="303" />
         <enum name="KEYCODE_TV_MEDIA_PAUSE" value="304" />
 <!--$_rbox_$_modify_$_end-->
+        <enum name="KEYCODE_FLYMODE" value="311" />
+        <enum name="KEYCODE_MICMUTE" value="312" />
     </attr>
 
     <!-- ***************************************************************** -->

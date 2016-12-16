@@ -5543,6 +5543,23 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mContext.sendBroadcastAsUser(errorIntent, UserHandle.CURRENT);
     }
 
+    private boolean isAirplaneModeOn() {
+        return Settings.Global.getInt(mContext.getContentResolver(),
+                Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+    }
+
+    private void setAirplaneModeOn(boolean enabling) {
+        // Change the system setting
+        Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON,
+                                enabling ? 1 : 0);
+        // Post the intent
+        Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        intent.putExtra("state", enabling);
+//        sendBroadcastAsUser(intent, UserHandle.ALL);
+        mContext.sendBroadcastAsUser(intent,UserHandle.CURRENT);
+    }
+
+
     /** {@inheritDoc} */
     @Override
     public int interceptKeyBeforeQueueing(KeyEvent event, int policyFlags) {
@@ -5629,6 +5646,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Handle special keys.
         switch (keyCode) {
+            case 311: {//process flymode key
+                if (down) {
+                    setAirplaneModeOn(!isAirplaneModeOn());
+                }
+                break;
+            }
+            case 312: {//process mic mute key
+                if (down) {
+                    AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE); 
+                    audioManager.setMicrophoneMute(!audioManager.isMicrophoneMute());
+                }
+                break;
+            }
             case KeyEvent.KEYCODE_BACK: {
                 if (down) {
                     mBackKeyHandled = false;
