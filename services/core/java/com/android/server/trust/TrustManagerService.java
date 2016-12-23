@@ -51,6 +51,7 @@ import android.os.Message;
 import android.os.PersistableBundle;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.storage.StorageManager;
@@ -323,10 +324,13 @@ public class TrustManagerService extends SystemService {
                 mDeviceLockedForUser.put(userId, locked);
             }
             if (locked) {
+                SystemProperties.set("sys.device_locked.status","1");
                 try {
                     ActivityManagerNative.getDefault().notifyLockedProfile(userId);
                 } catch (RemoteException e) {
                 }
+            } else {
+                SystemProperties.set("sys.device_locked.status","0");
             }
         }
     }
@@ -378,6 +382,15 @@ public class TrustManagerService extends SystemService {
             synchronized (mDeviceLockedForUser) {
                 changed = isDeviceLockedInner(id) != deviceLocked;
                 mDeviceLockedForUser.put(id, deviceLocked);
+                if (deviceLocked) {
+                    SystemProperties.set("sys.device_locked.status","1");
+                    try {
+                        ActivityManagerNative.getDefault().notifyLockedProfile(userId);
+                    } catch (RemoteException e) {
+                    }
+                } else {
+                    SystemProperties.set("sys.device_locked.status","0");
+                }
             }
             if (changed) {
                 dispatchDeviceLocked(id, deviceLocked);
