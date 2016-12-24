@@ -131,7 +131,7 @@ final class WindowState implements WindowManagerPolicy.WindowState {
     // to capture touch events in that area.
     static final int RESIZE_HANDLE_WIDTH_IN_DP = 30;
 
-    static final boolean DEBUG_DISABLE_SAVING_SURFACES = false;
+    static final boolean DEBUG_DISABLE_SAVING_SURFACES = true;
 
     final WindowManagerService mService;
     final WindowManagerPolicy mPolicy;
