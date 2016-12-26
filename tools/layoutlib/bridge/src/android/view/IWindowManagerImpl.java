@@ -100,7 +100,7 @@ public class IWindowManagerImpl implements IWindowManager {
     }
 
     @Override
-    public void clearForcedDisplayDensity(int displayId) throws RemoteException {
+    public void clearForcedDisplayDensityForUser(int displayId, int userId) throws RemoteException {
         // TODO Auto-generated method stub
     }
 
@@ -401,7 +401,8 @@ public class IWindowManagerImpl implements IWindowManager {
     }
 
     @Override
-    public void setForcedDisplayDensity(int displayId, int density) throws RemoteException {
+    public void setForcedDisplayDensityForUser(int displayId, int density, int userId)
+            throws RemoteException {
         // TODO Auto-generated method stub
     }
 
@@ -459,6 +460,16 @@ public class IWindowManagerImpl implements IWindowManager {
 
     @Override
     public void statusBarVisibilityChanged(int arg0) throws RemoteException {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void setRecentsVisibility(boolean visible) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override
+    public void setTvPipVisibility(boolean visible) {
         // TODO Auto-generated method stub
     }
 
