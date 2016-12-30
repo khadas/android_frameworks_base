@@ -2215,14 +2215,20 @@ public class MediaPlayer extends PlayerBase
             mTrackType = in.readInt();
             // TODO: parcel in the full MediaFormat; currently we are using createSubtitleFormat
             // even for audio/video tracks, meaning we only set the mime and language.
-            String mime = in.readString();
+            //String mime = in.readString();
             String language = in.readString();
-            mFormat = MediaFormat.createSubtitleFormat(mime, language);
-
-            if (mTrackType == MEDIA_TRACK_TYPE_SUBTITLE) {
+            if (mTrackType == MEDIA_TRACK_TYPE_TIMEDTEXT) {
+                mFormat = MediaFormat.createSubtitleFormat(
+                    MEDIA_MIMETYPE_TEXT_SUBRIP, language);
+            } else if (mTrackType == MEDIA_TRACK_TYPE_SUBTITLE) {
+                String mime = in.readString();
+                mFormat = MediaFormat.createSubtitleFormat(mime, language);
                 mFormat.setInteger(MediaFormat.KEY_IS_AUTOSELECT, in.readInt());
                 mFormat.setInteger(MediaFormat.KEY_IS_DEFAULT, in.readInt());
                 mFormat.setInteger(MediaFormat.KEY_IS_FORCED_SUBTITLE, in.readInt());
+            } else {
+                mFormat = new MediaFormat();
+                mFormat.setString(MediaFormat.KEY_LANGUAGE, language);
             }
         }
 
@@ -2573,6 +2579,9 @@ public class MediaPlayer extends PlayerBase
         TrackInfo[] tracks = getInbandTrackInfo();
         synchronized (mIndexTrackPairs) {
             for (int i = 0; i < tracks.length; i++) {
+                if (null == tracks[i]) {
+                    continue;
+                }
                 if (mInbandTrackIndices.get(i)) {
                     continue;
                 } else {
