@@ -613,7 +613,7 @@ public class ConnectivityServiceTest extends AndroidTestCase {
             return configRestrictsAvoidBadWifi;
         }
     }
-
+/*
     private class WrappedAvoidBadWifiTracker extends AvoidBadWifiTracker {
         public boolean configRestrictsAvoidBadWifi;
 
@@ -626,7 +626,7 @@ public class ConnectivityServiceTest extends AndroidTestCase {
             return configRestrictsAvoidBadWifi;
         }
     }
-
+*/
     private class WrappedConnectivityService extends ConnectivityService {
         public WrappedAvoidBadWifiTracker wrappedAvoidBadWifiTracker;
         private WrappedNetworkMonitor mLastCreatedNetworkMonitor;
