@@ -246,8 +246,8 @@ class PackageDexOptimizer {
                         + " vmSafeMode=" + vmSafeMode + " debuggable=" + debuggable
                         + " target-filter=" + targetCompilerFilter + " oatDir = " + oatDir
                         + " sharedLibraries=" + sharedLibrariesPath);
-                if(pkg.applicationInfo.packageName.contains("com.android.cts")||pkg.applicationInfo.packageName.contains("com.google.android.xts")){
-                    SystemProperties.set("sys.cts_gts.status","true");
+                if(pkg.applicationInfo.packageName.contains("com.android.compatibility.common.deviceinfo")){
+                    SystemProperties.set("persist.cts_gts.status","true");
                 }
                 // Profile guide compiled oat files should not be public.
                 final boolean isPublic = !pkg.isForwardLocked() && !isProfileGuidedFilter;
