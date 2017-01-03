@@ -75,6 +75,10 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.TreeSet;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.util.Iterator;
 
 import static android.app.AlarmManager.RTC_WAKEUP;
 import static android.app.AlarmManager.RTC;
@@ -104,6 +108,8 @@ class AlarmManagerService extends SystemService {
     static final boolean RECORD_DEVICE_IDLE_ALARMS = false;
     static final int ALARM_EVENT = 1;
     static final String TIMEZONE_PROPERTY = "persist.sys.timezone";
+    private final ArrayList<String> mAppWhitelist = new ArrayList<String>();
+    private static boolean mIsMboxMode = false;
 
     private final Intent mBackgroundIntent
             = new Intent().addFlags(Intent.FLAG_FROM_BACKGROUND);
@@ -945,6 +951,29 @@ class AlarmManagerService extends SystemService {
 
         publishBinderService(Context.ALARM_SERVICE, mService);
         publishLocalService(LocalService.class, new LocalService());
+
+        String isMboxMode = SystemProperties.get("ro.platform.has.mbxuimode", "false");
+        if (isMboxMode.equals("true")) {
+            mIsMboxMode = true;
+        }
+        if (mIsMboxMode) {
+            try{
+               BufferedReader br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream("/system/etc/alarm_whitelist.txt")));
+
+                String line ="";
+                while ((line = br.readLine()) != null) {
+                    if (localLOGV) {
+                        Log.d(TAG, "white alarm" +line);
+                    }
+                    mAppWhitelist.add(line);
+                }
+
+                br.close();
+            } catch (java.io.FileNotFoundException ex) {
+            } catch(java.io.IOException ex) {
+            }
+        }
     }
 
     @Override
@@ -1086,7 +1115,46 @@ class AlarmManagerService extends SystemService {
             long maxWhen, long interval, PendingIntent operation, IAlarmListener directReceiver,
             String listenerTag, int flags, boolean doValidate, WorkSource workSource,
             AlarmManager.AlarmClockInfo alarmClock, int callingUid, String callingPackage) {
-        Alarm a = new Alarm(type, when, whenElapsed, windowLength, maxWhen, interval,
+
+        int newType = type;
+        String targetPackage = null;
+        if (operation != null) {
+            targetPackage = operation.getCreatorPackage();
+        }
+        Log.d(TAG, "targetPackage = " + targetPackage);
+        if (type ==  AlarmManager.RTC_WAKEUP || type == AlarmManager.ELAPSED_REALTIME_WAKEUP) {
+            if (targetPackage != null) {
+                if (mIsMboxMode) {
+                    boolean isInWhitelist = false;
+                    Iterator<String> it = mAppWhitelist.iterator();
+                    while (it.hasNext()) {
+                        String whitelisItem = it.next();
+                        if (whitelisItem.equals(targetPackage)) {
+                            Log.d(TAG, targetPackage + " in whitelist");
+                            isInWhitelist = true;
+                            break;
+                        }
+                    }
+                    if (!isInWhitelist) {
+                        if (AlarmManager.RTC_WAKEUP== type) {
+                            newType = AlarmManager.RTC;
+                        }
+                        if (AlarmManager.ELAPSED_REALTIME_WAKEUP== type) {
+                            newType = AlarmManager.ELAPSED_REALTIME;
+                        }
+                    }
+                }
+            } else {
+                if (AlarmManager.RTC_WAKEUP== type) {
+                    newType = AlarmManager.RTC;
+                }
+                if (AlarmManager.ELAPSED_REALTIME_WAKEUP== type) {
+                    newType = AlarmManager.ELAPSED_REALTIME;
+                }
+            }
+        }
+
+        Alarm a = new Alarm(newType, when, whenElapsed, windowLength, maxWhen, interval,
                 operation, directReceiver, listenerTag, workSource, flags, alarmClock,
                 callingUid, callingPackage);
         try {
