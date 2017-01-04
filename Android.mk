@@ -467,6 +467,10 @@ LOCAL_SRC_FILES += \
 	core/java/android/service/quicksettings/IQSService.aidl \
 	core/java/android/service/quicksettings/IQSTileService.aidl \
 
+#BOARD_HAVE_BLUETOOTH_RTK Begin#
+LOCAL_SRC_FILES += core/java/android/bluetooth/IBluetoothRtkbt.aidl
+#BOARD_HAVE_BLUETOOTH_RTK End#
+
 # The following are native binders that need to go with the native component
 # at system/update_engine/binder_bindings/. Use relative path to refer to them.
 LOCAL_SRC_FILES += \
