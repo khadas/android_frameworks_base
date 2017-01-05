@@ -143,6 +143,16 @@ abstract class DisplayDevice {
     public void requestDisplayModesInTransactionLocked(int colorMode, int modeId) {
     }
 
+    /**Sets the display device resolution*/
+    public boolean requestMode(int modeId){
+        return false;
+    }
+
+    /**Sets the the display info for display device*/
+    public void setDisplayInfo(DisplayDeviceInfo info){
+
+    }
+
     /**
      * Sets the display layer stack while in a transaction.
      */

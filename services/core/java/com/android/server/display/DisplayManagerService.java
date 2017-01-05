@@ -66,7 +66,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-
+import android.util.Log;
 /**
  * Manages attached displays.
  * <p>
@@ -1032,6 +1032,22 @@ public final class DisplayManagerService extends SystemService {
         return mProjectionService;
     }
 
+	/**fly.gao  set the display device resolution*/
+    private void requestModeInternel(int displayId, int modeId){
+        synchronized (mSyncRoot) {
+            LogicalDisplay display = mLogicalDisplays.get(displayId);
+            if (display != null ) {
+               DisplayDevice primaryDevice = display.getPrimaryDisplayDeviceLocked();
+               if(primaryDevice != null){
+                   if(primaryDevice.requestMode(modeId)){
+                       primaryDevice.setDisplayInfo(null);
+                       updateLogicalDisplaysLocked();
+                   }
+               }
+            }
+        }
+    }
+
     private void dumpInternal(PrintWriter pw) {
         pw.println("DISPLAY MANAGER (dumpsys display)");
 
@@ -1194,6 +1210,12 @@ public final class DisplayManagerService extends SystemService {
     }
 
     private final class BinderService extends IDisplayManager.Stub {
+
+        @Override
+        public void requestMode(int displayId, int modeId){
+            requestModeInternel(displayId, modeId);
+        }
+
         /**
          * Returns information about the specified logical display.
          *

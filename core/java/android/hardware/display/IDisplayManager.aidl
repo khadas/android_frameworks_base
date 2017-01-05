@@ -77,4 +77,7 @@ interface IDisplayManager {
 
     // No permissions required but must be same Uid as the creator.
     void releaseVirtualDisplay(in IVirtualDisplayCallback token);
+
+    // set display device resolution
+    void requestMode(int displayId, int modeId);
 }

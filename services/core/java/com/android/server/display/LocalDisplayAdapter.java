@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import android.util.Log;
 
 /**
  * A display adapter for the local displays managed by Surface Flinger.
@@ -188,6 +189,16 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                 mBacklight = null;
             }
             mHdrCapabilities = SurfaceControl.getHdrCapabilities(displayToken);
+        }
+
+        @Override
+        public boolean requestMode(int modeId){
+            return requestModeInTransactionLocked(modeId);
+        }
+
+        @Override
+        public void setDisplayInfo(DisplayDeviceInfo info){
+            mInfo = info;
         }
 
         @Override
