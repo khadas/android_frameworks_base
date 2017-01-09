@@ -227,6 +227,7 @@ public class MediaFile {
             addFileType("WMV", FILE_TYPE_WMV, "video/x-ms-wmv", MtpConstants.FORMAT_WMV);
             addFileType("ASF", FILE_TYPE_ASF, "video/x-ms-asf");
         }
+        addFileType("ISO", FILE_TYPE_MP2TS, "video/iso");
 
         addFileType("JPG", FILE_TYPE_JPEG, "image/jpeg", MtpConstants.FORMAT_EXIF_JPEG);
         addFileType("JPEG", FILE_TYPE_JPEG, "image/jpeg", MtpConstants.FORMAT_EXIF_JPEG);

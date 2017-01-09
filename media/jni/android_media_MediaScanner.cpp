@@ -220,11 +220,9 @@ public:
         return checkAndClearExceptionFromCallback(mEnv, "setMimeType");
     }
 
-#ifdef BOX
     virtual status_t scanBDDirectory(const char* path, long long lastModified,
             long long fileSize)
     {
-    		#ifdef BOX
         jstring pathStr;
         if ((pathStr = mEnv->NewStringUTF(path)) == NULL) {
             mEnv->ExceptionClear();
@@ -235,19 +233,14 @@ public:
 
         mEnv->DeleteLocalRef(pathStr);
         return checkAndClearExceptionFromCallback(mEnv, "scanBDDirectory");
-        #endif
-        return 0;
     }
-#endif
 private:
     JNIEnv *mEnv;
     jobject mClient;
     jmethodID mScanFileMethodID;
     jmethodID mHandleStringTagMethodID;
     jmethodID mSetMimeTypeMethodID;
-//#ifdef BOX
     jmethodID mScanBDDirectoryMethodID;
-//#endif
 };
 
 
