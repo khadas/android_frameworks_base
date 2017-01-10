@@ -283,6 +283,21 @@ android_media_AudioTrack_setup(JNIEnv *env, jobject thiz, jobject weak_this, job
             return (jint) AUDIOTRACK_ERROR_SETUP_INVALIDFORMAT;
         }
 
+        audio_output_flags_t flag = AUDIO_OUTPUT_FLAG_NONE;
+        if (!audio_is_linear_pcm(format)) {
+            if (format == AUDIO_FORMAT_AC3 ||
+                format == AUDIO_FORMAT_E_AC3 ||
+                format == AUDIO_FORMAT_DTS ||
+                format == AUDIO_FORMAT_DTS_HD ||
+                format == AUDIO_FORMAT_DOLBY_TRUEHD ||
+                format == AUDIO_FORMAT_IEC61937) {
+                flag = AUDIO_OUTPUT_FLAG_DIRECT;
+                format = AUDIO_FORMAT_PCM_16_BIT;
+            } else {
+                ALOGE("Error creating Audiotrack: unsupported audio format!");
+            }
+        }
+
         // compute the frame count
         size_t frameCount;
         if (audio_is_linear_pcm(format)) {
@@ -330,7 +345,7 @@ android_media_AudioTrack_setup(JNIEnv *env, jobject thiz, jobject weak_this, job
                     format,// word length, PCM
                     nativeChannelMask,
                     frameCount,
-                    AUDIO_OUTPUT_FLAG_NONE,
+                    flag,
                     audioCallback, &(lpJniStorage->mCallbackData),//callback, callback data (user)
                     0,// notificationFrames == 0 since not using EVENT_MORE_DATA to feed the AudioTrack
                     0,// shared mem
@@ -356,7 +371,7 @@ android_media_AudioTrack_setup(JNIEnv *env, jobject thiz, jobject weak_this, job
                     format,// word length, PCM
                     nativeChannelMask,
                     frameCount,
-                    AUDIO_OUTPUT_FLAG_NONE,
+                    flag,
                     audioCallback, &(lpJniStorage->mCallbackData),//callback, callback data (user));
                     0,// notificationFrames == 0 since not using EVENT_MORE_DATA to feed the AudioTrack
                     lpJniStorage->mMemBase,// shared mem
