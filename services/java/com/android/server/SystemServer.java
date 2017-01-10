@@ -555,6 +555,20 @@ public final class SystemServer {
         boolean disableSamplingProfiler = SystemProperties.getBoolean("config.disable_samplingprof",
                 false);
         boolean isEmulator = SystemProperties.get("ro.kernel.qemu").equals("1");
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+
+        if(isBox){
+            Slog.i(TAG, "isBox stop some start....");
+
+            Slog.i(TAG, "disableLocation");
+            disableLocation = true;
+
+            //Slog.i(TAG, "disableNonCoreServices");
+            //disableNonCoreServices = true;
+
+            //Slog.i(TAG, "disableSystemUI");
+            //disableSystemUI = true;
+        }
 
         try {
             Slog.i(TAG, "Reading configuration...");
@@ -593,10 +607,12 @@ public final class SystemServer {
             mActivityManagerService.installSystemProviders();
             Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
 
-            traceBeginAndSlog("StartVibratorService");
-            vibrator = new VibratorService(context);
-            ServiceManager.addService("vibrator", vibrator);
-            Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
+            if(!isBox){
+                traceBeginAndSlog("StartVibratorService");
+                vibrator = new VibratorService(context);
+                ServiceManager.addService("vibrator", vibrator);
+                Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
+            }
 
             traceBeginAndSlog("StartConsumerIrService");
             consumerIr = new ConsumerIrService(context);
@@ -712,6 +728,7 @@ public final class SystemServer {
                 }
             }
         }
+        Slog.i(TAG, "start UiModeManagerService.");
 
         // We start this here so that we update our configuration to set watch or television
         // as appropriate.
@@ -950,7 +967,7 @@ public final class SystemServer {
             mSystemServiceManager.startService(AudioService.Lifecycle.class);
             Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
 
-            if (!disableNonCoreServices) {
+            if (!disableNonCoreServices && !isBox ) {
                 mSystemServiceManager.startService(DockObserver.class);
 
                 if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
@@ -1119,7 +1136,9 @@ public final class SystemServer {
             }
 
             if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_PRINTING)) {
-                mSystemServiceManager.startService(PRINT_MANAGER_SERVICE_CLASS);
+                if(!isBox){
+                    mSystemServiceManager.startService(PRINT_MANAGER_SERVICE_CLASS);
+                }
             }
 
             mSystemServiceManager.startService(RestrictionsManagerService.class);
@@ -1201,7 +1220,8 @@ public final class SystemServer {
 
         // Before things start rolling, be sure we have decided whether
         // we are in safe mode.
-        final boolean safeMode = wm.detectSafeMode();
+        //final boolean safeMode = wm.detectSafeMode();
+        final boolean safeMode = false;
         if (safeMode) {
             mActivityManagerService.enterSafeMode();
             // Disable the JIT for the system_server process
@@ -1221,13 +1241,15 @@ public final class SystemServer {
 
         // It is now time to start up the app processes...
 
-        Trace.traceBegin(Trace.TRACE_TAG_SYSTEM_SERVER, "MakeVibratorServiceReady");
-        try {
-            vibrator.systemReady();
-        } catch (Throwable e) {
-            reportWtf("making Vibrator Service ready", e);
+        if(!isBox){
+            Trace.traceBegin(Trace.TRACE_TAG_SYSTEM_SERVER, "MakeVibratorServiceReady");
+            try {
+                vibrator.systemReady();
+            } catch (Throwable e) {
+                reportWtf("making Vibrator Service ready", e);
+            }
+            Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
         }
-        Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);
 
         Trace.traceBegin(Trace.TRACE_TAG_SYSTEM_SERVER, "MakeLockSettingsServiceReady");
         if (lockSettings != null) {

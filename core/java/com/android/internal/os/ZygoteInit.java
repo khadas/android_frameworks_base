@@ -80,6 +80,7 @@ public class ZygoteInit {
     private static final String TAG = "Zygote";
 
     private static final String PROPERTY_DISABLE_OPENGL_PRELOADING = "ro.zygote.disable_gl_preload";
+    private static final String PROPERTY_FIRST_TIME_BOOTING = "persist.sys.first_booting";
     private static final String PROPERTY_RUNNING_IN_CONTAINER = "ro.boot.container";
 
     private static final String ANDROID_SOCKET_PREFIX = "ANDROID_SOCKET_";
@@ -683,7 +684,8 @@ public class ZygoteInit {
         /* For child process */
         if (pid == 0) {
             if (hasSecondZygote(abiList)) {
-                waitForSecondaryZygote(socketName);
+                //waitForSecondaryZygote(socketName);
+                Log.d(TAG,"--------call waitForSecondaryZygote,skip this---,abiList= "+abiList);
             }
 
             handleSystemServerProcess(parsedArgs);
@@ -709,7 +711,14 @@ public class ZygoteInit {
     public static void main(String argv[]) {
         // Mark zygote start. This ensures that thread creation will throw
         // an error.
-        ZygoteHooks.startZygoteNoThreadCreation();
+
+        // Finish profiling the zygote initialization.
+        boolean isFirstBooting = false;
+        // if first time booting or zygote restart or data encrypted,we need preload full class
+        if(Process.myPid() > 300 || SystemProperties.getBoolean(PROPERTY_FIRST_TIME_BOOTING, true)|| SystemProperties.get("ro.crypto.state").equals("encrypted")){
+            isFirstBooting = true;
+            ZygoteHooks.startZygoteNoThreadCreation();
+        }
 
         try {
             Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "ZygoteInit");
@@ -737,6 +746,12 @@ public class ZygoteInit {
             }
 
             registerZygoteSocket(socketName);
+            if(!isFirstBooting){
+                if (startSystemServer) {
+                    startSystemServer(abiList, socketName);
+                }
+            }
+
             Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "ZygotePreload");
             EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
                 SystemClock.uptimeMillis());
@@ -762,10 +777,11 @@ public class ZygoteInit {
             // Zygote process unmounts root storage spaces.
             Zygote.nativeUnmountStorageOnInit();
 
-            ZygoteHooks.stopZygoteNoThreadCreation();
-
-            if (startSystemServer) {
-                startSystemServer(abiList, socketName);
+            if(isFirstBooting){
+                ZygoteHooks.stopZygoteNoThreadCreation();
+                if (startSystemServer) {
+                    startSystemServer(abiList, socketName);
+                }
             }
 
             Log.i(TAG, "Accepting command socket connections");
