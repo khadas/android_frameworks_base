@@ -180,10 +180,17 @@ public class ConnectivityService extends IConnectivityManager.Stub
     private static final String TAG = ConnectivityService.class.getSimpleName();
 
     private static final boolean DBG = true;
-    private static final boolean VDBG = false;
+    private static final boolean VDBG = true;
 
     private static final boolean LOGD_RULES = false;
     private static final boolean LOGD_BLOCKED_NETWORKINFO = true;
+
+    // if true:
+    //    wifi and ethernet can coexist, if wifi and ethernet connect together, prefered to use ethernet
+    // if false:
+    //    wifi and ethernet can't coexist, if wifi and ethernet connect together, will tear down wifi
+    //    TODO: still have bug in this case to fix (like can't reconnect wifi when ethernet disconnect)
+    private static final boolean ENABLE_NETWORK_COEXIST = true;
 
     // TODO: create better separation between radio types and network types
 
@@ -4780,7 +4787,12 @@ public class ConnectivityService extends IConnectivityManager.Stub
                 break;
             }
         }
-        nai.asyncChannel.disconnect();
+
+        if (ENABLE_NETWORK_COEXIST) {
+            log("Skip teardownUnneededNetwork: " + nai.name());
+        } else {
+            nai.asyncChannel.disconnect();
+        }
     }
 
     private void handleLingerComplete(NetworkAgentInfo oldNetwork) {
