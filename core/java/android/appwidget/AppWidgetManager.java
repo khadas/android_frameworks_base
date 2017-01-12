@@ -892,8 +892,19 @@ public class AppWidgetManager {
         if (mService == null) {
             return false;
         }
-        return bindAppWidgetIdIfAllowed(appWidgetId, user.getIdentifier(), provider, options);
+            return bindAppWidgetIdIfAllowed(appWidgetId, user.getIdentifier(), provider, options);
     }
+      /**
+           *@hide
+           */
+    public boolean bindAppWidgetIdSkipBindPermission(int appWidgetId, ComponentName provider,
+            Bundle options,boolean skipBindPermission) {
+        if (mService == null) {
+            return false;
+         }
+            return bindAppWidgetIdSkipBindPermission(appWidgetId, UserHandle.myUserId(), provider, options, skipBindPermission);
+         }
+
 
     /**
      * Query if a given package was granted permission by the user to bind app widgets
@@ -963,6 +974,7 @@ public class AppWidgetManager {
      * @param permission Whether to give the package permission to bind widgets
      *
      * @hide
+     *
      */
     public void setBindAppWidgetPermission(String packageName, int userId, boolean permission) {
         if (mService == null) {
@@ -1067,6 +1079,20 @@ public class AppWidgetManager {
             throw e.rethrowFromSystemServer();
         }
     }
+    private boolean bindAppWidgetIdSkipBindPermission(int appWidgetId, int profileId,
+             ComponentName provider, Bundle options,boolean skipBindPermission) {
+        if (mService == null) {
+            return false;
+        }
+         try {
+             return mService.bindAppWidgetIdSkipBindPermission(mPackageName, appWidgetId,
+                    profileId, provider, options ,skipBindPermission);
+         }
+        catch (RemoteException e) {
+            throw new RuntimeException("system server dead?", e);
+        }
+    }
+
 
     private void convertSizesToPixels(AppWidgetProviderInfo info) {
         // Converting complex to dp.
