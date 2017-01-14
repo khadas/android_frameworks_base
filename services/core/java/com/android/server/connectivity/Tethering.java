@@ -97,7 +97,7 @@ public class Tethering extends BaseNetworkObserver implements IControlsTethering
 
     private final Context mContext;
     private final static String TAG = "Tethering";
-    private final static boolean DBG = false;
+    private final static boolean DBG = true;
     private final static boolean VDBG = false;
 
     private static final Class[] messageClasses = {
@@ -803,7 +803,9 @@ public class Tethering extends BaseNetworkObserver implements IControlsTethering
                             break;
                         case WifiManager.WIFI_AP_STATE_ENABLED:
                             // When the AP comes up and we've been requested to tether it, do so.
-                            if (mWifiTetherRequested) {
+                            // CHANGED: always do tether here, solve WifiManager.setWifiApEnabled(null, enable)
+                            // cant tether wifi. (add by hwg)
+                            /*if (mWifiTetherRequested)*/ {
                                 tetherMatchingInterfaces(true, ConnectivityManager.TETHERING_WIFI);
                             }
                             break;
