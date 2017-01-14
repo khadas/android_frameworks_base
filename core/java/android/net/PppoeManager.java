@@ -291,7 +291,7 @@ public class PppoeManager {
 	**/
 	public synchronized void connect(String name, String pwd, String iface) {
 		LOG("connect");
-		try{throw new Exception();}catch(Exception e){e.printStackTrace();}
+		//try{throw new Exception();}catch(Exception e){e.printStackTrace();}
 		setupPppoe(name,iface,null,null,pwd);
 		startPppoe();
 	}
@@ -300,7 +300,7 @@ public class PppoeManager {
 	**/
 	public synchronized void disconnect(String iface) {
 		LOG("disconnect");
-		try{throw new Exception();}catch(Exception e){e.printStackTrace();}
+		//try{throw new Exception();}catch(Exception e){e.printStackTrace();}
 		stopPppoe();
 	}
 
