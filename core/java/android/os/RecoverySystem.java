@@ -450,11 +450,13 @@ public class RecoverySystem {
 
             // If the package name ends with "_s.zip", it's a security update.
             boolean securityUpdate = filename.endsWith("_s.zip");
+            // If the package name ends with ".img", it's a rk_image update.
+            boolean rk_image = filename.endsWith(".img");
 
             // If the package is on the /data partition, the package needs to
             // be processed (i.e. uncrypt'd). The caller specifies if that has
             // been done in 'processed' parameter.
-            if (filename.startsWith("/data/")) {
+            if (filename.startsWith("/data/") && !rk_image) {
                 if (processed) {
                     if (!BLOCK_MAP_FILE.exists()) {
                         Log.e(TAG, "Package claimed to have been processed but failed to find "
@@ -488,6 +490,10 @@ public class RecoverySystem {
             final String securityArg = "--security\n";
 
             String command = filenameArg + localeArg;
+            if(rk_image){
+                final String RKfilenameArg = "--update_rkimage=" + filename + "\n";
+                command = RKfilenameArg + localeArg;
+            }
             if (securityUpdate) {
                 command += securityArg;
             }
