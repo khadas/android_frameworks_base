@@ -4115,4 +4115,7 @@
     <string name="reboot_confirm" >Your device will reboot.</string>
     <!-- label for item that reboot in phone options dialog -->
     <string name="global_action_reboot">Reboot</string>
+    <string name="reboot2ubuntu">Reboot to Ubuntu</string>
+    <string name="reboot2libreelec">Reboot to LibreELEC</string>
+    <string name="reboot_other_os_progress">System switching...</string>
 </resources>

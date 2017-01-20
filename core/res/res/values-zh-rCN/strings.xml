@@ -1522,4 +1522,6 @@
     <string name="reboot_confirm" >您的机器将重启.</string>
     <!-- label for item that reboot in phone options dialog -->
     <string name="global_action_reboot">重新启动</string>
+    <string name="reboot2ubuntu">"重启到Ubuntu系统"</string>
+    <string name="reboot2libreelec">"重启到LibreELEC系统"</string>
 </resources>

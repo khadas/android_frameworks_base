@@ -88,6 +88,8 @@ public final class ShutdownThread extends Thread {
     private static boolean mReboot;
     private static boolean mRebootSafeMode;
     private static boolean mRebootUpdate;
+    private static boolean mReboot2Ubuntu;
+    private static boolean mReboot2LibreELEC;
     private static String mRebootReason;
 
     // Provides shutdown assurance in case the system_server is killed
@@ -129,6 +131,8 @@ public final class ShutdownThread extends Thread {
     public static void shutdown(final Context context, boolean confirm) {
         mReboot = false;
         mRebootSafeMode = false;
+        mReboot2Ubuntu = false;
+        mReboot2LibreELEC = false;
         shutdownInner(context, confirm);
     }
 
@@ -212,10 +216,39 @@ public final class ShutdownThread extends Thread {
         mReboot = true;
         mRebootSafeMode = false;
         mRebootUpdate = false;
+        mReboot2Ubuntu = false;
+        mReboot2LibreELEC = false;
         mRebootReason = reason;
         shutdownInner(context, confirm);
     }
 
+    public static void rebootUbuntu(final Context context, String reason, boolean confirm) {
+       try {
+          Runtime.getRuntime().exec("reboot ubuntu");
+        } catch (IOException ioe) {
+            throw new RuntimeException("Error running command reboot ubuntu", ioe);
+        }
+        mReboot = true;
+        mRebootSafeMode = false;
+        mReboot2Ubuntu = true;
+        mReboot2LibreELEC = false;
+        mRebootReason = reason;
+        shutdownInner(context, confirm);
+    }
+
+    public static void rebootLibreELEC(final Context context, String reason, boolean confirm) {
+        try {
+          Runtime.getRuntime().exec("reboot libreelec");
+        } catch (IOException ioe) {
+            throw new RuntimeException("Error running command reboot libreelec", ioe);
+        }
+        mReboot = true;
+        mRebootSafeMode = false;
+        mReboot2Ubuntu = false;
+        mReboot2LibreELEC = true;
+        mRebootReason = reason;
+        shutdownInner(context, confirm);
+    }
     /**
      * Request a reboot into safe mode.  Must be called from a Looper thread in which its UI
      * is shown.
@@ -232,6 +265,8 @@ public final class ShutdownThread extends Thread {
         mReboot = true;
         mRebootSafeMode = true;
         mRebootUpdate = false;
+        mReboot2Ubuntu = false;
+        mReboot2LibreELEC = false;
         mRebootReason = null;
         shutdownInner(context, confirm);
     }
@@ -273,9 +308,19 @@ public final class ShutdownThread extends Thread {
                 pd.setIndeterminate(false);
             } else {
                 // Factory reset path. Set the dialog message accordingly.
-                pd.setTitle(context.getText(com.android.internal.R.string.reboot_to_reset_title));
-                pd.setMessage(context.getText(
-                        com.android.internal.R.string.reboot_to_reset_message));
+                if (mReboot2Ubuntu) {
+                   pd.setTitle(context.getText(com.android.internal.R.string.reboot2ubuntu));
+                   pd.setMessage(context.getText(
+                           com.android.internal.R.string.reboot_other_os_progress));
+                } else if (mReboot2LibreELEC) {
+                   pd.setTitle(context.getText(com.android.internal.R.string.reboot2libreelec));
+                   pd.setMessage(context.getText(
+                           com.android.internal.R.string.reboot_other_os_progress));
+                } else {
+                   pd.setTitle(context.getText(com.android.internal.R.string.reboot));
+                   pd.setMessage(context.getText(
+                           com.android.internal.R.string.reboot_progress));
+                }
                 pd.setIndeterminate(true);
             }
         } else {
