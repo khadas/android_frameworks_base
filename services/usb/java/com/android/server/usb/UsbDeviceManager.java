@@ -396,6 +396,7 @@ public class UsbDeviceManager {
             } else if ("CONFIGURED".equals(state)) {
                 connected = 1;
                 configured = 1;
+                mUsbDataUnlocked = true;
             } else {
                 Slog.e(TAG, "unknown state " + state);
                 return;
