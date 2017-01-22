@@ -81,6 +81,13 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.os.PowerManager;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+
 /**
  * Helper to show the global actions dialog.  Each item is an {@link Action} that
  * may show depending on whether the keyguard is showing, and whether the device
@@ -108,6 +115,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private final Context mContext;
     private final WindowManagerFuncs mWindowManagerFuncs;
     private final AudioManager mAudioManager;
+    private final PowerManager mPowerManager;
     private final IDreamManager mDreamManager;
 
     private ArrayList<Action> mItems;
@@ -136,6 +144,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mDreamManager = IDreamManager.Stub.asInterface(
                 ServiceManager.getService(DreamService.DREAM_SERVICE));
+        
+        mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
@@ -374,10 +384,37 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         @Override
         public void onPress() {
+            boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+           if(isBox){
+              wakeup_restart_set();
+            Log.d(TAG,"don't shutdown here,only go to sleep for box!");
+            mPowerManager.goToSleep(SystemClock.uptimeMillis());  
+           }else{
             // shutdown by making sure radio and power are handled accordingly.
             mWindowManagerFuncs.shutdown(false /* confirm */);
+           }
         }
     }
+
+    //for:tell kernel to reboot when wake up
+      private final void wakeup_restart_set(){
+                String sb = "restart";
+
+                File file = new File("/sys/devices/virtual/resume_reboot/resume_reboot/resume_reboot");
+                if (file.exists()) {
+                try{
+                if (file.canWrite()) {
+                        FileOutputStream fout = new FileOutputStream(file);
+                        byte[] bytes = sb.getBytes();
+                        fout.write(bytes);
+                        fout.close();
+                   }
+                }catch(Exception e){
+                        Log.e(TAG, file.toString() + "can not write");
+                }
+                }
+      }
+     //end   
 
     private final class RestartAction extends SinglePressAction implements LongPressAction {
         private RestartAction() {
