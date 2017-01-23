@@ -83,6 +83,21 @@ import static android.app.AlarmManager.ELAPSED_REALTIME;
 
 import com.android.internal.util.LocalLog;
 
+
+import android.os.Environment;
+import android.os.FileUtils;
+import android.util.Xml;
+import com.android.internal.util.FastXmlSerializer;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.BufferedOutputStream;
+import java.util.List;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlSerializer;
+
 class AlarmManagerService extends SystemService {
     private static final int RTC_WAKEUP_MASK = 1 << RTC_WAKEUP;
     private static final int RTC_MASK = 1 << RTC;
@@ -150,6 +165,12 @@ class AlarmManagerService extends SystemService {
     long mLastTimeChangeRealtime;
     long mAllowWhileIdleMinTime;
     int mNumTimeChanged;
+
+
+	//for alarm filter
+    private File rootDir;
+    private File alarmFilter;
+    private final List<String> packageList = new ArrayList<String>();
 
     /**
      * The current set of user whitelisted apps for device idle mode, meaning these are allowed
@@ -928,6 +949,11 @@ class AlarmManagerService extends SystemService {
         mClockReceiver.scheduleDateChangedEvent();
         mInteractiveStateReceiver = new InteractiveStateReceiver();
         mUninstallReceiver = new UninstallReceiver();
+
+		//create a xml file to list the packages that will be filterd
+        rootDir = Environment.getRootDirectory();
+        alarmFilter = new File(rootDir, "etc/alarm_filter.xml");
+        resolve(alarmFilter);
         
         if (mNativeData != 0) {
             AlarmThread waitThread = new AlarmThread();
@@ -955,6 +981,43 @@ class AlarmManagerService extends SystemService {
             mLocalDeviceIdleController
                     = LocalServices.getService(DeviceIdleController.LocalService.class);
         }
+    }
+
+
+	private void resolve(File file) {
+       if (!file.exists()) {
+           Slog.d(TAG, " Failed while trying resolve alarm filter file, not exists");
+           return;
+       }
+
+       try {
+           FileInputStream stream = new FileInputStream(file);
+           XmlPullParser parser = Xml.newPullParser();
+           parser.setInput(stream, null);
+
+           int type;
+           do {
+              type = parser.next();
+              if (type == XmlPullParser.START_TAG) {
+                  String tag = parser.getName();
+
+                  if ("app".equals(tag)) {
+                      String pkgName = parser.getAttributeValue(null, "package");
+                      packageList.add(pkgName);
+                  }
+              }
+            } while(type != XmlPullParser.END_DOCUMENT);
+       } catch (NullPointerException e) {
+            Slog.w(TAG, "Warning, failed parsing alarm_filter.xml: " + e);
+       } catch (NumberFormatException e) {
+            Slog.w(TAG, "Warning, failed parsing alarm_filter.xml: " + e);
+       } catch (XmlPullParserException e) {
+            Slog.w(TAG, "Warning, failed parsing alarm_filter.xml: " + e);
+       } catch (IOException e) {
+            Slog.w(TAG, "Warning, failed parsing alarm_filter.xml: " + e);
+       } catch (IndexOutOfBoundsException e) {
+            Slog.w(TAG, "Warning, failed parsing alarm_filter.xml: " + e);
+       }
     }
 
     @Override
@@ -1023,6 +1086,19 @@ class AlarmManagerService extends SystemService {
             return;
         }
 
+		int alarmType = type;
+		if (operation != null){
+	        String pkgName = operation.getTargetPackage();
+	        if (packageList != null) {
+	                if (packageList.contains(pkgName)) {
+	                        if (alarmType == RTC_WAKEUP) {
+	                            alarmType = RTC;
+	                        } else if (alarmType == ELAPSED_REALTIME_WAKEUP) {
+	                            alarmType = ELAPSED_REALTIME;
+	                        }
+	                }
+	        }
+		}
         // Sanity check the window length.  This will catch people mistakenly
         // trying to pass an end-of-window timestamp rather than a duration.
         if (windowLength > AlarmManager.INTERVAL_HALF_DAY) {
@@ -1070,6 +1146,7 @@ class AlarmManagerService extends SystemService {
         }
 
         synchronized (mLock) {
+			type = alarmType;
             if (DEBUG_BATCH) {
                 Slog.v(TAG, "set(" + operation + ") : type=" + type
                         + " triggerAtTime=" + triggerAtTime + " win=" + windowLength
