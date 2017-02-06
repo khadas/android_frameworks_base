@@ -560,8 +560,8 @@ public final class SystemServer {
         if(isBox){
             Slog.i(TAG, "isBox stop some start....");
 
-            Slog.i(TAG, "disableLocation");
-            disableLocation = true;
+//            Slog.i(TAG, "disableLocation");
+//            disableLocation = true;
 
             //Slog.i(TAG, "disableNonCoreServices");
             //disableNonCoreServices = true;
