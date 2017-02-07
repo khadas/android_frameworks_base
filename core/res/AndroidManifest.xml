@@ -2498,7 +2498,7 @@
          @hide
     -->
     <permission android:name="android.permission.ACCESS_SURFACE_FLINGER"
-        android:protectionLevel="normal" />
+        android:protectionLevel="signature" />
 
     <!-- @SystemApi Allows an application to take screen shots and more generally
          get access to the frame buffer data.
