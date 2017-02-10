@@ -44,6 +44,7 @@ import com.android.systemui.statusbar.policy.HeadsUpManager;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import android.os.SystemProperties;
 
 public abstract class PanelView extends FrameLayout {
     public static final boolean DEBUG = PanelBar.DEBUG;
@@ -402,6 +403,12 @@ public abstract class PanelView extends FrameLayout {
                                 heightDp, velocityDp);
                     }
             fling(vel, expand, isFalseTouch(x, y));
+	    if("rk312x".equals(SystemProperties.get("ro.board.platform"))){
+	    	if(mExpandedFraction>0f)
+			fling(vel, expand, isFalseTouch(x, y));
+	    }else
+	    	fling(vel, expand, isFalseTouch(x, y));
+
             onTrackingStopped(expand);
             mUpdateFlingOnLayout = expand && mPanelClosedOnDown && !mHasLayoutedSinceDown;
             if (mUpdateFlingOnLayout) {
