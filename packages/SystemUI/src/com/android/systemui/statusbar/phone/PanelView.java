@@ -402,7 +402,6 @@ public abstract class PanelView extends FrameLayout {
                                 EventLogConstants.SYSUI_LOCKSCREEN_GESTURE_SWIPE_UP_UNLOCK,
                                 heightDp, velocityDp);
                     }
-            fling(vel, expand, isFalseTouch(x, y));
 	    if("rk312x".equals(SystemProperties.get("ro.board.platform"))){
 	    	if(mExpandedFraction>0f)
 			fling(vel, expand, isFalseTouch(x, y));
