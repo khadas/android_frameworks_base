@@ -93,6 +93,13 @@ public class SettingsDrawerActivity extends Activity {
         }
         super.setContentView(R.layout.settings_with_drawer);
         mContentHeaderContainer = (FrameLayout) findViewById(R.id.content_header_container);
+
+        if(mContentHeaderContainer == null){
+            super.setContentView(R.layout.settings_with_drawer_mid);
+            mContentHeaderContainer = (FrameLayout) findViewById(R.id.content_header_container);
+            Log.e(TAG, "is box ??? mContentHeaderContainer is null!!!");
+        }
+
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (mDrawerLayout == null) {
             return;

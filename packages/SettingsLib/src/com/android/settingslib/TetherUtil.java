@@ -18,12 +18,18 @@ package com.android.settingslib;
 import android.content.Context;
 import android.os.SystemProperties;
 import android.telephony.CarrierConfigManager;
-
+import android.os.PersistableBundle;
+import android.util.Log;
 public class TetherUtil {
 
     private static boolean isEntitlementCheckRequired(Context context) {
         final CarrierConfigManager configManager = (CarrierConfigManager) context
              .getSystemService(Context.CARRIER_CONFIG_SERVICE);
+        final PersistableBundle persistableBundle = configManager.getConfig();
+        if(persistableBundle == null){
+            Log.e("TetherUtil ", "is box ???, PersistableBundle is null!!!");
+            return true;
+        }
         return configManager.getConfig().getBoolean(CarrierConfigManager
              .KEY_REQUIRE_ENTITLEMENT_CHECKS_BOOL);
     }
