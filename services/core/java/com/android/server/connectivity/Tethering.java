@@ -383,7 +383,11 @@ public class Tethering extends BaseNetworkObserver implements IControlsTethering
     }
 
     public void stopTethering(int type) {
-        enableTetheringInternal(type, false, null);
+        try{
+            enableTetheringInternal(type, false, null);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
         if (isTetherProvisioningRequired()) {
             cancelTetherProvisioningRechecks(type);
         }
