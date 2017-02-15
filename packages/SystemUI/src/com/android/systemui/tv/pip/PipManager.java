@@ -45,6 +45,8 @@ import com.android.systemui.SystemUIApplication;
 import com.android.systemui.recents.misc.SystemServicesProxy.TaskStackListener;
 import com.android.systemui.recents.misc.SystemServicesProxy;
 import com.android.systemui.statusbar.tv.TvStatusBar;
+import com.android.systemui.utils.DeviceInfoUtils;
+import com.android.systemui.utils.SizeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -159,7 +161,8 @@ public class PipManager {
     private MediaController mPipMediaController;
     private boolean mOnboardingShown;
     private String[] mLastPackagesResourceGranted;
-
+    /**Screen width*/
+    private int mScreenWidth;
     private final Runnable mResizePinnedStackRunnable = new Runnable() {
         @Override
         public void run() {
@@ -225,19 +228,29 @@ public class PipManager {
 
     private void loadConfigurationsAndApply() {
         Resources res = mContext.getResources();
-        mDefaultPipBounds = Rect.unflattenFromString(res.getString(
-                com.android.internal.R.string.config_defaultPictureInPictureBounds));
-        mSettingsPipBounds = Rect.unflattenFromString(res.getString(
-                R.string.pip_settings_bounds));
         mMenuModePipBounds = Rect.unflattenFromString(res.getString(
                 R.string.pip_menu_bounds));
-        mRecentsPipBounds = Rect.unflattenFromString(res.getString(
-                R.string.pip_recents_bounds));
-        mRecentsFocusedPipBounds = Rect.unflattenFromString(res.getString(
-                R.string.pip_recents_focused_bounds));
         mRecentsFocusChangedAnimationDurationMs = res.getInteger(
                 R.integer.recents_tv_pip_focus_anim_duration);
-
+        mScreenWidth = DeviceInfoUtils.getScreenWidth(mContext);
+        int pipWindowWidth = SizeUtils.dp2px(mContext, 240);
+        int pipWindowHeight = SizeUtils.dp2px(mContext, 135);
+        int defaultPipLeft = mScreenWidth - pipWindowWidth - SizeUtils.dp2px(mContext, 50);
+        int defaultPipRight = defaultPipLeft + pipWindowWidth;
+        int defaultpipTop = SizeUtils.dp2px(mContext, 50);
+        int defaultpipBottom = defaultpipTop + pipWindowHeight;
+        mDefaultPipBounds = new Rect(defaultPipLeft, defaultpipTop, defaultPipRight, defaultpipBottom);
+        int settingsPipLeft = (mScreenWidth - pipWindowWidth) / 2;
+        int settingsPipRight = settingsPipLeft + pipWindowWidth;
+        int settingsPipTop = defaultpipTop;
+        int settingsPipBottom = settingsPipTop + pipWindowHeight;
+        mSettingsPipBounds = new Rect(settingsPipLeft, settingsPipTop, settingsPipRight, settingsPipBottom);
+        mRecentsFocusedPipBounds = mSettingsPipBounds;
+        int recentsPipLeft = (mScreenWidth - SizeUtils.dp2px(mContext, 160)) / 2;
+        int recentsPipRight = recentsPipLeft + SizeUtils.dp2px(mContext, 160);
+        int recentsPipTop = defaultpipTop;
+        int recentsPipBottom = recentsPipTop + SizeUtils.dp2px(mContext, 101) ;
+        mRecentsPipBounds = new Rect(recentsPipLeft, recentsPipTop,recentsPipRight, recentsPipBottom);
         // Reset the PIP bounds and apply. PIP bounds can be changed by two reasons.
         //   1. Configuration changed due to the language change (RTL <-> RTL)
         //   2. SystemUI restarts after the crash
@@ -610,8 +623,8 @@ public class PipManager {
                 Rect bounds = isSettingsShown() ? mSettingsPipBounds : mDefaultPipBounds;
                 if (mPipBounds != bounds) {
                     mPipBounds = bounds;
-                    resizePinnedStack(STATE_PIP_OVERLAY);
                 }
+                resizePinnedStack(STATE_PIP_OVERLAY);
             }
         }
 
