@@ -39,7 +39,7 @@ class SurfaceControl;
 class BootAnimation : public Thread, public IBinder::DeathRecipient
 {
 public:
-                BootAnimation();
+                BootAnimation(bool shutdown);
     virtual     ~BootAnimation();
 
     sp<SurfaceComposerClient> session() const;
@@ -136,6 +136,8 @@ private:
     EGLDisplay  mSurface;
     sp<SurfaceControl> mFlingerSurfaceControl;
     sp<Surface> mFlingerSurface;
+    bool        mShutdown;
+    bool        mReverseAxis;
     bool        mClockEnabled;
     bool        mTimeIsAccurate;
     bool        mSystemBoot;
