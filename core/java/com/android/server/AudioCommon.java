@@ -298,8 +298,8 @@ public class AudioCommon {
 		else
 			setCurrentPlaybackDevice(state);
 
-		ActivityManagerNative.broadcastStickyIntent(new Intent(
-				AUDIOPCMLISTUPDATE), null, UserHandle.USER_ALL);
+		//ActivityManagerNative.broadcastStickyIntent(new Intent(
+		//		AUDIOPCMLISTUPDATE), null, UserHandle.USER_ALL);
 	}
 
 	public static void doUsbAudioDevicesRouting(int streamType, String state) {

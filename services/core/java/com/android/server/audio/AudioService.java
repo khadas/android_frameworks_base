@@ -4974,7 +4974,7 @@ public class AudioService extends IAudioService.Stub {
                 Slog.i(TAG, "deviceSpec:" + deviceSpec + " is(already)Connected:" + isConnected);
             }
 
-            boolean isSpdifOrHdmi = ((device == AudioSystem.DEVICE_OUT_ANLG_DOCK_HEADSET) ||
+            boolean isSpdifOrHdmi = ((device == AudioSystem.DEVICE_OUT_SPDIF) ||
                             (device == AudioSystem.DEVICE_OUT_AUX_DIGITAL));
             if (isSpdifOrHdmi) {
                 if (!connect) {
