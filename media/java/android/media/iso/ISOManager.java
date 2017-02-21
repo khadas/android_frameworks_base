@@ -203,8 +203,8 @@ public class ISOManager
 		}
 
 
-		Log.d(TAG,"isBDDirectory(), pathStr = "+pathStr);
- 		Log.d(TAG,"isBDDirectory(), path = "+path);
+	//	Log.d(TAG,"isBDDirectory(), pathStr = "+pathStr);
+ 	//	Log.d(TAG,"isBDDirectory(), path = "+path);
 		
 		File file = new File(path);
 		if(file.isDirectory())
