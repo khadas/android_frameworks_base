@@ -70,6 +70,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
     private static final String NAME_USB_AUDIO = "usb_audio";
     private static final String NAME_HDMI_AUDIO = "hdmi_audio";
     private static final String NAME_HDMI = "hdmi";
+    private static final String NAME_DP = "cdn-dp";
 
     private static final int MSG_NEW_DEVICE_STATE = 1;
     private static final int MSG_SYSTEM_READY = 2;
@@ -417,6 +418,14 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                     Slog.w(TAG, "This kernel does not have HDMI audio support");
                 }
             }
+
+	    // Monitor DP
+	    uei = new UEventInfo(NAME_DP, BIT_HDMI_AUDIO, 0, 0);
+	    if (uei.checkSwitchExists()) {
+		retVal.add(uei);
+	    } else {
+		Slog.w(TAG, "This kernel does not have dp audio support");
+	    }
 
             return retVal;
         }
