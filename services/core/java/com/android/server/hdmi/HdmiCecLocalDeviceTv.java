@@ -1460,16 +1460,55 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     final void addCecDevice(HdmiDeviceInfo info) {
         assertRunOnServiceThread();
+        /* check if devices has same physical address */
+        if ((info.getPhysicalAddress() == mService.getPhysicalAddress()) &&
+            (mDeviceInfos.size() != 0) &&
+            info.getLogicalAddress() != mAddress) {
+            Slog.d(TAG, "has same physical address with local device:" + info + ", local size:" + mDeviceInfos.size());
+            return ;
+        }
+
+        /* ignore unregistered logical address*/
+        if (info.getLogicalAddress() == Constants.ADDR_UNREGISTERED) {
+            Slog.d(TAG, "ignore info with UNREGISTERED address:" + info);
+            return ;
+        }
+
+        for (int i = 0; i < mDeviceInfos.size(); i++) {
+            HdmiDeviceInfo dev = mDeviceInfos.valueAt(i);
+            /* check if old dev with same phy address is exist */
+            if (info.getPhysicalAddress() == dev.getPhysicalAddress()
+                && info.getLogicalAddress() != dev.getLogicalAddress()
+                && info.getDeviceType() == dev.getDeviceType()) {
+                Slog.d(TAG, "found devices with same physical addr:" + info + ", dev:" + dev);
+                HdmiCecMessage msg = HdmiCecMessageBuilder.buildGivePhysicalAddress(mAddress, dev.getLogicalAddress());
+                mService.sendCecCommand(msg, new SendMessageCallback() {
+                    @Override
+                    public void onSendCompleted(int error) {
+                        if (error != Constants.SEND_RESULT_SUCCESS) {
+                            Slog.d(TAG, "send GivePhysicalAddress failed:\n" + error);
+                        }
+                    }
+                });
+            }
+        }
+
         HdmiDeviceInfo old = addDeviceInfo(info);
         if (info.getLogicalAddress() == mAddress) {
             // The addition of TV device itself should not be notified.
             return;
         }
+        Slog.d(TAG, " old: " + old);
+        Slog.d(TAG, "info: " + info);
         if (old == null) {
             invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
         } else if (!old.equals(info)) {
-            invokeDeviceEventListener(old, HdmiControlManager.DEVICE_EVENT_REMOVE_DEVICE);
-            invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
+            if (old.getPhysicalAddress() == info.getPhysicalAddress()) {
+                invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_UPDATE_DEVICE);
+            } else {
+                invokeDeviceEventListener(old, HdmiControlManager.DEVICE_EVENT_REMOVE_DEVICE);
+                invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
+            }
         }
     }
 
@@ -1693,10 +1732,12 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (!mService.isControlEnabled()) {
             return;
         }
-        if (!initiatedByCec && mAutoDeviceOff) {
+
+        //comment out the code by wj, send standy from uboot
+        /*if (!initiatedByCec && mAutoDeviceOff) {
             mService.sendCecCommand(HdmiCecMessageBuilder.buildStandby(
                     mAddress, Constants.ADDR_BROADCAST));
-        }
+        }*/
     }
 
     boolean isProhibitMode() {
