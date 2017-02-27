@@ -71,6 +71,7 @@ import com.android.internal.util.XmlUtils;
 import com.android.server.AttributeCache;
 import com.android.server.am.ActivityStack.ActivityState;
 import com.android.server.am.ActivityStackSupervisor.ActivityContainer;
+import android.os.SystemProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -1247,6 +1248,15 @@ final class ActivityRecord {
     }
 
     void windowsDrawnLocked() {
+	//Launcher is drawn completed,box can exit bootanim, other product  wait for keygurad drawn
+	if(isHomeActivity() && shortComponentName!=null && !shortComponentName.contains(".FallbackHome"))
+	{
+		if("box".equals(SystemProperties.get("ro.target.product")))
+		{
+			SystemProperties.set("service.bootanim.exit", "1");	
+			Log.d("xzj","----launcher drawn done,exit bootanim----");
+		}
+	}
         mStackSupervisor.mActivityMetricsLogger.notifyWindowsDrawn();
         if (displayStartTime != 0) {
             reportLaunchTimeLocked(SystemClock.uptimeMillis());

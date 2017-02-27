@@ -6055,7 +6055,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 return;
             }
 
-            if (!mBootAnimationStopped) {
+	    //do not exit bootanim,because startHomeActivityLocked will start com.android.settings.FallbackHome,and will show black screen before keygurad
+            /*if (!mBootAnimationStopped) {
                 // Do this one time.
                 Trace.asyncTraceBegin(Trace.TRACE_TAG_WINDOW_MANAGER, "Stop bootanim", 0);
                 try {
@@ -6077,7 +6078,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (!mForceDisplayEnabled && !checkBootAnimationCompleteLocked()) {
                 if (DEBUG_BOOT) Slog.i(TAG_WM, "performEnableScreen: Waiting for anim complete");
                 return;
-            }
+            }*/
 
             EventLog.writeEvent(EventLogTags.WM_BOOT_ANIMATION_DONE, SystemClock.uptimeMillis());
             Trace.asyncTraceEnd(Trace.TRACE_TAG_WINDOW_MANAGER, "Stop bootanim", 0);

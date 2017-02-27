@@ -94,6 +94,8 @@ public class KeyguardServiceDelegate {
         @Override
         public void onDrawn() throws RemoteException {
             if (DEBUG) Log.v(TAG, "**** SHOWN CALLED ****");
+	    //keyguard drawn complete ,can exit bootanim
+	    android.os.SystemProperties.set("service.bootanim.exit", "1");
             if (mDrawnListener != null) {
                 mDrawnListener.onDrawn();
             }
