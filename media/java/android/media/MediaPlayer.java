@@ -52,6 +52,7 @@ import android.media.SubtitleController.Anchor;
 import android.media.SubtitleData;
 import android.media.SubtitleTrack.RenderingWidget;
 import android.media.SyncParams;
+import android.security.NetworkSecurityPolicy;
 
 import com.android.internal.util.Preconditions;
 
@@ -613,6 +614,7 @@ public class MediaPlayer extends PlayerBase
     private int mStreamType = AudioManager.USE_DEFAULT_STREAM_TYPE;
     private int mUsage = -1;
     private boolean mBypassInterruptionPolicy;
+    private boolean mNonFileScheme = false;
 
     /**
      * Default constructor. Consider using one of the create() methods for
@@ -964,6 +966,7 @@ public class MediaPlayer extends PlayerBase
      */
     public void setDataSource(@NonNull Context context, @NonNull Uri uri)
             throws IOException, IllegalArgumentException, SecurityException, IllegalStateException {
+        mNonFileScheme = false;
         setDataSource(context, uri, null);
     }
 
@@ -984,6 +987,7 @@ public class MediaPlayer extends PlayerBase
                     SecurityException, IllegalStateException {
         final ContentResolver resolver = context.getContentResolver();
         final String scheme = uri.getScheme();
+        mNonFileScheme = false;
         if (ContentResolver.SCHEME_FILE.equals(scheme)) {
             setDataSource(uri.getPath());
             return;
@@ -1036,6 +1040,7 @@ public class MediaPlayer extends PlayerBase
      */
     public void setDataSource(String path)
             throws IOException, IllegalArgumentException, SecurityException, IllegalStateException {
+        mNonFileScheme = false;
         setDataSource(path, null, null);
     }
 
@@ -1052,6 +1057,7 @@ public class MediaPlayer extends PlayerBase
     {
         String[] keys = null;
         String[] values = null;
+        mNonFileScheme = false;
 
         if (headers != null) {
             keys = new String[headers.size()];
@@ -1074,6 +1080,10 @@ public class MediaPlayer extends PlayerBase
         if ("file".equals(scheme)) {
             path = uri.getPath();
         } else if (scheme != null) {
+            if ("http".equals(uri.getScheme()) && !NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted()) {
+                mNonFileScheme = true;
+                return;
+            }
             // handle non-file sources
             nativeSetDataSource(
                 MediaHTTPService.createHttpServiceBinderIfNecessary(path),
@@ -1132,6 +1142,7 @@ public class MediaPlayer extends PlayerBase
      */
     public void setDataSource(FileDescriptor fd)
             throws IOException, IllegalArgumentException, IllegalStateException {
+        mNonFileScheme = false;
         // intentionally less than LONG_MAX
         setDataSource(fd, 0, 0x7ffffffffffffffL);
     }
@@ -1150,6 +1161,7 @@ public class MediaPlayer extends PlayerBase
      */
     public void setDataSource(FileDescriptor fd, long offset, long length)
             throws IOException, IllegalArgumentException, IllegalStateException {
+        mNonFileScheme = false;
         _setDataSource(fd, offset, length);
     }
 
@@ -1165,6 +1177,7 @@ public class MediaPlayer extends PlayerBase
      */
     public void setDataSource(MediaDataSource dataSource)
             throws IllegalArgumentException, IllegalStateException {
+        mNonFileScheme = false;
         _setDataSource(dataSource);
     }
 
@@ -1181,6 +1194,9 @@ public class MediaPlayer extends PlayerBase
      * @throws IllegalStateException if it is called in an invalid state
      */
     public void prepare() throws IOException, IllegalStateException {
+        if (mNonFileScheme && !NetworkSecurityPolicy.getInstance().isCleartextTrafficPermitted()) {
+            throw new IOException("ClearText traffic not permitted.");
+        }
         _prepare();
         scanInternalSubtitleTracks();
     }
