@@ -65,6 +65,7 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.os.SystemProperties;
 import android.os.UserManager;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -355,6 +356,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     private ScreenPinningRequest mScreenPinningRequest;
 
     private int mNavigationIconHints = 0;
+    private boolean mBarIsAdd = false;
     private HandlerThread mHandlerThread;
 
     // ensure quick settings is disabled until the current user makes it through the setup wizard
@@ -618,7 +620,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         // TODO: use MediaSessionManager.SessionListener to hook us up to future updates
         // in session state
 
-        addNavigationBar();
+        if("true".equals(SystemProperties.get("persist.sys.status.bar.bottom","false")))
+            addBottomBarInside();
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new PhoneStatusBarPolicy(mContext, mCastController, mHotspotController,
@@ -1130,6 +1133,52 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         mNavigationBarView.getHomeButton().setOnTouchListener(mHomeActionListener);
         mNavigationBarView.getHomeButton().setOnLongClickListener(mLongPressHomeListener);
         mAssistManager.onConfigurationChanged();
+    }
+
+    private void addBottomBarInside(){
+        if (!mBarIsAdd) {
+            Log.d(TAG,"add Bottom  Bar");
+            if (mNavigationBarView != null) {
+              addNavigationBar();
+              mBarIsAdd = true;
+              SystemProperties.set("persist.sys.status.bar.bottom","true");
+            }
+        }
+    }
+
+    private void removeBottomBarInside(){
+       if (mBarIsAdd) {
+           Log.d(TAG,"remove Bottom  Bar");
+           if (mNavigationBarView != null) {
+             mWindowManager.removeView(mNavigationBarView);
+             mBarIsAdd = false;
+             SystemProperties.set("persist.sys.status.bar.bottom","false");
+           }
+       }
+    }
+
+    @Override
+    public void addBottomBar(){
+       addBottomBarInside();
+    }
+
+    @Override
+    public void removeBottomBar(){
+      removeBottomBarInside();
+    }
+
+    @Override
+    public void addUpperBar() {
+      SystemProperties.set("persist.sys.status.bar.upper","true");
+      disable(0,0,false);
+    }
+
+    @Override
+    public void removeUpperBar() {
+       SystemProperties.set("persist.sys.status.bar.upper","false");
+       int state1 = StatusBarManager.DISABLE_EXPAND | StatusBarManager.DISABLE_NOTIFICATION_ICONS | StatusBarManager.DISABLE2_QUICK_SETTINGS | StatusBarManager.DISABLE_SYSTEM_INFO;
+       int state2 = state1;
+       disable(state1,state2,false);
     }
 
     // For small-screen devices (read: phones) that lack hardware navigation buttons
@@ -1820,6 +1869,11 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
      * State is one or more of the DISABLE constants from StatusBarManager.
      */
     public void disable(int state1, int state2, boolean animate) {
+        if ("false".equals(SystemProperties.get("persist.sys.status.bar.upper","false"))) {
+          state1 = StatusBarManager.DISABLE_EXPAND | StatusBarManager.DISABLE_NOTIFICATION_ICONS | StatusBarManager.DISABLE_NOTIFICATION_ALERTS | StatusBarManager.DISABLE_SYSTEM_INFO | StatusBarManager.DISABLE2_QUICK_SETTINGS;
+          state2 = state1;
+          animate = false;
+        }
         animate &= mStatusBarWindowState != WINDOW_STATE_HIDDEN;
         mDisabledUnmodified1 = state1;
         mDisabledUnmodified2 = state2;

@@ -103,6 +103,22 @@ public class TvStatusBar extends BaseStatusBar {
     public void notificationLightPulse(int argb, int onMillis, int offMillis) {
     }
 
+    @Override // CommandQueue
+    public void addBottomBar() {
+    }
+
+    @Override // CommandQueue
+    public void removeBottomBar() {
+    }
+
+    @Override // CommandQueue
+    public void addUpperBar() {
+    }
+
+    @Override // CommandQueue
+    public void removeUpperBar() {
+    }
+
     @Override
     protected void setAreThereNotifications() {
     }

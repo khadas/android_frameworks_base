@@ -65,6 +65,10 @@ public class CommandQueue extends IStatusBar.Stub {
     private static final int MSG_ASSIST_DISCLOSURE          = 22 << MSG_SHIFT;
     private static final int MSG_START_ASSIST               = 23 << MSG_SHIFT;
     private static final int MSG_CAMERA_LAUNCH_GESTURE      = 24 << MSG_SHIFT;
+    private static final int MSG_ADD_BAR_BOTTOM             = 25 << MSG_SHIFT;
+    private static final int MSG_REMOVE_BAR_BOTTOM          = 26 << MSG_SHIFT;
+    private static final int MSG_ADD_BAR_UPPER              = 27 << MSG_SHIFT;
+    private static final int MSG_REMOVE_BAR_UPPER           = 28 << MSG_SHIFT;
 
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
@@ -111,6 +115,10 @@ public class CommandQueue extends IStatusBar.Stub {
         public void showAssistDisclosure();
         public void startAssist(Bundle args);
         public void onCameraLaunchGestureDetected(int source);
+        public void addBottomBar();
+        public void removeBottomBar();
+        public void addUpperBar();
+        public void removeUpperBar();
     }
 
     public CommandQueue(Callbacks callbacks, StatusBarIconList list) {
@@ -303,6 +311,33 @@ public class CommandQueue extends IStatusBar.Stub {
         }
     }
 
+    public void addBottomBar() {
+        synchronized (mList) {
+            mHandler.removeMessages(MSG_ADD_BAR_BOTTOM);
+            mHandler.obtainMessage(MSG_ADD_BAR_BOTTOM, 0, 0, null).sendToTarget();
+       }
+    }
+
+    public void removeBottomBar() {
+        synchronized (mList) {
+            mHandler.removeMessages(MSG_REMOVE_BAR_BOTTOM);
+            mHandler.obtainMessage(MSG_REMOVE_BAR_BOTTOM, 0, 0, null).sendToTarget();
+      }
+    }
+
+    public void addUpperBar() {
+       synchronized (mList) {
+           mHandler.removeMessages(MSG_ADD_BAR_UPPER);
+           mHandler.obtainMessage(MSG_ADD_BAR_UPPER, 0, 0, null).sendToTarget();
+       }
+    }
+
+    public void removeUpperBar() {
+       synchronized (mList) {
+           mHandler.removeMessages(MSG_REMOVE_BAR_UPPER);
+           mHandler.obtainMessage(MSG_REMOVE_BAR_UPPER, 0, 0, null).sendToTarget();
+       }
+    }
     private final class H extends Handler {
         public void handleMessage(Message msg) {
             final int what = msg.what & MSG_MASK;
@@ -404,6 +439,18 @@ public class CommandQueue extends IStatusBar.Stub {
                 case MSG_CAMERA_LAUNCH_GESTURE:
                     mCallbacks.onCameraLaunchGestureDetected(msg.arg1);
                     break;
+                case MSG_ADD_BAR_BOTTOM:
+                    mCallbacks.addBottomBar();
+                    break;
+                case MSG_REMOVE_BAR_BOTTOM:
+                    mCallbacks.removeBottomBar();
+                   break;
+                case MSG_ADD_BAR_UPPER:
+                    mCallbacks.addUpperBar();
+                   break;
+                case MSG_REMOVE_BAR_UPPER:
+                    mCallbacks.removeUpperBar();
+                   break;
             }
         }
     }
