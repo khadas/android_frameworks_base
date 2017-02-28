@@ -319,9 +319,10 @@ public class KeyguardAffordanceHelper {
 
         // We snap back if the current translation is not far enough
         boolean snapBack = false;
+        /**
         if (mCallback.needsAntiFalsing()) {
             snapBack = snapBack || mFalsingManager.isFalseTouch();
-        }
+        }*/
         snapBack = snapBack || isBelowFalsingThreshold();
 
         // or if the velocity is in the opposite direction.
