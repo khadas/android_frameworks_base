@@ -384,11 +384,12 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         @Override
         public void onPress() {
-            boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
-           if(isBox){
-              wakeup_restart_set();
-            Log.d(TAG,"don't shutdown here,only go to sleep for box!");
-            mPowerManager.goToSleep(SystemClock.uptimeMillis());  
+           boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+           boolean notUseLegeacyWakeupRestartPlatform = "rk3399".equals(SystemProperties.get("ro.board.platform"));
+           if(isBox && !notUseLegeacyWakeupRestartPlatform){
+               wakeup_restart_set();
+               Log.d(TAG,"don't shutdown here,only go to sleep for box!");
+               mPowerManager.goToSleep(SystemClock.uptimeMillis());
            }else{
             // shutdown by making sure radio and power are handled accordingly.
             mWindowManagerFuncs.shutdown(false /* confirm */);
