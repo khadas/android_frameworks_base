@@ -247,7 +247,7 @@ class PackageDexOptimizer {
                         + " target-filter=" + targetCompilerFilter + " oatDir = " + oatDir
                         + " sharedLibraries=" + sharedLibrariesPath);
                 if(pkg.applicationInfo.packageName.contains("com.android.compatibility.common.deviceinfo")){
-                    SystemProperties.set("persist.cts_gts.status","true");
+                    SystemProperties.set("cts_gts.status","true");
                 }
                 // Profile guide compiled oat files should not be public.
                 final boolean isPublic = !pkg.isForwardLocked() && !isProfileGuidedFilter;

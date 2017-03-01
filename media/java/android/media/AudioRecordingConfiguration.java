@@ -150,7 +150,7 @@ public final class AudioRecordingConfiguration implements Parcelable {
                 break;
             }
         }
-        if("true".equals(SystemProperties.get("persist.cts_gts.status", "false"))){
+        if("true".equals(SystemProperties.get("cts_gts.status", "false"))){
             final AudioDeviceInfo[] devices =
                 AudioManager.getDevicesStatic(AudioManager.GET_DEVICES_INPUTS);
             Log.i("hxw","devices.length 2:"+devices.length);
