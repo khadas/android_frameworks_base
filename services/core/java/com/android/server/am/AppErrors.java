@@ -62,6 +62,7 @@ import static com.android.server.am.ActivityManagerDebugConfig.TAG_AM;
 import static com.android.server.am.ActivityManagerDebugConfig.TAG_WITH_CLASS_NAME;
 import static com.android.server.am.ActivityManagerService.MY_PID;
 import static com.android.server.am.ActivityManagerService.SYSTEM_DEBUGGABLE;
+import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_LOWMEM;
 
 /**
  * Controls error conditions in applications.
@@ -367,6 +368,16 @@ class AppErrors {
         }
 
         int res = result.get();
+
+        if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
+		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
+		if((mService.mProcessMap.get(r.processName) != null)||(mService.mServiceMap.get(r.processName) != null)){
+			if(DEBUG_LOWMEM)Slog.d("xzj","-----hide error msg for filter process "+r);
+			return;
+		}
+	}
+
+
 
         Intent appErrorIntent = null;
         MetricsLogger.action(mContext, MetricsProto.MetricsEvent.ACTION_APP_CRASH, res);
@@ -707,6 +718,17 @@ class AppErrors {
                 }
                 return;
             }
+	    if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
+		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+	    {
+	    	if((mService.mProcessMap.get(proc.processName) != null)||(mService.mServiceMap.get(proc.processName) != null)){
+			if(DEBUG_LOWMEM)Slog.w("xzj", "Skipping crash dialog of " + proc + ": filter");
+			if (res != null) {
+				res.set(0);
+			}
+			return;
+	    }
+							                        }
             final boolean crashSilenced = mAppsNotReportingCrashes != null &&
                     mAppsNotReportingCrashes.contains(proc.info.packageName);
             if ((mService.canShowErrorDialogs() || showBackground) && !crashSilenced) {
