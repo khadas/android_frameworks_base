@@ -388,7 +388,7 @@ public final class ActiveServices {
         r.delayedStop = false;
         r.pendingStarts.add(new ServiceRecord.StartItem(r, false, r.makeNextStartId(),
                 service, neededGrants));
-	if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+	if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("cts_gts.status", "false"))))
 	{
 		if(callFromSystem)//mark call from system
 			r.appInfo.flags |= ApplicationInfo.FLAG_IS_GAME;
@@ -918,7 +918,7 @@ public final class ActiveServices {
         }
         ServiceRecord s = res.record;
 	if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
-		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("cts_gts.status", "false"))))
 	{
 		if(isCallerSystem)//mark call from system
 			s.appInfo.flags |= ApplicationInfo.FLAG_IS_GAME;

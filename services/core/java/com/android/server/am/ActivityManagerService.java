@@ -2744,7 +2744,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         Watchdog.getInstance().addMonitor(this);
         Watchdog.getInstance().addThread(mHandler);
 
-	if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))) ||( "vr".equals(android.os.SystemProperties.get("ro.target.product","unknown"))) ) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
+	if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))) ||( "vr".equals(android.os.SystemProperties.get("ro.target.product","unknown"))) ) && (!"true".equals(SystemProperties.get("cts_gts.status", "false")))){
   		File configureDir = Environment.getRootDirectory();
   		File packageForLowmemFilter = new File(configureDir, "etc/lowmem_package_filter.xml");
   		if (packageForLowmemFilter.exists()) {
@@ -3682,7 +3682,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 		+ " thread=" + (app != null ? app.thread : null)+ " pid=" + (app != null ? app.pid : -1));
 
 	if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
-		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
+		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("cts_gts.status", "false")))){
         	final ActivityRecord next = getFocusedStack().topRunningActivityLocked();
 	        if(next!= null && (!next.packageName.equals(processName)&& !processName.contains("antutu")) && next.packageName.contains("antutu")){
              		if(DEBUG_LOWMEM)Slog.v("xzj", "process dont start because for antutu: " + next.packageName + "/" + info.processName);
@@ -3712,10 +3712,10 @@ public final class ActivityManagerService extends ActivityManagerNative
 	}
         if(("com.google.android.setupwizard".equals(processName)) 
 	&& (("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))))){
-		if(!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))
+		if(!"true".equals(SystemProperties.get("cts_gts.status", "false")))
 		{
 			Log.d("xzj","--start com.google.android.setupwizard---");
-			SystemProperties.set("sys.cts_gts.status","true");
+			SystemProperties.set("cts_gts.status","true");
 		}
 	}
 
@@ -5399,7 +5399,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 "Dying app: " + app + ", pid: " + pid + ", thread: " + thread.asBinder());
 	    boolean isrestart = true; 
 	    if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) 
-		&& (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+		&& (!"true".equals(SystemProperties.get("cts_gts.status", "false"))))
 	    	if(!"com.android.systemui".equals(app.processName))
 	    		isrestart = false;
             handleAppDiedLocked(app, false, isrestart);
@@ -11548,7 +11548,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                         addAppLocked(app, false, null /* ABI override */);
                     }
 		    if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))))
-				    && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
+				    && (!"true".equals(SystemProperties.get("cts_gts.status", "false")))){
 			if((mProcessMap.get(app.processName) != null)||(mServiceMap.get(app.processName) != null)){
 				if(DEBUG_LOWMEM)Slog.d("xzj","---low mem mode,system ready skip start persist app= "+app);
 				continue;
@@ -11757,7 +11757,7 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         if ((info.flags & PERSISTENT_MASK) == PERSISTENT_MASK) {
             if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) 
-			    && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
+			    && (!"true".equals(SystemProperties.get("cts_gts.status", "false")))){
 		if((info.processName.contains("com.android.systemui"))||(info.processName.contains("android.process.media")))
 	    	{
             		app.persistent = true;
@@ -13453,8 +13453,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 // If we're done calling all the receivers, run the next "boot phase" passed in
                 // by the SystemServer
                 if (goingCallback != null) {
-                    //goingCallback.run();
-                    mHandler.post(goingCallback);
+                    goingCallback.run();
                 }
                 return;
             }
@@ -13551,7 +13550,9 @@ public final class ActivityManagerService extends ActivityManagerNative
             readGrantedUriPermissionsLocked();
         }
 
-        if (goingCallback != null) goingCallback.run();
+        //if (goingCallback != null) goingCallback.run();
+	if (goingCallback != null) 
+		mHandler.post(goingCallback);
 
         mBatteryStatsService.noteEvent(BatteryStats.HistoryItem.EVENT_USER_RUNNING_START,
                 Integer.toString(currentUserId), currentUserId);
@@ -17261,7 +17262,7 @@ public final class ActivityManagerService extends ActivityManagerNative
             mPreviousProcess = null;
         }
         if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) 
-            && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))//if lowmem config
+            && (!"true".equals(SystemProperties.get("cts_gts.status", "false"))))//if lowmem config
         {
             if((!"com.android.systemui".equals(app.processName))&&(!"android.process.media".equals(app.processName)))
             {     
@@ -21120,10 +21121,10 @@ public final class ActivityManagerService extends ActivityManagerNative
             cachedProcessLimit = mProcessLimit - emptyProcessLimit;
         }
 	if(("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
-		&& (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
+		&& (!"true".equals(SystemProperties.get("cts_gts.status", "false")))){
 		emptyProcessLimit = cachedProcessLimit = 0;
 	}else if(("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))
-		&&(!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
+		&&(!"true".equals(SystemProperties.get("cts_gts.status", "false")))){
 		emptyProcessLimit = cachedProcessLimit = 3;
 	}
 
@@ -21230,7 +21231,22 @@ public final class ActivityManagerService extends ActivityManagerNative
                         mNumCachedHiddenProcs++;
                         numCached++;
                         if (numCached > cachedProcessLimit) {
-                            app.kill("cached #" + numCached, true);
+			    int count = mExcludeEmptyApp.size();
+			    boolean mExclude = false;
+			    if(("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
+					    ||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))))
+			    {
+			    	for (int k=0; k<count; k++) {
+			    		if(app.processName != null && app.processName.contains(mExcludeEmptyApp.get(k)))
+			    	        {
+			    	        	if(DEBUG_LOWMEM)Slog.d("xzj","------shouldExcludeCachedApp App= "+app.processName);
+			    	    		mExclude = true;
+			    	    		break;
+			    	        }
+			    	}
+			    }
+			    if(!mExclude)//do not kill phone, which would cause 3g dongle can not use, do not kill media which would cause mediaprovider stale
+                            	app.kill("cached #" + numCached, true);
                         }
                         break;
                     case ActivityManager.PROCESS_STATE_CACHED_EMPTY:
@@ -21242,7 +21258,23 @@ public final class ActivityManagerService extends ActivityManagerNative
                         } else {
                             numEmpty++;
                             if (numEmpty > emptyProcessLimit) {
-                                app.kill("empty #" + numEmpty, true);
+			    	int count = mExcludeEmptyApp.size();
+				boolean mExclude = false;
+				if(("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
+						||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))))
+				{
+					for (int k=0; k<count; k++) {
+						if(app.processName != null && app.processName.contains(mExcludeEmptyApp.get(k)))
+						{
+							if(DEBUG_LOWMEM)Slog.d("xzj","------shouldExcludeEmptyApp App= "+app.processName);
+							mExclude = true;
+							break;
+						}
+					}
+				}
+
+				if(!mExclude)//do not kill phone, which would cause 3g dongle can not use, do not kill media which would cause mediaprovider stale
+					app.kill("empty #" + numEmpty, true);
                             }
                         }
                         break;

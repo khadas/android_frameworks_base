@@ -370,7 +370,7 @@ class AppErrors {
         int res = result.get();
 
         if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
-		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")))){
+		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("cts_gts.status", "false")))){
 		if((mService.mProcessMap.get(r.processName) != null)||(mService.mServiceMap.get(r.processName) != null)){
 			if(DEBUG_LOWMEM)Slog.d("xzj","-----hide error msg for filter process "+r);
 			return;
@@ -719,7 +719,7 @@ class AppErrors {
                 return;
             }
 	    if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))
-		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+		||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("cts_gts.status", "false"))))
 	    {
 	    	if((mService.mProcessMap.get(proc.processName) != null)||(mService.mServiceMap.get(proc.processName) != null)){
 			if(DEBUG_LOWMEM)Slog.w("xzj", "Skipping crash dialog of " + proc + ": filter");

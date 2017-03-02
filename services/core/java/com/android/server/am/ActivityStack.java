@@ -1327,7 +1327,7 @@ final class ActivityStack {
             if (prev != null) {
                 prev.stopFreezingScreenLocked(true /*force*/);
 	    if((("true".equals(SystemProperties.get("ro.config.low_ram", "false"))) /*|| ("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))*/)
-	    	 && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false"))))
+	    	 && (!"true".equals(SystemProperties.get("cts_gts.status", "false"))))
    	    {
 		ActivityStack topStack = mStackSupervisor.getFocusedStack();
 		ActivityRecord next = topStack.topRunningActivityLocked();
