@@ -559,7 +559,8 @@ final class ContentProviderProxy implements IContentProvider
 
             data.writeString(callingPkg);
             url.writeToParcel(data, 0);
-            values.writeToParcel(data, 0);
+	    if(values!=null)
+            	values.writeToParcel(data, 0);
             data.writeString(selection);
             data.writeStringArray(selectionArgs);
 
