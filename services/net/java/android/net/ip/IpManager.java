@@ -466,12 +466,6 @@ public class IpManager extends StateMachine {
             }
         };
 
-        try {
-            mNwService.registerObserver(mNetlinkTracker);
-        } catch (RemoteException e) {
-            Log.e(mTag, "Couldn't register NetlinkTracker: " + e.toString());
-        }
-
         mAvoidBadWifiTracker = new AvoidBadWifiTracker(mContext, getHandler());
 
         resetLinkProperties();
@@ -488,6 +482,13 @@ public class IpManager extends StateMachine {
         addState(mStoppingState);
 
         setInitialState(mStoppedState);
+
+        try {
+            mNwService.registerObserver(mNetlinkTracker);
+        } catch (RemoteException e) {
+            Log.e(mTag, "Couldn't register NetlinkTracker: " + e.toString());
+        }
+
         mLocalLog = new LocalLog(MAX_LOG_RECORDS);
         mMsgStateLogger = new MessageHandlingLogger();
         super.start();
