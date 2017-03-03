@@ -11544,15 +11544,15 @@ public final class ActivityManagerService extends ActivityManagerNative
                 final List<ApplicationInfo> apps = AppGlobals.getPackageManager()
                         .getPersistentApplications(STOCK_PM_FLAGS | matchFlags).getList();
                 for (ApplicationInfo app : apps) {
-                    if (!"android".equals(app.packageName)) {
-                        addAppLocked(app, false, null /* ABI override */);
-                    }
 		    if((("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))))
 				    && (!"true".equals(SystemProperties.get("cts_gts.status", "false")))){
 			if((mProcessMap.get(app.processName) != null)||(mServiceMap.get(app.processName) != null)){
 				if(DEBUG_LOWMEM)Slog.d("xzj","---low mem mode,system ready skip start persist app= "+app);
 				continue;
 		    	}
+		    }
+                    if (!"android".equals(app.packageName)) {
+		    	addAppLocked(app, false, null /* ABI override */);
 		    }
                 }
             } catch (RemoteException ex) {
