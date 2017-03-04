@@ -43,7 +43,7 @@ import com.android.systemui.statusbar.phone.NotificationsQuickSettingsContainer;
 import com.android.systemui.statusbar.phone.PhoneStatusBar;
 import com.android.systemui.statusbar.phone.QSTileHost;
 import com.android.systemui.statusbar.policy.KeyguardMonitor.Callback;
-
+import android.os.SystemProperties;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -185,7 +185,13 @@ public class QSCustomizer extends LinearLayout implements OnMenuItemClickListene
     private void reset() {
         ArrayList<String> tiles = new ArrayList<>();
         String defTiles = mContext.getString(R.string.quick_settings_tiles_default);
+        boolean isSupportBluetooth = "true".equals("ro.rk.bt_enable");
+        boolean isSupportFlash = "true".equals("ro.rk.flash_enable");
         for (String tile : defTiles.split(",")) {
+            if(!isSupportBluetooth && tile.equals("bt"))
+                continue;
+            if(!isSupportFlash && tile.equals("flashlight"))
+                continue;
             tiles.add(tile);
         }
         mTileAdapter.setTileSpecs(tiles);
