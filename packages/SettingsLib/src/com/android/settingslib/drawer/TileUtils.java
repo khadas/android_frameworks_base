@@ -31,7 +31,7 @@ import android.provider.Settings.Global;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
-
+import android.os.SystemProperties;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -134,6 +134,7 @@ public class TileUtils {
                 getTilesForAction(context, user, EXTRA_SETTINGS_ACTION, cache, null, tiles, false);
             }
         }
+        boolean isSupportBluetooth = "true".equals(SystemProperties.get("ro.rk.bt_enable"));
         HashMap<String, DashboardCategory> categoryMap = new HashMap<>();
         for (Tile tile : tiles) {
             DashboardCategory category = categoryMap.get(tile.category);
@@ -145,6 +146,9 @@ public class TileUtils {
                 }
                 categoryMap.put(category.key, category);
             }
+            Intent tileIntent = tile.intent;
+            if(!isSupportBluetooth && tileIntent != null && tileIntent.toString().contains("com.android.settings/.Settings$BluetoothSettingsActivity"))
+                continue;
             category.addTile(tile);
         }
         ArrayList<DashboardCategory> categories = new ArrayList<>(categoryMap.values());
