@@ -760,6 +760,11 @@ public abstract class PanelView extends FrameLayout {
         }
 
         mExpandedHeight = Math.max(0, mExpandedHeight);
+        if("rk312x".equals(SystemProperties.get("ro.board.platform"))){
+            if(mExpandedHeight <= fhWithoutOverExpansion/1.5){
+                mExpandedHeight = 0;
+            }
+        }
         mExpandedFraction = Math.min(1f, fhWithoutOverExpansion == 0
                 ? 0
                 : mExpandedHeight / fhWithoutOverExpansion);
