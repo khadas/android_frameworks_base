@@ -818,8 +818,10 @@ public class AudioTrack extends PlayerBase
         // IEC61937 is based on stereo. We could coerce it to stereo.
         // But the application needs to know the stream is stereo so that
         // it is encoded and played correctly. So better to just reject it.
+        // AMLOGIC: this is added to fix KODI 7.1 channel passthrough
         if (audioFormat == AudioFormat.ENCODING_IEC61937
-                && channelConfig != AudioFormat.CHANNEL_OUT_STEREO) {
+                && channelConfig != AudioFormat.CHANNEL_OUT_STEREO
+                && channelConfig != AudioFormat.CHANNEL_OUT_7POINT1_SURROUND) {
             throw new IllegalArgumentException(
                     "ENCODING_IEC61937 must be configured as CHANNEL_OUT_STEREO");
         }
