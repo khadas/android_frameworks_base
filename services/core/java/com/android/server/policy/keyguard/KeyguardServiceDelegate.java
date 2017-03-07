@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.WindowManagerPolicy.OnKeyguardExitResult;
+import android.os.SystemService;
 
 import com.android.internal.policy.IKeyguardDrawnCallback;
 import com.android.internal.policy.IKeyguardExitCallback;
@@ -96,6 +97,7 @@ public class KeyguardServiceDelegate {
             if (DEBUG) Log.v(TAG, "**** SHOWN CALLED ****");
 	    //keyguard drawn complete ,can exit bootanim
 	    android.os.SystemProperties.set("service.bootanim.exit", "1");
+        SystemService.stop("bootanim");
             if (mDrawnListener != null) {
                 mDrawnListener.onDrawn();
             }
