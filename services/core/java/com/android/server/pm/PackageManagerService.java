@@ -19007,6 +19007,10 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
                 mInstallerService.dump(new IndentingPrintWriter(pw, "  ", 120));
             }
 
+            if (dumpState.isDumping(DumpState.DUMP_PERF_MODE) && packageName == null) {
+                mSettings.dumpPackagePerformanceMode(pw, dumpState);
+            }
+
             if (!checkin && dumpState.isDumping(DumpState.DUMP_FROZEN) && packageName == null) {
                 // XXX should handle packageName != null by dumping only install data that
                 // the given package is involved with.

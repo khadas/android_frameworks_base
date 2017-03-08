@@ -166,6 +166,7 @@ public final class PowerManagerService extends SystemService
     // Power hints defined in hardware/libhardware/include/hardware/power.h.
     private static final int POWER_HINT_LOW_POWER = 5;
     private static final int POWER_HINT_VR_MODE = 7;
+    private static final int POWER_HINT_PERFORMANCE = 10;
 
     // Power features defined in hardware/libhardware/include/hardware/power.h.
     private static final int POWER_FEATURE_DOUBLE_TAP_TO_WAKE = 1;
@@ -3599,18 +3600,9 @@ public final class PowerManagerService extends SystemService
         }
 
         public void setPerformanceMode(int mode) {
-            final long ident = Binder.clearCallingIdentity();
             if (mPerformanceMode != mode) {
                 mPerformanceMode = mode;
-                BackgroundThread.getHandler().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent intent = new Intent(PowerManager.ACTION_PERFORMANCE_MODE_CHANGED)
-                                .putExtra(PowerManager.EXTRA_PERFORMANCE_MODE, mPerformanceMode)
-                                .addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_REPLACE_PENDING);
-                        mContext.sendBroadcast(intent);
-                    }
-                });
+                powerHint(POWER_HINT_PERFORMANCE,mode);
             }
         }
 
