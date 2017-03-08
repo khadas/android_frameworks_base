@@ -114,6 +114,9 @@ public final class HdmiCecMessageValidator {
         addValidationInfo(Constants.MESSAGE_USER_CONTROL_RELEASED, noneValidator, DEST_DIRECT);
         addValidationInfo(Constants.MESSAGE_VENDOR_REMOTE_BUTTON_UP, noneValidator, DEST_ALL);
 
+        //added by wj for cec2.0
+        addValidationInfo(Constants.MESSAGE_GIVE_FEATURES, noneValidator, DEST_DIRECT);
+
         // TODO: Validate more than length for the following messages.
 
         // Messages for the One Touch Record.
@@ -160,7 +163,11 @@ public final class HdmiCecMessageValidator {
                 new VariableLengthValidator(1, 2), DEST_DIRECT);
 
         // Messages for the Power Status.
-        addValidationInfo(Constants.MESSAGE_REPORT_POWER_STATUS, oneByteValidator, DEST_DIRECT);
+        if (mService.getCecVersion() < Constants.CEC_VERSION_2_0) {
+            addValidationInfo(Constants.MESSAGE_REPORT_POWER_STATUS, oneByteValidator, DEST_DIRECT);
+        } else {
+            addValidationInfo(Constants.MESSAGE_REPORT_POWER_STATUS, oneByteValidator, DEST_ALL);
+        }
 
         // Messages for the General Protocol.
         addValidationInfo(Constants.MESSAGE_FEATURE_ABORT,
@@ -184,6 +191,9 @@ public final class HdmiCecMessageValidator {
         // Messages for the Capability Discovery and Control.
         addValidationInfo(Constants.MESSAGE_CDC_MESSAGE, maxLengthValidator,
                 DEST_BROADCAST | SRC_UNREGISTERED);
+
+        //added by wj for cec2.0
+        addValidationInfo(Constants.MESSAGE_REPORT_FEATURES, maxLengthValidator, DEST_BROADCAST);
     }
 
     private void addValidationInfo(int opcode, ParameterValidator validator, int addrType) {

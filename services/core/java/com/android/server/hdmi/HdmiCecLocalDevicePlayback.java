@@ -76,6 +76,10 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     protected void onAddressAllocated(int logicalAddress, int reason) {
         assertRunOnServiceThread();
+
+        //added by wj for cec2.0
+        reportCecFeatures();
+
         mService.sendCecCommand(HdmiCecMessageBuilder.buildReportPhysicalAddressCommand(
                 mAddress, mService.getPhysicalAddress(), mDeviceType));
         mService.sendCecCommand(HdmiCecMessageBuilder.buildDeviceVendorIdCommand(
@@ -279,6 +283,15 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
         int physicalAddress = HdmiUtils.twoBytesToInt(message.getParams());
         maySetActiveSource(physicalAddress);
         return true;  // Broadcast message.
+    }
+
+    @Override
+    protected boolean handleReportFeatures(HdmiCecMessage message) {
+        if (mService.getCecVersion() < Constants.CEC_VERSION_2_0)
+            return false;
+
+        //TODO:
+        return true;
     }
 
     private void maySetActiveSource(int physicalAddress) {

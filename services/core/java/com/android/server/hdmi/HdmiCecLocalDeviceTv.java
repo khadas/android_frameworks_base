@@ -19,6 +19,7 @@ package com.android.server.hdmi;
 import static android.hardware.hdmi.HdmiControlManager.CLEAR_TIMER_STATUS_CEC_DISABLE;
 import static android.hardware.hdmi.HdmiControlManager.CLEAR_TIMER_STATUS_CHECK_RECORDER_CONNECTION;
 import static android.hardware.hdmi.HdmiControlManager.CLEAR_TIMER_STATUS_FAIL_TO_CLEAR_SELECTED_SOURCE;
+import static android.hardware.hdmi.HdmiControlManager.ONE_TOUCH_RECORD_OTHER_REASON;
 import static android.hardware.hdmi.HdmiControlManager.ONE_TOUCH_RECORD_CEC_DISABLED;
 import static android.hardware.hdmi.HdmiControlManager.ONE_TOUCH_RECORD_CHECK_RECORDER_CONNECTION;
 import static android.hardware.hdmi.HdmiControlManager.ONE_TOUCH_RECORD_FAIL_TO_RECORD_DISPLAYED_SCREEN;
@@ -198,6 +199,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             mArcFeatureEnabled.put(port.getId(), port.isArcSupported());
         }
         mService.registerTvInputCallback(mTvInputCallback);
+
+        //added by wj for cec2.0
+        reportCecFeatures();
+
         mService.sendCecCommand(HdmiCecMessageBuilder.buildReportPhysicalAddressCommand(
                 mAddress, mService.getPhysicalAddress(), mDeviceType));
         mService.sendCecCommand(HdmiCecMessageBuilder.buildDeviceVendorIdCommand(
@@ -1001,7 +1006,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     boolean isArcFeatureEnabled(int portId) {
         assertRunOnServiceThread();
-        return mArcFeatureEnabled.get(portId);
+        return mArcFeatureEnabled.get(portId) && mService.isArcFeatureEnabled();
     }
 
     @ServiceThreadOnly
@@ -1770,6 +1775,13 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             return Constants.ABORT_NOT_IN_CORRECT_MODE;
         }
 
+        //added by wj for cec2.0
+        if (!mService.canRecordTvScreen()) {
+            Slog.w(TAG, "Can not start one touch record. Feature is porbidden.");
+            announceOneTouchRecordResult(recorderAddress, ONE_TOUCH_RECORD_OTHER_REASON);
+            return Constants.ABORT_NOT_IN_CORRECT_MODE;
+        }
+
         if (!checkRecorder(recorderAddress)) {
             Slog.w(TAG, "Invalid recorder address:" + recorderAddress);
             announceOneTouchRecordResult(recorderAddress,
@@ -1940,6 +1952,15 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @Override
     protected boolean handleMenuStatus(HdmiCecMessage message) {
         // Do nothing and just return true not to prevent from responding <Feature Abort>.
+        return true;
+    }
+
+    @Override
+    protected boolean handleReportFeatures(HdmiCecMessage message) {
+        if (mService.getCecVersion() < Constants.CEC_VERSION_2_0)
+            return false;
+
+        //TODO:
         return true;
     }
 

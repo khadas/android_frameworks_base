@@ -61,11 +61,19 @@ final class Constants {
     /** Logical address for playback 3 */
     public static final int ADDR_PLAYBACK_3 = 11;
 
-    /** Logical address reserved for future usage */
-    public static final int ADDR_RESERVED_1 = 12;
+    /**
+     * Modified by wj for cec2.0
+     * Used for device type 'Playback Device', 'Recording Device', 'Tuner',
+     * 'Processor' if all dedicated logical address have been allocated.
+     */
+    public static final int ADDR_BACKUP_1 = 12;
 
-    /** Logical address reserved for future usage */
-    public static final int ADDR_RESERVED_2 = 13;
+    /**
+     * Modified by wj for cec2.0
+     * Used for device type 'Playback Device', 'Recording Device', 'Tuner',
+     * 'Processor' if all dedicated logical address have been allocated.
+     */
+    public static final int ADDR_BACKUP_2 = 13;
 
     /** Logical address for TV other than the one assigned with {@link #ADDR_TV} */
     public static final int ADDR_SPECIFIC_USE = 14;
@@ -145,6 +153,10 @@ final class Constants {
     static final int MESSAGE_SET_EXTERNAL_TIMER = 0xA2;
     static final int MESSAGE_REPORT_SHORT_AUDIO_DESCRIPTOR = 0xA3;
     static final int MESSAGE_REQUEST_SHORT_AUDIO_DESCRIPTOR = 0xA4;
+    //added by wj for cec2.0
+    static final int MESSAGE_GIVE_FEATURES = 0xA5;
+    //added by wj for cec2.0
+    static final int MESSAGE_REPORT_FEATURES = 0xA6;
     static final int MESSAGE_INITIATE_ARC = 0xC0;
     static final int MESSAGE_REPORT_ARC_INITIATED = 0xC1;
     static final int MESSAGE_REPORT_ARC_TERMINATED = 0xC2;
@@ -267,6 +279,10 @@ final class Constants {
 
     static final int DISABLED = 0;
     static final int ENABLED = 1;
+
+    //added by wj for cec2.0 which is backward compatible with the older version;
+    static final int CEC_VERSION_1_4 = 0x05;
+    static final int CEC_VERSION_2_0 = 0x06;
 
     private Constants() { /* cannot be instantiated */ }
 }

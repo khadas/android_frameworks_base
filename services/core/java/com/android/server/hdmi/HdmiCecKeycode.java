@@ -101,7 +101,12 @@ final class HdmiCecKeycode {
     public static final int CEC_KEYCODE_INITIAL_CONFIGURATION = 0x55;
     public static final int CEC_KEYCODE_SELECT_BROADCAST_TYPE = 0x56;
     public static final int CEC_KEYCODE_SELECT_SOUND_PRESENTATION = 0x57;
-    // RESERVED = 0x58-0x5F
+
+    //added by wj for cec2.0
+    public static final int CEC_KEYCODE_AUDIO_DESCRIPTION_CONTROL = 0x58;
+    public static final int CEC_KEYCODE_INTERNET_CONTROL = 0x59;
+    public static final int CEC_KEYCODE_3D_MODE_CONTROL = 0x5A;
+    // RESERVED = 0x5B-0x5F
     public static final int CEC_KEYCODE_PLAY_FUNCTION = 0x60;
     public static final int CEC_KEYCODE_PAUSE_PLAY_FUNCTION = 0x61;
     public static final int CEC_KEYCODE_RECORD_FUNCTION = 0x62;
@@ -351,6 +356,11 @@ final class HdmiCecKeycode {
                     intToSingleByteArray(UI_BROADCAST_TOGGLE_ANALOGUE_DIGITAL)),
             // No Android keycode defined for CEC_KEYCODE_SELECT_SOUND_PRESENTATION
             new KeycodeEntry(UNSUPPORTED_KEYCODE, CEC_KEYCODE_SELECT_SOUND_PRESENTATION),
+
+            //add the UI command codes for cec2.0
+            new KeycodeEntry(UNSUPPORTED_KEYCODE, CEC_KEYCODE_AUDIO_DESCRIPTION_CONTROL),
+            new KeycodeEntry(UNSUPPORTED_KEYCODE, CEC_KEYCODE_INTERNET_CONTROL),
+            new KeycodeEntry(UNSUPPORTED_KEYCODE, CEC_KEYCODE_3D_MODE_CONTROL),
             // RESERVED
             // The following deterministic key definitions do not need key mapping
             // since they are supposed to be generated programmatically only.

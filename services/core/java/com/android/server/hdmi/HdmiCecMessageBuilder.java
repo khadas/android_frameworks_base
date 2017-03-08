@@ -565,6 +565,32 @@ public class HdmiCecMessageBuilder {
         return buildCommand(src, dest, Constants.MESSAGE_CLEAR_EXTERNAL_TIMER, params);
     }
 
+    /**
+     * Added by wj for cec2.0.
+     * Build &lt;Give Features&gt; command.
+     *
+     * @param src source address of command
+     * @param dest destination address of command
+     * @return newly created {@link HdmiCecMessage}
+     */
+    static HdmiCecMessage buildGiveFeatures(int src, int dest) {
+        return buildCommand(src, dest, Constants.MESSAGE_GIVE_FEATURES);
+    }
+
+    /**
+     * Added by wj for cec2.0.
+     * Build &lt;Report Features&gt; command.
+     *
+     * @param src source address of command
+     * @param dest destination address of command
+     * @param params features-specific parameters
+     * @return newly created {@link HdmiCecMessage}
+     */
+    static HdmiCecMessage buildReportFeatures(int src, byte[] params) {
+        return buildCommand(src, Constants.ADDR_BROADCAST,
+            Constants.MESSAGE_REPORT_FEATURES, params);
+    }
+
     /***** Please ADD new buildXXX() methods above. ******/
 
     /**
