@@ -306,6 +306,12 @@ abstract class HdmiCecLocalDevice {
                 return handleTimerStatus(message);
             case Constants.MESSAGE_RECORD_STATUS:
                 return handleRecordStatus(message);
+
+            //added by wj for cec2.0
+            case Constants.MESSAGE_GIVE_FEATURES:
+                return handleGiveFeatures(message);
+            case Constants.MESSAGE_REPORT_FEATURES:
+                return handleReportFeatures(message);
             default:
                 return false;
         }
@@ -531,9 +537,13 @@ abstract class HdmiCecLocalDevice {
         return false;
     }
 
+    //modified by wj for cec2.0
+    //shall send <Report Power Status> with a broadcase address.
     protected boolean handleGiveDevicePowerStatus(HdmiCecMessage message) {
+        int dest = (mService.getCecVersion() < Constants.CEC_VERSION_2_0)
+            ? message.getSource() : Constants.ADDR_BROADCAST;
         mService.sendCecCommand(HdmiCecMessageBuilder.buildReportPowerStatus(
-                mAddress, message.getSource(), mService.getPowerStatus()));
+                mAddress, dest, mService.getPowerStatus()));
         return true;
     }
 
@@ -614,6 +624,23 @@ abstract class HdmiCecLocalDevice {
         mAddress = mPreferredAddress = logicalAddress;
         onAddressAllocated(logicalAddress, reason);
         setPreferredAddress(logicalAddress);
+    }
+
+    protected boolean handleGiveFeatures(HdmiCecMessage message) {
+        return reportCecFeatures();
+    }
+
+    protected boolean handleReportFeatures(HdmiCecMessage message) {
+        return false;
+    }
+
+    protected boolean reportCecFeatures() {
+        if (mService.getCecVersion() < Constants.CEC_VERSION_2_0)
+            return false;
+
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildReportFeatures(
+            mAddress, mService.getCecFeatures()));
+        return true;
     }
 
     int getType() {

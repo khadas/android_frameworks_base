@@ -243,6 +243,10 @@ public final class HdmiCecMessage {
                 return "Cdc Message";
             case Constants.MESSAGE_ABORT:
                 return "Abort";
+            case Constants.MESSAGE_GIVE_FEATURES:
+                return "Give Features";
+            case Constants.MESSAGE_REPORT_FEATURES:
+                return "Report Features";
             default:
                 return String.format("Opcode: %02X", opcode);
         }

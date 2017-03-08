@@ -259,6 +259,10 @@ public final class HdmiControlService extends SystemService {
 
     private HdmiCecMessageValidator mMessageValidator;
 
+    //added by wj for cec2.0. decrease the communication times with CEC.
+    private int mCecVersion = 0;
+    private HdmiCecFeaturesInfo mFeaturesInfo;
+
     @ServiceThreadOnly
     private int mPowerStatus = HdmiControlManager.POWER_STATUS_STANDBY;
 
@@ -558,6 +562,11 @@ public final class HdmiControlService extends SystemService {
         mAddressAllocated = false;
         mCecController.setOption(OPTION_CEC_SERVICE_CONTROL, ENABLED);
         mCecController.setOption(OPTION_CEC_SET_LANGUAGE, HdmiUtils.languageToInt(mLanguage));
+
+        //added by wj for cec2.0 or later version
+        if (getCecVersion() >= Constants.CEC_VERSION_2_0)
+            mFeaturesInfo = new HdmiCecFeaturesInfo(this, getCecVersion(), mLocalDevices);
+
         initializeLocalDevices(initiatedBy);
     }
 
@@ -792,9 +801,41 @@ public final class HdmiControlService extends SystemService {
 
     /**
      * Returns version of CEC.
+     * Modified by wj for cec2.0, decrease the communication times with CEC.
      */
     int getCecVersion() {
-        return mCecController.getVersion();
+        if (mCecVersion == 0)
+            mCecVersion = mCecController.getVersion();
+        return mCecVersion;
+    }
+
+    /**
+     * Get all CEC features for cec2.0 or later version.
+     * CEC version + All device types + device features + RC profiles
+     * Default value is null.
+     */
+    byte[] getCecFeatures() {
+        return (mFeaturesInfo != null) ? mFeaturesInfo.getCecFeatures(): HdmiCecMessage.EMPTY_PARAM;
+    }
+
+    /**
+     * Make sure whether the ARC feature is enabled or not.
+     * Added this for cec2.0, and usually used for TV.
+     * Default value is true.
+     */
+
+    boolean isArcFeatureEnabled() {
+        return (mFeaturesInfo != null) ? mFeaturesInfo.canSupportARC() : true;
+    }
+
+    /**
+     * Make sure whether One Touch Record feature can suuport or not.
+     * Added this for cec2.0, and usually used for TV.
+     * Default value is true.
+     */
+
+    boolean canRecordTvScreen() {
+        return (mFeaturesInfo != null) ? mFeaturesInfo.canRecordTvScreen() : true;
     }
 
     /**
@@ -1500,6 +1541,7 @@ public final class HdmiControlService extends SystemService {
                         Slog.w(TAG, "Local tv device not available to change arc mode.");
                         return;
                     }
+                    tv.startArcAction(enabled);
                 }
             });
         }
