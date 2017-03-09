@@ -1043,6 +1043,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // If sensor is turned off or nonexistent for some reason
             return;
         }
+        if(!"1".equals(SystemProperties.get("service.bootanim.exit"))){
+            return;
+        }
         // Could have been invoked due to screen turning on or off or
         // change of the currently visible window's orientation.
         if (localLOGV) Slog.v(TAG, "mScreenOnEarly=" + mScreenOnEarly
