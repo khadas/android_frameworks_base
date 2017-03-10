@@ -45,6 +45,7 @@ import com.android.systemui.statusbar.policy.HeadsUpManager;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import android.os.SystemProperties;
+import android.app.KeyguardManager;
 
 public abstract class PanelView extends FrameLayout {
     public static final boolean DEBUG = PanelBar.DEBUG;
@@ -760,9 +761,14 @@ public abstract class PanelView extends FrameLayout {
         }
 
         mExpandedHeight = Math.max(0, mExpandedHeight);
+
         if("rk312x".equals(SystemProperties.get("ro.board.platform"))){
-            if(mExpandedHeight <= fhWithoutOverExpansion/1.5){
-                mExpandedHeight = 0;
+            KeyguardManager mKeyguardManager = (KeyguardManager) getContext().getSystemService(Context.KEYGUARD_SERVICE);
+            boolean flag = mKeyguardManager.inKeyguardRestrictedInputMode();
+            if(flag){
+                if(mExpandedHeight <= fhWithoutOverExpansion/1.5){
+                    mExpandedHeight = 0;
+                }
             }
         }
         mExpandedFraction = Math.min(1f, fhWithoutOverExpansion == 0
