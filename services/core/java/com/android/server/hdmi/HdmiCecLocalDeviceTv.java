@@ -304,7 +304,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     private void handleSelectInternalSource() {
         assertRunOnServiceThread();
         // Seq #18
-        if (mService.isControlEnabled() && mActiveSource.logicalAddress != mAddress) {
+        //modified by wj
+        //always send message <Active Source> when this function is invoked.
+        if (mService.isControlEnabled()/* && mActiveSource.logicalAddress != mAddress*/) {
+            Slog.d(TAG, "handle select internal source...");
             updateActiveSource(mAddress, mService.getPhysicalAddress());
             if (mSkipRoutingControl) {
                 mSkipRoutingControl = false;
