@@ -328,8 +328,12 @@ class WallpaperController {
     void setWindowWallpaperPosition(
             WindowState window, float x, float y, float xStep, float yStep) {
         if (window.mWallpaperX != x || window.mWallpaperY != y)  {
-            window.mWallpaperX = x;
-            window.mWallpaperY = y;
+            //window.mWallpaperX = x;
+            //window.mWallpaperY = y;
+            window.mWallpaperX = Math.min(x, 1.0f);
+            window.mWallpaperY = Math.min(y, 1.0f);
+            //Slog.i(TAG,"window.mWallpaperX:"+window.mWallpaperX);
+            //Slog.i(TAG,"window.mWallpaperY:"+window.mWallpaperY);
             window.mWallpaperXStep = xStep;
             window.mWallpaperYStep = yStep;
             updateWallpaperOffsetLocked(window, true);
