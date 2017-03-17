@@ -1,3 +1,4 @@
+ifeq ($(strip $(BOARD_HAVE_BLUETOOTH)),true)
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -10,3 +11,4 @@ LOCAL_PACKAGE_NAME := BluetoothMidiService
 LOCAL_CERTIFICATE := platform
 
 include $(BUILD_PACKAGE)
+endif
