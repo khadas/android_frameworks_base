@@ -3417,7 +3417,7 @@ public class AudioService extends IAudioService.Stub {
                     ringerMode = RINGER_MODE_SILENT;
                 }
                 // Setting the ringer mode will toggle mute
-                result &= ~FLAG_ADJUST_VOLUME;
+                //result &= ~FLAG_ADJUST_VOLUME;
             }
             break;
         case RINGER_MODE_VIBRATE:
