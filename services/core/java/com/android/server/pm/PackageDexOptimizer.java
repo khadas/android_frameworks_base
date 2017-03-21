@@ -246,6 +246,11 @@ class PackageDexOptimizer {
                         + " vmSafeMode=" + vmSafeMode + " debuggable=" + debuggable
                         + " target-filter=" + targetCompilerFilter + " oatDir = " + oatDir
                         + " sharedLibraries=" + sharedLibrariesPath);
+		if(pkg.applicationInfo.packageName.contains("com.google.android.media.gts")){
+			SystemProperties.set("cts_gts.media.gts","true");
+		}else if("true".equals(SystemProperties.get("cts_gts.media.gts"))){
+			SystemProperties.set("cts_gts.media.gts","");
+		}
                 if(pkg.applicationInfo.packageName.contains("com.android.compatibility.common.deviceinfo")){
                     SystemProperties.set("cts_gts.status","true");
                 }
