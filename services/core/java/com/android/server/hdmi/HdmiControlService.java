@@ -175,7 +175,9 @@ public final class HdmiControlService extends SystemService {
 
         private String getMenuLanguage() {
             Locale locale = Locale.getDefault();
-            if (locale.equals(Locale.TAIWAN) || locale.equals(HONG_KONG) || locale.equals(MACAU)) {
+            //changeed by wj, when languageCode is zh-CN, return chi.
+            //Return zho when using Taiwan/Hong Kong/Macau.
+            if (locale.equals(Locale.CHINA)) {
                 // Android always returns "zho" for all Chinese variants.
                 // Use "bibliographic" code defined in CEC639-2 for traditional
                 // Chinese used in Taiwan/Hong Kong/Macau.
@@ -1017,17 +1019,17 @@ public final class HdmiControlService extends SystemService {
         AudioManager audioManager = getAudioManager();
         boolean muted = audioManager.isStreamMute(AudioManager.STREAM_MUSIC);
         if (mute) {
-            if (!muted) {
+            /*if (!muted) {
                 audioManager.setStreamMute(AudioManager.STREAM_MUSIC, true);
-            }
+            }*/
         } else {
             if (muted) {
                 audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false);
             }
             // FLAG_HDMI_SYSTEM_AUDIO_VOLUME prevents audio manager from announcing
             // volume change notification back to hdmi control service.
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume,
-                    AudioManager.FLAG_SHOW_UI | AudioManager.FLAG_HDMI_SYSTEM_AUDIO_VOLUME);
+            /*audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume,
+                    AudioManager.FLAG_SHOW_UI | AudioManager.FLAG_HDMI_SYSTEM_AUDIO_VOLUME);*/
         }
     }
 
