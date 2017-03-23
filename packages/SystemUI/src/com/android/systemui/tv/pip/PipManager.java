@@ -35,6 +35,7 @@ import android.os.Debug;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.os.SystemProperties;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -68,6 +69,9 @@ public class PipManager {
 
     private static final int MAX_RUNNING_TASKS_COUNT = 10;
 
+    private static final String[] BLACK_LIST_OF_PIP = {
+        "org.xbmc.kodi"
+    };
     /**
      * List of package and class name which are considered as Settings,
      * so PIP location should be adjusted to the left of the side panel.
@@ -478,6 +482,25 @@ public class PipManager {
         return mState != STATE_NO_PIP;
     }
 
+    public boolean IsBlackApkRunning() {
+        List<RunningTaskInfo> runningTasks;
+        try {
+            runningTasks = mActivityManager.getTasks(1, 0);
+            if (runningTasks == null || runningTasks.size() == 0) {
+                return false;
+            }
+        } catch (RemoteException e) {
+            Log.d(TAG, "Failed to detect top activity", e);
+            return false;
+        }
+        ComponentName topActivity = runningTasks.get(0).topActivity;
+        for (String black_list: BLACK_LIST_OF_PIP) {
+            if (topActivity.getPackageName().equals(black_list)) {
+                return true;
+            }
+        }
+        return false;
+    }
     private StackInfo getPinnedStackInfo() {
         StackInfo stackInfo = null;
         try {
@@ -725,6 +748,42 @@ public class PipManager {
     public static PipManager getInstance() {
         if (sPipManager == null) {
             sPipManager = new PipManager();
+
+            Handler mHandler = new Handler() {
+                @Override
+                public void handleMessage(Message msg) {
+                    super.handleMessage(msg);
+                    switch (msg.what) {
+                        case 0:
+                            sPipManager.closePipInternal(true);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+            };
+            Thread thread = new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    while(true){
+                        if(sPipManager.mState != STATE_NO_PIP){
+                            if(MediaUtils.IsMulMediaClient() || sPipManager.IsBlackApkRunning()){
+                                Log.e(TAG, "close pip because of mul Media Player.");
+                                mHandler.sendEmptyMessage(0);
+                            }
+                        }
+                        try{
+                            Thread.sleep(1000);
+                        }catch(InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            });
+            thread.start();
         }
         return sPipManager;
     }

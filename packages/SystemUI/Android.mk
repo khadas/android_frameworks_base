@@ -31,6 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     SystemUI-proto-tags
 
 LOCAL_JAVA_LIBRARIES := telephony-common
+LOCAL_JNI_SHARED_LIBRARIES := librockchip_pip_jni
 
 LOCAL_PACKAGE_NAME := SystemUI
 LOCAL_CERTIFICATE := platform
