@@ -29,6 +29,7 @@ import android.util.Slog;
 import android.media.AudioManager;
 import android.util.Log;
 import android.view.InputDevice;
+import android.os.SystemProperties;
 
 import com.android.internal.R;
 import com.android.server.input.InputManagerService;
@@ -407,15 +408,19 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             //
             // If the kernel does not have an "hdmi_audio" switch, just fall back on the older
             // "hdmi" switch instead.
-            uei = new UEventInfo(NAME_HDMI_AUDIO, BIT_HDMI_AUDIO, 0, 0);
-            if (uei.checkSwitchExists()) {
-                retVal.add(uei);
-            } else {
-                uei = new UEventInfo(NAME_HDMI, BIT_HDMI_AUDIO, 0, 0);
+
+            boolean isBOX = "box".equals(SystemProperties.get("ro.target.product", "box"));
+            if (!isBOX) {
+                uei = new UEventInfo(NAME_HDMI_AUDIO, BIT_HDMI_AUDIO, 0, 0);
                 if (uei.checkSwitchExists()) {
                     retVal.add(uei);
                 } else {
-                    Slog.w(TAG, "This kernel does not have HDMI audio support");
+                    uei = new UEventInfo(NAME_HDMI, BIT_HDMI_AUDIO, 0, 0);
+                    if (uei.checkSwitchExists()) {
+                        retVal.add(uei);
+                    } else {
+                        Slog.w(TAG, "This kernel does not have HDMI audio support");
+                    }
                 }
             }
 
