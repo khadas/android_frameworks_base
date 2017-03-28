@@ -645,6 +645,11 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     boolean mDoingSetFocusedActivity;
 
+    static final String[] mThirdPartyAppWhiteList = { "com.antutu.ABenchMark:push", 
+                            "com.antutu.ABenchMark","com.antutu.ABenchMark:channel",
+                            "com.antutu.benchmark.full"};
+    static final int [] mThirdPartyAppAdj = {7,7,7,7};
+
     public boolean canShowErrorDialogs() {
         return mShowDialogs && !mSleeping && !mShuttingDown
                 && mLockScreenShown != LOCK_SCREEN_SHOWN;
@@ -20599,6 +20604,8 @@ public final class ActivityManagerService extends ActivityManagerNative
     private final boolean applyOomAdjLocked(ProcessRecord app, boolean doingAll, long now,
             long nowElapsed) {
         boolean success = true;
+        boolean isThirdPartyAppWhiteProcess =  false;
+        int mThirdPartyAdj = ProcessList.HOME_APP_ADJ;
 
         if (app.curRawAdj != app.setRawAdj) {
             app.setRawAdj = app.curRawAdj;
@@ -20606,7 +20613,27 @@ public final class ActivityManagerService extends ActivityManagerNative
 
         int changes = 0;
 
-        if (app.curAdj != app.setAdj) {
+        if (("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) {
+            if (mThirdPartyAppWhiteList.length != mThirdPartyAppAdj.length) {
+                throw new IllegalArgumentException("mThirdPartyAppWhiteList is not match mThirdPartyAppAdj");
+            }
+            for (int num = 0; num <= mThirdPartyAppWhiteList.length -1 ;num++) {
+                if (mThirdPartyAppWhiteList[num].equals(app.processName) && app.curAdj > mThirdPartyAppAdj[num]) {
+                    isThirdPartyAppWhiteProcess = true;
+                    mThirdPartyAdj = mThirdPartyAppAdj[num];                      
+                }
+            }
+        }
+
+        if (isThirdPartyAppWhiteProcess == true) {
+            ProcessList.setOomAdj(app.pid, app.info.uid, mThirdPartyAdj);
+            if (DEBUG_SWITCH || DEBUG_OOM_ADJ) Slog.v(TAG_OOM_ADJ,
+                    "Set " + app.pid + " " + app.processName + " adj " +mThirdPartyAdj  + ": "
+                    + app.adjType);
+            app.curAdj = mThirdPartyAdj;
+            app.setAdj = app.curAdj;
+            app.verifiedAdj = ProcessList.INVALID_ADJ;
+        }else if (app.curAdj != app.setAdj) {
             ProcessList.setOomAdj(app.pid, app.info.uid, app.curAdj);
             if (DEBUG_SWITCH || DEBUG_OOM_ADJ) Slog.v(TAG_OOM_ADJ,
                     "Set " + app.pid + " " + app.processName + " adj " + app.curAdj + ": "
