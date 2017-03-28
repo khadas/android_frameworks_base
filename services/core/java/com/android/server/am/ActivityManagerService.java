@@ -3710,11 +3710,11 @@ public final class ActivityManagerService extends ActivityManagerNative
 			if(DEBUG_LOWMEM)Slog.v("xzj", "----clean memory for start " + info.processName);	
 		}
 	}
-        if(("com.google.android.setupwizard".equals(processName)) 
+        if(("com.google.android.setupwizard".equals(processName)||"com.android.cts.verifier".equals(processName)) 
 	&& (("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))))){
 		if(!"true".equals(SystemProperties.get("cts_gts.status", "false")))
 		{
-			Log.d("xzj","--start com.google.android.setupwizard---");
+			Log.d("xzj","--start "+processName);
 			SystemProperties.set("cts_gts.status","true");
 		}
 	}
