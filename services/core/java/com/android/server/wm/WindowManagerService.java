@@ -7770,7 +7770,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
         // Let the policy update hidden states.
         config.keyboardHidden = Configuration.KEYBOARDHIDDEN_NO;
-        config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
+        config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
         config.navigationHidden = Configuration.NAVIGATIONHIDDEN_NO;
         mPolicy.adjustConfigurationLw(config, keyboardPresence, navigationPresence);
     }
