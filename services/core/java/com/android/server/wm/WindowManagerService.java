@@ -167,6 +167,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import android.os.SystemProperties;
 
 import static android.app.ActivityManager.DOCKED_STACK_CREATE_MODE_TOP_OR_LEFT;
 import static android.app.ActivityManager.StackId.DOCKED_STACK_ID;
@@ -342,6 +343,8 @@ public class WindowManagerService extends IWindowManager.Stub
 
     private static final String SYSTEM_SECURE = "ro.secure";
     private static final String SYSTEM_DEBUGGABLE = "ro.debuggable";
+    private static final String WINDOW_FAKE_ROTATION = "ro.sf.fakerotation";
+    private static final String WINDOW_ROTATION_DEGREES = "ro.sf.hwrotation";
 
     private static final String DENSITY_OVERRIDE = "ro.config.density_override";
     private static final String SIZE_OVERRIDE = "ro.config.size_override";
@@ -516,6 +519,11 @@ public class WindowManagerService extends IWindowManager.Stub
     WindowState[] mRebuildTmp = new WindowState[20];
 
     /**
+     * Check product characteristics.
+     */
+    boolean mIsTabletEnv;
+
+    /**
      * Stores for each user whether screencapture is disabled
      * This array is essentially a cache for all userId for
      * {@link android.app.admin.DevicePolicyManager#getScreenCaptureDisabled}
@@ -562,6 +570,8 @@ public class WindowManagerService extends IWindowManager.Stub
     int mRotation = 0;
     int mLastOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
     boolean mAltOrientation = false;
+    boolean mRotateOnBoot = false;
+    boolean mFirstRotate = false;
 
     private boolean mKeyguardWaitingForActivityDrawn;
 
@@ -735,6 +745,9 @@ public class WindowManagerService extends IWindowManager.Stub
     float mTransitionAnimationScaleSetting = 1.0f;
     float mAnimatorDurationScaleSetting = 1.0f;
     boolean mAnimationsDisabled = false;
+
+    float mWindowAnimationScaleBackup = 1.0f;
+    float mTransitionAnimationScaleBackup = 1.0f;
 
     final InputManagerService mInputManager;
     final DisplayManagerInternal mDisplayManagerInternal;
@@ -1061,6 +1074,8 @@ public class WindowManagerService extends IWindowManager.Stub
         mAllowTheaterModeWakeFromLayout = context.getResources().getBoolean(
                 com.android.internal.R.bool.config_allowTheaterModeWakeFromWindowLayout);
 
+        mRotateOnBoot = isWindowFakeRotation();
+        mIsTabletEnv = isTabletEnv();
 
         LocalServices.addService(WindowManagerInternal.class, new LocalService());
         initPolicy();
@@ -5919,7 +5934,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
     public void enableScreenAfterBoot() {
         synchronized(mWindowMap) {
-            if (DEBUG_BOOT) {
+           if (DEBUG_BOOT) {
                 RuntimeException here = new RuntimeException("here");
                 here.fillInStackTrace();
                 Slog.i(TAG_WM, "enableScreenAfterBoot: mDisplayEnabled=" + mDisplayEnabled
@@ -5950,7 +5965,7 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     void enableScreenIfNeededLocked() {
-        if (DEBUG_BOOT) {
+         if (DEBUG_BOOT) {
             RuntimeException here = new RuntimeException("here");
             here.fillInStackTrace();
             Slog.i(TAG_WM, "enableScreenIfNeededLocked: mDisplayEnabled=" + mDisplayEnabled
@@ -6059,10 +6074,12 @@ public class WindowManagerService extends IWindowManager.Stub
             /*if (!mBootAnimationStopped) {
                 // Do this one time.
                 Trace.asyncTraceBegin(Trace.TRACE_TAG_WINDOW_MANAGER, "Stop bootanim", 0);
+
+                if (!mRotateOnBoot ) {
                 try {
                     IBinder surfaceFlinger = ServiceManager.getService("SurfaceFlinger");
                     if (surfaceFlinger != null) {
-                        //Slog.i(TAG_WM, "******* TELLING SURFACE FLINGER WE ARE BOOTED!");
+                        Slog.i(TAG, "******* TELLING SURFACE FLINGER WE ARE BOOTED!");
                         Parcel data = Parcel.obtain();
                         data.writeInterfaceToken("android.ui.ISurfaceComposer");
                         surfaceFlinger.transact(IBinder.FIRST_CALL_TRANSACTION, // BOOT_FINISHED
@@ -6073,7 +6090,11 @@ public class WindowManagerService extends IWindowManager.Stub
                     Slog.e(TAG_WM, "Boot completed: SurfaceFlinger is dead!");
                 }
                 mBootAnimationStopped = true;
+                }
             }
+
+            // Set flag first rotate in order to expand duration of window freeze timeout.
+            mFirstRotate = true;
 
             if (!mForceDisplayEnabled && !checkBootAnimationCompleteLocked()) {
                 if (DEBUG_BOOT) Slog.i(TAG_WM, "performEnableScreen: Waiting for anim complete");
@@ -6886,6 +6907,11 @@ public class WindowManagerService extends IWindowManager.Stub
                     + " metrics");
         }
 
+        if (mRotateOnBoot) {
+             mRotation = Surface.ROTATION_0;
+             rotation = Surface.ROTATION_90;
+        }
+
         if (mRotation == rotation && mAltOrientation == altOrientation) {
             // No change.
              return false;
@@ -6904,7 +6930,13 @@ public class WindowManagerService extends IWindowManager.Stub
 
         mWindowsFreezingScreen = WINDOWS_FREEZING_SCREENS_ACTIVE;
         mH.removeMessages(H.WINDOW_FREEZE_TIMEOUT);
-        mH.sendEmptyMessageDelayed(H.WINDOW_FREEZE_TIMEOUT, WINDOW_FREEZE_TIMEOUT_DURATION);
+        if (mFirstRotate) {
+            mH.sendEmptyMessageDelayed(H.WINDOW_FREEZE_TIMEOUT, 5000);
+            mFirstRotate = false;
+        } else {
+            mH.sendEmptyMessageDelayed(H.WINDOW_FREEZE_TIMEOUT, WINDOW_FREEZE_TIMEOUT_DURATION);
+        }
+
         mWaitingForConfig = true;
         displayContent.layoutNeeded = true;
         final int[] anim = new int[2];
@@ -6931,6 +6963,22 @@ public class WindowManagerService extends IWindowManager.Stub
             mSeamlessRotationCount = 0;
         }
 
+	boolean isDelay = true;//(("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")));
+	if (mRotateOnBoot) {
+            try {
+                IBinder surfaceFlinger = ServiceManager.getService("SurfaceFlinger");
+                if (surfaceFlinger != null) {
+                    Slog.i(TAG, "******* TELLING SURFACE FLINGER WE ARE BOOTED !!!!!");
+                    Parcel data = Parcel.obtain();
+                    data.writeInterfaceToken("android.ui.ISurfaceComposer");
+                    surfaceFlinger.transact(IBinder.FIRST_CALL_TRANSACTION,
+                                            data, null, 0);
+                    data.recycle();
+                }
+            } catch (RemoteException ex) {
+                Slog.e(TAG, "Boot completed: SurfaceFlinger is dead!");
+            }
+        }
         // We need to update our screen size information to match the new rotation. If the rotation
         // has actually changed then this method will return true and, according to the comment at
         // the top of the method, the caller is obligated to call computeNewConfigurationLocked().
@@ -7174,6 +7222,14 @@ public class WindowManagerService extends IWindowManager.Stub
     private boolean isSystemSecure() {
         return "1".equals(SystemProperties.get(SYSTEM_SECURE, "1")) &&
                 "0".equals(SystemProperties.get(SYSTEM_DEBUGGABLE, "0"));
+    }
+
+    private boolean isWindowFakeRotation() {
+        return "true".equals(SystemProperties.get(WINDOW_FAKE_ROTATION, "false"));
+    }
+
+    private boolean isTabletEnv() {
+        return (SystemProperties.getInt(WINDOW_ROTATION_DEGREES,0) % 180 ) == 90;
     }
 
     /**
@@ -10127,6 +10183,13 @@ public class WindowManagerService extends IWindowManager.Stub
         // the screen then the whole world is changing behind the scenes.
         mPolicy.setLastInputMethodWindowLw(null, null);
 
+        if (mRotateOnBoot) {
+            mWindowAnimationScaleBackup = getAnimationScale(0);
+            mTransitionAnimationScaleBackup = getAnimationScale(1);
+            setAnimationScale(0, 0);
+            setAnimationScale(1, 0);
+        }
+
         if (mAppTransition.isTransitionSet()) {
             mAppTransition.freeze();
         }
@@ -10255,6 +10318,12 @@ public class WindowManagerService extends IWindowManager.Stub
         mH.sendEmptyMessageDelayed(H.FORCE_GC, 2000);
 
         mScreenFrozenLock.release();
+
+        if (mRotateOnBoot) {
+            setAnimationScale(0, mWindowAnimationScaleBackup);
+            setAnimationScale(1, mTransitionAnimationScaleBackup);
+            mRotateOnBoot = false;
+        }
 
         if (updateRotation) {
             if (DEBUG_ORIENTATION) Slog.d(TAG_WM, "Performing post-rotate rotation");
