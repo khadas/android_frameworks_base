@@ -539,10 +539,34 @@ public class NavigationBarView extends LinearLayout {
     }
 
     void updateRotatedViews() {
-        mRotatedViews[Surface.ROTATION_0] =
-                mRotatedViews[Surface.ROTATION_180] = findViewById(R.id.rot0);
-        mRotatedViews[Surface.ROTATION_270] =
-                mRotatedViews[Surface.ROTATION_90] = findViewById(R.id.rot90);
+        Configuration configuration = mContext.getResources().getConfiguration();
+        boolean isLowDensity= (configuration.densityDpi <= 360 );
+        if( isLowDensity )
+        {
+            if(!mVertical)
+            {
+                Log.d(TAG, "exchage mRotatedViews for low pixal display when zoom in/out.");
+                mRotatedViews[Surface.ROTATION_0] =
+                        mRotatedViews[Surface.ROTATION_180] = findViewById(R.id.rot90);
+                mRotatedViews[Surface.ROTATION_270] =
+                        mRotatedViews[Surface.ROTATION_90] = findViewById(R.id.rot0);
+
+            }
+            else
+            {
+                mRotatedViews[Surface.ROTATION_0] =
+                        mRotatedViews[Surface.ROTATION_180] = findViewById(R.id.rot0);
+                mRotatedViews[Surface.ROTATION_270] =
+                        mRotatedViews[Surface.ROTATION_90] = findViewById(R.id.rot90);
+            }
+        }
+        else
+        {
+                mRotatedViews[Surface.ROTATION_0] =
+                        mRotatedViews[Surface.ROTATION_180] = findViewById(R.id.rot0);
+                mRotatedViews[Surface.ROTATION_270] =
+                        mRotatedViews[Surface.ROTATION_90] = findViewById(R.id.rot90);
+        }
 
         updateCurrentView();
     }
