@@ -64,8 +64,11 @@ public class MediaFile {
     public static final int FILE_TYPE_MP2TS   = 28;
     public static final int FILE_TYPE_AVI     = 29;
     public static final int FILE_TYPE_WEBM    = 30;
+    public static final int FILE_TYPE_TRP     = 31;
+    public static final int FILE_TYPE_FLV     = 32;
+    public static final int FILE_TYPE_MPG     = 33;
     private static final int FIRST_VIDEO_FILE_TYPE = FILE_TYPE_MP4;
-    private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_WEBM;
+    private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_MPG;
 
     // More video file types
     public static final int FILE_TYPE_MP2PS   = 200;
@@ -183,6 +186,8 @@ public class MediaFile {
 
     static {
         addFileType("MP3", FILE_TYPE_MP3, "audio/mpeg", MtpConstants.FORMAT_MP3);
+        addFileType("MP1", FILE_TYPE_MP3, "audio/mpeg",MtpConstants.FORMAT_MP3);
+        addFileType("MP2", FILE_TYPE_MP3, "audio/mpeg",MtpConstants.FORMAT_MP3);
         addFileType("MPGA", FILE_TYPE_MP3, "audio/mpeg", MtpConstants.FORMAT_MP3);
         addFileType("M4A", FILE_TYPE_M4A, "audio/mp4", MtpConstants.FORMAT_MPEG);
         addFileType("WAV", FILE_TYPE_WAV, "audio/x-wav", MtpConstants.FORMAT_WAV);
@@ -222,6 +227,11 @@ public class MediaFile {
         addFileType("WEBM", FILE_TYPE_WEBM, "video/webm");
         addFileType("TS", FILE_TYPE_MP2TS, "video/mp2ts");
         addFileType("AVI", FILE_TYPE_AVI, "video/avi");
+        addFileType("WMV", FILE_TYPE_WMV, "video/x-ms-wmv", MtpConstants.FORMAT_WMV);
+        addFileType("TP", FILE_TYPE_MP2TS, "video/mp2ts");
+        addFileType("TRP", FILE_TYPE_TRP, "video/mp2ts");
+        addFileType("ASF", FILE_TYPE_ASF, "video/x-ms-asf");
+        addFileType("M2TS", FILE_TYPE_MP2TS, "video/mp2ts");
 
         if (isWMVEnabled()) {
             addFileType("WMV", FILE_TYPE_WMV, "video/x-ms-wmv", MtpConstants.FORMAT_WMV);
@@ -269,6 +279,7 @@ public class MediaFile {
         addFileType("ZIP", FILE_TYPE_ZIP, "application/zip");
         addFileType("MPG", FILE_TYPE_MP2PS, "video/mp2p");
         addFileType("MPEG", FILE_TYPE_MP2PS, "video/mp2p");
+        addFileType("VOB", FILE_TYPE_MPG, "video/mpg");
     }
 
     public static boolean isAudioFileType(int fileType) {
