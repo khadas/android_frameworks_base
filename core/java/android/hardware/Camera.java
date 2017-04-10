@@ -544,6 +544,11 @@ public class Camera {
         mFaceDetectionRunning = false;
     }
 
+    public final boolean isReleased() {
+        if (mNativeContext == 0) return true;
+        return false;
+    }
+
     /**
      * Unlocks the camera to allow another process to access it.
      * Normally, the camera is locked to the process with an active Camera
