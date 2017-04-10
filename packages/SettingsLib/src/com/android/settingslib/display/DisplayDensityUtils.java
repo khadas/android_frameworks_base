@@ -46,7 +46,7 @@ public class DisplayDensityUtils {
     private static final float MIN_SCALE = 0.85f;
 
     /** Maximum density scale. The actual scale used depends on the device. */
-    private static final float MAX_SCALE = 1.50f;
+    private static  float MAX_SCALE = 1.50f;
 
     /** Summary used for "default" scale. */
     public static final int SUMMARY_DEFAULT = R.string.screen_zoom_summary_default;
@@ -102,6 +102,7 @@ public class DisplayDensityUtils {
 
         final int currentDensity = metrics.densityDpi;
         int currentDensityIndex = -1;
+        MAX_SCALE = Float.parseFloat(context.getResources().getString(R.string.config_max_density_scale));
 
         // Compute number of "larger" and "smaller" scales for this display.
         final int minDimensionPx = Math.min(metrics.widthPixels, metrics.heightPixels);

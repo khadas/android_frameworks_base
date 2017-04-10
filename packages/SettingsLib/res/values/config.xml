@@ -26,6 +26,9 @@
     <!-- Whether to send a custom package name with the PSD.-->
     <bool name="config_sendPackageName">false</bool>
 
+    <!-- Maximum density scale. The actual scale used depends on the device..-->
+    <string name="config_max_density_scale" format="float" type="dimen">1.5</string>
+
     <!-- Name for the set of keys associating package names -->
     <string name="config_helpPackageNameKey" translatable="false"></string>
 
