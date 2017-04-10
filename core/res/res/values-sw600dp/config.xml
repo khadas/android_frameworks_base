@@ -38,7 +38,7 @@
     <integer name="config_maxResolverActivityColumns">3</integer>
 
     <!-- Use a larger scaling span for larger screen devices. -->
-    <dimen name="config_minScalingSpan">32mm</dimen>
+    <dimen name="config_minScalingSpan">32dp</dimen>
 
     <integer name="config_dockedStackDividerSnapMode">1</integer>
 </resources>
