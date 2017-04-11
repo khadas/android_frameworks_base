@@ -215,6 +215,13 @@
     <!-- How far the expanded QS panel peeks from the header in collapsed state. -->
     <dimen name="qs_peek_height">0dp</dimen>
 
+    <!-- How large the icons in the quick settings footer dialog are -->
+    <dimen name="qs_footer_dialog_icon_size">24sp</dimen>
+    <!-- Left and right margin of the icons -->
+    <dimen name="qs_footer_dialog_icon_margin">8sp</dimen>
+    <!-- Alpha value of network logging icon -->
+    <item name="qs_footer_dialog_network_logging_icon_alpha" format="float" type="dimen">0.3</item>
+
     <!-- Zen mode panel: condition item button padding -->
     <dimen name="zen_mode_condition_detail_button_padding">8dp</dimen>
 
@@ -452,6 +459,9 @@
     <dimen name="trust_circle_inner_radius_enter">18dp</dimen>
     <!-- TrustDrawable: Thickness of the circle -->
     <dimen name="trust_circle_thickness">2dp</dimen>
+
+    <!-- How much two taps can be apart to still be recognized as a double tap on the lockscreen -->
+    <dimen name="double_tap_slop">32dp</dimen>
 
     <!-- Margin on the right side of the system icon group on Keyguard. -->
     <fraction name="battery_button_height_fraction">10.5%</fraction>
