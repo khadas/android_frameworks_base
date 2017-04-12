@@ -2300,7 +2300,7 @@ public final class BluetoothAdapter {
                     public void onScanResult(int callbackType, ScanResult result) {
                         if (callbackType != ScanSettings.CALLBACK_TYPE_ALL_MATCHES) {
                             // Should not happen.
-                            Log.e(TAG, "LE Scan has already started");
+                            if (DBG) Log.e(TAG, "LE Scan has already started");
                             return;
                         }
                         ScanRecord scanRecord = result.getScanRecord();
