@@ -216,10 +216,18 @@ public class ImageWallpaper extends WallpaperService {
                 }
                 hasWallpaper = false;
             }
-
-            // Force the wallpaper to cover the screen in both dimensions
-            int surfaceWidth = Math.max(displayInfo.logicalWidth, mBackgroundWidth);
-            int surfaceHeight = Math.max(displayInfo.logicalHeight, mBackgroundHeight);
+            int surfaceWidth=0;
+            int surfaceHeight=0;
+            if (FIXED_SIZED_SURFACE)
+            {
+                 surfaceWidth = surfaceHeight = Math.max(displayInfo.logicalWidth,displayInfo.logicalHeight);
+            }
+            else
+            {
+                // Force the wallpaper to cover the screen in both dimensions
+                surfaceWidth = Math.max(displayInfo.logicalWidth, mBackgroundWidth);
+                surfaceHeight = Math.max(displayInfo.logicalHeight, mBackgroundHeight);
+            }
 
             if (FIXED_SIZED_SURFACE) {
                 // Used a fixed size surface, because we are special.  We can do
