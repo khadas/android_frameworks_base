@@ -35,7 +35,6 @@ import com.android.systemui.statusbar.policy.KeyButtonView;
 import com.android.systemui.tuner.TunerService;
 
 import java.util.Objects;
-
 public class NavigationBarInflaterView extends FrameLayout implements TunerService.Tunable {
 
     private static final String TAG = "NavBarInflater";
@@ -86,7 +85,7 @@ public class NavigationBarInflaterView extends FrameLayout implements TunerServi
         Display display = ((WindowManager)
                 context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
         Mode displayMode = display.getMode();
-        isRot0Landscape = displayMode.getPhysicalWidth() > displayMode.getPhysicalHeight();
+        isRot0Landscape = displayMode.getPhysicalWidth() < displayMode.getPhysicalHeight();
     }
 
     private void createInflaters() {
@@ -254,8 +253,14 @@ public class NavigationBarInflaterView extends FrameLayout implements TunerServi
         View v = null;
         if (HOME.equals(button)) {
             v = inflater.inflate(R.layout.home, parent, false);
+            if (landscape && isSw600Dp()) {
+                setupLandButton(v);
+            }
         } else if (BACK.equals(button)) {
             v = inflater.inflate(R.layout.back, parent, false);
+            if (landscape && isSw600Dp()) {
+                setupLandButton(v);
+            }
         } else if (RECENT.equals(button)) {
             v = inflater.inflate(R.layout.recent_apps, parent, false);
             if (landscape && isSw600Dp()) {
