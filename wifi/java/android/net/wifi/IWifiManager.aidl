@@ -91,7 +91,7 @@ interface IWifiManager
 
     WifiInfo getConnectionInfo();
 
-    boolean setWifiEnabled(String packageName, boolean enable);
+    boolean setWifiEnabled(boolean enable);
 
     int getWifiEnabledState();
 
