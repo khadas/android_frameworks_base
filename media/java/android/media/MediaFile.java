@@ -54,6 +54,9 @@ public class MediaFile {
     private static final int LAST_MIDI_FILE_TYPE = FILE_TYPE_IMY;
 
     // Video file types
+    public static final int FILE_TYPE_TRP     = 18;
+    public static final int FILE_TYPE_FLV     = 19;
+    public static final int FILE_TYPE_MPG     = 20;
     public static final int FILE_TYPE_MP4     = 21;
     public static final int FILE_TYPE_M4V     = 22;
     public static final int FILE_TYPE_3GPP    = 23;
@@ -64,11 +67,8 @@ public class MediaFile {
     public static final int FILE_TYPE_MP2TS   = 28;
     public static final int FILE_TYPE_AVI     = 29;
     public static final int FILE_TYPE_WEBM    = 30;
-    public static final int FILE_TYPE_TRP     = 31;
-    public static final int FILE_TYPE_FLV     = 32;
-    public static final int FILE_TYPE_MPG     = 33;
     private static final int FIRST_VIDEO_FILE_TYPE = FILE_TYPE_MP4;
-    private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_MPG;
+    private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_WEBM;
 
     // More video file types
     public static final int FILE_TYPE_MP2PS   = 200;
