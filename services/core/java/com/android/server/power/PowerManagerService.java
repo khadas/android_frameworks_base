@@ -3400,6 +3400,15 @@ public final class PowerManagerService extends SystemService
         }
 
         @Override // Binder call
+        public void powerHintNoPermCheck(int hintId, int data) {
+            if (!mSystemReady) {
+                // Service not ready yet, so who the heck cares about power hints, bah.
+                return;
+            }
+            powerHintInternal(hintId, data);
+        }
+
+        @Override // Binder call
         public void acquireWakeLock(IBinder lock, int flags, String tag, String packageName,
                 WorkSource ws, String historyTag) {
             if (lock == null) {

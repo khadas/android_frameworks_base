@@ -22,12 +22,18 @@ import android.annotation.Nullable;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IPowerManager;
 import android.os.Looper;
 import android.os.Message;
+import android.os.PowerManagerInternal;
+import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.view.Surface;
+import android.util.Log;
 
 import java.io.IOException;
 import java.lang.annotation.Retention;
@@ -1584,6 +1590,7 @@ final public class MediaCodec {
     private EventHandler mCallbackHandler;
     private Callback mCallback;
     private OnFrameRenderedListener mOnFrameRenderedListener;
+    private final IPowerManager mPower;
     private Object mListenerLock = new Object();
 
     private static final int EVENT_CALLBACK = 1;
@@ -1772,6 +1779,8 @@ final public class MediaCodec {
         mOnFrameRenderedHandler = mEventHandler;
 
         mBufferLock = new Object();
+
+        mPower = IPowerManager.Stub.asInterface(ServiceManager.getService("power"));
 
         native_setup(name, nameIsType, encoder);
     }
@@ -1988,6 +1997,21 @@ final public class MediaCodec {
      * for start may be attributed to future method calls.
      */
     public final void start() {
+        if(SystemProperties.get("ro.board.platform").equals("rk3399")){
+            if(getCodecInfo().isVideo()){
+                try{
+                    int videoWidth,videoHeight;
+                    videoWidth = getInputFormat().getInteger(MediaFormat.KEY_WIDTH);
+                    videoHeight = getInputFormat().getInteger(MediaFormat.KEY_HEIGHT);
+                    if(videoWidth > 2048 || videoHeight > 2048)
+                        mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40003);
+                    else
+                        mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
+                }catch (Exception e){
+                    Log.i("MediaCodec",e.getMessage());
+                }
+            }
+        }
         native_start();
         synchronized(mBufferLock) {
             cacheBuffers(true /* input */);
@@ -2004,6 +2028,15 @@ final public class MediaCodec {
      * @throws IllegalStateException if in the Released state.
      */
     public final void stop() {
+        if(SystemProperties.get("ro.board.platform").equals("rk3399")){
+            if(getCodecInfo().isVideo()){
+                try{
+                    mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
+                }catch (Exception e){
+                    Log.i("MediaCodec",e.getMessage());
+                }
+            }
+        }
         native_stop();
         freeAllTrackedBuffers();
 

@@ -27,12 +27,15 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.IPowerManager;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.Process;
 import android.os.PowerManager;
+import android.os.PowerManagerInternal;
+import android.os.ServiceManager;
 import android.os.SystemProperties;
 import android.provider.Settings;
 import android.system.ErrnoException;
@@ -615,6 +618,7 @@ public class MediaPlayer extends PlayerBase
     private int mStreamType = AudioManager.USE_DEFAULT_STREAM_TYPE;
     private int mUsage = -1;
     private boolean mBypassInterruptionPolicy;
+    private final IPowerManager mPower;
 
     /**
      * Default constructor. Consider using one of the create() methods for
@@ -637,6 +641,8 @@ public class MediaPlayer extends PlayerBase
 
         mTimeProvider = new TimeProvider(this);
         mOpenSubtitleSources = new Vector<InputStream>();
+
+        mPower = IPowerManager.Stub.asInterface(ServiceManager.getService("power"));
 
         /* Native setup requires a weak reference to our object.
          * It's easier to create it here than in C++.
@@ -1372,6 +1378,28 @@ public class MediaPlayer extends PlayerBase
      * @throws IllegalStateException if it is called in an invalid state
      */
     public void start() throws IllegalStateException {
+        if(SystemProperties.get("ro.board.platform").equals("rk3399")){
+            TrackInfo[] trackInfos = getTrackInfo();
+            if (trackInfos != null && trackInfos.length > 0){
+                for (int i = 0; i < trackInfos.length; i++){
+                    if(trackInfos[i].getTrackType() == TrackInfo.MEDIA_TRACK_TYPE_VIDEO){
+                        try{
+                            int videoWidth,videoHeight;
+                            videoWidth = getVideoWidth();
+                            videoHeight = getVideoHeight();
+                            if(videoWidth > 2048 || videoHeight > 2048){
+                                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40003);
+                            } else {
+                                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
+                            }
+                        }catch (Exception e){
+                            Log.i("MediaPlayer",e.getMessage());
+                        }
+                        break;
+                    }
+                }
+            }
+        }
         baseStart();
         stayAwake(true);
         _start();
@@ -1396,6 +1424,13 @@ public class MediaPlayer extends PlayerBase
      * initialized.
      */
     public void stop() throws IllegalStateException {
+        if(SystemProperties.get("ro.board.platform").equals("rk3399")){
+            try{
+                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
+            }catch (Exception e){
+                Log.i("MediaPlayer",e.getMessage());
+            }
+        }
         stayAwake(false);
         _stop();
     }
@@ -1409,6 +1444,27 @@ public class MediaPlayer extends PlayerBase
      * initialized.
      */
     public void pause() throws IllegalStateException {
+        if(SystemProperties.get("ro.board.platform").equals("rk3399")){
+            TrackInfo[] trackInfos = getTrackInfo();
+            if (trackInfos != null && trackInfos.length > 0){
+                for (int i = 0; i < trackInfos.length; i++){
+                    if(trackInfos[i].getTrackType() == TrackInfo.MEDIA_TRACK_TYPE_VIDEO){
+                        try{
+                            int videoWidth,videoHeight;
+                            videoWidth = getVideoWidth();
+                            videoHeight = getVideoHeight();
+                            if(videoWidth > 2048 || videoHeight > 2048)
+                                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40003);
+                            else
+                                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
+                        }catch (Exception e){
+                            Log.i("MediaPlayer",e.getMessage());
+                        }
+                        break;
+                    }
+                }
+            }
+        }
         stayAwake(false);
         _pause();
     }
@@ -1866,6 +1922,13 @@ public class MediaPlayer extends PlayerBase
      * data source and calling prepare().
      */
     public void reset() {
+        if(SystemProperties.get("ro.board.platform").equals("rk3399")){
+            try{
+                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
+            }catch (Exception e){
+                Log.i("MediaPlayer",e.getMessage());
+            }
+        }
         mSelectedSubtitleTrackIndex = -1;
         synchronized(mOpenSubtitleSources) {
             for (final InputStream is: mOpenSubtitleSources) {
