@@ -25,6 +25,7 @@ import com.android.internal.policy.IKeyguardExitCallback;
 import com.android.internal.policy.IKeyguardService;
 import com.android.server.UiThread;
 import com.android.server.policy.keyguard.KeyguardStateMonitor.OnShowingStateChangedCallback;
+import com.android.internal.widget.LockPatternUtils;
 
 import java.io.PrintWriter;
 
@@ -52,6 +53,7 @@ public class KeyguardServiceDelegate {
     private final KeyguardState mKeyguardState = new KeyguardState();
     private DrawnListener mDrawnListenerWhenConnect;
     private final OnShowingStateChangedCallback mShowingStateChangedCallback;
+    private LockPatternUtils mLockPatternUtils;
 
     private static final class KeyguardState {
         KeyguardState() {
@@ -96,8 +98,20 @@ public class KeyguardServiceDelegate {
         public void onDrawn() throws RemoteException {
             if (DEBUG) Log.v(TAG, "**** SHOWN CALLED ****");
 	    //keyguard drawn complete ,can exit bootanim
-	    android.os.SystemProperties.set("service.bootanim.exit", "1");
-        SystemService.stop("bootanim");
+	    if((!"vr".equals(android.os.SystemProperties.get("ro.target.product")))&&
+	       (!"box".equals(android.os.SystemProperties.get("ro.target.product")))){//platforms has keyguard service
+		Log.d("xzj","----keygurad drawn done,if keygurad is null?----");
+	    	if (mLockPatternUtils.isLockScreenDisabled(0)){
+			Log.d("xzj","----keygurad drawn done,not keyguradk,ummmmmm----");
+			try {
+				Thread.sleep(3000);
+			} catch (Exception e) {
+			}	    
+		}
+		Log.d("xzj","----keygurad drawn done,exit bootanim----");
+	    	android.os.SystemProperties.set("service.bootanim.exit", "1");
+        	SystemService.stop("bootanim");
+	    }
             if (mDrawnListener != null) {
                 mDrawnListener.onDrawn();
             }
@@ -128,6 +142,7 @@ public class KeyguardServiceDelegate {
         mScrimHandler = UiThread.getHandler();
         mShowingStateChangedCallback = showingStateChangedCallback;
         mScrim = createScrim(context, mScrimHandler);
+	mLockPatternUtils = new LockPatternUtils(context);
     }
 
     private boolean isBox() {
