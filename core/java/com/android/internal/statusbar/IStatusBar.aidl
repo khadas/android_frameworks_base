@@ -56,6 +56,10 @@ oneway interface IStatusBar
     void buzzBeepBlinked();
     void notificationLightOff();
     void notificationLightPulse(int argb, int millisOn, int millisOff);
+    void addBottomBar();
+    void removeBottomBar();
+    void addUpperBar();
+    void removeUpperBar();
 
     void showRecentApps(boolean triggeredFromAltTab, boolean fromHome);
     void hideRecentApps(boolean triggeredFromAltTab, boolean triggeredFromHomeKey);
