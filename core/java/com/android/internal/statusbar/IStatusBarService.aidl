@@ -62,6 +62,10 @@ interface IStatusBarService
             in NotificationVisibility[] noLongerVisibleKeys);
     void onNotificationExpansionChanged(in String key, in boolean userAction, in boolean expanded);
     void setSystemUiVisibility(int vis, int mask, String cause);
+    void addBottomBar();
+    void removeBottomBar();
+    void addUpperBar();
+    void removeUpperBar();
 
     void addTile(in ComponentName tile);
     void remTile(in ComponentName tile);

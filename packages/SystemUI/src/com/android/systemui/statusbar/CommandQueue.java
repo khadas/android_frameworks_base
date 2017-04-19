@@ -77,6 +77,10 @@ public class CommandQueue extends IStatusBar.Stub {
     private static final int MSG_APP_TRANSITION_FINISHED       = 31 << MSG_SHIFT;
     private static final int MSG_DISMISS_KEYBOARD_SHORTCUTS    = 32 << MSG_SHIFT;
     private static final int MSG_HANDLE_SYSNAV_KEY             = 33 << MSG_SHIFT;
+    private static final int MSG_ADD_BAR_BOTTOM             = 34 << MSG_SHIFT;
+    private static final int MSG_REMOVE_BAR_BOTTOM          = 35 << MSG_SHIFT;
+    private static final int MSG_ADD_BAR_UPPER              = 36 << MSG_SHIFT;
+    private static final int MSG_REMOVE_BAR_UPPER           = 37 << MSG_SHIFT;
 
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
@@ -133,6 +137,11 @@ public class CommandQueue extends IStatusBar.Stub {
         void clickTile(ComponentName tile);
 
         void handleSystemNavigationKey(int arg1);
+
+        void addBottomBar();
+        void removeBottomBar();
+        void addUpperBar();
+        void removeUpperBar();
     }
 
     public CommandQueue(Callbacks callbacks) {
@@ -399,6 +408,34 @@ public class CommandQueue extends IStatusBar.Stub {
         }
     }
 
+    public void addBottomBar() {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_ADD_BAR_BOTTOM);
+            mHandler.obtainMessage(MSG_ADD_BAR_BOTTOM, 0, 0, null).sendToTarget();
+       }
+    }
+
+    public void removeBottomBar() {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_REMOVE_BAR_BOTTOM);
+            mHandler.obtainMessage(MSG_REMOVE_BAR_BOTTOM, 0, 0, null).sendToTarget();
+      }
+    }
+
+    public void addUpperBar() {
+       synchronized (mLock) {
+           mHandler.removeMessages(MSG_ADD_BAR_UPPER);
+           mHandler.obtainMessage(MSG_ADD_BAR_UPPER, 0, 0, null).sendToTarget();
+       }
+    }
+
+    public void removeUpperBar() {
+       synchronized (mLock) {
+           mHandler.removeMessages(MSG_REMOVE_BAR_UPPER);
+           mHandler.obtainMessage(MSG_REMOVE_BAR_UPPER, 0, 0, null).sendToTarget();
+       }
+    }
+
     private final class H extends Handler {
         public void handleMessage(Message msg) {
             final int what = msg.what & MSG_MASK;
@@ -517,6 +554,18 @@ public class CommandQueue extends IStatusBar.Stub {
                 case MSG_HANDLE_SYSNAV_KEY:
                     mCallbacks.handleSystemNavigationKey(msg.arg1);
                     break;
+                case MSG_ADD_BAR_BOTTOM:
+                    mCallbacks.addBottomBar();
+                    break;
+                case MSG_REMOVE_BAR_BOTTOM:
+                    mCallbacks.removeBottomBar();
+                   break;
+                case MSG_ADD_BAR_UPPER:
+                    mCallbacks.addUpperBar();
+                   break;
+                case MSG_REMOVE_BAR_UPPER:
+                    mCallbacks.removeUpperBar();
+                   break;
             }
         }
     }
