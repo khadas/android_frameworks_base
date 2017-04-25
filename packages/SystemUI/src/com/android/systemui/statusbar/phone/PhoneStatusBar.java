@@ -356,7 +356,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     private ScreenPinningRequest mScreenPinningRequest;
 
     private int mNavigationIconHints = 0;
-    private boolean mBarIsAdd = false;
+    private boolean mBottomBarIsAdd = false;
+    private boolean mUpperBarIsAdd = false;
     private HandlerThread mHandlerThread;
 
     // ensure quick settings is disabled until the current user makes it through the setup wizard
@@ -1136,22 +1137,22 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     }
 
     private void addBottomBarInside(){
-        if (!mBarIsAdd) {
+        if (!mBottomBarIsAdd) {
             Log.d(TAG,"add Bottom  Bar");
             if (mNavigationBarView != null) {
               addNavigationBar();
-              mBarIsAdd = true;
+              mBottomBarIsAdd = true;
               SystemProperties.set("persist.sys.status.bar.bottom","true");
             }
         }
     }
 
     private void removeBottomBarInside(){
-       if (mBarIsAdd) {
+       if (mBottomBarIsAdd) {
            Log.d(TAG,"remove Bottom  Bar");
            if (mNavigationBarView != null) {
              mWindowManager.removeView(mNavigationBarView);
-             mBarIsAdd = false;
+             mBottomBarIsAdd = false;
              SystemProperties.set("persist.sys.status.bar.bottom","false");
            }
        }
@@ -1169,16 +1170,26 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     @Override
     public void addUpperBar() {
-      SystemProperties.set("persist.sys.status.bar.upper","true");
-      disable(0,0,false);
+      if (!mUpperBarIsAdd) {
+          Log.d(TAG,"add Upper Bar");
+          if (mStatusBarWindow != null) {
+              mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
+              mUpperBarIsAdd = true;
+              SystemProperties.set("persist.sys.status.bar.upper","true");
+           }
+       }
     }
 
     @Override
     public void removeUpperBar() {
-       SystemProperties.set("persist.sys.status.bar.upper","false");
-       int state1 = StatusBarManager.DISABLE_EXPAND | StatusBarManager.DISABLE_NOTIFICATION_ICONS | StatusBarManager.DISABLE2_QUICK_SETTINGS | StatusBarManager.DISABLE_SYSTEM_INFO;
-       int state2 = state1;
-       disable(state1,state2,false);
+      if (mUpperBarIsAdd) {
+          Log.d(TAG,"remove Upper Bar");
+          if (mStatusBarWindow != null) {
+              mWindowManager.removeView(mStatusBarWindow);
+              mUpperBarIsAdd = false;
+              SystemProperties.set("persist.sys.status.bar.upper","false");
+           }
+       }
     }
 
     // For small-screen devices (read: phones) that lack hardware navigation buttons
@@ -1869,11 +1880,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
      * State is one or more of the DISABLE constants from StatusBarManager.
      */
     public void disable(int state1, int state2, boolean animate) {
-        if ("false".equals(SystemProperties.get("persist.sys.status.bar.upper","false"))) {
-          state1 = StatusBarManager.DISABLE_EXPAND | StatusBarManager.DISABLE_NOTIFICATION_ICONS | StatusBarManager.DISABLE_NOTIFICATION_ALERTS | StatusBarManager.DISABLE_SYSTEM_INFO | StatusBarManager.DISABLE2_QUICK_SETTINGS;
-          state2 = state1;
-          animate = false;
-        }
         animate &= mStatusBarWindowState != WINDOW_STATE_HIDDEN;
         mDisabledUnmodified1 = state1;
         mDisabledUnmodified2 = state2;
@@ -2869,6 +2875,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         makeStatusBarView();
         mStatusBarWindowManager = new StatusBarWindowManager(mContext);
         mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
+        mUpperBarIsAdd = true;
+        if("false".equals(SystemProperties.get("persist.sys.status.bar.upper","false")))
+            removeUpperBar();
     }
 
     // called by makeStatusbar and also by PhoneStatusBarView
