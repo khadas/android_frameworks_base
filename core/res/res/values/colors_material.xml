@@ -17,7 +17,7 @@
 <!-- Colors specific to Material themes. -->
 <resources>
     <color name="foreground_material_dark">@color/white</color>
-    <color name="foreground_material_light">@color/material_blue_grey_800</color>
+    <color name="foreground_material_light">@color/black</color>
 
     <color name="background_material_dark">@color/material_grey_850</color>
     <color name="background_material_light">@color/material_grey_50</color>
@@ -71,8 +71,8 @@
     <item name="disabled_alpha_material_light" format="float" type="dimen">0.26</item>
     <item name="disabled_alpha_material_dark" format="float" type="dimen">0.30</item>
 
-    <item name="highlight_alpha_material_light" format="float" type="dimen">0.7</item>
-    <item name="highlight_alpha_material_dark" format="float" type="dimen">0.7</item>
+    <item name="highlight_alpha_material_light" format="float" type="dimen">0.12</item>
+    <item name="highlight_alpha_material_dark" format="float" type="dimen">0.20</item>
     <item name="highlight_alpha_material_colored" format="float" type="dimen">0.26</item>
 
     <!-- Primary & accent colors -->
