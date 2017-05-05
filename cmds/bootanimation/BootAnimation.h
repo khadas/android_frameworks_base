@@ -136,7 +136,7 @@ private:
     bool parseAnimationDesc(Animation&);
     bool preloadZip(Animation &animation);
     bool playSoundsAllowed() const;
-
+	void getTexCoordinate();
     void checkExit();
 
     sp<SurfaceComposerClient>       mSession;
@@ -159,6 +159,20 @@ private:
     String8     mZipFileName;
     SortedVector<String8> mLoadedFiles;
     sp<TimeCheckThread> mTimeCheckThread;
+	int         mHardwareRotation;
+    GLfloat     mTexCoords[8];
+    int         mTexWidth;
+    int         mTexHeight;
+    int         mBMPWidth;
+    int         mBMPHeight;
+
+    template<class T>
+    void exchangeParameters(T* x, T* y) {
+        T temp;
+        temp = *x;
+        *x = *y;
+        *y = temp;
+    }
 };
 
 // ---------------------------------------------------------------------------

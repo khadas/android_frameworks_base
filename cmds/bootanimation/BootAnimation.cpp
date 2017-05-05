@@ -16,6 +16,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "BootAnimation"
+#define FIXED_ONE 1
 
 #include <stdint.h>
 #include <sys/inotify.h>
@@ -104,18 +105,29 @@ static const std::vector<std::string> PLAY_SOUND_BOOTREASON_BLACKLIST {
 BootAnimation::BootAnimation(bool shutdown) : Thread(false), mClockEnabled(true), mTimeIsAccurate(false),
         mTimeFormat12Hour(false), mTimeCheckThread(NULL) {
     mSession = new SurfaceComposerClient();
+    mHardwareRotation = 0;
 
     // If the system has already booted, the animation is not being used for a boot.
     mSystemBoot = !property_get_bool(BOOT_COMPLETED_PROP_NAME, 0);
     mShutdown = shutdown;
     mReverseAxis = false;
+    mShutdown = shutdown;
+    char property[PROPERTY_VALUE_MAX];
+
+    if (property_get("ro.sf.hwrotation", property, "0") > 0) {
+        mHardwareRotation = atoi(property);
+    }
+
+    if (property_get("ro.sf.fakerotation", property, "false") > 0) {
+        mReverseAxis = !strcmp(property, "true");
+    }
     if(mShutdown){
         sp<IBinder> dtoken(SurfaceComposerClient::getBuiltInDisplay(
                                         ISurfaceComposer::eDisplayIdMain)); // primary_display_token
         DisplayInfo dinfo;
         status_t status = SurfaceComposerClient::getDisplayInfo(dtoken, &dinfo);
         if (status == OK) {
-            ALOGD("DISPLAY,W-H: %d-%d, ori: %d", dinfo.w, dinfo.h, dinfo.orientation);
+            ALOGE("\\\\*********DISPLAY,W-H: %d-%d, ori: %d", dinfo.w, dinfo.h, dinfo.orientation);
             if(dinfo.orientation==1 || dinfo.orientation==3 )
                 mReverseAxis=true;
             else
@@ -239,6 +251,11 @@ status_t BootAnimation::initTexture(FileMap* map, int* width, int* height)
     if (tw < w) tw <<= 1;
     if (th < h) th <<= 1;
 
+    mBMPWidth = w;
+    mBMPHeight = h;
+    mTexWidth = tw;
+    mTexHeight = th;
+
     switch (bitmap.colorType()) {
         case kN32_SkColorType:
             if (!mUseNpotTextures && (tw != w || th != h)) {
@@ -288,9 +305,16 @@ status_t BootAnimation::readyToRun() {
     // create the native surface
     int curWidth = dinfo.w;
     int curHeight = dinfo.h;
-    if(mShutdown && mReverseAxis){
+    /*if(mShutdown && mReverseAxis){
         curWidth = dinfo.h;
         curHeight = dinfo.w;
+    }*/
+
+    if (mShutdown) {
+       if (dinfo.orientation % 2 == 0) {
+           curWidth = dinfo.h;
+           curHeight = dinfo.w;
+       }
     }
 
     sp<SurfaceControl> control = session()->createSurface(String8("BootAnimation"),
@@ -303,6 +327,15 @@ status_t BootAnimation::readyToRun() {
     sp<Surface> s = control->getSurface();
 
     // initialize opengl and egl
+#ifdef USE_565
+    const EGLint attribs[] = {
+            EGL_RED_SIZE,   5,
+            EGL_GREEN_SIZE, 6,
+            EGL_BLUE_SIZE,  5,
+            EGL_DEPTH_SIZE, 0,
+            EGL_NONE
+    };
+#else
     const EGLint attribs[] = {
             EGL_RED_SIZE,   8,
             EGL_GREEN_SIZE, 8,
@@ -310,6 +343,7 @@ status_t BootAnimation::readyToRun() {
             EGL_DEPTH_SIZE, 0,
             EGL_NONE
     };
+#endif
     EGLint w, h;
     EGLint numConfigs;
     EGLConfig config;
@@ -381,53 +415,173 @@ bool BootAnimation::threadLoop()
     return r;
 }
 
+void BootAnimation::getTexCoordinate() {
+
+    GLfloat w_scale = float(mBMPWidth)/mTexWidth;
+    GLfloat h_scale = float(mBMPHeight)/mTexHeight;
+
+	if (mReverseAxis) {
+		mTexCoords[0]=0;                 mTexCoords[1]=FIXED_ONE*h_scale;
+		mTexCoords[2]=0;                 mTexCoords[3]=0;
+		mTexCoords[4]=FIXED_ONE*w_scale; mTexCoords[5]=0;
+		mTexCoords[6]=FIXED_ONE*w_scale; mTexCoords[7]=FIXED_ONE*h_scale;
+	} else {
+		mTexCoords[0]=0;                 mTexCoords[1]=0;
+		mTexCoords[2]=FIXED_ONE*w_scale; mTexCoords[3]=0;
+		mTexCoords[4]=FIXED_ONE*w_scale; mTexCoords[5]=FIXED_ONE*h_scale;
+		mTexCoords[6]=0;                 mTexCoords[7]=FIXED_ONE*h_scale;
+
+        // 若没有 reverse_axis, 且 mBMPWidth 等于 mTexWidth, mBMPHeight 等于 mTexHeight, 则 : 
+        // mTexCoords 的内容是 :
+        // {
+        //      0, 0    // texture_coordinate_space 中, 左下角
+        //      1, 0    // 右下角
+        //      1, 1    // 右上角
+        //      0, 1    // 左上角
+        // }
+	}
+}
 bool BootAnimation::android()
 {
-    initTexture(&mAndroid[0], mAssets, "images/android-logo-mask.png");
+    initTexture(&mAndroid[0], mAssets, "images/android-logo-mask.png"); // texture_object_mask
     initTexture(&mAndroid[1], mAssets, "images/android-logo-shine.png");
+    mBMPWidth = mTexWidth = mBMPHeight = mTexHeight = 1;
+    getTexCoordinate();
 
     // clear screen
     glShadeModel(GL_FLAT);
     glDisable(GL_DITHER);
+    glViewport(0, 0, mWidth, mHeight);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    float ratio = mWidth / mHeight;
+    glFrustumf(-ratio, ratio, -1, 1, 0, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glOrthof(0, mWidth, mHeight, 0, 0, 1);
+
+    glEnable(GL_TEXTURE_2D);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisable(GL_SCISSOR_TEST);
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT);
     eglSwapBuffers(mDisplay, mSurface);
 
-    glEnable(GL_TEXTURE_2D);
-    glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-    const GLint xc = (mWidth  - mAndroid[0].w) / 2;
-    const GLint yc = (mHeight - mAndroid[0].h) / 2;
-    const Rect updateRect(xc, yc, xc + mAndroid[0].w, yc + mAndroid[0].h);
-
-    glScissor(updateRect.left, mHeight - updateRect.bottom, updateRect.width(),
-            updateRect.height());
-
     // Blend state
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+    if (mReverseAxis) {
+        exchangeParameters(&mWidth, &mHeight);
+    }
+
+    GLfloat xc = float(mWidth  - mAndroid[0].w) / 2;
+    GLfloat yc = float(mHeight - mAndroid[0].h) / 2;
+
+    if (mReverseAxis) {
+        exchangeParameters(&xc, &yc);
+        exchangeParameters(&mAndroid[0].w, &mAndroid[0].h);
+        exchangeParameters(&mAndroid[1].w, &mAndroid[1].h);
+    }
+
+	const GLfloat mask_vertices[] = {
+			xc, yc, 0,                  // 在 gl_coordinate_space 中, 左下角
+			xc+mAndroid[0].w, yc, 0,    // 右下角
+			xc+mAndroid[0].w, yc+mAndroid[0].h, 0,  // 右上角
+			xc, yc+mAndroid[0].h, 0     // 左上角
+	};
+
+	const GLfloat shine_vertices[] = {
+			xc, yc, 0,
+			xc+mAndroid[1].w, yc, 0,
+			xc+mAndroid[1].w, yc+mAndroid[1].h, 0,
+			xc, yc+mAndroid[1].h, 0
+	};
+
+	const GLushort indices[] = 
+    { 
+        0, 1, 2,    // triangle
+        0, 2, 3 
+    };
+	int nelem = sizeof(indices)/sizeof(indices[0]);
+
+    const Rect updateRect(xc, yc, xc + mAndroid[0].w, yc + mAndroid[0].h);
+    glScissor(updateRect.left, updateRect.top, updateRect.width(),
+            updateRect.height());
 
     const nsecs_t startTime = systemTime();
     do {
         nsecs_t now = systemTime();
         double time = now - startTime;
-        float t = 4.0f * float(time / us2ns(16667)) / mAndroid[1].w;
-        GLint offset = (1 - (t - floorf(t))) * mAndroid[1].w;
-        GLint x = xc - offset;
+        float t = 0;
+        GLint x, y, offset;
+
+        if (mReverseAxis) {
+            t = 4.0f * float(time / us2ns(16667)) / mAndroid[1].h;
+            offset = (1 - (t - floorf(t))) * mAndroid[1].h;
+            y = yc - offset;
+        } else {
+            t = 4.0f * float(time / us2ns(16667)) / mAndroid[1].w;
+            offset = (1 - (t - floorf(t))) * mAndroid[1].w;
+            x = xc - offset;
+        }
+
+        glMatrixMode(GL_TEXTURE);
+        glLoadIdentity();
+
+        glMatrixMode(GL_MODELVIEW); // 之后的变换将作用在 视图模型变换.
 
         glDisable(GL_SCISSOR_TEST);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glEnable(GL_SCISSOR_TEST);
+
+        if (mReverseAxis) {
+            glTranslatef(0, -offset, 0);
+        } else {
+            glTranslatef(-offset, 0, 0);
+        }
+
         glDisable(GL_BLEND);
         glBindTexture(GL_TEXTURE_2D, mAndroid[1].name);
-        glDrawTexiOES(x,                 yc, 0, mAndroid[1].w, mAndroid[1].h);
-        glDrawTexiOES(x + mAndroid[1].w, yc, 0, mAndroid[1].w, mAndroid[1].h);
+        glVertexPointer(3,                  // size
+                        GL_FLOAT,           // type
+                        0,                  // stride
+                        shine_vertices);    // pointer
+        glTexCoordPointer(2,        // size, 二维纹理. 
+                          GL_FLOAT,
+                          0,
+                          mTexCoords);
+        glDrawElements(GL_TRIANGLES, nelem, GL_UNSIGNED_SHORT, indices);
+
+        if (mReverseAxis) {
+            glTranslatef(0, mAndroid[1].h, 0);
+        } else {
+            glTranslatef(mAndroid[1].w, 0, 0);
+        }
+        glDrawElements(GL_TRIANGLES, nelem, GL_UNSIGNED_SHORT, indices);
+
+        /*-----------------------------------*/
+
+        /* 回退之前两次的 位移变换. */
+        if (mReverseAxis) { 
+            glTranslatef(0, offset - mAndroid[1].h, 0);
+        } else {
+            glTranslatef(offset - mAndroid[1].w, 0, 0);
+        }
 
         glEnable(GL_BLEND);
+        /* 将 texture_object_mask 作为 current texture. */
         glBindTexture(GL_TEXTURE_2D, mAndroid[0].name);
-        glDrawTexiOES(xc, yc, 0, mAndroid[0].w, mAndroid[0].h);
+        glVertexPointer(3, GL_FLOAT, 0, mask_vertices);
+        glTexCoordPointer(2, GL_FLOAT, 0, mTexCoords);
+        glDrawElements(GL_TRIANGLES,        // mode
+                       nelem,               // count
+                       GL_UNSIGNED_SHORT,   // type
+                       indices);            // indices 
+
+        /*-----------------------------------*/
 
         EGLBoolean res = eglSwapBuffers(mDisplay, mSurface);
         if (res == EGL_FALSE)
@@ -673,8 +827,13 @@ bool BootAnimation::parseAnimationDesc(Animation& animation)
         char pathType;
         if (sscanf(l, "%d %d %d", &width, &height, &fps) == 3) {
             // ALOGD("> w=%d, h=%d, fps=%d", width, height, fps);
-            animation.width = width;
-            animation.height = height;
+             if (mReverseAxis) {
+                animation.width = height;
+                animation.height = width;
+            } else {
+                animation.width = width;
+                animation.height = height;
+            }
             animation.fps = fps;
         } else if (sscanf(l, " %c %d %d %s #%6s %16s %16s",
                           &pathType, &count, &pause, path, color, clockPos1, clockPos2) >= 4) {
@@ -852,12 +1011,30 @@ bool BootAnimation::movie()
         }
     }
 
+#ifndef CONTINUOUS_SPLASH
+    // clear screen
     // Blend required to draw time on top of animation frames.
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glShadeModel(GL_FLAT);
     glDisable(GL_DITHER);
+    glViewport(0, 0, mWidth, mHeight);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    float ratio = mWidth / mHeight;
+    glFrustumf(-ratio, ratio, -1, 1, 0, 1);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glOrthof(0, mWidth, mHeight, 0, 0, 1);
+
+    glEnable(GL_TEXTURE_2D);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisable(GL_SCISSOR_TEST);
     glDisable(GL_BLEND);
+    glClearColor(0,0,0,1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    eglSwapBuffers(mDisplay, mSurface);
+#endif
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glEnable(GL_TEXTURE_2D);
@@ -901,6 +1078,19 @@ bool BootAnimation::playAnimation(const Animation& animation)
     nsecs_t frameDuration = s2ns(1) / animation.fps;
     const int animationX = (mWidth - animation.width) / 2;
     const int animationY = (mHeight - animation.height) / 2;
+    nsecs_t lastFrame = systemTime();
+
+    float xc = (float) animationX;
+    float yc = (float) animationY;
+    const GLfloat vertices[] = {
+            xc, yc, 0,
+            xc+animation.width, yc, 0,
+            xc+animation.width, yc+animation.height, 0,
+            xc, yc+animation.height, 0
+    };
+
+    const GLushort indices[] = { 0, 1, 2,  0, 2, 3 };
+    int nelem = sizeof(indices)/sizeof(indices[0]);
 
     for (size_t i=0 ; i<pcount ; i++) {
         const Animation::Part& part(animation.parts[i]);
@@ -947,6 +1137,7 @@ bool BootAnimation::playAnimation(const Animation& animation)
                     }
                     int w, h;
                     initTexture(frame.map, &w, &h);
+                    getTexCoordinate();
                 }
 
                 const int xc = animationX + frame.trimX;
@@ -959,18 +1150,25 @@ bool BootAnimation::playAnimation(const Animation& animation)
                     glEnable(GL_SCISSOR_TEST);
                     while (head != tail) {
                         const Rect& r2(*head++);
-                        glScissor(r2.left, mHeight - r2.bottom, r2.width(), r2.height());
+                        //glScissor(r2.left, mHeight - r2.bottom, r2.width(), r2.height());
+                        const Rect& r(*head++);
+                        glScissor(r.left, mHeight - r.bottom,
+                                r.width(), r.height());
                         glClear(GL_COLOR_BUFFER_BIT);
                     }
                     glDisable(GL_SCISSOR_TEST);
                 }
                 // specify the y center as ceiling((mHeight - frame.trimHeight) / 2)
                 // which is equivalent to mHeight - (yc + frame.trimHeight)
-                glDrawTexiOES(xc, mHeight - (yc + frame.trimHeight),
-                              0, frame.trimWidth, frame.trimHeight);
+                //glDrawTexiOES(xc, mHeight - (yc + frame.trimHeight),
+                //              0, frame.trimWidth, frame.trimHeight);
                 if (mClockEnabled && mTimeIsAccurate && validClock(part)) {
                     drawClock(animation.clockFont, part.clockPosX, part.clockPosY);
                 }
+
+                glVertexPointer(3, GL_FLOAT, 0, vertices);
+                glTexCoordPointer(2, GL_FLOAT, 0, mTexCoords);
+                glDrawElements(GL_TRIANGLES, nelem, GL_UNSIGNED_SHORT, indices);
 
                 eglSwapBuffers(mDisplay, mSurface);
 

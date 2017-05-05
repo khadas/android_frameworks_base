@@ -260,6 +260,28 @@ class ActivityStarter {
                     Display.DEFAULT_DISPLAY : mSupervisor.mFocusedStack.mDisplayId) :
                     (container.mActivityDisplay == null ? Display.DEFAULT_DISPLAY :
                             container.mActivityDisplay.mDisplayId)));
+            ComponentName SetupCmpName = intent.getComponent();
+            if (mSupervisor.mRotateOnBoot) {
+                String GMSSetupString = "com.google.android.setupwizard/.SetupWizardActivity";
+                String action=intent.getAction();
+                if (SetupCmpName != null && GMSSetupString.equals(SetupCmpName.flattenToShortString())) {
+                    if (action.equals("android.intent.action.MAIN")) {
+                        Slog.d(TAG,"caijq setupwizard mWindowManager.freezeRotation(1) --- ");
+                        mWindowManager.freezeRotation(1);
+                        mSupervisor.mHandler.sendEmptyMessageDelayed(mSupervisor.FREEZON_RESET_MSG, 1500);
+                    }
+                }
+                if (action != null && action.equals("com.android.setupwizard.EXIT")) {
+                    Slog.d(TAG,"caijq setupwizard mWindowManager.freezeRotation(1) ----");
+                    mWindowManager.freezeRotation(1);
+                    mSupervisor.mHandler.sendEmptyMessageDelayed(mSupervisor.FREEZON_RESET_MSG, 1500);
+                }
+            }
+            
+            //if (!mSupervisor.mLaunchingActivity.isHeld()) {
+            //    Slog.d(TAG,"caijq mLaunchingActivity.acquire");
+            //    mSupervisor.mLaunchingActivity.acquire(10*100l);
+            //}
         }
 
         ActivityRecord sourceRecord = null;

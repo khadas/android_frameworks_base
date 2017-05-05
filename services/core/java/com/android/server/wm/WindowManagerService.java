@@ -5949,7 +5949,10 @@ public class WindowManagerService extends IWindowManager.Stub
             hideBootMessagesLocked();
             // If the screen still doesn't come up after 30 seconds, give
             // up and turn it on.
-            mH.sendEmptyMessageDelayed(H.BOOT_TIMEOUT, 30*1000);
+            if (mRotateOnBoot)
+                mH.sendEmptyMessageDelayed(H.BOOT_TIMEOUT, 5*1000);
+            else
+                mH.sendEmptyMessageDelayed(H.BOOT_TIMEOUT, 30*1000);
         }
 
         mPolicy.systemBooted();
@@ -6071,7 +6074,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
 
 	    //do not exit bootanim,because startHomeActivityLocked will start com.android.settings.FallbackHome,and will show black screen before keygurad
-            /*if (!mBootAnimationStopped) {
+            if (!mBootAnimationStopped) {
                 // Do this one time.
                 Trace.asyncTraceBegin(Trace.TRACE_TAG_WINDOW_MANAGER, "Stop bootanim", 0);
 
@@ -6099,7 +6102,7 @@ public class WindowManagerService extends IWindowManager.Stub
             if (!mForceDisplayEnabled && !checkBootAnimationCompleteLocked()) {
                 if (DEBUG_BOOT) Slog.i(TAG_WM, "performEnableScreen: Waiting for anim complete");
                 return;
-            }*/
+            }
 
             EventLog.writeEvent(EventLogTags.WM_BOOT_ANIMATION_DONE, SystemClock.uptimeMillis());
             Trace.asyncTraceEnd(Trace.TRACE_TAG_WINDOW_MANAGER, "Stop bootanim", 0);
@@ -6963,8 +6966,8 @@ public class WindowManagerService extends IWindowManager.Stub
             mSeamlessRotationCount = 0;
         }
 
-	boolean isDelay = true;//(("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")));
-	if (mRotateOnBoot) {
+        boolean isDelay = true;//(("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false")))) && (!"true".equals(SystemProperties.get("sys.cts_gts.status", "false")));
+        if (mRotateOnBoot) {
             try {
                 IBinder surfaceFlinger = ServiceManager.getService("SurfaceFlinger");
                 if (surfaceFlinger != null) {
@@ -6978,6 +6981,7 @@ public class WindowManagerService extends IWindowManager.Stub
             } catch (RemoteException ex) {
                 Slog.e(TAG, "Boot completed: SurfaceFlinger is dead!");
             }
+            SystemClock.sleep(100);
         }
         // We need to update our screen size information to match the new rotation. If the rotation
         // has actually changed then this method will return true and, according to the comment at
@@ -7224,7 +7228,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 "0".equals(SystemProperties.get(SYSTEM_DEBUGGABLE, "0"));
     }
 
-    private boolean isWindowFakeRotation() {
+    public boolean isWindowFakeRotation() {
         return "true".equals(SystemProperties.get(WINDOW_FAKE_ROTATION, "false"));
     }
 

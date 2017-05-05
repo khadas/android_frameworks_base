@@ -216,6 +216,7 @@ public final class ActivityStackSupervisor implements DisplayListener {
     static final int SHOW_LOCK_TASK_ESCAPE_MESSAGE_MSG = FIRST_SUPERVISOR_STACK_MSG + 13;
     static final int REPORT_MULTI_WINDOW_MODE_CHANGED_MSG = FIRST_SUPERVISOR_STACK_MSG + 14;
     static final int REPORT_PIP_MODE_CHANGED_MSG = FIRST_SUPERVISOR_STACK_MSG + 15;
+    static final int FREEZON_RESET_MSG = FIRST_SUPERVISOR_STACK_MSG + 16;
 
     private static final String VIRTUAL_DISPLAY_BASE_NAME = "ActivityViewVirtualDisplay";
 
@@ -292,6 +293,8 @@ public final class ActivityStackSupervisor implements DisplayListener {
     /** Short cut */
     WindowManagerService mWindowManager;
     DisplayManager mDisplayManager;
+
+    boolean mRotateOnBoot = false;
 
     /** Counter for next free stack ID to use for dynamic activity stacks. */
     private int mNextFreeStackId = FIRST_DYNAMIC_STACK_ID;
@@ -555,6 +558,8 @@ public final class ActivityStackSupervisor implements DisplayListener {
                     getStack(HOME_STACK_ID, CREATE_IF_NEEDED, ON_TOP);
 
             mInputManagerInternal = LocalServices.getService(InputManagerInternal.class);
+
+            mRotateOnBoot = wm.isWindowFakeRotation();
         }
     }
 
@@ -3831,7 +3836,7 @@ public final class ActivityStackSupervisor implements DisplayListener {
         }
     }
 
-    private final class ActivityStackSupervisorHandler extends Handler {
+    public final class ActivityStackSupervisorHandler extends Handler {
 
         public ActivityStackSupervisorHandler(Looper looper) {
             super(looper);
@@ -4019,6 +4024,10 @@ public final class ActivityStackSupervisor implements DisplayListener {
                             handleLaunchTaskBehindCompleteLocked(r);
                         }
                     }
+                } break;
+                case FREEZON_RESET_MSG: {
+                    mWindowManager.thawRotation();
+                    Slog.d(TAG_STACK, "caijq : mWindowManager.thawRotation() ..............." );
                 } break;
 
             }
