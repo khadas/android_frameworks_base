@@ -71,7 +71,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
- import java.io.UnsupportedEncodingException;
+
 /**
  * Internal service helper that no-one should use directly.
  *
@@ -752,18 +752,8 @@ public class MediaScanner implements AutoCloseable {
 
             return result;
         }
-	    private boolean isEncoding(String value,String code) throws UnsupportedEncodingException{
-            return value.equals(new String(value.getBytes(code),code));
-        }
-        public void handleStringTag(String name, String value) {
-	        try{
-                if(isEncoding(value,"ISO-8859-1")){
-                    value = new String(value.getBytes("ISO-8859-1"),"GBK");
-                }
-            }catch(UnsupportedEncodingException e){
-                e.printStackTrace();
-            }
 
+        public void handleStringTag(String name, String value) {
             if (name.equalsIgnoreCase("title") || name.startsWith("title;")) {
                 // Don't trim() here, to preserve the special \001 character
                 // used to force sorting. The media provider will trim() before
