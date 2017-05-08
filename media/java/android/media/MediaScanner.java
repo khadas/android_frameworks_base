@@ -72,7 +72,6 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
  import java.io.UnsupportedEncodingException;
- import java.util.regex.*;
 /**
  * Internal service helper that no-one should use directly.
  *
@@ -756,23 +755,10 @@ public class MediaScanner implements AutoCloseable {
 	    private boolean isEncoding(String value,String code) throws UnsupportedEncodingException{
             return value.equals(new String(value.getBytes(code),code));
         }
-
-        final Pattern utf8Pattern = Pattern.compile(
-                        "^([\\x01-\\x7f]|[\\xc0-\\xdf][\\x80-\\xbf]|[\\xe0-\\xef][\\x80-\\xbf]{2}|[\\xf0-\\xf7][\\x80-\\xbf]{3}|[\\xf8-\\xfb][\\x80-\\xbf]{4}|[\\xfc-\\xfd][\\x80-\\xbf]{5})+$");
         public void handleStringTag(String name, String value) {
-            try
-            {
-                if(isEncoding(value,"ISO-8859-1"))
-                {
-                        Matcher matcher = utf8Pattern.matcher(value);
-                        if (matcher.matches())
-                        {
-                            value=new String(value.getBytes("ISO-8859-1"),"UTF-8");
-                        }
-                        else
-                        {
-                             value=new String(value.getBytes("ISO-8859-1"),"GBK");
-                        }
+	        try{
+                if(isEncoding(value,"ISO-8859-1")){
+                    value = new String(value.getBytes("ISO-8859-1"),"GBK");
                 }
             }catch(UnsupportedEncodingException e){
                 e.printStackTrace();
