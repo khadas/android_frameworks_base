@@ -820,6 +820,7 @@ public final class Bitmap implements Parcelable {
      * @throws IllegalArgumentException if the width or height are <= 0
      */
     public static Bitmap createBitmap(int width, int height, Config config) {
+        Log.e(TAG, "===========the width is" + width +"the height is" + height);
         return createBitmap(width, height, config, true);
     }
 

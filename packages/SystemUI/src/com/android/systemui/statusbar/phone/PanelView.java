@@ -403,7 +403,8 @@ public abstract class PanelView extends FrameLayout {
                                 EventLogConstants.SYSUI_LOCKSCREEN_GESTURE_SWIPE_UP_UNLOCK,
                                 heightDp, velocityDp);
                     }
-	    if("rk312x".equals(SystemProperties.get("ro.board.platform"))){
+	    if("rk312x".equals(SystemProperties.get("ro.board.platform")) || 
+                "rk3126c".equals(SystemProperties.get("ro.board.platform"))){
 	    	if(mExpandedFraction>0f)
 			fling(vel, expand, isFalseTouch(x, y));
 	    }else
@@ -762,7 +763,8 @@ public abstract class PanelView extends FrameLayout {
 
         mExpandedHeight = Math.max(0, mExpandedHeight);
 
-        if("rk312x".equals(SystemProperties.get("ro.board.platform"))){
+        if("rk312x".equals(SystemProperties.get("ro.board.platform")) || 
+                "rk3126c".equals(SystemProperties.get("ro.board.platform"))){
             KeyguardManager mKeyguardManager = (KeyguardManager) getContext().getSystemService(Context.KEYGUARD_SERVICE);
             boolean flag = mKeyguardManager.inKeyguardRestrictedInputMode();
             if(flag){
