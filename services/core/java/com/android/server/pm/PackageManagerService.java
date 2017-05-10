@@ -18037,8 +18037,17 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
     public void setComponentEnabledSetting(ComponentName componentName,
             int newState, int flags, int userId) {
         if (!sUserManager.exists(userId)) return;
-        setEnabledSetting(componentName.getPackageName(),
-                componentName.getClassName(), newState, flags, userId, null);
+        if(("com.google.android.setupwizard".equals(componentName.getPackageName())) && (COMPONENT_ENABLED_STATE_DISABLED == newState)
+               && (("true".equals(SystemProperties.get("ro.config.low_ram", "false")))||("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))))){
+               if("true".equals(SystemProperties.get("cts_gts.status", "false"))){
+                       Log.d("xzj","---com.google.android.setupwizard completed,disabled it---");
+                       SystemProperties.set("cts_gts.status","");
+		}
+                Log.d("xzj","---com.google.android.setupwizard completed,11111");
+        }
+
+	setEnabledSetting(componentName.getPackageName(),
+		componentName.getClassName(), newState, flags, userId, null);
     }
 
     private void setEnabledSetting(final String packageName, String className, int newState,
