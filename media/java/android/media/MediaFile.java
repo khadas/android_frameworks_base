@@ -67,7 +67,7 @@ public class MediaFile {
     public static final int FILE_TYPE_MP2TS   = 28;
     public static final int FILE_TYPE_AVI     = 29;
     public static final int FILE_TYPE_WEBM    = 30;
-    private static final int FIRST_VIDEO_FILE_TYPE = FILE_TYPE_MP4;
+    private static final int FIRST_VIDEO_FILE_TYPE = FILE_TYPE_TRP;
     private static final int LAST_VIDEO_FILE_TYPE = FILE_TYPE_WEBM;
 
     // More video file types
@@ -232,6 +232,8 @@ public class MediaFile {
         addFileType("TRP", FILE_TYPE_TRP, "video/mp2ts");
         addFileType("ASF", FILE_TYPE_ASF, "video/x-ms-asf");
         addFileType("M2TS", FILE_TYPE_MP2TS, "video/mp2ts");
+        addFileType("FLV", FILE_TYPE_FLV, "video/flv");
+        addFileType("DAT", FILE_TYPE_MPG, "video/mpg");
 
         if (isWMVEnabled()) {
             addFileType("WMV", FILE_TYPE_WMV, "video/x-ms-wmv", MtpConstants.FORMAT_WMV);
