@@ -1598,7 +1598,7 @@ public class WallpaperManager {
      */
     public void clear(@SetWallpaperFlags int which) throws IOException {
         if ((which & FLAG_SYSTEM) != 0) {
-            clear();
+            setStream(openDefaultWallpaper(mContext, FLAG_SYSTEM), null, false, which);
         }
         if ((which & FLAG_LOCK) != 0) {
             clearWallpaper(FLAG_LOCK, mContext.getUserId());
