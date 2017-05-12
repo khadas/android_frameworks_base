@@ -1472,6 +1472,33 @@ public class WallpaperManagerService extends IWallpaperManager.Stub {
         }
     }
 
+    private Bitmap getDefaultWallpaper(Context context) {
+            int    defaultResId = com.android.internal.R.drawable.default_wallpaper;
+            InputStream is =     context.getResources().openRawResource(defaultResId);
+            if (is != null) {
+                try {
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    return BitmapFactory.decodeStream(is, null, options);
+                } catch (OutOfMemoryError e) {
+                    Slog.w(TAG, "Can't decode stream", e);
+                } finally {
+                    IoUtils.closeQuietly(is);
+                }
+            }
+            return null;
+        }
+     private void saveFile(Bitmap bm, String path) {
+     try{
+         File myCaptureFile = new File(path);
+         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(myCaptureFile));
+         bm.compress(Bitmap.CompressFormat.JPEG, 90, bos);
+         bos.flush();
+         bos.close();
+        }catch(Exception e) {
+            Slog.w(TAG, "saveFile can't save stream", e);
+        }
+    }
+
     private void migrateSystemToLockWallpaperLocked(int userId) {
         WallpaperData sysWP = mWallpaperMap.get(userId);
         if (sysWP == null) {
@@ -1494,6 +1521,7 @@ public class WallpaperManagerService extends IWallpaperManager.Stub {
         try {
             Os.rename(sysWP.wallpaperFile.getAbsolutePath(), lockWP.wallpaperFile.getAbsolutePath());
             Os.rename(sysWP.cropFile.getAbsolutePath(), lockWP.cropFile.getAbsolutePath());
+
         } catch (ErrnoException e) {
             Slog.e(TAG, "Can't migrate system wallpaper: " + e.getMessage());
             lockWP.wallpaperFile.delete();
@@ -1997,6 +2025,17 @@ public class WallpaperManagerService extends IWallpaperManager.Stub {
             mWallpaperMap.put(userId, wallpaper);
             if (!wallpaper.cropExists()) {
                 generateCrop(wallpaper);
+                //When system first bootup,lock wallpaper share with system,let's save it.
+                File mWallpaperDir = getWallpaperDir(wallpaper.userId);
+                File mWallpaperFile = new File(mWallpaperDir, WALLPAPER);
+                File mWallpaperCropFile = new File(mWallpaperDir, WALLPAPER_CROP);
+                Bitmap bmp=getDefaultWallpaper(mContext);
+                saveFile(bmp,mWallpaperFile.getAbsolutePath());
+                //FileUtils.copyFile(mWallpaperCropFile,mWallpaperCropFile);
+                saveFile(bmp,mWallpaperCropFile.getAbsolutePath());
+                if (DEBUG) {
+                    Slog.d(TAG, "generating from default wallpaper and save it.");
+                }
             }
         }
         boolean success = false;
