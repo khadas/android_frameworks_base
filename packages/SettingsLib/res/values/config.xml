@@ -25,7 +25,10 @@
 
     <!-- Whether to send a custom package name with the PSD.-->
     <bool name="config_sendPackageName">false</bool>
-
+    
+    <!-- Minimum density scale. The actual scale used depends on the device..-->
+    <string name="config_min_density_scale" format="float" type="dimen">0.85</string>
+    
     <!-- Maximum density scale. The actual scale used depends on the device..-->
     <string name="config_max_density_scale" format="float" type="dimen">1.5</string>
 

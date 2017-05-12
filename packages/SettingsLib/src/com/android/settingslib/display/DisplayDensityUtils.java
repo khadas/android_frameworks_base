@@ -43,7 +43,7 @@ public class DisplayDensityUtils {
     private static final float MIN_SCALE_INTERVAL = 0.09f;
 
     /** Minimum density scale. This is available on all devices. */
-    private static final float MIN_SCALE = 0.85f;
+    private static  float MIN_SCALE = 0.85f;
 
     /** Maximum density scale. The actual scale used depends on the device. */
     private static  float MAX_SCALE = 1.50f;
@@ -102,6 +102,7 @@ public class DisplayDensityUtils {
 
         final int currentDensity = metrics.densityDpi;
         int currentDensityIndex = -1;
+        MIN_SCALE = Float.parseFloat(context.getResources().getString(R.string.config_min_density_scale));
         MAX_SCALE = Float.parseFloat(context.getResources().getString(R.string.config_max_density_scale));
 
         // Compute number of "larger" and "smaller" scales for this display.
