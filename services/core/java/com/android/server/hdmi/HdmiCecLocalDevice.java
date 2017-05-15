@@ -45,6 +45,13 @@ abstract class HdmiCecLocalDevice {
 
     private static final int MSG_DISABLE_DEVICE_TIMEOUT = 1;
     private static final int MSG_USER_CONTROL_RELEASE_TIMEOUT = 2;
+    /**for cec version2.0 compatibility--start**/
+    private static final int MSG_GET_CEC_VERSION_TIMEOUT = 3;
+    private int mConnectedDevCecVersion = 0;
+    private static final int CONNECTED_DEV_VERSION_1_4 = 1;
+    private static final int CONNECTED_DEV_VERSION_2_0= 2;
+    /**for cec version2.0 compatibility --end**/
+
     // Timeout in millisecond for device clean up (5s).
     // Normal actions timeout is 2s but some of them would have several sequence of timeout.
     private static final int DEVICE_CLEANUP_TIMEOUT = 5000;
@@ -138,6 +145,9 @@ abstract class HdmiCecLocalDevice {
                     break;
                 case MSG_USER_CONTROL_RELEASE_TIMEOUT:
                     handleUserControlReleased();
+                    break;
+                case MSG_GET_CEC_VERSION_TIMEOUT:
+                    mConnectedDevCecVersion = CONNECTED_DEV_VERSION_1_4;
                     break;
             }
         }
@@ -307,11 +317,13 @@ abstract class HdmiCecLocalDevice {
             case Constants.MESSAGE_RECORD_STATUS:
                 return handleRecordStatus(message);
 
-            //added by wj for cec2.0
+            //added for cec2.0
             case Constants.MESSAGE_GIVE_FEATURES:
                 return handleGiveFeatures(message);
             case Constants.MESSAGE_REPORT_FEATURES:
                 return handleReportFeatures(message);
+            case Constants.MESSAGE_CEC_VERSION:
+                return handleCecVersion(message);
             default:
                 return false;
         }
@@ -537,11 +549,14 @@ abstract class HdmiCecLocalDevice {
         return false;
     }
 
-    //modified by wj for cec2.0
+    //modified by amlogic for cec2.0
     //shall send <Report Power Status> with a broadcase address.
+    //if dev doesn't get the cec version back by sending MESSAGE_CEC_VERSION, it probably be < 2.0
     protected boolean handleGiveDevicePowerStatus(HdmiCecMessage message) {
         int dest = (mService.getCecVersion() < Constants.CEC_VERSION_2_0)
             ? message.getSource() : Constants.ADDR_BROADCAST;
+        if (mConnectedDevCecVersion < CONNECTED_DEV_VERSION_2_0)
+            dest = message.getSource();
         mService.sendCecCommand(HdmiCecMessageBuilder.buildReportPowerStatus(
                 mAddress, dest, mService.getPowerStatus()));
         return true;
@@ -643,6 +658,11 @@ abstract class HdmiCecLocalDevice {
         return true;
     }
 
+    protected boolean handleCecVersion(HdmiCecMessage message) {
+        mConnectedDevCecVersion = CONNECTED_DEV_VERSION_2_0;
+        return true;
+    }
+
     int getType() {
         return mDeviceType;
     }
@@ -657,6 +677,11 @@ abstract class HdmiCecLocalDevice {
     void setDeviceInfo(HdmiDeviceInfo info) {
         assertRunOnServiceThread();
         mDeviceInfo = info;
+
+        /*update the connected cec dev's version*/
+        mHandler.sendMessageDelayed(Message.obtain(mHandler, MSG_GET_CEC_VERSION_TIMEOUT), 2000);
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildGetCecVesion(
+            mAddress, 0));
     }
 
     // Returns true if the logical address is same as the argument.
