@@ -57,7 +57,7 @@ public class HdmiCecMessageBuilder {
                 (byte) (originalOpcode & 0xFF),
                 (byte) (reason & 0xFF),
         };
-        return buildCommand(src, dest, Constants.MESSAGE_FEATURE_ABORT, params);
+       return buildCommand(src, dest, Constants.MESSAGE_FEATURE_ABORT, params);
     }
 
     /**
@@ -337,6 +337,19 @@ public class HdmiCecMessageBuilder {
         return buildCommand(src, dest, Constants.MESSAGE_REPORT_POWER_STATUS, param);
     }
 
+    /**
+     * Build &lt;Get Cec Version &gt; command.
+     *
+     * @param src source address of command
+     * @return newly created {@link HdmiCecMessage}
+     */
+    static HdmiCecMessage buildGetCecVesion(int src, int param) {
+        byte[] params = new byte[] {
+                (byte) (param & 0xFF)
+        };
+        return buildCommand(src, Constants.ADDR_BROADCAST,
+            Constants.MESSAGE_GET_CEC_VERSION, params);
+    }
     /**
      * Build &lt;Report Menu Status&gt; command.
      *
