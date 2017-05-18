@@ -36,7 +36,7 @@ import android.net.LocalSocketAddress;
 import android.net.LocalSocket;
 import android.util.Slog;
 import android.view.Display;
-
+import android.os.SystemProperties;
 /**
  * Activity manager code dealing with processes.
  */
@@ -182,7 +182,7 @@ final class ProcessList {
     // These are the various interesting memory levels that we will give to
     // the OOM killer.  Note that the OOM killer only supports 6 slots, so we
     // can't give it a different value for every possible kind of process.
-    private final int[] mOomAdj = new int[] {
+    private int[] mOomAdj = new int[] {
             FOREGROUND_APP_ADJ, VISIBLE_APP_ADJ, PERCEPTIBLE_APP_ADJ,
             BACKUP_APP_ADJ, CACHED_APP_MIN_ADJ, CACHED_APP_MAX_ADJ
     };
@@ -215,6 +215,12 @@ final class ProcessList {
         minfo.readMemInfo();
         mTotalMemMb = minfo.getTotalSize()/(1024*1024);
         updateOomLevels(0, 0, false);
+        if(SystemProperties.getInt("boot.car.enable",0)==1){
+           mOomAdj=new int[]{
+                   0,1,2,
+                   3,9,16
+           };
+        }
     }
 
     void applyDisplaySize(WindowManagerService wm) {
