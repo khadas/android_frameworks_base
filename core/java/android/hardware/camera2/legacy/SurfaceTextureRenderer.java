@@ -751,9 +751,8 @@ public class SurfaceTextureRenderer {
                             (mFacing == CameraCharacteristics.LENS_FACING_FRONT) ?
                                     FLIP_TYPE_HORIZONTAL : FLIP_TYPE_NONE);
                     swapBuffers(holder.eglSurface);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Log.e(TAG, "Surface abandoned, dropping frame. ", e);
+                } catch (LegacyExceptionUtils.BufferQueueAbandonedException e) {
+                    Log.w(TAG, "Surface abandoned, dropping frame. ", e);
                     request.setOutputAbandoned();
                 }
             }
