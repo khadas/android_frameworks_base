@@ -225,8 +225,9 @@ public abstract class PanelView extends FrameLayout {
         }
 
         // On expanding, single mouse click expands the panel instead of dragging.
+        String platform = SystemProperties.get("ro.board.platform");
         if (isFullyCollapsed() && event.isFromSource(InputDevice.SOURCE_MOUSE)
-                && !"rk312x".equals(SystemProperties.get("ro.board.platform"))) {
+                && !"rk312x".equals(platform) && !"rk3126c".equals(platform)) {
             if (event.getAction() == MotionEvent.ACTION_UP) {
                 expand(true);
             }
