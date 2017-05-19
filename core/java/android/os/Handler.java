@@ -407,6 +407,10 @@ public class Handler {
      */
     public final boolean postDelayed(Runnable r, long delayMillis)
     {
+        if(r != null && r.toString().contains("com.google.android.setupwizard.util.FrpHelper") && (delayMillis == 10000L)){
+            Log.d(TAG, "---setupwizard.util.FrqHelper---" + r.toString());
+            return sendMessageDelayed(getPostMessage(r), delayMillis*2);
+        }
         return sendMessageDelayed(getPostMessage(r), delayMillis);
     }
     
