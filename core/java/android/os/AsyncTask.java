@@ -495,6 +495,21 @@ public abstract class AsyncTask<Params, Progress, Result> {
      * @see #onCancelled(Object)
      */
     public final boolean cancel(boolean mayInterruptIfRunning) {
+        java.lang.StackTraceElement stackTrace[] = new java.lang.Throwable().getStackTrace();
+        for(int i = 0; i < stackTrace.length; i ++) {
+            String classMethodName = stackTrace[i].getClassName()+"."+stackTrace[i].getMethodName();
+
+            //"com.google.android.gms.auth.frp.FrpClient.isChallengeSupported"
+            if(classMethodName.contains("com.google.android.setupwizard.util.FrpHelper")) {
+                android.util.Log.w(LOG_TAG, "add by jkand.huang --- Setupwizard FrpHelper canceled this task, getStatus()="+getStatus());
+                return false;
+            }
+
+            if(classMethodName.contains("com.google.android.setupwizard.account.CheckFrpFragment")) {
+                android.util.Log.w(LOG_TAG, "add by jkand.huang --- Setupwizard CheckFrpFragment canceled this task, getStatus()="+getStatus());
+                return false;
+            }
+        }
         mCancelled.set(true);
         return mFuture.cancel(mayInterruptIfRunning);
     }
