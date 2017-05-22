@@ -100,7 +100,7 @@ PointerController::PointerController(const sp<PointerControllerPolicyInterface>&
     mLocked.presentation = PRESENTATION_POINTER;
     mLocked.presentationChanged = false;
 
-    mLocked.inactivityTimeout = INACTIVITY_TIMEOUT_NORMAL;
+    mLocked.inactivityTimeout = INACTIVITY_TIMEOUT_SHORT;
 
     mLocked.pointerFadeDirection = 0;
     mLocked.pointerX = 0;
