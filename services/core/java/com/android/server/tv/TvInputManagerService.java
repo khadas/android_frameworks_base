@@ -915,6 +915,15 @@ public final class TvInputManagerService extends SystemService {
         public void updateTvInputInfo(TvInputInfo inputInfo, int userId) {
             String inputInfoPackageName = inputInfo.getServiceInfo().packageName;
             String callingPackageName = getCallingPackageName();
+
+            /*so many packages have the same user id,not just the first one*/
+            String[] callingPackageGroup = getCallingPackageNames();
+            if (callingPackageGroup != null)
+            for (int i =0 ;i<callingPackageGroup.length;i++) {
+                if (TextUtils.equals(inputInfoPackageName, callingPackageGroup[i]))
+                    callingPackageName = callingPackageGroup[i];
+            }
+
             if (!TextUtils.equals(inputInfoPackageName, callingPackageName)) {
                 throw new IllegalArgumentException("calling package " + callingPackageName
                         + " is not allowed to change TvInputInfo for " + inputInfoPackageName);
@@ -931,6 +940,16 @@ public final class TvInputManagerService extends SystemService {
             } finally {
                 Binder.restoreCallingIdentity(identity);
             }
+        }
+
+
+         private String[] getCallingPackageNames() {
+            final String[] packages = mContext.getPackageManager().getPackagesForUid(
+                    Binder.getCallingUid());
+            if (packages != null && packages.length > 0) {
+                return packages;
+            }
+            return null;
         }
 
         private String getCallingPackageName() {
