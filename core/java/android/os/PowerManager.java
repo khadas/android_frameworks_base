@@ -438,7 +438,6 @@ public final class PowerManager {
      */
     public static final String REBOOT_REQUESTED_BY_DEVICE_OWNER = "deviceowner";
 
-
     /**
      * @hide
      */
@@ -447,6 +446,23 @@ public final class PowerManager {
      * @hide
      */
     public static final int PERFORMANCE_MODE_PERFORMANCE = 1;
+
+    /**
+     * @hide
+     */
+    public static final int SCREEN_SCENE_OFF = 0;
+    /**
+     * @hide
+     */
+    public static final int SCREEN_SCENE_ON = 1;
+    /**
+     * @hide
+     */
+    public static final int VIDEO_SCENE_NORMAL = 2;
+    /**
+     * @hide
+     */
+    public static final int VIDEO_SCENE_PERF = 3;
 
     /**
      * The 'reason' value used when rebooting in safe mode
@@ -1529,6 +1545,20 @@ public final class PowerManager {
         try {
             if (mService != null) {
                 mService.setPerformanceMode(mode);
+            }
+        } catch (RemoteException e) {
+        }
+    }
+
+    /**
+     * Set the current boost mode for secne.
+     *
+     * @hide
+     */
+    public void powerHintNoPermCheck(int scene) {
+        try {
+            if (mService != null) {
+                mService.powerHintNoPermCheck(scene);
             }
         } catch (RemoteException e) {
         }

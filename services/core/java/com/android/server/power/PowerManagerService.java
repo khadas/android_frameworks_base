@@ -60,6 +60,7 @@ import android.util.PrintWriterPrinter;
 import android.util.Slog;
 import android.util.SparseIntArray;
 import android.util.TimeUtils;
+import android.util.Xml;
 import android.view.Display;
 import android.view.WindowManagerPolicy;
 
@@ -77,12 +78,19 @@ import com.android.server.lights.LightsManager;
 import com.android.server.vr.VrManagerService;
 import libcore.util.Objects;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.Integer;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlSerializer;
 
 import static android.os.PowerManagerInternal.POWER_HINT_INTERACTION;
 import static android.os.PowerManagerInternal.WAKEFULNESS_ASLEEP;
@@ -513,6 +521,11 @@ public final class PowerManagerService extends SystemService
 
     private int mPerformanceMode = PowerManager.PERFORMANCE_MODE_NORMAL;
 
+    private int screenOnDDRMinFreq=2;
+    private int screenOffDDRMinFreq=0;
+    private int videoNormalDDRMinFreq=0;
+    private int videoPerfDDRMinFreq=2;
+
     private native void nativeInit();
 
     private static native void nativeAcquireSuspendBlocker(String name);
@@ -540,6 +553,7 @@ public final class PowerManagerService extends SystemService
 
             mWakefulness = WAKEFULNESS_AWAKE;
 
+            parseConfig();
             nativeInit();
             nativeSetAutoSuspend(false);
             nativeSetInteractive(true);
@@ -577,6 +591,47 @@ public final class PowerManagerService extends SystemService
                     }
                 }
                 mBootCompletedRunnables = null;
+            }
+        }
+    }
+
+    private void parseConfig(){
+        File file=new File("/system/etc/ddr_config.xml");
+        if (!file.exists()) {
+            Slog.e(TAG, " Failed while trying resolve ddr config file, not exists");
+            return;
+        }
+        FileInputStream stream=null;
+        try {
+            stream = new FileInputStream(file);
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setInput(stream, null);
+            int type;
+            do {
+                type = parser.next();
+                if (type == XmlPullParser.START_TAG) {
+                    String tag = parser.getName();
+                    if(tag.equals("screen_on")){
+                        screenOnDDRMinFreq = Integer.parseInt(parser.getAttributeValue(null,"min_freq"));
+                    }else if(tag.equals("screen_off")){
+                        screenOffDDRMinFreq = Integer.parseInt(parser.getAttributeValue(null,"min_freq"));
+                    }else if(tag.equals("video_normal")){
+                        videoNormalDDRMinFreq = Integer.parseInt(parser.getAttributeValue(null,"min_freq"));
+                    }else if(tag.equals("video_perf")){
+                        videoPerfDDRMinFreq = Integer.parseInt(parser.getAttributeValue(null,"min_freq"));
+                    }
+                }
+            } while(type != XmlPullParser.END_DOCUMENT);
+        } catch (Exception e) {
+            Slog.i(TAG, "failed parsing ddr_config.xml");
+            e.printStackTrace();
+        } finally {
+            if(stream!=null){
+                try{
+                    stream.close();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -3400,12 +3455,25 @@ public final class PowerManagerService extends SystemService
         }
 
         @Override // Binder call
-        public void powerHintNoPermCheck(int hintId, int data) {
+        public void powerHintNoPermCheck(int scene) {
             if (!mSystemReady) {
                 // Service not ready yet, so who the heck cares about power hints, bah.
                 return;
             }
-            powerHintInternal(hintId, data);
+            switch(scene) {
+            case PowerManager.SCREEN_SCENE_OFF:
+                powerHintInternal(PowerManagerInternal.POWER_HINT_RKBOOST, (screenOffDDRMinFreq&0xF) | 0xF0000);
+                break;
+            case PowerManager.SCREEN_SCENE_ON:
+                powerHintInternal(PowerManagerInternal.POWER_HINT_RKBOOST, (screenOnDDRMinFreq&0xF) | 0xF0000);
+                break;
+            case PowerManager.VIDEO_SCENE_NORMAL:
+                powerHintInternal(PowerManagerInternal.POWER_HINT_RKBOOST, (videoNormalDDRMinFreq&0xF) | 0xF0000);
+                break;
+            case PowerManager.VIDEO_SCENE_PERF:
+                powerHintInternal(PowerManagerInternal.POWER_HINT_RKBOOST, (videoPerfDDRMinFreq&0xF) | 0xF0000);
+                break;
+            }
         }
 
         @Override // Binder call
@@ -3648,6 +3716,7 @@ public final class PowerManagerService extends SystemService
             }
         }
 
+        @Override // Binder call
         public void setPerformanceMode(int mode) {
             if (mPerformanceMode != mode) {
                 mPerformanceMode = mode;

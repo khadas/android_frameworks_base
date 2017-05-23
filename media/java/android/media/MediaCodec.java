@@ -29,7 +29,7 @@ import android.os.Handler;
 import android.os.IPowerManager;
 import android.os.Looper;
 import android.os.Message;
-import android.os.PowerManagerInternal;
+import android.os.PowerManager;
 import android.os.ServiceManager;
 import android.os.SystemProperties;
 import android.view.Surface;
@@ -2004,9 +2004,9 @@ final public class MediaCodec {
                     videoWidth = getInputFormat().getInteger(MediaFormat.KEY_WIDTH);
                     videoHeight = getInputFormat().getInteger(MediaFormat.KEY_HEIGHT);
                     if(videoWidth > 2048 || videoHeight > 2048)
-                        mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40003);
+                        mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_PERF);
                     else
-                        mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
+                        mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_NORMAL);
                 }catch (Exception e){
                     Log.i("MediaCodec",e.getMessage());
                 }
@@ -2031,7 +2031,7 @@ final public class MediaCodec {
         if(SystemProperties.get("ro.board.platform").equals("rk3399")){
             if(getCodecInfo().isVideo()){
                 try{
-                    mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
+                    mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_NORMAL);
                 }catch (Exception e){
                     Log.i("MediaCodec",e.getMessage());
                 }

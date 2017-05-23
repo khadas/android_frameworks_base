@@ -68,10 +68,10 @@ public abstract class PowerManagerInternal {
      * These must be kept in sync with the values in hardware/libhardware/include/hardware/power.h
      */
     public static final int POWER_HINT_INTERACTION = 2;
-    public static final int POWER_HINT_VIDEO_DECODE = 4;
     public static final int POWER_HINT_SUSTAINED_PERFORMANCE_MODE = 6;
     public static final int POWER_HINT_LAUNCH = 8;
     public static final int POWER_HINT_PERFORMANCE = 10;
+    public static final int POWER_HINT_RKBOOST = 11;
 
     public static String wakefulnessToString(int wakefulness) {
         switch (wakefulness) {

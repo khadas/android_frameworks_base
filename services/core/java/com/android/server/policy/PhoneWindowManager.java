@@ -6643,6 +6643,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (mKeyguardDelegate != null) {
                 mKeyguardDelegate.onScreenTurnedOff();
             }
+
+            if(SystemProperties.get("ro.board.platform").equals("rk3399")){
+                mPowerManager.powerHintNoPermCheck(PowerManager.SCREEN_SCENE_OFF);
+            }
         }
         reportScreenStateToVrManager(false);
     }
@@ -6668,6 +6672,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (DEBUG_WAKEUP) Slog.d(TAG,
                         "null mKeyguardDelegate: setting mKeyguardDrawComplete.");
                 finishKeyguardDrawn();
+            }
+
+            if(SystemProperties.get("ro.board.platform").equals("rk3399")){
+                mPowerManager.powerHintNoPermCheck(PowerManager.SCREEN_SCENE_ON);
             }
         }
     }
