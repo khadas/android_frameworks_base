@@ -333,11 +333,13 @@ public class WallpaperManager {
         }
 
         void forgetLoadedWallpaper() {
+         if(mCachedWallpaper!=null || mDefaultWallpaper!=null){
             synchronized (this) {
                 mCachedWallpaper = null;
                 mCachedWallpaperUserId = 0;
                 mDefaultWallpaper = null;
             }
+          }
         }
 
         private Bitmap getCurrentWallpaperLocked(int userId) {
