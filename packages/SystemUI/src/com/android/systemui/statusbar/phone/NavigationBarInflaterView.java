@@ -29,7 +29,6 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Space;
-
 import com.android.systemui.R;
 import com.android.systemui.statusbar.policy.KeyButtonView;
 import com.android.systemui.tuner.TunerService;
@@ -77,7 +76,9 @@ public class NavigationBarInflaterView extends FrameLayout implements TunerServi
     private View mLastLandscape;
 
     private boolean mAlternativeOrder;
-
+    private boolean mIsReverseInflateRot0;
+    private boolean mIsReverseInflateRot90;
+    private int mCurrentOrientation = Configuration.ORIENTATION_PORTRAIT;
     public NavigationBarInflaterView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mDensity = context.getResources().getConfiguration().densityDpi;
@@ -99,7 +100,8 @@ public class NavigationBarInflaterView extends FrameLayout implements TunerServi
     @Override
     protected void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        if (mDensity != newConfig.densityDpi) {
+        mCurrentOrientation = newConfig.orientation;
+        if(mDensity != newConfig.densityDpi || mDensity < 600){
             mDensity = newConfig.densityDpi;
             createInflaters();
             inflateChildren();
@@ -216,10 +218,18 @@ public class NavigationBarInflaterView extends FrameLayout implements TunerServi
         // Inflate these in start to end order or accessibility traversal will be messed up.
         inflateButtons(start, (ViewGroup) mRot0.findViewById(R.id.ends_group), isRot0Landscape);
         inflateButtons(start, (ViewGroup) mRot90.findViewById(R.id.ends_group), !isRot0Landscape);
-
-        inflateButtons(center, (ViewGroup) mRot0.findViewById(R.id.center_group), isRot0Landscape);
-        inflateButtons(center, (ViewGroup) mRot90.findViewById(R.id.center_group), !isRot0Landscape);
-
+        LinearLayout centerLayout = (LinearLayout)mRot0.findViewById(R.id.center_group);
+        mIsReverseInflateRot0 = !isRot0Landscape && !isSw600Dp() && mCurrentOrientation == Configuration.ORIENTATION_LANDSCAPE;
+        if(mIsReverseInflateRot0)
+            centerLayout.setOrientation(LinearLayout.VERTICAL);
+        inflateButtons(center, centerLayout, isRot0Landscape);
+        mIsReverseInflateRot0 = false;
+        centerLayout = (LinearLayout)mRot90.findViewById(R.id.center_group);
+        mIsReverseInflateRot90 = !isRot0Landscape && !isSw600Dp() && mCurrentOrientation == Configuration.ORIENTATION_PORTRAIT;
+        if(mIsReverseInflateRot90)
+            centerLayout.setOrientation(LinearLayout.HORIZONTAL);
+        inflateButtons(center, centerLayout, !isRot0Landscape);
+        mIsReverseInflateRot90 = false;
         addGravitySpacer((LinearLayout) mRot0.findViewById(R.id.ends_group));
         addGravitySpacer((LinearLayout) mRot90.findViewById(R.id.ends_group));
 
@@ -303,8 +313,13 @@ public class NavigationBarInflaterView extends FrameLayout implements TunerServi
             ViewGroup.LayoutParams params = v.getLayoutParams();
             params.width = (int) (params.width * size);
         }
+        if(mIsReverseInflateRot0 || mIsReverseInflateRot90){
+            setupVerticalButton(v);
+        }
+
         parent.addView(v);
         addToDispatchers(v);
+
         View lastView = landscape ? mLastLandscape : mLastPortrait;
         if (lastView != null) {
             v.setAccessibilityTraversalAfter(lastView.getId());
@@ -368,7 +383,7 @@ public class NavigationBarInflaterView extends FrameLayout implements TunerServi
 
     private boolean isSw600Dp() {
         Configuration configuration = mContext.getResources().getConfiguration();
-        return (configuration.smallestScreenWidthDp >= 600);
+        return configuration.smallestScreenWidthDp >= 600;
     }
 
     /**
@@ -381,6 +396,15 @@ public class NavigationBarInflaterView extends FrameLayout implements TunerServi
                 R.dimen.navigation_key_width_sw600dp_land);
         int padding = res.getDimensionPixelOffset(R.dimen.navigation_key_padding_sw600dp_land);
         v.setPadding(padding, v.getPaddingTop(), padding, v.getPaddingBottom());
+    }
+
+     private void setupVerticalButton(View v) {
+        Resources res = mContext.getResources();
+        v.getLayoutParams().height = res.getDimensionPixelOffset(
+                R.dimen.navigation_key_width);
+        v.getLayoutParams().width = ViewGroup.LayoutParams.MATCH_PARENT;
+        int padding = res.getDimensionPixelOffset(R.dimen.navigation_key_padding);
+        v.setPadding(0, padding, 0, padding);
     }
 
     private void clearViews() {

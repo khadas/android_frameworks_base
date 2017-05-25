@@ -1478,9 +1478,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             volumeAddButton.setVisibility(View.GONE);
             volumeSubButton.setVisibility(View.GONE);
         }
-        if ((mContext.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
-                && ((mContext.getResources().getConfiguration().screenHeightDp < 600)
-                || (mContext.getResources().getConfiguration().screenWidthDp < 600))) {
+        if (mContext.getResources().getConfiguration().smallestScreenWidthDp < 400) {
             volumeAddButton.setVisibility(View.GONE);
             volumeSubButton.setVisibility(View.GONE);
         }
