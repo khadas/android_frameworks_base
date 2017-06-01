@@ -124,6 +124,11 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                 // Display properties changed.
                 sendDisplayDeviceEventLocked(device, DISPLAY_DEVICE_EVENT_CHANGED);
             }
+            // Update color modes && hdr capabilities.
+            if (device != null) {
+                device.updateColorModesLocked(colorModes, activeColorMode);
+                device.updateHdrCapabilities(displayToken);
+            }
         } else {
             // The display is no longer available. Ignore the attempt to add it.
             // If it was connected but has already been disconnected, we'll get a
@@ -187,11 +192,16 @@ final class LocalDisplayAdapter extends DisplayAdapter {
             } else {
                 mBacklight = null;
             }
-            mHdrCapabilities = SurfaceControl.getHdrCapabilities(displayToken);
+            updateHdrCapabilities(displayToken);
         }
 
         @Override
         public boolean hasStableUniqueId() {
+            return true;
+        }
+
+        public boolean updateHdrCapabilities(IBinder displayToken) {
+            mHdrCapabilities = SurfaceControl.getHdrCapabilities(displayToken);
             return true;
         }
 
@@ -612,6 +622,12 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                     pw.print(", ");
                 }
                 pw.print(mSupportedColorModes.get(i));
+            }
+            pw.println("]");
+            int [] hdrtypes = mHdrCapabilities.getSupportedHdrTypes();
+            pw.print("mHdrCapabilities=[  ");
+            for (int type : hdrtypes) {
+                pw.print(type+"  ");
             }
             pw.println("]");
         }
