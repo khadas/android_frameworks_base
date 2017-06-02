@@ -383,7 +383,8 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
         super.disableDevice(initiatedByCec, callback);
 
         assertRunOnServiceThread();
-        if (!initiatedByCec && mIsActiveSource) {
+        //do not send inactive msg when disable cec device
+        if (!initiatedByCec && mIsActiveSource && !SystemProperties.getBoolean("sys.ignore.inativecec", false)) {
             mService.sendCecCommand(HdmiCecMessageBuilder.buildInactiveSource(
                     mAddress, mService.getPhysicalAddress()));
         }
