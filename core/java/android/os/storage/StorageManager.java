@@ -59,6 +59,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import android.os.SystemProperties;
 
 /**
  * StorageManager is the interface to the systems storage service. The storage
@@ -140,6 +141,12 @@ public class StorageManager {
             "/sys/block/mmcblk0/size",
             "/sys/block/sda/size"
     };
+    private static final String[] INTERNAL_STORAGE_SIZE_PATHS_ALTERNATIVE = {
+            "/sys/block/mmcblk1/size",
+            "/sys/block/sda/size"
+    };
+    private static String platform=SystemProperties.get("ro.board.platform", "unknow");
+    private static boolean alternative_path=platform.equals("rk3368")||platform.equals("rk3399");
     private static final int INTERNAL_STORAGE_SECTOR_SIZE = 512;
 
     private final Context mContext;
@@ -931,10 +938,20 @@ public class StorageManager {
 
     /** {@hide} */
     public long getPrimaryStorageSize() {
-        for (String path : INTERNAL_STORAGE_SIZE_PATHS) {
-            final long numberBlocks = readLong(path);
-            if (numberBlocks > 0) {
-                return numberBlocks * INTERNAL_STORAGE_SECTOR_SIZE;
+        if(alternative_path){
+            for (String path : INTERNAL_STORAGE_SIZE_PATHS_ALTERNATIVE) {
+                final long numberBlocks = readLong(path);
+                if (numberBlocks > 0) {
+                    return numberBlocks * INTERNAL_STORAGE_SECTOR_SIZE;
+                }
+            }
+        }
+        else{
+            for (String path : INTERNAL_STORAGE_SIZE_PATHS) {
+                final long numberBlocks = readLong(path);
+                if (numberBlocks > 0) {
+                    return numberBlocks * INTERNAL_STORAGE_SECTOR_SIZE;
+                }
             }
         }
         return 0;
