@@ -71,6 +71,9 @@ public class Watchdog extends Thread {
         "/system/bin/mediaserver",
         "/system/bin/sdcard",
         "/system/bin/surfaceflinger",
+        "/system/bin/tvserver",
+        "/system/bin/systemcontrol",
+        "/system/bin/hdmi_cec",
         "media.codec",     // system/bin/mediacodec
         "media.extractor", // system/bin/mediaextractor
         "com.android.bluetooth",  // Bluetooth service
