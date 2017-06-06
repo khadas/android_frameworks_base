@@ -97,6 +97,20 @@ static const std::vector<std::string> PLAY_SOUND_BOOTREASON_BLACKLIST {
   "Watchdog",
 };
 
+// avoid useless sleep during animation fps. which may
+// cause addtional time for booting.
+static void msleepAndCheckExit(int msec) {
+    char value[PROPERTY_VALUE_MAX];
+    while (msec-- > 0) {
+        property_get(EXIT_PROP_NAME, value, "0");
+        int exitnow = atoi(value);
+        if (exitnow) {
+            return;
+        }
+        usleep(1000);
+    }
+}
+
 // ---------------------------------------------------------------------------
 
 BootAnimation::BootAnimation() : Thread(false), mClockEnabled(true), mTimeIsAccurate(false),
@@ -407,7 +421,7 @@ bool BootAnimation::android()
         // 12fps: don't animate too fast to preserve CPU
         const nsecs_t sleepTime = 83333 - ns2us(systemTime() - now);
         if (sleepTime > 0)
-            usleep(sleepTime);
+            msleepAndCheckExit(sleepTime/1000);
 
         checkExit();
     } while (!exitPending());
@@ -950,6 +964,20 @@ bool BootAnimation::playAnimation(const Animation& animation)
                 //ALOGD("%lld, %lld", ns2ms(now - lastFrame), ns2ms(delay));
                 lastFrame = now;
 
+#if 1
+                // save bootup time!
+                nsecs_t hundredUsDelay = delay/100000;
+                while (hundredUsDelay-- > 0) {
+                    char value[PROPERTY_VALUE_MAX];
+                    property_get(EXIT_PROP_NAME, value, "0");
+                    int exitnow = atoi(value);
+                    if (exitnow) {
+                        ALOGD("requested exit, quick exit now! %ld", hundredUsDelay);
+                        break;
+                    }
+                    usleep(100);
+                }
+#else
                 if (delay > 0) {
                     struct timespec spec;
                     spec.tv_sec  = (now + delay) / 1000000000;
@@ -959,11 +987,12 @@ bool BootAnimation::playAnimation(const Animation& animation)
                         err = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &spec, NULL);
                     } while (err<0 && errno == EINTR);
                 }
-
+#endif
                 checkExit();
             }
 
-            usleep(part.pause * ns2us(frameDuration));
+            //usleep(part.pause * ns2us(frameDuration));
+            msleepAndCheckExit(part.pause * ns2us(frameDuration)/1000);
 
             // For infinite parts, we've now played them at least once, so perhaps exit
             if(exitPending() && !part.count)

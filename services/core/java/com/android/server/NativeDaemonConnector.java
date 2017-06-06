@@ -136,7 +136,12 @@ final class NativeDaemonConnector implements Runnable, Handler.Callback, Watchdo
                 listenToSocket();
             } catch (Exception e) {
                 loge("Error in NativeDaemonConnector: " + e);
-                SystemClock.sleep(5000);
+                if (e instanceof IOException) {
+                    // socket may not ready, check frequently for better performance
+                    SystemClock.sleep(100);
+                } else {
+                    SystemClock.sleep(5000);
+                }
             }
         }
     }
