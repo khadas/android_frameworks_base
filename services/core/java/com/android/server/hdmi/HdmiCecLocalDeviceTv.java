@@ -1510,6 +1510,9 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         Slog.d(TAG, "info: " + info);
         if (old == null) {
             invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
+            mService.sendCecCommand(HdmiCecMessageBuilder.buildGiveDevicePowerStatus(mAddress, info.getLogicalAddress()));
+            /*mService.sendCecCommand(HdmiCecMessageBuilder.buildUserControlPressed(mAddress,
+                        info.getLogicalAddress(), HdmiCecKeycode.CEC_KEYCODE_POWER));*/
         } else if (!old.equals(info)) {
             if (old.getPhysicalAddress() == info.getPhysicalAddress()) {
                 invokeDeviceEventListener(info, HdmiControlManager.DEVICE_EVENT_UPDATE_DEVICE);
@@ -1741,11 +1744,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             return;
         }
 
-        //comment out the code by wj, send standy from uboot
-        /*if (!initiatedByCec && mAutoDeviceOff) {
+        if (!initiatedByCec && mAutoDeviceOff) {
             mService.sendCecCommand(HdmiCecMessageBuilder.buildStandby(
                     mAddress, Constants.ADDR_BROADCAST));
-        }*/
+        }
     }
 
     boolean isProhibitMode() {
