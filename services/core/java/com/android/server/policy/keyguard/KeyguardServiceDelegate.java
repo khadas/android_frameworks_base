@@ -99,7 +99,8 @@ public class KeyguardServiceDelegate {
             if (DEBUG) Log.v(TAG, "**** SHOWN CALLED ****");
 	    //keyguard drawn complete ,can exit bootanim
 	    if((!"vr".equals(android.os.SystemProperties.get("ro.target.product")))&&
-	       (!"box".equals(android.os.SystemProperties.get("ro.target.product")))){//platforms has keyguard service
+	       (!"box".equals(android.os.SystemProperties.get("ro.target.product")))&&
+	       (!"1".equals(android.os.SystemProperties.get("service.bootanim.exit")))){//platforms has keyguard service
 		Log.d("xzj","----keygurad drawn done,if keygurad is null?----");
 	    	if (mLockPatternUtils.isLockScreenDisabled(0)){
 			Log.d("xzj","----keygurad drawn done,not keyguradk,ummmmmm----");
