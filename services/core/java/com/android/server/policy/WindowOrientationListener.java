@@ -404,7 +404,7 @@ public abstract class WindowOrientationListener {
         // large or we can lose responsiveness.  Likewise we don't want to make it too
         // small or we do a poor job suppressing acceleration spikes.
         // Empirically, 100ms seems to be too small and 500ms is too large.
-        private static final float FILTER_TIME_CONSTANT_MS = 200.0f;
+        private static final float FILTER_TIME_CONSTANT_MS = 100.0f;
 
         /* State for orientation detection. */
 
@@ -449,7 +449,7 @@ public abstract class WindowOrientationListener {
         // adjacent orientation.  No orientation proposal is made when the orientation
         // angle is within the gap between the current orientation and the adjacent
         // orientation.
-        private static final int ADJACENT_ORIENTATION_ANGLE_GAP = 45;
+        private static final int ADJACENT_ORIENTATION_ANGLE_GAP = 0;
 
         // The tilt angle range in degrees for each orientation.
         // Beyond these tilt angles, we don't even consider transitioning into the
@@ -691,7 +691,42 @@ public abstract class WindowOrientationListener {
                             }
 
                             // Find the nearest rotation.
-                            int nearestRotation = (orientationAngle + 45) / 90;
+                            //int nearestRotation = (orientationAngle + 45) / 90;
+                            int nearestRotation = 0;
+                            switch (mCurrentRotation)
+                            {
+                                 // original is vertical, rotate 45 to be horizontal
+                                 case 0: 
+                                 case 2:
+                                 {
+                                          if( 45 <= orientationAngle && orientationAngle < 135)
+                                               nearestRotation = 1;
+                                          else if( 135 <= orientationAngle && orientationAngle < 225)
+                                               nearestRotation = 2;
+                                          else if( 225 <= orientationAngle && orientationAngle < 315)
+                                               nearestRotation = 3;
+                                          else
+                                               nearestRotation = 0;
+                                          break;
+                                 }
+                                 // original is horizontal, rotate 30 to be vertical
+                                 case 1: 
+                                 case 3:
+                                 {
+                                          if( 30 <= orientationAngle && orientationAngle < 135)
+                                               nearestRotation = 1;
+                                          else if( 135 <= orientationAngle && orientationAngle< 225)
+                                               nearestRotation = 2;
+                                          else if( 225 <= orientationAngle && orientationAngle< 330)
+                                               nearestRotation = 3;
+                                          else
+                                               nearestRotation = 0;
+                                          break;
+                                  }
+                                  default:
+                                          break;
+                             }
+                             // modify by chendongqi for LG Performance--end @}
                             if (nearestRotation == 4) {
                                 nearestRotation = 0;
                             }
@@ -808,7 +843,7 @@ public abstract class WindowOrientationListener {
          * for hysteresis.
          */
         private boolean isOrientationAngleAcceptableLocked(int rotation, int orientationAngle) {
-            // If there is no current rotation, then there is no gap.
+            /*// If there is no current rotation, then there is no gap.
             // The gap is used only to introduce hysteresis among advertised orientation
             // changes to avoid flapping.
             final int currentRotation = mCurrentRotation;
@@ -850,7 +885,7 @@ public abstract class WindowOrientationListener {
                         }
                     }
                 }
-            }
+            }*/
             return true;
         }
 
@@ -860,6 +895,7 @@ public abstract class WindowOrientationListener {
          */
         private boolean isPredictedRotationAcceptableLocked(long now) {
             // The predicted rotation must have settled long enough.
+            /*
             if (now < mPredictedRotationTimestampNanos + PROPOSAL_SETTLE_TIME_NANOS) {
                 return false;
             }
@@ -885,7 +921,7 @@ public abstract class WindowOrientationListener {
             if (mTouched || now < mTouchEndedTimestampNanos
                     + PROPOSAL_MIN_TIME_SINCE_TOUCH_END_NANOS) {
                 return false;
-            }
+            }*/
 
             // Looks good!
             return true;

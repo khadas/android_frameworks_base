@@ -525,6 +525,9 @@ class ScreenRotationAnimation {
             mFinishExitAnimation.scaleCurrentDuration(animationScale);
             mFinishEnterAnimation.restrictDuration(maxAnimationDuration);
             mFinishEnterAnimation.scaleCurrentDuration(animationScale);
+            Slog.d("sensor","rotate animation -----------------");
+            mRotateExitAnimation.setDuration(mRotateExitAnimation.getDuration()*3/5);
+            mRotateEnterAnimation.setDuration(mRotateEnterAnimation.getDuration()*3/5);
             if (USE_CUSTOM_BLACK_FRAME) {
                 mStartFrameAnimation.restrictDuration(maxAnimationDuration);
                 mStartFrameAnimation.scaleCurrentDuration(animationScale);
