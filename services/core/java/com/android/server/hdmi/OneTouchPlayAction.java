@@ -17,6 +17,7 @@ package com.android.server.hdmi;
 
 import android.hardware.hdmi.HdmiControlManager;
 import android.hardware.hdmi.IHdmiControlCallback;
+import com.android.server.hdmi.HdmiControlService.SendMessageCallback;
 import android.hardware.hdmi.HdmiPlaybackClient.OneTouchPlayCallback;
 import android.os.RemoteException;
 import android.util.Slog;
@@ -32,7 +33,7 @@ import java.util.List;
  * Package-private, accessed by {@link HdmiControlService} only.
  */
 final class OneTouchPlayAction extends HdmiCecFeatureAction {
-    private static final String TAG = "OneTouchPlayAction";
+    private static final String TAG = "CecOneTouchPlayAction";
 
     // State in which the action is waiting for <Report Power Status>. In normal situation
     // source device can simply send <Text|Image View On> and <Active Source> in succession
@@ -53,6 +54,20 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
     private final List<IHdmiControlCallback> mCallbacks = new ArrayList<>();
 
     private int mPowerStatusCounter = 0;
+    private boolean mTextViewOn;
+    private int mTargetPowerStatus;
+
+    private SendMessageCallback mTextViewOnCallback = new SendMessageCallback() {
+        @Override
+        public void onSendCompleted(int error) {
+            Slog.d(TAG, "TextViewOn Result:" + error);
+            if (error != Constants.SEND_RESULT_SUCCESS) {
+                mTextViewOn = false;
+            } else {
+                mTextViewOn = true;
+            }
+        }
+    };
 
     // Factory method. Ensures arguments are valid.
     static OneTouchPlayAction create(HdmiCecLocalDevicePlayback source,
@@ -74,12 +89,18 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
-        sendCommand(HdmiCecMessageBuilder.buildTextViewOn(getSourceAddress(), mTargetAddress));
+        mTextViewOn = false;
+        mTargetPowerStatus = -1;
+        wakeupTaget();
         broadcastActiveSource();
         queryDevicePowerStatus();
         mState = STATE_WAITING_FOR_REPORT_POWER_STATUS;
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
         return true;
+    }
+
+    private void wakeupTaget() {
+        sendCommand(HdmiCecMessageBuilder.buildTextViewOn(getSourceAddress(), mTargetAddress), mTextViewOnCallback);
     }
 
     private void broadcastActiveSource() {
@@ -104,7 +125,8 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
             if (status == HdmiControlManager.POWER_STATUS_ON) {
                 broadcastActiveSource();
                 invokeCallback(HdmiControlManager.RESULT_SUCCESS);
-                finish();
+                mTargetPowerStatus = 1;
+                finish(true);
             }
             return true;
         }
@@ -117,13 +139,17 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
             return;
         }
         if (state == STATE_WAITING_FOR_REPORT_POWER_STATUS) {
-            if (mPowerStatusCounter++ < LOOP_COUNTER_MAX) {
+            /* if send fail, try to send wake up message again */
+            if (!mTextViewOn) {
+                wakeupTaget();
+            }
+            if (mPowerStatusCounter++ < LOOP_COUNTER_MAX && mTextViewOn) {
                 queryDevicePowerStatus();
                 addTimer(mState, HdmiConfig.TIMEOUT_MS);
             } else {
                 // Couldn't wake up the TV for whatever reason. Report failure.
                 invokeCallback(HdmiControlManager.RESULT_TIMEOUT);
-                finish();
+                finish(true);
             }
         }
     }
@@ -140,5 +166,15 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
         } catch (RemoteException e) {
             Slog.e(TAG, "Callback failed:" + e);
         }
+    }
+
+    @Override
+    void finish(boolean removeSelf) {
+        /* should invoke call back before finished when timeout */
+        if (mTargetPowerStatus < 0 || !mTextViewOn) {
+            Slog.d(TAG, "timeout, mTargetPowerStatus:" + mTargetPowerStatus + ", mTextViewOn:" + mTextViewOn);
+            invokeCallback(HdmiControlManager.RESULT_TIMEOUT);
+        }
+        super.finish(removeSelf);
     }
 }
