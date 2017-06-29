@@ -326,7 +326,7 @@ public class IpManager extends StateMachine {
 
         /* package */ boolean mEnableIPv4 = true;
         /* package */ boolean mEnableIPv6 = true;
-        /* package */ boolean mUsingIpReachabilityMonitor = true;
+        /* package */ boolean mUsingIpReachabilityMonitor = false;
         /* package */ int mRequestedPreDhcpActionMs;
         /* package */ StaticIpConfiguration mStaticIpConfig;
         /* package */ ApfCapabilities mApfCapabilities;
@@ -1041,7 +1041,7 @@ public class IpManager extends StateMachine {
     }
 
     private boolean startIpReachabilityMonitor() {
-        try {
+    /*    try {
             mIpReachabilityMonitor = new IpReachabilityMonitor(
                     mContext,
                     mInterfaceName,
@@ -1060,8 +1060,10 @@ public class IpManager extends StateMachine {
             logError("IpReachabilityMonitor failure: %s", iae);
             mIpReachabilityMonitor = null;
         }
-
-        return (mIpReachabilityMonitor != null);
+    */
+	mIpReachabilityMonitor = null;
+	Log.e(mTag, "Not using IpReachabilityMonitor..");
+	return (mIpReachabilityMonitor != null);
     }
 
     private void stopAllIP() {
