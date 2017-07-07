@@ -103,9 +103,10 @@ import com.android.server.usage.UsageStatsService;
 import com.android.server.vr.VrManagerService;
 import com.android.server.webkit.WebViewUpdateService;
 import com.android.server.wm.WindowManagerService;
+import com.android.server.RkDisplayDeviceManagementService;
+
 
 import dalvik.system.VMRuntime;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
@@ -1206,7 +1207,15 @@ public final class SystemServer {
                     }
                 }
                 // $_rbox_$_modify_$ end
-
+                // $_rbox_$_modify_$_aisx: added 2017-06-27, add RkDisplayDeviceManagementService
+                try {
+                    ServiceManager.addService(
+                        "drm_device_management",
+                        new RkDisplayDeviceManagementService(context));
+                } catch (Throwable e) {
+                    Slog.e(TAG, "Failure starting kDisplayDeviceManagement Service", e);
+                }
+                // $_rbox_$_modify_$ end
                 if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
                     mSystemServiceManager.startService(FingerprintService.class);
                 }
