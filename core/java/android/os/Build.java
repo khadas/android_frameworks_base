@@ -784,6 +784,7 @@ public class Build {
     public static boolean isBuildConsistent() {
         // Don't care on eng builds.  Incremental build may trigger false negative.
         if ("eng".equals(TYPE)) return true;
+        if ("userdebug".equals(TYPE)) return true;
 
         final String system = SystemProperties.get("ro.build.fingerprint");
         final String vendor = SystemProperties.get("ro.vendor.build.fingerprint");
