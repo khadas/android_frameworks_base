@@ -1573,6 +1573,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             Entry oldEntry) {
         if (DEBUG) Log.d(TAG, "addNotification key=" + notification.getKey());
 
+        if("false".equals(SystemProperties.get("persist.sys.status.bar.upper","false"))) return;
+
         mNotificationData.updateRanking(ranking);
         Entry shadeEntry = createNotificationViews(notification);
         if (shadeEntry == null) {
