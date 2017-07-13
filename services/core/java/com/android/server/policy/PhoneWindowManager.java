@@ -1063,7 +1063,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // If sensor is turned off or nonexistent for some reason
             return;
         }
-        if(!"1".equals(SystemProperties.get("service.bootanim.exit"))){
+	if((!"1".equals(SystemProperties.get("service.bootanim.exit")))||("trigger_restart_min_framework".equals(SystemProperties.get("vold.decrypt")))){
             return;
         }
         // Could have been invoked due to screen turning on or off or
