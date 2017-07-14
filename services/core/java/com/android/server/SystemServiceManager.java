@@ -79,6 +79,7 @@ public class SystemServiceManager {
     public <T extends SystemService> T startService(Class<T> serviceClass) {
         try {
             final String name = serviceClass.getName();
+            long time = System.currentTimeMillis();
             Slog.i(TAG, "Starting " + name);
             Trace.traceBegin(Trace.TRACE_TAG_SYSTEM_SERVER, "StartService " + name);
 
@@ -115,6 +116,7 @@ public class SystemServiceManager {
                 throw new RuntimeException("Failed to start service " + name
                         + ": onStart threw an exception", ex);
             }
+            Slog.i(TAG, "Started " + name +", time="+(System.currentTimeMillis()-time));
             return service;
         } finally {
             Trace.traceEnd(Trace.TRACE_TAG_SYSTEM_SERVER);

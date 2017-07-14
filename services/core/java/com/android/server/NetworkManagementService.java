@@ -339,6 +339,7 @@ public class NetworkManagementService extends INetworkManagementService.Stub
     }
 
     public void systemReady() {
+    /*
         if (DBG) {
             final long start = System.currentTimeMillis();
             prepareNativeDaemon();
@@ -348,6 +349,17 @@ public class NetworkManagementService extends INetworkManagementService.Stub
         } else {
             prepareNativeDaemon();
         }
+    */
+
+        mFgHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                final long start = System.currentTimeMillis();
+                prepareNativeDaemon();
+                final long delta = System.currentTimeMillis() - start;
+                Slog.d(TAG, "Prepared in " + delta + "ms");
+                }
+            }, 3000);
     }
 
     private IBatteryStats getBatteryStats() {
@@ -577,7 +589,6 @@ public class NetworkManagementService extends INetworkManagementService.Stub
      * existing in-memory rules.
      */
     private void prepareNativeDaemon() {
-
         mBandwidthControlEnabled = false;
 
         // only enable bandwidth control when support exists

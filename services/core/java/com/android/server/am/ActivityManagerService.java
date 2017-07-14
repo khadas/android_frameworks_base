@@ -11404,6 +11404,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                         .getPersistentApplications(STOCK_PM_FLAGS | matchFlags).getList();
                 for (ApplicationInfo app : apps) {
                     if (!"android".equals(app.packageName)) {
+                        Slog.d(TAG, "startPersistentApps addAppLocked:" + app);
                         addAppLocked(app, false, null /* ABI override */);
                     }
                 }
@@ -13398,9 +13399,6 @@ public final class ActivityManagerService extends ActivityManagerNative
         mSystemServiceManager.startUser(currentUserId);
 
         synchronized (this) {
-            // Only start up encryption-aware persistent apps; once user is
-            // unlocked we'll come back around and start unaware apps
-            startPersistentApps(PackageManager.MATCH_DIRECT_BOOT_AWARE);
 
             // Start up initial activity.
             mBooting = true;
@@ -13417,6 +13415,10 @@ public final class ActivityManagerService extends ActivityManagerNative
             }
             startHomeActivityLocked(currentUserId, "systemReady");
 
+            // Only start up encryption-aware persistent apps; once user is
+            // unlocked we'll come back around and start unaware apps
+            startPersistentApps(PackageManager.MATCH_DIRECT_BOOT_AWARE);
+
             try {
                 if (AppGlobals.getPackageManager().hasSystemUidErrors()) {
                     Slog.e(TAG, "UIDs on the system are inconsistent, you need to wipe your"
@@ -13431,34 +13433,46 @@ public final class ActivityManagerService extends ActivityManagerNative
                 mUiHandler.obtainMessage(SHOW_FINGERPRINT_ERROR_UI_MSG).sendToTarget();
             }
 
-            long ident = Binder.clearCallingIdentity();
-            try {
-                Intent intent = new Intent(Intent.ACTION_USER_STARTED);
-                intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY
-                        | Intent.FLAG_RECEIVER_FOREGROUND);
-                intent.putExtra(Intent.EXTRA_USER_HANDLE, currentUserId);
-                broadcastIntentLocked(null, null, intent,
-                        null, null, 0, null, null, null, AppOpsManager.OP_NONE,
-                        null, false, false, MY_PID, Process.SYSTEM_UID,
-                        currentUserId);
-                intent = new Intent(Intent.ACTION_USER_STARTING);
-                intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-                intent.putExtra(Intent.EXTRA_USER_HANDLE, currentUserId);
-                broadcastIntentLocked(null, null, intent,
-                        null, new IIntentReceiver.Stub() {
-                            @Override
-                            public void performReceive(Intent intent, int resultCode, String data,
-                                    Bundle extras, boolean ordered, boolean sticky, int sendingUser)
-                                    throws RemoteException {
-                            }
-                        }, 0, null, null,
-                        new String[] {INTERACT_ACROSS_USERS}, AppOpsManager.OP_NONE,
-                        null, true, false, MY_PID, Process.SYSTEM_UID, UserHandle.USER_ALL);
-            } catch (Throwable t) {
-                Slog.wtf(TAG, "Failed sending first user broadcasts", t);
-            } finally {
-                Binder.restoreCallingIdentity(ident);
-            }
+            Thread thrd = new Thread(new Runnable() {
+               public void run() {
+                    try {
+                       Thread.sleep(5000);
+                    } catch(Exception e) {}
+
+                    synchronized (ActivityManagerService.this) {
+
+                        long ident = Binder.clearCallingIdentity();
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_USER_STARTED);
+                            intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY
+                                    | Intent.FLAG_RECEIVER_FOREGROUND);
+                            intent.putExtra(Intent.EXTRA_USER_HANDLE, currentUserId);
+                            broadcastIntentLocked(null, null, intent,
+                                    null, null, 0, null, null, null, AppOpsManager.OP_NONE,
+                                    null, false, false, MY_PID, Process.SYSTEM_UID,
+                                    currentUserId);
+                            intent = new Intent(Intent.ACTION_USER_STARTING);
+                            intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+                            intent.putExtra(Intent.EXTRA_USER_HANDLE, currentUserId);
+                            broadcastIntentLocked(null, null, intent,
+                                    null, new IIntentReceiver.Stub() {
+                                        @Override
+                                        public void performReceive(Intent intent, int resultCode, String data,
+                                                Bundle extras, boolean ordered, boolean sticky, int sendingUser)
+                                                throws RemoteException {
+                                        }
+                                    }, 0, null, null,
+                                    new String[] {INTERACT_ACROSS_USERS}, AppOpsManager.OP_NONE,
+                                    null, true, false, MY_PID, Process.SYSTEM_UID, UserHandle.USER_ALL);
+                        } catch (Throwable t) {
+                            Slog.wtf(TAG, "Failed sending first user broadcasts", t);
+                        } finally {
+                            Binder.restoreCallingIdentity(ident);
+                        }
+                    }
+                }
+            });
+            thrd.start();
             mStackSupervisor.resumeFocusedStackTopActivityLocked();
             mUserController.sendUserSwitchBroadcastsLocked(-1, currentUserId);
         }

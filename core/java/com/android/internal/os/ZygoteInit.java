@@ -517,7 +517,6 @@ public class ZygoteInit {
         if (parsedArgs.niceName != null) {
             Process.setArgV0(parsedArgs.niceName);
         }
-
         final String systemServerClasspath = Os.getenv("SYSTEMSERVERCLASSPATH");
         if (systemServerClasspath != null) {
             performSystemServerDexOpt(systemServerClasspath);
@@ -742,13 +741,17 @@ public class ZygoteInit {
             registerZygoteSocket(socketName);
 
             if (SystemProperties.get("dalvik.vm.disable_preload", "false").equals("false")) {
-                Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "ZygotePreload");
-                EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
-                    SystemClock.uptimeMillis());
-                preload();
-                EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
-                    SystemClock.uptimeMillis());
-                Trace.traceEnd(Trace.TRACE_TAG_DALVIK);
+                //if (SystemProperties.get("dalvik.vm.dis_pri_preload", "false").equals("false")) {
+                    //if(Process.SECONDARY_ZYGOTE_SOCKET.equals(socketName)) {
+                    Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "ZygotePreload");
+                    EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
+                        SystemClock.uptimeMillis());
+                    preload();
+                    EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
+                        SystemClock.uptimeMillis());
+                    Trace.traceEnd(Trace.TRACE_TAG_DALVIK);
+                    //}
+                //}
             }
 
             // Finish profiling the zygote initialization.
@@ -811,7 +814,7 @@ public class ZygoteInit {
             }
 
             try {
-                Thread.sleep(1000);
+                Thread.sleep(10);
             } catch (InterruptedException ie) {
             }
         }
