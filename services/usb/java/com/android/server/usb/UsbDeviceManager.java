@@ -119,7 +119,7 @@ public class UsbDeviceManager {
     // Delay for debouncing USB disconnects.
     // We often get rapid connect/disconnect events when enabling USB functions,
     // which need debouncing.
-    private static final int UPDATE_DELAY = 1000;
+    private static final int UPDATE_DELAY = 2000;
 
     // Time we received a request to enter USB accessory mode
     private long mAccessoryModeRequestTime = 0;
@@ -360,11 +360,13 @@ public class UsbDeviceManager {
                  * Remove MTP from persistent config, to bring usb to a good state
                  * after fixes to b/31814300. This block can be removed after the update
                  */
-                String persisted = SystemProperties.get(USB_PERSISTENT_CONFIG_PROPERTY);
-                if (UsbManager.containsFunction(persisted, UsbManager.USB_FUNCTION_MTP)) {
-                    SystemProperties.set(USB_PERSISTENT_CONFIG_PROPERTY,
-                            UsbManager.removeFunction(persisted, UsbManager.USB_FUNCTION_MTP));
-                }
+		if(!"true".equals(SystemProperties.get("ro.usb.default_mtp"))){
+                	String persisted = SystemProperties.get(USB_PERSISTENT_CONFIG_PROPERTY);
+                	if (UsbManager.containsFunction(persisted, UsbManager.USB_FUNCTION_MTP)) {
+                    		SystemProperties.set(USB_PERSISTENT_CONFIG_PROPERTY,
+                            	UsbManager.removeFunction(persisted, UsbManager.USB_FUNCTION_MTP));
+                	}
+		}
 
                 setEnabledFunctions(null, false, false);
 
@@ -587,7 +589,7 @@ public class UsbDeviceManager {
         }
 
         private String applyAdbFunction(String functions) {
-            if (mAdbEnabled) {
+            if (mAdbEnabled||mCharging) {
                 functions = UsbManager.addFunction(functions, UsbManager.USB_FUNCTION_ADB);
             } else {
                 functions = UsbManager.removeFunction(functions, UsbManager.USB_FUNCTION_ADB);
@@ -955,7 +957,8 @@ public class UsbDeviceManager {
             String func = SystemProperties.get(USB_PERSISTENT_CONFIG_PROPERTY,
                     UsbManager.USB_FUNCTION_NONE);
             if (UsbManager.USB_FUNCTION_NONE.equals(func)) {
-                func = UsbManager.USB_FUNCTION_MTP;
+                func = UsbManager.USB_FUNCTION_NONE;
+		mCharging = true;
             }
             return func;
         }
