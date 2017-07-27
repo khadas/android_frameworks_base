@@ -45,7 +45,6 @@ import android.os.storage.IMountService;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
-import android.util.Log;
 import android.util.Slog;
 import android.view.WindowManager;
 
@@ -231,9 +230,6 @@ public final class SystemServer {
     }
 
     private void run() {
-        android.os.Process.setThreadPriority(
-                android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-
         try {
             Trace.traceBegin(Trace.TRACE_TAG_SYSTEM_SERVER, "InitBeforeStartServices");
             // If a device's clock is before 1970 (before 0), a lot of
@@ -314,7 +310,7 @@ public final class SystemServer {
 
             // Prepare the main looper thread (this thread).
             android.os.Process.setThreadPriority(
-                android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+                android.os.Process.THREAD_PRIORITY_FOREGROUND);
             android.os.Process.setCanSelfBackground(false);
             Looper.prepareMainLooper();
 
@@ -1470,7 +1466,6 @@ public final class SystemServer {
 
     private static void traceBeginAndSlog(String name) {
         Trace.traceBegin(Trace.TRACE_TAG_SYSTEM_SERVER, name);
-        //Slog.i(TAG, name);
-        Log.e(TAG, name);
+        Slog.i(TAG, name);
     }
 }

@@ -972,6 +972,7 @@ bool BootAnimation::playAnimation(const Animation& animation)
                     property_get(EXIT_PROP_NAME, value, "0");
                     int exitnow = atoi(value);
                     if (exitnow) {
+                        ALOGD("requested exit, quick exit now! %ld", hundredUsDelay);
                         break;
                     }
                     usleep(100);

@@ -183,11 +183,8 @@ static const char ABI_LIST_PROPERTY[] = "ro.product.cpu.abilist32";
 static const char ZYGOTE_NICE_NAME[] = "zygote";
 #endif
 
-
 int main(int argc, char* const argv[])
 {
-    nice(-19);
-    ALOGE("zygote enter: %s", argv[0]);
     if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0) {
         // Older kernels don't understand PR_SET_NO_NEW_PRIVS and return
         // EINVAL. Don't die on such kernels.
