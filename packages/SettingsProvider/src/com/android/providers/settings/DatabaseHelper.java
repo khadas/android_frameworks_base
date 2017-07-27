@@ -2436,6 +2436,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
             stmt = db.compileStatement("INSERT OR IGNORE INTO secure(name,value)"
                     + " VALUES(?,?);");
 
+            loadStringSetting(stmt, Settings.Secure.DEFAULT_INPUT_METHOD,
+					R.string.def_input_method);
+            loadStringSetting(stmt, Settings.Secure.ENABLED_INPUT_METHODS,
+					R.string.def_input_method);
+
             loadStringSetting(stmt, Settings.Secure.LOCATION_PROVIDERS_ALLOWED,
                     R.string.def_location_providers_allowed);
 

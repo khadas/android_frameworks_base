@@ -220,4 +220,7 @@
 
     <!-- Default setting for ability to add users from the lock screen -->
     <bool name="def_add_users_from_lockscreen">false</bool>
+
+    <!-- Default input method -->
+    <string name="def_input_method">com.android.inputmethod.latin/.LatinIME</string>
 </resources>
