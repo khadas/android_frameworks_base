@@ -87,17 +87,6 @@ public final class MediaCodecInfo {
         return mIsEncoder;
     }
 
-    /** @hide */
-    public final boolean isVideo() {
-        CodecCapabilities capInte;
-        for (String key : mCaps.keySet()) {
-            capInte = mCaps.get(key);
-            if(capInte.isVideo())
-                return true;
-        }
-        return false;
-    }
-
     /**
      * Query the media types supported by the codec.
      */
