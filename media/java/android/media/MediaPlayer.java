@@ -34,6 +34,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.Process;
 import android.os.PowerManager;
+import android.os.PowerManagerInternal;
 import android.os.ServiceManager;
 import android.os.SystemProperties;
 import android.provider.Settings;
@@ -1387,9 +1388,9 @@ public class MediaPlayer extends PlayerBase
                             videoWidth = getVideoWidth();
                             videoHeight = getVideoHeight();
                             if(videoWidth > 2048 || videoHeight > 2048){
-                                mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_PERF);
+                                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40003);
                             } else {
-                                mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_NORMAL);
+                                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
                             }
                         }catch (Exception e){
                             Log.i("MediaPlayer",e.getMessage());
@@ -1425,7 +1426,7 @@ public class MediaPlayer extends PlayerBase
     public void stop() throws IllegalStateException {
         if(SystemProperties.get("ro.board.platform").equals("rk3399")){
             try{
-                mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_NORMAL);
+                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
             }catch (Exception e){
                 Log.i("MediaPlayer",e.getMessage());
             }
@@ -1453,9 +1454,9 @@ public class MediaPlayer extends PlayerBase
                             videoWidth = getVideoWidth();
                             videoHeight = getVideoHeight();
                             if(videoWidth > 2048 || videoHeight > 2048)
-                                mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_PERF);
+                                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40003);
                             else
-                                mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_NORMAL);
+                                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
                         }catch (Exception e){
                             Log.i("MediaPlayer",e.getMessage());
                         }
@@ -1923,7 +1924,7 @@ public class MediaPlayer extends PlayerBase
     public void reset() {
         if(SystemProperties.get("ro.board.platform").equals("rk3399")){
             try{
-                mPower.powerHintNoPermCheck(PowerManager.VIDEO_SCENE_NORMAL);
+                mPower.powerHintNoPermCheck(PowerManagerInternal.POWER_HINT_VIDEO_DECODE,0x40000);
             }catch (Exception e){
                 Log.i("MediaPlayer",e.getMessage());
             }
