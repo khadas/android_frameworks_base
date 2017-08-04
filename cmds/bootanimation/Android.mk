@@ -77,6 +77,7 @@ LOCAL_SHARED_LIBRARIES := \
     libbinder \
     libui \
     libhwui \
+    libmedia \
     libEGL \
     libGLESv1_CM \
     libgui \
