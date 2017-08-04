@@ -22,6 +22,7 @@ LOCAL_SHARED_LIBRARIES := \
     libbinder \
     libui \
     libskia \
+    libmedia \
     libEGL \
     libGLESv1_CM \
     libgui \

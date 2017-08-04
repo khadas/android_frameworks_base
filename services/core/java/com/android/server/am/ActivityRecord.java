@@ -1260,8 +1260,11 @@ final class ActivityRecord {
 				} catch (Exception e) {																	                }
 			}
 			Log.d("xzj","----launcher drawn done,exit bootanim----");
-			SystemProperties.set("service.bootanim.exit", "1");	
-			SystemService.stop("bootanim");
+			SystemProperties.set("service.bootanim.exit", "1");
+                       // for boot video,we could not force stop bootanim 
+                       if("false".equals(SystemProperties.get("persist.sys.bootvideo.enable","false"))){
+			   SystemService.stop("bootanim");
+                       }
 		}
 	}
         mStackSupervisor.mActivityMetricsLogger.notifyWindowsDrawn();
