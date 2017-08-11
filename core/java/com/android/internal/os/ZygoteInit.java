@@ -112,6 +112,8 @@ public class ZygoteInit {
     /** Controls whether we should preload resources during zygote init. */
     public static final boolean PRELOAD_RESOURCES = true;
 
+    private static final boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+
     /**
      * Registers a server socket for zygote command connections
      *
@@ -687,7 +689,9 @@ public class ZygoteInit {
         /* For child process */
         if (pid == 0) {
             if (hasSecondZygote(abiList)) {
-                //waitForSecondaryZygote(socketName);
+                if(isBox){
+                    waitForSecondaryZygote(socketName);
+                }
                 Log.d(TAG,"--------call waitForSecondaryZygote,skip this---,abiList= "+abiList);
             }
 
@@ -715,14 +719,17 @@ public class ZygoteInit {
         // Mark zygote start. This ensures that thread creation will throw
         // an error.
 
-        // Finish profiling the zygote initialization.
         boolean isFirstBooting = false;
-        // if first time booting or zygote restart or data encrypted,we need preload full class
-        if(Process.myPid() > 300 || SystemProperties.getBoolean(PROPERTY_FIRST_TIME_BOOTING, true)|| SystemProperties.get("ro.crypto.state").equals("encrypted")){
-            isFirstBooting = true;
+        if(!isBox){
+            // Finish profiling the zygote initialization.
+            // if first time booting or zygote restart or data encrypted,we need preload full class
+            if(Process.myPid() > 300 || SystemProperties.getBoolean(PROPERTY_FIRST_TIME_BOOTING, true)|| SystemProperties.get("ro.crypto.state").equals("encrypted")){
+                isFirstBooting = true;
+                ZygoteHooks.startZygoteNoThreadCreation();
+            }
+        }else{
             ZygoteHooks.startZygoteNoThreadCreation();
         }
-
         try {
             Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "ZygoteInit");
             RuntimeInit.enableDdms();
@@ -749,7 +756,7 @@ public class ZygoteInit {
             }
 
             registerZygoteSocket(socketName);
-            if(!isFirstBooting){
+            if(!isFirstBooting && !isBox){
                 if (startSystemServer) {
                     startSystemServer(abiList, socketName);
                 }
@@ -780,7 +787,7 @@ public class ZygoteInit {
             // Zygote process unmounts root storage spaces.
             Zygote.nativeUnmountStorageOnInit();
 
-            if(isFirstBooting){
+            if(isFirstBooting || isBox){
                 ZygoteHooks.stopZygoteNoThreadCreation();
                 if (startSystemServer) {
                     startSystemServer(abiList, socketName);
