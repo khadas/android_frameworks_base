@@ -111,13 +111,13 @@ interface IRkDisplayDeviceManagementService
     /**
      * Set contrast
      */
-    void setContrast(int display, float contrast);
+    void setContrast(int display, int contrast);
     /**
      *Set saturation
      */
-    void setSaturation(int display, float saturation);
+    void setSaturation(int display, int saturation);
     /**
       *Set Hue
     */
-    void setHue(int display, float degree);
+    void setHue(int display, int degree);
 }

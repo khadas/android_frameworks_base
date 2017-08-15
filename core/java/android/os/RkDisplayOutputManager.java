@@ -530,7 +530,7 @@ public class RkDisplayOutputManager {
     }
 
     /*
-    * brightness: [-128, 127], default 0
+    * brightness: [0, 100], default 50
     */
     /**
     *
@@ -539,14 +539,14 @@ public class RkDisplayOutputManager {
     * @return
     * @hide
     */
-    public int setBrightness(int display, int brightness)
+    public int setBrightness(int display, int bright_percent)
     {
-        if (brightness < -32 || brightness > 31) {
-            Log.e(TAG, "setBrightness out of range " + brightness);
+        if (bright_percent < 0 || bright_percent > 100) {
+            Log.e(TAG, "setBrightness out of range " + bright_percent);
             return -1;
         }
         try {
-            mService.setBrightness(display, brightness);
+            mService.setBrightness(display, bright_percent);
         } catch (Exception e) {
             Log.e(TAG, "Error set brightness :" + e);
             return -1;
@@ -555,7 +555,7 @@ public class RkDisplayOutputManager {
     }
 
     /*
-    * contrast: [0, 1.992], default 1;
+    * contrast: [0, 100], default 50;
     */
     /**
     *
@@ -564,14 +564,14 @@ public class RkDisplayOutputManager {
     * @return
     * @hide
     */
-    public int setContrast(int display, float contrast)
+    public int setContrast(int display, int con_percent)
     {
-        if (contrast < 0 || contrast > 1.992) {
-            Log.e(TAG, "setContrast out of range " + contrast);
+        if (con_percent < 0 || con_percent > 100) {
+            Log.e(TAG, "setContrast out of range " + con_percent);
             return -1;
         }
         try {
-            mService.setContrast(display, contrast);
+            mService.setContrast(display, con_percent);
         } catch (Exception e) {
             Log.e(TAG, "Error set Contrast :" + e);
             return -1;
@@ -580,7 +580,7 @@ public class RkDisplayOutputManager {
     }
 
     /*
-    * saturation: [0, 1.992], default 1;
+    * saturation: [0, 100], default 50;
     */
     /**
     *
@@ -589,14 +589,14 @@ public class RkDisplayOutputManager {
     * @return
     * @hide
     */
-    public int setSaturation(int display, float saturation)
+    public int setSaturation(int display, int sat_percent)
     {
-        if (saturation < 0 || saturation > 1.992) {
-            Log.e(TAG, "setContrast out of range " + saturation);
+        if (sat_percent < 0 || sat_percent > 100) {
+            Log.e(TAG, "setContrast out of range " + sat_percent);
             return -1;
         }
         try {
-            mService.setSaturation(display, saturation);
+            mService.setSaturation(display, sat_percent);
         } catch (Exception e) {
             Log.e(TAG, "Error set sat_con :" + e);
             return -1;
@@ -605,7 +605,7 @@ public class RkDisplayOutputManager {
     }
 
     /*
-    * degree: [-30, 30], default 0
+    * degree: [0, 100], default 0
     */
     /**
     *
@@ -614,14 +614,14 @@ public class RkDisplayOutputManager {
     * @return
     * @hide
     */
-    public int setHue(int display, float degree)
+    public int setHue(int display, int degree_percent)
     {
-        if (degree < -30 || degree > 30) {
-            Log.e(TAG, "Error set hue out of range " + degree);
+        if (degree_percent < 0 || degree_percent > 100) {
+            Log.e(TAG, "Error set hue out of range " + degree_percent);
             return -1;
         }
         try {
-            mService.setHue(display, degree);
+            mService.setHue(display, degree_percent);
         } catch (Exception e) {
             Log.e(TAG, "Error set hue :" + e);
             return -1;

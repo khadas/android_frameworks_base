@@ -57,10 +57,10 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
     public final int DISPLAY_OVERSCAN_BOTTOM = 5;
     public final int DISPLAY_OVERSCAN_ALL = 6;
 
-    private final int DEFAULT_BRIGHTNESS = 0;
-    private final int DEFAULT_CONTRAST = 1;
-    private final int DEFAULT_SATURATION = 1;
-    private final int DEFAULT_HUE = 1;
+    private final int DEFAULT_BRIGHTNESS = 50;
+    private final int DEFAULT_CONTRAST = 50;
+    private final int DEFAULT_SATURATION = 50;
+    private final int DEFAULT_HUE = 50;
 
     private int timeline=0;
     /**
@@ -240,7 +240,7 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         StringBuilder builder = new StringBuilder();
         boolean isSameProperty = false;
 
-        if (brightness >= -31 && brightness <= 31)
+        if (brightness >= 0 && brightness <= 100)
             builder.append(brightness);
         else
             builder.append(DEFAULT_BRIGHTNESS);
@@ -260,11 +260,11 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         }
     }
 
-    public void setContrast(int display, float contrast)  {
+    public void setContrast(int display, int contrast)  {
         StringBuilder builder = new StringBuilder();
         boolean isSameProperty = false;
 
-        if (contrast >= 0 && contrast <= 1.992)
+        if (contrast >= 0 && contrast <= 100)
             builder.append(contrast);
         else
             builder.append(DEFAULT_CONTRAST);
@@ -284,11 +284,11 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         }
     }
 //"persist.sys.saturation.main"
-    public void setSaturation(int display, float saturation) {
+    public void setSaturation(int display, int saturation) {
         StringBuilder builder = new StringBuilder();
         boolean isSameProperty = false;
 
-        if (saturation >= 0 && saturation <= 1.992)
+        if (saturation >= 0 && saturation <= 100)
             builder.append(saturation);
         else
             builder.append(DEFAULT_SATURATION);
@@ -307,11 +307,11 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         }
     }
 
-    public void setHue(int display, float degree){
+    public void setHue(int display, int degree){
         StringBuilder builder = new StringBuilder();
         boolean isSameProperty = false;
 
-        if (degree >= -30 && degree <= 30)
+        if (degree >= 0 && degree <= 100)
             builder.append(degree);
         else
             builder.append(DEFAULT_HUE);
