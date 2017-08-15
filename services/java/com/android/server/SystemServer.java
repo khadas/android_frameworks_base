@@ -1208,13 +1208,15 @@ public final class SystemServer {
                 }
                 // $_rbox_$_modify_$ end
                 // $_rbox_$_modify_$_aisx: added 2017-06-27, add RkDisplayDeviceManagementService
-                try {
-                    ServiceManager.addService(
-                        "drm_device_management",
-                        new RkDisplayDeviceManagementService(context));
-                } catch (Throwable e) {
-                    Slog.e(TAG, "Failure starting kDisplayDeviceManagement Service", e);
-                }
+                if (!isUseDisplayd) {
+                    try {
+                        ServiceManager.addService(
+                            "drm_device_management",
+                            new RkDisplayDeviceManagementService(context));
+                    } catch (Throwable e) {
+                        Slog.e(TAG, "Failure starting kDisplayDeviceManagement Service", e);
+                    }
+		}
                 // $_rbox_$_modify_$ end
                 if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
                     mSystemServiceManager.startService(FingerprintService.class);

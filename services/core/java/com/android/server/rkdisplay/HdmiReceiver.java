@@ -31,6 +31,8 @@ import android.view.WindowManager;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
+import android.os.SystemProperties;
+
 
 public class HdmiReceiver extends BroadcastReceiver{
     private static final String TAG = "HdmiReceiver";
@@ -66,7 +68,9 @@ public class HdmiReceiver extends BroadcastReceiver{
     }
 
     public void updateDisplayInfos(){
-        mDisplayModes.updateDisplayInfos();
+        boolean isUseDisplayd = SystemProperties.getBoolean("ro.rk.displayd.enable", true);
+        if (!isUseDisplayd)
+            mDisplayModes.updateDisplayInfos();
     }
 
     private class MyTask extends TimerTask{
