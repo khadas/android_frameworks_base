@@ -439,6 +439,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mSystemBooted;
     private boolean mDeferBindKeyguard;
     boolean mHdmiPlugged;
+    boolean mDPlugged;
     HdmiControl mHdmiControl;
     IUiModeManager mUiModeManager;
     int mUiMode;
@@ -878,6 +879,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         @Override
         public void onUEvent(UEventObserver.UEvent event) {
             setHdmiPlugged("1".equals(event.get("SWITCH_STATE")));
+        }
+    };
+
+    private UEventObserver mDPObserver = new UEventObserver() {
+        @Override
+        public void onUEvent(UEventObserver.UEvent event) {
+            setDPlugged("1".equals(event.get("SWITCH_STATE")));
         }
     };
 
@@ -1966,6 +1974,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Controls rotation and the like.
         initializeHdmiState();
+        initializeDPState();
 
         // Match current screen state.
         if (!mPowerManager.isInteractive()) {
@@ -5690,6 +5699,51 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // Always do this so the sticky intent is stuck (to false) if there is no hdmi.
         mHdmiPlugged = !plugged;
         setHdmiPlugged(!mHdmiPlugged);
+    }
+
+    void setDPlugged(boolean plugged) {
+        if (mDPlugged != plugged) {
+            mDPlugged = plugged;
+            updateRotation(true, true);
+            Intent intent = new Intent(ACTION_DP_PLUGGED);
+            intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+            intent.putExtra(EXTRA_DP_PLUGGED_STATE, plugged);
+            mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
+        }
+    }
+
+    void initializeDPState() {
+        boolean plugged = false;
+        // watch for DP plug messages if the hdmi switch exists
+        if (new File("/sys/devices/virtual/switch/cdn-dp/state").exists()) {
+            mHDMIObserver.startObserving("DEVPATH=/devices/virtual/switch/cdn-dp");
+
+            final String filename = "/sys/class/switch/cdn-dp/state";
+            FileReader reader = null;
+            try {
+                reader = new FileReader(filename);
+                char[] buf = new char[15];
+                int n = reader.read(buf);
+                if (n > 1) {
+                    plugged = 0 != Integer.parseInt(new String(buf, 0, n-1));
+                }
+            } catch (IOException ex) {
+                Slog.w(TAG, "Couldn't read DP state from " + filename + ": " + ex);
+            } catch (NumberFormatException ex) {
+                Slog.w(TAG, "Couldn't read DP state from " + filename + ": " + ex);
+            } finally {
+                if (reader != null) {
+                    try {
+                        reader.close();
+                    } catch (IOException ex) {
+                    }
+                }
+            }
+        }
+        // This dance forces the code in setDPlugged to run.
+        // Always do this so the sticky intent is stuck (to false) if there is no DP.
+        mDPlugged = !plugged;
+        setDPlugged(!mDPlugged);
     }
 
     final Object mScreenshotLock = new Object();

@@ -40,6 +40,8 @@
 namespace android {
 
 DrmResources::DrmResources()  {
+  extend_ = NULL;
+  primary_ = NULL;
 }
 
 DrmResources::~DrmResources() {

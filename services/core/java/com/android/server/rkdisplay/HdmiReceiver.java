@@ -34,7 +34,8 @@ import java.util.Vector;
 
 public class HdmiReceiver extends BroadcastReceiver{
     private static final String TAG = "HdmiReceiver";
-    private final String ACTION = "android.intent.action.HDMI_PLUGGED";
+    private final String HDMI_ACTION = "android.intent.action.HDMI_PLUGGED";
+    private final String DP_ACTION = "android.intent.action.DP_PLUGGED";
     private final String ACTION_CHANGE = "android.display.action.change";
     private static Context mcontext;
     private static Timer mHdmiUpdateTimer=null;
@@ -54,7 +55,7 @@ public class HdmiReceiver extends BroadcastReceiver{
 
         Log.d(TAG,"action ="+intent.getAction());
         boolean plugged = false;
-        if (intent.getAction().equals(ACTION) || intent.getAction().equals(ACTION_CHANGE)){
+        if (intent.getAction().equals(HDMI_ACTION) || intent.getAction().equals(ACTION_CHANGE) || intent.getAction().equals(DP_ACTION)){
             if (needWaitForTaskFinish == false) {
                 needWaitForTaskFinish = true;
                 mHdmiUpdateTimer.schedule(new MyTask(), 100);

@@ -107,12 +107,14 @@ public interface WindowManagerPolicy {
      * Sticky broadcast of the current HDMI plugged state.
      */
     public final static String ACTION_HDMI_PLUGGED = "android.intent.action.HDMI_PLUGGED";
+    public final static String ACTION_DP_PLUGGED = "android.intent.action.DP_PLUGGED";
 
     /**
      * Extra in {@link #ACTION_HDMI_PLUGGED} indicating the state: true if
      * plugged in to HDMI, false if not.
      */
     public final static String EXTRA_HDMI_PLUGGED_STATE = "state";
+    public final static String EXTRA_DP_PLUGGED_STATE = "state";
 
     /**
      * Set to {@code true} when intent was invoked from pressing the home key.
