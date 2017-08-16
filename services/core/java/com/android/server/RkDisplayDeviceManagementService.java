@@ -100,8 +100,10 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
 
     public String[] getModelist(int display, String iface){
         List<String> hdmiResoList = mdrmModes.getModeList(display);
-        String[] modeList = hdmiResoList.toArray(new String[hdmiResoList.size()]);
-        return modeList;
+        if (hdmiResoList != null)
+            return hdmiResoList.toArray(new String[hdmiResoList.size()]);
+        else
+            return  null;
     }
 
     public String getMode(int display, String iface){

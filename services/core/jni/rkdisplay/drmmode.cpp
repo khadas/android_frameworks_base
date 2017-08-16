@@ -18,9 +18,11 @@
 #include "drmresources.h"
 
 #include <stdint.h>
+#include <math.h>
 #include <string>
 #include <xf86drm.h>
 #include <xf86drmMode.h>
+#include <cutils/log.h>
 
 namespace android {
 
@@ -41,6 +43,7 @@ DrmMode::DrmMode(drmModeModeInfoPtr m)
       flags_(m->flags),
       type_(m->type),
       name_(m->name) {
+      interlaced_ = !!(flags_ & DRM_MODE_FLAG_INTERLACE);
 }
 
 DrmMode::~DrmMode()
@@ -73,21 +76,67 @@ bool DrmMode::operator==(const DrmMode &m) const {
          v_scan_ == m.v_scan() && flags_ == m.flags() && type_ == m.type();
 }
 
+bool DrmMode::equal(const DrmMode &m) const {
+  if (clock_ == m.clock() && h_display_ == m.h_display()&&
+      h_sync_start_ == m.h_sync_start() && h_sync_end_ == m.h_sync_end() &&
+      h_total_ == m.h_total()&&
+      v_display_ == m.v_display() && v_sync_start_ == m.v_sync_start() &&
+      v_sync_end_ == m.v_sync_end() && v_total_ == m.v_total()
+      && flags_ == m.flags())
+        return true;
+  return false;
+}
+
 bool DrmMode::equal(uint32_t width, uint32_t height, uint32_t vrefresh,
                     bool interlaced) const
 {
-  int interlaced_ = !!(flags_ & DRM_MODE_FLAG_INTERLACE);
-
   if (h_display_ == width && v_display_ == height &&
       interlaced_ == interlaced && v_refresh_ == vrefresh)
     return true;
   return false;
 }
 
+bool DrmMode::equal(uint32_t width, uint32_t height, float vrefresh,
+                    uint32_t hsync_start, uint32_t hsync_end, uint32_t htotal,
+                    uint32_t vsync_start, uint32_t vsync_end, uint32_t vtotal,
+                    uint32_t flags) const
+{
+  float v_refresh = clock_ / (float)(v_total_ * h_total_) * 1000.0f;
+  uint32_t flags_temp;
+  if (flags_ & DRM_MODE_FLAG_INTERLACE)
+    v_refresh *= 2;
+  if (flags_ & DRM_MODE_FLAG_DBLSCAN)
+    v_refresh /= 2;
+  if (v_scan_ > 1)
+    v_refresh /= v_scan_ ;
+
+  /* vrefresh within 1 HZ */
+  if (fabs(v_refresh - vrefresh) > 1.0f)
+    return false;
+
+  if (h_display_ == width && v_display_ == height &&
+      hsync_start == h_sync_start_ && hsync_end == h_sync_end_ &&
+      vsync_start == v_sync_start_ && vsync_end == v_sync_end_ &&
+      htotal == h_total_ && vtotal == v_total_ && flags == flags_)
+    return true;
+
+  if (h_display_ == width && v_display_ == height &&
+      hsync_start == h_sync_start_ && hsync_end == h_sync_end_ &&
+      vsync_start == v_sync_start_ && vsync_end == v_sync_end_ &&
+      htotal == h_total_ && vtotal == v_total_ ) {
+        flags_temp = DRM_MODE_FLAG_PHSYNC|DRM_MODE_FLAG_NHSYNC|DRM_MODE_FLAG_PVSYNC|
+                         DRM_MODE_FLAG_NVSYNC|DRM_MODE_FLAG_INTERLACE|
+                         DRM_MODE_FLAG_420_MASK;
+        if((flags & flags_temp) == (flags_ & flags_temp))
+          return true;
+      }
+  return false;
+}
+
+
 bool DrmMode::equal(uint32_t width, uint32_t height, uint32_t vrefresh,
                      uint32_t flag, uint32_t clk, bool interlaced) const
 {
-  int interlaced_ = !!(flags_ & DRM_MODE_FLAG_INTERLACE);
   ALOGV("DrmMode h=%d,v=%d,interlaced=%d,v_refresh_=%d,flags=%d,clk=%d",
          h_display_, v_display_, interlaced_, v_refresh_, flags_,clock_);
   if (h_display_ == width && v_display_ == height &&
@@ -174,6 +223,10 @@ float DrmMode::v_refresh() const {
 
 uint32_t DrmMode::flags() const {
   return flags_;
+}
+
+uint32_t DrmMode::interlaced() const {
+    return interlaced_;
 }
 
 uint32_t DrmMode::type() const {

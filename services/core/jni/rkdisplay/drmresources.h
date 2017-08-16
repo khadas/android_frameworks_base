@@ -48,6 +48,23 @@ namespace android {
       DBG_SILENT = 1 << 6,
   };
 
+  enum {
+      HWC_DISPLAY_PRIMARY     = 0,
+      HWC_DISPLAY_EXTERNAL    = 1,    // HDMI, DP, etc.
+      HWC_DISPLAY_VIRTUAL     = 2,
+  
+      HWC_NUM_PHYSICAL_DISPLAY_TYPES = 2,
+      HWC_NUM_DISPLAY_TYPES          = 3,
+  };
+
+  enum {
+      HWC_DISPLAY_PRIMARY_BIT     = 1 << HWC_DISPLAY_PRIMARY,
+      HWC_DISPLAY_EXTERNAL_BIT    = 1 << HWC_DISPLAY_EXTERNAL,
+      HWC_DISPLAY_VIRTUAL_BIT     = 1 << HWC_DISPLAY_VIRTUAL,
+  };
+
+
+
 #define type_name_define(res) \
 const char * res##_str(int type);
 
@@ -67,6 +84,7 @@ class DrmResources {
   }
 
 
+  bool mode_verify(const DrmMode &mode);
   void DisplayChanged(void);
   void SetPrimaryDisplay(DrmConnector *c);
   void SetExtendDisplay(DrmConnector *c);
@@ -106,6 +124,7 @@ class DrmResources {
 #endif
 
  private:
+  void ConfigurePossibleDisplays();
   int TryEncoderForDisplay(int display, DrmEncoder *enc);
   int GetProperty(uint32_t obj_id, uint32_t obj_type, const char *prop_name,
                   DrmProperty *property);

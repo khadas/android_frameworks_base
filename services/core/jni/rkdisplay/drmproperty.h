@@ -21,6 +21,7 @@
 #include <string>
 #include <xf86drmMode.h>
 #include <vector>
+#include <cutils/log.h>
 
 namespace android {
 

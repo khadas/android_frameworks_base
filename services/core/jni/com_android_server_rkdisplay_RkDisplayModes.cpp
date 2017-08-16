@@ -35,16 +35,6 @@
 
 namespace android{
 
-enum {
-    HWC_DISPLAY_PRIMARY     = 0,
-    HWC_DISPLAY_EXTERNAL    = 1,    // HDMI, DP, etc.
-    HWC_DISPLAY_VIRTUAL     = 2,
-
-    HWC_NUM_PHYSICAL_DISPLAY_TYPES = 2,
-    HWC_NUM_DISPLAY_TYPES          = 3,
-};
-
-
 static struct {
     jclass clazz;
     jmethodID ctor;
@@ -97,7 +87,9 @@ static void updateConnectors(){
             cnt++;
         }
         ALOGD("crtc: %d %d foundHdmi %d", crtcId1, crtcId2, foundHdmi);
-        if (crtcId1 == crtcId2 && foundHdmi) {
+        char property[PROPERTY_VALUE_MAX];
+        property_get("sys.hwc.device.primary", property, "null");
+        if (crtcId1 == crtcId2 && foundHdmi && strstr(property, "HDMI-A") == NULL) {
             for (auto &conn : drm_->connectors()) {
                 if (builtInHdmi(conn->get_type()) && conn->state() == DRM_MODE_CONNECTED) {
                     extend = conn.get();
@@ -118,15 +110,86 @@ static void updateConnectors(){
     }
 }
 
+static void hotPlugUpdate(){
+    DrmConnector *mextend = NULL;
+    DrmConnector *mprimary = NULL;
+
+    for (auto &conn : drm_->connectors()) {
+        drmModeConnection old_state = conn->state();
+
+        conn->UpdateModes();
+
+        drmModeConnection cur_state = conn->state();
+
+        if (cur_state == old_state)
+            continue;
+        ALOGI("%s event  for connector %u\n",
+            cur_state == DRM_MODE_CONNECTED ? "Plug" : "Unplug", conn->id());
+    
+        if (cur_state == DRM_MODE_CONNECTED) {
+         if (conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT)
+           mextend = conn.get();
+         else if (conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT)
+           mprimary = conn.get();
+        }
+    }
+
+    /*
+    * status changed?
+    */
+    drm_->DisplayChanged();
+
+    DrmConnector *old_primary = drm_->GetConnectorFromType(HWC_DISPLAY_PRIMARY);
+    mprimary = mprimary ? mprimary : old_primary;
+    if (!mprimary || mprimary->state() != DRM_MODE_CONNECTED) {
+    mprimary = NULL;
+    for (auto &conn : drm_->connectors()) {
+     if (!(conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT))
+       continue;
+     if (conn->state() == DRM_MODE_CONNECTED) {
+       mprimary = conn.get();
+       break;
+     }
+    }
+    }
+
+    if (!mprimary) {
+        ALOGE("%s %d Failed to find primary display\n", __FUNCTION__, __LINE__);
+        return;
+    }
+    if (mprimary != old_primary) {
+        drm_->SetPrimaryDisplay(mprimary);
+    }
+
+    DrmConnector *old_extend = drm_->GetConnectorFromType(HWC_DISPLAY_EXTERNAL);
+    mextend = mextend ? mextend : old_extend;
+    if (!mextend || mextend->state() != DRM_MODE_CONNECTED) {
+        mextend = NULL;
+        for (auto &conn : drm_->connectors()) {
+            if (!(conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT))
+                continue;
+            if (conn->id() == mprimary->id())
+                continue;
+            if (conn->state() == DRM_MODE_CONNECTED) {
+                mextend = conn.get();
+                break;
+            }
+        }
+    }
+    drm_->SetExtendDisplay(mextend);
+
+    updateConnectors();
+}
+
+
+
 static void nativeInit(JNIEnv* env, jobject obj) {
     if (drm_ == NULL) {
         drm_ = new DrmResources();
         drm_->Init();
         ALOGD("nativeInit: ");
-        updateConnectors();
-
-        ALOGD("primary: %p extend: %p", primary, extend);
-        
+        hotPlugUpdate();
+        ALOGD("primary: %p extend: %p", primary, extend);    
     }
 }
 
@@ -490,33 +553,8 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
 
 }
 
-
 static void nativeUpdateConnectors(JNIEnv* env, jobject obj){
-    DrmConnector *mextend = NULL;
-    for (auto &conn : drm_->connectors()) {
-        conn->UpdateModes();
-        if (conn->state() == DRM_MODE_CONNECTED) {
-            if (conn->display())
-                mextend = conn.get();
-        }
-    }
-
-    DrmConnector *mprimary = drm_->GetConnectorFromType(HWC_DISPLAY_PRIMARY);
-    DrmConnector *old_extend = drm_->GetConnectorFromType(HWC_DISPLAY_EXTERNAL);
-    mextend = mextend ? mextend : old_extend;
-    if (!mextend || mextend->state() != DRM_MODE_CONNECTED) {
-        mextend = NULL;
-        for (auto &conn : drm_->connectors()) {
-            if (conn->id() == mprimary->id())
-                continue;
-            if (conn->state() == DRM_MODE_CONNECTED) {
-                mextend = conn.get();
-                break;
-            }
-        }
-    }
-    drm_->SetExtendDisplay(mextend);
-    updateConnectors();
+    hotPlugUpdate();
 }
 
 static void nativeSetMode(JNIEnv* env, jobject obj, jint dpy,jint iface_type, jstring mode)
@@ -561,15 +599,12 @@ static jint nativeGetNumConnectors(JNIEnv* env, jobject obj)
 
 static jint nativeGetConnectionState(JNIEnv* env, jobject obj, jint dpy)
 {
-    int display = dpy;
     drmModeConnection cur_state=DRM_MODE_UNKNOWNCONNECTION;
 
-    for (auto &conn : drm_->connectors()){
-        if (display == conn->display()) {
-            cur_state = conn->state();
-            break;
-        }
-    }
+    if (dpy == HWC_DISPLAY_PRIMARY && primary)
+        cur_state = primary->state();
+    else if (dpy == HWC_DISPLAY_EXTERNAL && extend)
+        cur_state = extend->state();
 
     ALOGD("nativeGetConnectionState cur_state %d ", cur_state);
     return static_cast<jint>(cur_state);
@@ -577,15 +612,14 @@ static jint nativeGetConnectionState(JNIEnv* env, jobject obj, jint dpy)
 
 static jint nativeGetBuiltIn(JNIEnv* env, jobject obj, jint dpy)
 {
-    int display = dpy;
     int built_in=0;
 
-    for (auto &conn : drm_->connectors()){
-        if (display == conn->display()) {
-            built_in = conn->get_type();
-            break;
-        }
-    }
+    if (dpy == HWC_DISPLAY_PRIMARY && primary)
+        built_in = primary->get_type();
+    else if (dpy == HWC_DISPLAY_EXTERNAL && extend)
+        built_in = extend->get_type();
+    else
+        built_in = 0;
 
     return static_cast<jint>(built_in);
 }

@@ -22,7 +22,6 @@
 #include <string>
 
 #include <xf86drmMode.h>
-#include <cutils/log.h>
 
 namespace android {
 
@@ -44,9 +43,9 @@ void DrmProperty::Init(drmModePropertyPtr p, uint64_t value) {
   name_ = p->name;
   value_ = value;
 
-  for (int i = 0; i < p->count_values; ++i){
+  for (int i = 0; i < p->count_values; ++i)
     values_.push_back(p->values[i]);
-  }
+
   for (int i = 0; i < p->count_enums; ++i)
     enums_.push_back(DrmPropertyEnum(&p->enums[i]));
 
