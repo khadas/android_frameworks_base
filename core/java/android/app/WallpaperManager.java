@@ -55,6 +55,7 @@ import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.WindowManager;
 import android.view.WindowManagerGlobal;
 
 import libcore.io.IoUtils;
@@ -310,7 +311,10 @@ public class WallpaperManager {
                 mCachedWallpaper = null;
                 mCachedWallpaperUserId = 0;
                 try {
-                    mCachedWallpaper = getCurrentWallpaperLocked(userId);
+		    if("true".equals(SystemProperties.get("ro.wallpaper.fixsize")))
+		    	mCachedWallpaper = getCurrentWallpaperLocked(context,userId);
+		    else
+                    	mCachedWallpaper = getCurrentWallpaperLocked(userId);
                     mCachedWallpaperUserId = userId;
                 } catch (OutOfMemoryError e) {
                     Log.w(TAG, "No memory load current wallpaper", e);
@@ -342,6 +346,41 @@ public class WallpaperManager {
           }
         }
 
+	private Bitmap getCurrentWallpaperLocked(Context context,int userId) {
+	  if (mService == null) {
+	                Log.w(TAG, "WallpaperService not running");
+	                return null;
+	            }
+
+	            try {
+	                Bundle params = new Bundle();
+	                ParcelFileDescriptor fd = mService.getWallpaper(this, FLAG_SYSTEM,
+	                        params, userId);
+	                if (fd != null) {
+	                    try {
+				WindowManager mWindowManager = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+				int wW = mWindowManager.getDefaultDisplay().getWidth();
+				int wH = mWindowManager.getDefaultDisplay().getHeight();
+	                        BitmapFactory.Options options = new BitmapFactory.Options();
+			        options.inJustDecodeBounds = true;
+				BitmapFactory.decodeFileDescriptor(
+					fd.getFileDescriptor(), null, options);
+				options.inSampleSize = calculateInSampleSize(options, wW,wH);
+				options.inJustDecodeBounds = false;
+	                        return BitmapFactory.decodeFileDescriptor(
+	                                fd.getFileDescriptor(), null, options);
+	                    } catch (OutOfMemoryError e) {
+	                        Log.w(TAG, "Can't decode file", e);
+	                    } finally {
+	                        IoUtils.closeQuietly(fd);
+	                    }
+	                }
+	            } catch (RemoteException e) {
+	                throw e.rethrowFromSystemServer();
+	            }
+	            return null;
+	        }
+
         private Bitmap getCurrentWallpaperLocked(int userId) {
             if (mService == null) {
                 Log.w(TAG, "WallpaperService not running");
@@ -369,11 +408,32 @@ public class WallpaperManager {
             return null;
         }
 
+        private int calculateInSampleSize(BitmapFactory.Options options,int reqWidth, int reqHeight){
+                  int width = options.outWidth;
+                  int height = options.outHeight;
+                  int inSampleSize = 1;
+                  if (width > reqWidth && height > reqHeight){
+                int widthRatio = Math.round((float) width / (float) reqWidth);
+                int heightRatio = Math.round((float) width / (float) reqWidth);
+                inSampleSize = Math.max(widthRatio, heightRatio);
+                  }
+                  return inSampleSize;
+        }
+
         private Bitmap getDefaultWallpaper(Context context, @SetWallpaperFlags int which) {
+            WindowManager mWindowManager = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+            int wW = mWindowManager.getDefaultDisplay().getWidth();
+            int wH = mWindowManager.getDefaultDisplay().getHeight();
             InputStream is = openDefaultWallpaper(context, which);
             if (is != null) {
                 try {
                     BitmapFactory.Options options = new BitmapFactory.Options();
+		    if("true".equals(SystemProperties.get("ro.wallpaper.fixsize"))){
+                    	options.inJustDecodeBounds = true;
+                    	BitmapFactory.decodeStream(is, null, options);
+                    	options.inSampleSize = calculateInSampleSize(options, wW,wH);
+                    	options.inJustDecodeBounds = false;
+		    }
                     return BitmapFactory.decodeStream(is, null, options);
                 } catch (OutOfMemoryError e) {
                     Log.w(TAG, "Can't decode stream", e);

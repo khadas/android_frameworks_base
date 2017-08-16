@@ -229,7 +229,7 @@ public class ImageWallpaper extends WallpaperService {
                 surfaceHeight = Math.max(displayInfo.logicalHeight, mBackgroundHeight);
             }
 
-            if (FIXED_SIZED_SURFACE) {
+            if (FIXED_SIZED_SURFACE && (!"true".equals(SystemProperties.get("ro.wallpaper.fixsize")))) {
                 // Used a fixed size surface, because we are special.  We can do
                 // this because we know the current design of window animations doesn't
                 // cause this to break.
