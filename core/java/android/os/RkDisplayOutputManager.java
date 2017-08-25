@@ -121,11 +121,12 @@ public class RkDisplayOutputManager {
         }
         mService = IRkDisplayDeviceManagementService.Stub.asInterface(b);
 
+        int mMainState = getCurrentDpyConnState(MAIN_DISPLAY);
         try {
             // Get main display interface
             String[] display_iface = mService.listInterfaces(MAIN_DISPLAY);
             if(DBG) Log.d(TAG, "main display iface num is " + display_iface.length);
-            if(display_iface != null && display_iface.length > 0) {
+            if(display_iface != null && display_iface.length > 0 &&  mMainState==DRM_MODE_CONNECTED) {
                 m_main_iface = new int[display_iface.length];
                 for(int i = 0; i < m_main_iface.length; i++) {
                 if(DBG) Log.d(TAG, display_iface[i]);

@@ -189,7 +189,19 @@ static void nativeInit(JNIEnv* env, jobject obj) {
         drm_->Init();
         ALOGD("nativeInit: ");
         hotPlugUpdate();
-        ALOGD("primary: %p extend: %p", primary, extend);    
+        if (primary == NULL) {
+            for (auto &conn : drm_->connectors()) {
+                if ((conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT)) {
+                    drm_->SetPrimaryDisplay(conn.get());
+                    primary = conn.get();
+                }
+                if ((conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT) && conn->state() == DRM_MODE_CONNECTED) {
+                    drm_->SetExtendDisplay(conn.get());
+                    extend = conn.get();
+                }
+            }
+        }
+        ALOGD("primary: %p extend: %p", primary, extend);
     }
 }
 
@@ -635,7 +647,8 @@ static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
 
     if (display == HWC_DISPLAY_PRIMARY) {
         mCurConnector = primary;
-        mModes = primary->modes();
+        if (primary != NULL)
+            mModes = primary->modes();
         ALOGD("primary built_in %d", mCurConnector->built_in());
     }else if (display == HWC_DISPLAY_EXTERNAL){
         if (extend != NULL) {
