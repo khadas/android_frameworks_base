@@ -209,6 +209,7 @@ final class Constants {
     static final String PROPERTY_PREFERRED_ADDRESS_PLAYBACK = "persist.sys.hdmi.addr.playback";
     static final String PROPERTY_PREFERRED_ADDRESS_TV = "persist.sys.hdmi.addr.tv";
 
+    static final String PROPERTY_DEVICE_CEC_ENABLE = "persist.sys.hdmi.cec_enable";
     // Property name for the local device configurations.
     // TODO(OEM): OEM should provide this property, and the value is the comma separated integer
     //     values which denotes the device type in HDMI Spec 1.4.

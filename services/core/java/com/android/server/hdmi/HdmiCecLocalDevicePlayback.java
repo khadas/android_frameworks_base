@@ -152,6 +152,10 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
     void onHotplug(int portId, boolean connected) {
         assertRunOnServiceThread();
         mCecMessageCache.flushAll();
+        Slog.w(TAG,"onHotplug portId:"+portId +",connected:"+connected);
+        if(connected){
+         mService.touchTv();
+        }
         // We'll not clear mIsActiveSource on the hotplug event to pass CETC 11.2.2-2 ~ 3.
         if (WAKE_ON_HOTPLUG && connected && mService.isPowerStandbyOrTransient()) {
             mService.wakeUp();
@@ -224,7 +228,8 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
 
     @Override
     protected boolean canGoToStandby() {
-        return !getWakeLock().isHeld();
+        //return !getWakeLock().isHeld();
+        return true;
     }
 
     @Override

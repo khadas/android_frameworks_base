@@ -19,6 +19,7 @@ package android.hardware.hdmi;
 import android.annotation.SystemApi;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.SystemProperties;
 
 /**
  * A class to encapsulate device information for HDMI devices including CEC and MHL. In terms of
@@ -407,7 +408,13 @@ public class HdmiDeviceInfo implements Parcelable {
      * Returns display (OSD) name of the device.
      */
     public String getDisplayName() {
-        return mDisplayName;
+        String mDisplayName_RK;
+
+        mDisplayName_RK = SystemProperties.get("persist.sys.exdevicename", "box");
+        if("box".equals(SystemProperties.get("ro.target.product",  "unknown")))
+            return mDisplayName_RK;
+        else
+            return mDisplayName;
     }
 
     /**

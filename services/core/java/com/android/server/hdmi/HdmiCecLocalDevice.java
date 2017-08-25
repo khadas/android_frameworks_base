@@ -22,7 +22,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.util.Slog;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
@@ -35,7 +37,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
+import android.util.Log;
+import android.hardware.hdmi.HdmiControlManager;
 /**
  * Class that models a logical CEC device hosted in this system. Handles initialization,
  * CEC commands that call for actions customized per device type.
@@ -226,6 +229,7 @@ abstract class HdmiCecLocalDevice {
         if (dest != mAddress && dest != Constants.ADDR_BROADCAST) {
             return false;
         }
+		
         // Cache incoming message. Note that it caches only white-listed one.
         mCecMessageCache.cacheMessage(message);
         return onMessage(message);
@@ -234,6 +238,9 @@ abstract class HdmiCecLocalDevice {
     @ServiceThreadOnly
     protected final boolean onMessage(HdmiCecMessage message) {
         assertRunOnServiceThread();
+		if(message.getOpcode() == Constants.MESSAGE_REPORT_POWER_STATUS && message.getSource() == 0){
+			mService.sendPowerStatusChanged(HdmiControlManager.TYPE_HDMI_CEC_TV, (int)(message.getParams()[0]));
+		}
         if (dispatchMessageToAction(message)) {
             return true;
         }
@@ -367,7 +374,18 @@ abstract class HdmiCecLocalDevice {
 
     @ServiceThreadOnly
     protected boolean handleRequestActiveSource(HdmiCecMessage message) {
-        return false;
+        assertRunOnServiceThread();
+        // Note that since this method is called after physical address allocation is done,
+        // mDeviceInfo should not be null.
+        HdmiCecMessage cecMessage = HdmiCecMessageBuilder.buildActiveSource(
+                mAddress, mDeviceInfo.getPhysicalAddress());
+        if (cecMessage != null) {
+            mService.sendCecCommand(cecMessage);
+        } else {
+            Slog.w(TAG, "Failed to build <Request Active Source>:" + mDeviceInfo.getPhysicalAddress());
+        }
+        return true;
+
     }
 
     @ServiceThreadOnly
@@ -436,12 +454,17 @@ abstract class HdmiCecLocalDevice {
     @ServiceThreadOnly
     protected boolean handleStandby(HdmiCecMessage message) {
         assertRunOnServiceThread();
-        // Seq #12
-        if (mService.isControlEnabled() && !mService.isProhibitMode()
-                && mService.isPowerOnOrTransient()) {
-            mService.standby();
-            return true;
-        }
+		Log.i(TAG, "receive standby command:" + message);
+		if(message.getSource() == 0)
+			mService.sendPowerStatusChanged(HdmiControlManager.TYPE_HDMI_CEC_TV,  HdmiControlManager.POWER_STATUS_STANDBY);
+		String isStandby = SystemProperties.get("persist.sys.cecstanbyen", "1");
+		if(isStandby.equals("1")){
+				if (mService.isControlEnabled() && !mService.isProhibitMode()&& mService.isPowerOnOrTransient()) {
+				mService.standby();
+				return true;
+			}
+		}
+		
         return false;
     }
 
@@ -459,6 +482,7 @@ abstract class HdmiCecLocalDevice {
 
         final long downTime = SystemClock.uptimeMillis();
         final byte[] params = message.getParams();
+		Log.d(TAG, "UserControlPressed params =" + params[0]);
         final int keycode = HdmiCecKeycode.cecKeycodeAndParamsToAndroidKey(params);
         int keyRepeatCount = 0;
         if (mLastKeycode != HdmiCecKeycode.UNSUPPORTED_KEYCODE) {
@@ -915,4 +939,9 @@ abstract class HdmiCecLocalDevice {
         pw.println("mActiveSource: " + mActiveSource);
         pw.println(String.format("mActiveRoutingPath: 0x%04x", mActiveRoutingPath));
     }
+	
+	/**Get device logic address*/
+	public int getLogicAddress(){
+		return mAddress;
+	}
 }

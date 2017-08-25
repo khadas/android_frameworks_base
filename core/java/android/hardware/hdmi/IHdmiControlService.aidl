@@ -71,4 +71,10 @@ interface IHdmiControlService {
     void clearTimerRecording(int recorderAddress, int sourceType, in byte[] recordSource);
     void sendMhlVendorCommand(int portId, int offset, int length, in byte[] data);
     void addHdmiMhlVendorCommandListener(IHdmiMhlVendorCommandListener listener);
+	//send cec command
+	void sendControlCommand(int src, int targetAddress, int opCode, in byte[] params);
+	//get local address for specific type
+	int getLocalAddress(int type);
+	//get power status
+	int getPowerStatus();
 }

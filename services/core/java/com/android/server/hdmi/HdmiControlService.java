@@ -28,7 +28,7 @@ import static com.android.server.hdmi.Constants.OPTION_MHL_ENABLE;
 import static com.android.server.hdmi.Constants.OPTION_MHL_INPUT_SWITCHING;
 import static com.android.server.hdmi.Constants.OPTION_MHL_POWER_CHARGE;
 import static com.android.server.hdmi.Constants.OPTION_MHL_SERVICE_CONTROL;
-
+import android.view.InputEventReceiver;
 import android.annotation.Nullable;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
@@ -49,6 +49,8 @@ import android.hardware.hdmi.IHdmiMhlVendorCommandListener;
 import android.hardware.hdmi.IHdmiRecordListener;
 import android.hardware.hdmi.IHdmiSystemAudioModeChangeListener;
 import android.hardware.hdmi.IHdmiVendorCommandListener;
+import android.hardware.hdmi.HdmiPlaybackClient.OneTouchPlayCallback;
+import android.hardware.hdmi.HdmiPlaybackClient;
 import android.media.AudioManager;
 import android.media.tv.TvInputManager;
 import android.media.tv.TvInputManager.TvInputCallback;
@@ -69,7 +71,7 @@ import android.util.ArraySet;
 import android.util.Slog;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
-
+import android.hardware.display.DisplayManager;
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.util.IndentingPrintWriter;
 import com.android.server.SystemService;
@@ -89,7 +91,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.InputEvent;
+import android.view.InputChannel;
+import android.view.InputDevice;
+import android.view.InputEventReceiver;
+import android.view.Display;
+import android.hardware.input.InputManager;
+import android.hardware.input.InputManager.InputDeviceListener;
 /**
  * Provides a service for sending and processing HDMI control messages,
  * HDMI-CEC and MHL control command, and providing the information on both standard.
@@ -150,13 +160,19 @@ public final class HdmiControlService extends SystemService {
             assertRunOnServiceThread();
             switch (intent.getAction()) {
                 case Intent.ACTION_SCREEN_OFF:
+                    Log.i(TAG, "HdmiControlBroadcastReceiver SCREEN_OFF");
                     if (isPowerOnOrTransient()) {
+                        //standbyTv();
                         onStandby(STANDBY_SCREEN_OFF);
                     }
                     break;
                 case Intent.ACTION_SCREEN_ON:
+               //     Log.i(TAG, "HdmiControlBroadcastReceiver 2");
                     if (isPowerStandbyOrTransient()) {
+                        Log.i(TAG, "HdmiControlBroadcastReceiver SCREEN_ON");
+                        touchTv();
                         onWakeUp();
+                        //touchTv();
                     }
                     break;
                 case Intent.ACTION_CONFIGURATION_CHANGED:
@@ -294,7 +310,11 @@ public final class HdmiControlService extends SystemService {
 
     @Nullable
     private PowerManager mPowerManager;
-
+	
+	private DisplayManager mDisplayManager;
+	
+	private InputManager mInputManager;
+	
     // Last input port before switching to the MHL port. Should switch back to this port
     // when the mobile device sends the request one touch play with off.
     // Gets invalidated if we go to other port/input.
@@ -390,6 +410,7 @@ public final class HdmiControlService extends SystemService {
     public void onStart() {
         mIoThread.start();
         mPowerStatus = HdmiControlManager.POWER_STATUS_TRANSIENT_TO_ON;
+		//sendPowerStatusChanged();
         mProhibitMode = false;
         mHdmiControlEnabled = readBooleanSetting(Global.HDMI_CONTROL_ENABLED, true);
         mMhlInputChangeEnabled = readBooleanSetting(Global.MHL_INPUT_SWITCHING_ENABLED, true);
@@ -400,13 +421,13 @@ public final class HdmiControlService extends SystemService {
                 initializeCec(INITIATED_BY_BOOT_UP);
             }
         } else {
-            Slog.i(TAG, "Device does not support HDMI-CEC.");
+            Log.i(TAG, "Device does not support HDMI-CEC.");
             return;
         }
 
         mMhlController = HdmiMhlControllerStub.create(this);
         if (!mMhlController.isReady()) {
-            Slog.i(TAG, "Device does not support MHL-control.");
+            Log.i(TAG, "Device does not support MHL-control.");
         }
         mMhlDevices = Collections.emptyList();
 
@@ -427,6 +448,7 @@ public final class HdmiControlService extends SystemService {
             registerContentObserver();
         }
         mMhlController.setOption(OPTION_MHL_SERVICE_CONTROL, ENABLED);
+		
     }
 
     @Override
@@ -462,6 +484,7 @@ public final class HdmiControlService extends SystemService {
     private void onInitializeCecComplete(int initiatedBy) {
         if (mPowerStatus == HdmiControlManager.POWER_STATUS_TRANSIENT_TO_ON) {
             mPowerStatus = HdmiControlManager.POWER_STATUS_ON;
+			sendPowerStatusChanged(HdmiControlManager.TYPE_HDMI_CEC_BOX, mPowerStatus);
         }
         mWakeUpMessageReceived = false;
 
@@ -834,12 +857,17 @@ public final class HdmiControlService extends SystemService {
      * @param command CEC command to send out
      * @param callback interface used to the result of send command
      */
-    @ServiceThreadOnly
+    //@ServiceThreadOnly
     void sendCecCommand(HdmiCecMessage command, @Nullable SendMessageCallback callback) {
-        assertRunOnServiceThread();
+        if("false".equals(SystemProperties.get(Constants.PROPERTY_DEVICE_CEC_ENABLE,"true")))
+               return ;
+
+        //assertRunOnServiceThread();
         if (mMessageValidator.isValid(command) == HdmiCecMessageValidator.OK) {
+		//	Log.i(TAG, "sendCecCommand->valid message type");
             mCecController.sendCommand(command, callback);
         } else {
+	//		Log.i(TAG, "sendCecCommand->Invalid message type:" + command);
             HdmiLogger.error("Invalid message type:" + command);
             if (callback != null) {
                 callback.onSendCompleted(Constants.SEND_RESULT_FAILURE);
@@ -847,9 +875,9 @@ public final class HdmiControlService extends SystemService {
         }
     }
 
-    @ServiceThreadOnly
+    //@ServiceThreadOnly
     void sendCecCommand(HdmiCecMessage command) {
-        assertRunOnServiceThread();
+        //assertRunOnServiceThread();
         sendCecCommand(command, null);
     }
 
@@ -868,6 +896,10 @@ public final class HdmiControlService extends SystemService {
     @ServiceThreadOnly
     boolean handleCecCommand(HdmiCecMessage message) {
         assertRunOnServiceThread();
+        if("false".equals(SystemProperties.get(Constants.PROPERTY_DEVICE_CEC_ENABLE,"true")))
+               return true;
+
+		Log.i(TAG, "handleCecCommand:" + message);
         if (!mAddressAllocated) {
             mCecMessageBuffer.bufferMessage(message);
             return true;
@@ -899,7 +931,7 @@ public final class HdmiControlService extends SystemService {
         }
 
         if (message.getDestination() != Constants.ADDR_BROADCAST) {
-            HdmiLogger.warning("Unhandled cec command:" + message);
+           // HdmiLogger.warning("Unhandled cec command:" + message);
         }
         return false;
     }
@@ -913,7 +945,6 @@ public final class HdmiControlService extends SystemService {
     @ServiceThreadOnly
     void onHotplug(int portId, boolean connected) {
         assertRunOnServiceThread();
-
         if (connected && !isTvDevice()) {
             ArrayList<HdmiCecLocalDevice> localDevices = new ArrayList<>();
             for (int type : mLocalDevices) {
@@ -991,7 +1022,7 @@ public final class HdmiControlService extends SystemService {
     }
 
     void announceSystemAudioModeChange(boolean enabled) {
-        synchronized (mLock) {
+           synchronized (mLock) {
             for (SystemAudioModeChangeListenerRecord record :
                     mSystemAudioModeChangeListenerRecords) {
                 invokeSystemAudioModeChangeLocked(record.mListener, enabled);
@@ -1688,6 +1719,25 @@ public final class HdmiControlService extends SystemService {
             pw.decreaseIndent();
             pw.println("mPowerStatus: " + mPowerStatus);
         }
+		
+		@Override
+		public void sendControlCommand(int src, int targetAddress, int opCode, byte[] params){
+			HdmiCecMessage cecMessage = new HdmiCecMessage(src, targetAddress, opCode, params);
+			sendCecCommand(cecMessage);
+		}
+		
+		@Override
+		public int getLocalAddress(int type){
+			HdmiCecLocalDevice device = mCecController.getLocalDevice(type);
+			if(device != null)
+				return device.getLogicAddress();
+			return -1;
+		}
+		
+		@Override
+		public int getPowerStatus(){
+			return HdmiControlService.this.getPowerStatus();
+		}
     }
 
     @ServiceThreadOnly
@@ -1975,7 +2025,7 @@ public final class HdmiControlService extends SystemService {
 
     @ServiceThreadOnly
     int getPowerStatus() {
-        assertRunOnServiceThread();
+        //assertRunOnServiceThread();
         return mPowerStatus;
     }
 
@@ -2024,6 +2074,7 @@ public final class HdmiControlService extends SystemService {
     private void onWakeUp() {
         assertRunOnServiceThread();
         mPowerStatus = HdmiControlManager.POWER_STATUS_TRANSIENT_TO_ON;
+		sendPowerStatusChanged(HdmiControlManager.TYPE_HDMI_CEC_BOX, mPowerStatus);
         if (mCecController != null) {
             if (mHdmiControlEnabled) {
                 int startReason = INITIATED_BY_SCREEN_ON;
@@ -2048,6 +2099,7 @@ public final class HdmiControlService extends SystemService {
             mPowerStatus = HdmiControlManager.POWER_STATUS_STANDBY;
             return;
         }
+        sendPowerStatusChanged(HdmiControlManager.TYPE_HDMI_CEC_BOX, mPowerStatus);
 
         final List<HdmiCecLocalDevice> devices = getAllLocalDevices();
         disableDevices(new PendingActionClearedCallback() {
@@ -2101,6 +2153,7 @@ public final class HdmiControlService extends SystemService {
 
     @ServiceThreadOnly
     private void clearLocalDevices() {
+        Slog.v(TAG, "clearLocalDevices");
         assertRunOnServiceThread();
         if (mCecController == null) {
             return;
@@ -2118,6 +2171,7 @@ public final class HdmiControlService extends SystemService {
             return;
         }
         mPowerStatus = HdmiControlManager.POWER_STATUS_STANDBY;
+		sendPowerStatusChanged(HdmiControlManager.TYPE_HDMI_CEC_BOX, mPowerStatus);
         for (HdmiCecLocalDevice device : mCecController.getLocalDeviceList()) {
             device.onStandby(mStandbyMessageReceived, standbyAction);
         }
@@ -2224,7 +2278,6 @@ public final class HdmiControlService extends SystemService {
     @ServiceThreadOnly
     void setControlEnabled(boolean enabled) {
         assertRunOnServiceThread();
-
         synchronized (mLock) {
             mHdmiControlEnabled = enabled;
         }
@@ -2333,7 +2386,6 @@ public final class HdmiControlService extends SystemService {
 
    void setMhlInputChangeEnabled(boolean enabled) {
        mMhlController.setOption(OPTION_MHL_INPUT_SWITCHING, toInt(enabled));
-
         synchronized (mLock) {
             mMhlInputChangeEnabled = enabled;
         }
@@ -2363,4 +2415,54 @@ public final class HdmiControlService extends SystemService {
         getContext().sendBroadcastAsUser(intent, UserHandle.ALL,
                 HdmiControlService.PERMISSION);
     }
+
+
+//tell the tv ,go to standby now
+	public void standbyTv(){
+		if(mCecController != null){
+			HdmiCecLocalDevice playBackDevice = mCecController.getLocalDevice(HdmiDeviceInfo.DEVICE_PLAYBACK);
+			int playBackAddrss = playBackDevice.getLogicAddress();
+			byte[] cecParam = new byte[0];
+			final HdmiCecMessage cecMessage = new HdmiCecMessage(playBackAddrss, 0, 0x36, cecParam);
+			sendCecCommand(cecMessage, new SendMessageCallback(){
+				public void onSendCompleted(int error){
+					if(error == Constants.SEND_RESULT_SUCCESS){
+						sendPowerStatusChanged(HdmiControlManager.TYPE_HDMI_CEC_TV, HdmiControlManager.POWER_STATUS_STANDBY);
+						Log.i(TAG, "standbyTv->sendCecCommand success");
+					}
+					else
+						Log.i(TAG, "standbyTv->sendCecCommand failed");
+				}
+			});
+		}
+	}
+
+//tell the tv ,wake up now
+	public void touchTv(){
+                assertRunOnServiceThread();
+		Log.i(TAG, "touchTv-1");
+                oneTouchPlay( new IHdmiControlCallback.Stub() {
+                	@Override
+		 	public void onComplete(int result) throws RemoteException {
+                                if (result != HdmiControlManager.RESULT_SUCCESS) {
+                                        Log.i(TAG, "One touch play failed: " + result);
+                                } else {
+                                        Log.i(TAG, "One touch play succeed: " + result);
+
+                                }
+                	}
+            });
+	}
+
+
+	public void sendPowerStatusChanged(int deviceType, int powerStatus){
+		Log.i(TAG, "sendPowerStatusChanged");
+		Intent intent = new Intent(HdmiControlManager.POWER_STATUS_CHANGED);
+		intent.putExtra(HdmiControlManager.HDMI_CEC_POWER_STATUS, powerStatus);
+		intent.putExtra(HdmiControlManager.HDMI_CEC_DEVICE_TYPE, deviceType);
+                intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+		getContext().sendBroadcast(intent);
+	}
+	
+	
 }

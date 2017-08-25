@@ -90,6 +90,11 @@ import static android.os.PowerManagerInternal.WAKEFULNESS_AWAKE;
 import static android.os.PowerManagerInternal.WAKEFULNESS_DOZING;
 import static android.os.PowerManagerInternal.WAKEFULNESS_DREAMING;
 
+//FOR CEC
+import android.hardware.hdmi.*;
+import android.os.ServiceManager;
+
+
 /**
  * The power manager service is responsible for coordinating power management
  * functions on the device.
@@ -1283,6 +1288,22 @@ public final class PowerManagerService extends SystemService
         }
 
         Trace.traceBegin(Trace.TRACE_TAG_POWER, "goToSleep");
+        //FOR CEC standbyTv
+       if("box".equals(SystemProperties.get("ro.target.product",  "unknown"))){
+        	IBinder playBinder = ServiceManager.getService(Context.HDMI_CONTROL_SERVICE);
+        	if(playBinder!=null){
+        		IHdmiControlService mControlService = IHdmiControlService.Stub.asInterface(playBinder);
+                	if(mControlService!=null){
+        		try {
+           			Slog.i(TAG, "send cec standby command to TV");
+           			mControlService.sendControlCommand(mControlService.getLocalAddress(HdmiDeviceInfo.DEVICE_PLAYBACK), 0 , 0x36, new byte[]{});
+        		} catch (Exception e) {
+                	        Slog.i(TAG, "fail to send cec standby command to TV" + e);
+        		}
+                	}
+        	}
+        }
+
         try {
             switch (reason) {
                 case PowerManager.GO_TO_SLEEP_REASON_DEVICE_ADMIN:

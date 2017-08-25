@@ -562,7 +562,7 @@ final class HdmiCecController {
     @ServiceThreadOnly
     void sendCommand(final HdmiCecMessage cecMessage,
             final HdmiControlService.SendMessageCallback callback) {
-        assertRunOnServiceThread();
+      //  assertRunOnServiceThread();
         runOnIoThread(new Runnable() {
             @Override
             public void run() {

@@ -255,6 +255,16 @@ public final class HdmiControlManager {
     // True if we have a logical device of type TV hosted in the system.
     private final boolean mHasTvDevice;
 
+	//Broadcast action for power status changed
+	public static final String POWER_STATUS_CHANGED = "com.rockchip.hdmicec.power_status_changed";
+	//The key for box power status
+	public static final String HDMI_CEC_POWER_STATUS = "hdmi_cec_power_status";
+	//The key for hdmi cec device type
+	public static final String HDMI_CEC_DEVICE_TYPE = "hdmi_cec_device_type";
+	//box type
+	public static final int TYPE_HDMI_CEC_BOX = 0;
+	//tv type
+	public static final int TYPE_HDMI_CEC_TV= 1;
     /**
      * {@hide} - hide this constructor because it has a parameter of type IHdmiControlService,
      * which is a system private class. The right way to create an instance of this class is
