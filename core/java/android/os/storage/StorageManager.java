@@ -143,7 +143,8 @@ public class StorageManager {
     };
     private static final String[] INTERNAL_STORAGE_SIZE_PATHS_ALTERNATIVE = {
             "/sys/block/mmcblk1/size",
-            "/sys/block/sda/size"
+            "/sys/block/sda/size",
+	    "/sys/block/rknand_userdata/size"
     };
     private static String platform=SystemProperties.get("ro.board.platform", "unknow");
     private static boolean alternative_path=platform.equals("rk3368")||platform.equals("rk3399");
