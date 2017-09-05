@@ -34,6 +34,8 @@ import android.util.Log;
 import libcore.util.ZoneInfoDB;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class provides access to the system alarm services.  These allow you
@@ -1110,5 +1112,198 @@ public class AlarmManager {
                 return new AlarmClockInfo[size];
             }
         };
+    }
+
+    /**
+     * Current App alarm strategy.
+     *
+     * @hide
+     */
+    public static final String APP_ALARM_STRATEGY_PROP = "persist.sys.alarm.strategy";
+
+    /**
+     * Save for fixed App alarm trigger interval.
+     *
+     * fixed2 strategy only.
+     *
+     * @hide
+     */
+    public static final String APP_ALARM_FIXED_INTERVAL = "persist.sys.alarm.fixed";
+
+    /**
+     * The strategy for App alarm when screen off.
+     * @hide
+     */
+    public enum ScreenOffAlarmStrategy {
+        SCREEN_OFF_ALARM_STRATEGY_NONE,
+        SCREEN_OFF_ALARM_STRATEGY_FIXED2
+    }
+
+    /**
+     * The config for App alarms when screen off.
+     *
+     * files:
+     * /system/etc/alarm_window_conf.xml
+     * /data/system/alarm_window_conf.xml (overwrites above file)
+     *
+     * @hide
+     */
+    public static final class AppAlarmConfig implements Parcelable {
+        public ScreenOffAlarmStrategy mAlarmStrategy =
+            ScreenOffAlarmStrategy.SCREEN_OFF_ALARM_STRATEGY_NONE;
+
+        public long mAppAlarmRepeatAlignment = 0L;
+        public long mAppAlarmFixedAlignment = 0L;
+        public long mAppAlarmSkipShort = 0L;
+
+
+	public boolean mIsStrict = true;
+	public boolean mAppAlarmIgnoreTop = false;
+	public boolean mSkipNonWakeup = true;
+	public boolean mAlignNonWakeup = false;
+	public boolean mAlignSystemAlarm = false;
+
+        public Map<String, String> mAppAlarmWhiteList = new HashMap<String, String>();
+        public Map<String, String> mAppAlarmBlackList = new HashMap<String, String>();
+
+        public AppAlarmConfig() {
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel out, int flags) {
+
+		out.writeString(mAlarmStrategy.name());
+
+		out.writeLong(mAppAlarmRepeatAlignment);
+		out.writeLong(mAppAlarmFixedAlignment);
+		out.writeLong(mAppAlarmSkipShort);
+
+		out.writeInt(mIsStrict ? 1 : 0);
+		out.writeInt(mAppAlarmIgnoreTop ? 1 : 0);
+		out.writeInt(mSkipNonWakeup ? 1 : 0);
+		out.writeInt(mAlignNonWakeup ? 1 : 0);
+		out.writeInt(mAlignSystemAlarm ? 1 : 0);
+
+		out.writeMap(mAppAlarmWhiteList);
+		out.writeMap(mAppAlarmBlackList);
+        }
+
+        public static final Parcelable.Creator<AppAlarmConfig> CREATOR
+            = new Parcelable.Creator<AppAlarmConfig>() {
+                @Override
+                public AppAlarmConfig createFromParcel(Parcel in) {
+                    return new AppAlarmConfig(in);
+                }
+
+                @Override
+                public AppAlarmConfig[] newArray(int size) {
+                    return new AppAlarmConfig[size];
+                }
+        };
+
+        private AppAlarmConfig(Parcel in) {
+            String strategy = in.readString();
+            try {
+                mAlarmStrategy = Enum.valueOf(ScreenOffAlarmStrategy.class, strategy);
+            } catch (Exception e) {
+                mAlarmStrategy = ScreenOffAlarmStrategy.SCREEN_OFF_ALARM_STRATEGY_NONE;
+            }
+
+            mAppAlarmRepeatAlignment = in.readLong();
+            mAppAlarmFixedAlignment = in.readLong();
+            mAppAlarmSkipShort = in.readLong();
+
+            mIsStrict = (in.readInt() == 1);
+            mAppAlarmIgnoreTop = (in.readInt() == 1);
+            mSkipNonWakeup = (in.readInt() == 1);
+            mAlignSystemAlarm = (in.readInt() == 1);
+
+            mAppAlarmWhiteList = in.readHashMap(null);
+            mAppAlarmBlackList = in.readHashMap(null);
+        }
+
+        public void restoreToDefault() {
+            mAlarmStrategy = ScreenOffAlarmStrategy.SCREEN_OFF_ALARM_STRATEGY_NONE;
+
+            mAppAlarmRepeatAlignment = 0L;
+            mAppAlarmFixedAlignment = 0L;
+            mAppAlarmSkipShort = 0L;
+
+	    mIsStrict = true;
+	    mAppAlarmIgnoreTop = false;
+	    mSkipNonWakeup = true;
+	    mAlignNonWakeup = false;
+	    mAlignSystemAlarm = false;
+
+            mAppAlarmWhiteList = new HashMap<String, String>();
+            mAppAlarmBlackList = new HashMap<String, String>();
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("strategy:").append(mAlarmStrategy);
+            sb.append(", repeat alignment:").append(mAppAlarmRepeatAlignment);
+            sb.append(", fixed alignment:").append(mAppAlarmFixedAlignment);
+            sb.append(", skip short interval:").append(mAppAlarmSkipShort);
+            sb.append(", strict:").append(mIsStrict);
+            sb.append(", ignore top:").append(mAppAlarmIgnoreTop);
+            sb.append(", skip nonwakeup:").append(mSkipNonWakeup);
+            sb.append(", align system alarm:").append(mAlignSystemAlarm);
+            sb.append(", whitelist size:").append(
+                    mAppAlarmWhiteList == null ? 0 : mAppAlarmWhiteList.size());
+            sb.append(", blacklist size:").append(
+                    mAppAlarmBlackList == null ? 0 : mAppAlarmBlackList.size());
+            return sb.toString();
+        }
+    }
+
+    /**
+     * Get current alarm configs.
+     *
+     * @param parseXml read the Xml config files when true, otherwise, return current config directly
+     * @param update if parseXml is true, update the config in AlarmManagerService
+     *
+     * @return the config object
+     * @hide
+     */
+    public AppAlarmConfig getAppAlarmConfig(boolean parseXml, boolean update) {
+        AppAlarmConfig result = null;
+        try {
+            result = mService.getAppAlarmConfig(parseXml, update);
+        } catch (RemoteException ex) {
+        }
+        return result;
+    }
+
+    /**
+     * Set current alarm configs.
+     *
+     * @param alarmConfig the config object
+     * @param update update the config object in AlarmManagerService
+     * @param persist save to Xml file
+     *
+     * @return true if success
+     *
+     * @hide
+     */
+    public boolean setAppAlarmConfig(AppAlarmConfig alarmConfig, boolean update,
+            boolean persist) {
+        boolean result = false;
+        if (alarmConfig != null && (update || persist)) {
+            try {
+                result = mService.setAppAlarmConfig(alarmConfig, update, persist);
+            } catch (RemoteException ex) {
+            }
+        } else {
+            // noop, return early
+            result = true;
+        }
+        return result;
     }
 }

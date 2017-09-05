@@ -17,3 +17,4 @@
 package android.app;
 
 parcelable AlarmManager.AlarmClockInfo;
+parcelable AlarmManager.AppAlarmConfig;

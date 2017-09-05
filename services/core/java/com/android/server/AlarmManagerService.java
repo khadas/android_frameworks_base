@@ -36,6 +36,7 @@ import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -80,6 +81,7 @@ import static android.app.AlarmManager.RTC_WAKEUP;
 import static android.app.AlarmManager.RTC;
 import static android.app.AlarmManager.ELAPSED_REALTIME_WAKEUP;
 import static android.app.AlarmManager.ELAPSED_REALTIME;
+import static android.app.AlarmManager.ScreenOffAlarmStrategy.SCREEN_OFF_ALARM_STRATEGY_NONE;
 
 import com.android.internal.util.LocalLog;
 
@@ -98,6 +100,8 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
 
+import com.android.server.AlarmAlignmentManager.AlarmExtraData;
+import com.android.server.AlarmAlignmentManager.AlarmAlignmentInfo;
 class AlarmManagerService extends SystemService {
     private static final int RTC_WAKEUP_MASK = 1 << RTC_WAKEUP;
     private static final int RTC_MASK = 1 << RTC;
@@ -119,6 +123,9 @@ class AlarmManagerService extends SystemService {
     static final boolean RECORD_DEVICE_IDLE_ALARMS = false;
     static final int ALARM_EVENT = 1;
     static final String TIMEZONE_PROPERTY = "persist.sys.timezone";
+    private static final String POWEROFF_ALARM_FEATURE = "ro.power_alarm.feature";
+    private static final String ALARM_POWERON_PROPERTY = "persist.sys.power_on";
+    private static final String ALARM_POWERON_TIME_PROPERTY = "persist.sys.time_up";
 
     private final Intent mBackgroundIntent
             = new Intent().addFlags(Intent.FLAG_FROM_BACKGROUND);
@@ -211,6 +218,7 @@ class AlarmManagerService extends SystemService {
     private final SparseArray<AlarmManager.AlarmClockInfo> mHandlerSparseAlarmClockArray =
             new SparseArray<>();
 
+    private AlarmAlignmentManager mAlarmAlignmentManager;
     /**
      * All times are in milliseconds. These constants are kept synchronized with the system
      * global Settings. Any access to this class or its fields should be done while
@@ -714,6 +722,7 @@ class AlarmManagerService extends SystemService {
     public AlarmManagerService(Context context) {
         super(context);
         mConstants = new Constants(mHandler);
+        mAlarmAlignmentManager = AlarmAlignmentManager.getInstance(this);
     }
 
     static long convertToElapsed(long when, int type) {
@@ -923,6 +932,8 @@ class AlarmManagerService extends SystemService {
 
     @Override
     public void onStart() {
+        // we need to load config asap
+        mAlarmAlignmentManager.loadAlarmWindowConfigs(true, true);
         mNativeData = init();
         mNextWakeup = mNextNonWakeup = 0;
 
@@ -950,7 +961,7 @@ class AlarmManagerService extends SystemService {
         mInteractiveStateReceiver = new InteractiveStateReceiver();
         mUninstallReceiver = new UninstallReceiver();
 
-		//create a xml file to list the packages that will be filterd
+	//create a xml file to list the packages that will be filterd
         rootDir = Environment.getRootDirectory();
         alarmFilter = new File(rootDir, "etc/alarm_filter.xml");
         resolve(alarmFilter);
@@ -984,7 +995,7 @@ class AlarmManagerService extends SystemService {
     }
 
 
-	private void resolve(File file) {
+    private void resolve(File file) {
        if (!file.exists()) {
            Slog.d(TAG, " Failed while trying resolve alarm filter file, not exists");
            return;
@@ -1086,19 +1097,19 @@ class AlarmManagerService extends SystemService {
             return;
         }
 
-		int alarmType = type;
-		if (operation != null){
-	        String pkgName = operation.getTargetPackage();
-	        if (packageList != null) {
-	                if (packageList.contains(pkgName)) {
-	                        if (alarmType == RTC_WAKEUP) {
-	                            alarmType = RTC;
-	                        } else if (alarmType == ELAPSED_REALTIME_WAKEUP) {
-	                            alarmType = ELAPSED_REALTIME;
-	                        }
-	                }
-	        }
+	int alarmType = type;
+
+	if (operation != null && packageList != null) {
+	    if (packageList.contains(callingPackage)) {
+		if (alarmType == RTC_WAKEUP) {
+		    alarmType = RTC;
+		} else if (alarmType == ELAPSED_REALTIME_WAKEUP) {
+		    alarmType = ELAPSED_REALTIME;
 		}
+	    }
+	}
+
+	
         // Sanity check the window length.  This will catch people mistakenly
         // trying to pass an end-of-window timestamp rather than a duration.
         if (windowLength > AlarmManager.INTERVAL_HALF_DAY) {
@@ -1132,7 +1143,28 @@ class AlarmManagerService extends SystemService {
         final long nominalTrigger = convertToElapsed(triggerAtTime, type);
         // Try to prevent spamming by making sure we aren't firing alarms in the immediate future
         final long minTrigger = nowElapsed + mConstants.MIN_FUTURITY;
-        final long triggerElapsed = (nominalTrigger > minTrigger) ? nominalTrigger : minTrigger;
+        // We may need to modify the trigger time
+        /*final*/ long triggerElapsed = (nominalTrigger > minTrigger) ? nominalTrigger : minTrigger;
+        AlarmExtraData extra = null;
+        if (mAlarmAlignmentManager.getStrategy() != SCREEN_OFF_ALARM_STRATEGY_NONE
+                && !mInteractive && !mAlarmAlignmentManager.isCharging()
+                && operation != null
+                && mAlarmAlignmentManager.isFilteredAppAlarm(
+                    operation.getCreatorPackage(), operation.getIntent(),
+                    alarmClock, flags)) {
+            // TODO object pool?
+            AlarmAlignmentInfo info = new AlarmAlignmentInfo(triggerAtTime, triggerElapsed,
+                    interval, windowLength, flags);
+
+            extra = mAlarmAlignmentManager.alignAppAlarm(type, nowElapsed,
+                    nominalTrigger, minTrigger, info);
+
+            triggerAtTime = info.triggerAtTime;
+            triggerElapsed = info.triggerElapsed;
+            windowLength = info.windowLength;
+            interval = info.interval;
+            flags = info.flags;
+        }
 
         final long maxElapsed;
         if (windowLength == AlarmManager.WINDOW_EXACT) {
@@ -1146,26 +1178,38 @@ class AlarmManagerService extends SystemService {
         }
 
         synchronized (mLock) {
-			type = alarmType;
+		type = alarmType;
             if (DEBUG_BATCH) {
                 Slog.v(TAG, "set(" + operation + ") : type=" + type
                         + " triggerAtTime=" + triggerAtTime + " win=" + windowLength
                         + " tElapsed=" + triggerElapsed + " maxElapsed=" + maxElapsed
                         + " interval=" + interval + " flags=0x" + Integer.toHexString(flags));
             }
-            setImplLocked(type, triggerAtTime, triggerElapsed, windowLength, maxElapsed,
-                    interval, operation, directReceiver, listenerTag, flags, true, workSource,
-                    alarmClock, callingUid, callingPackage);
+            if (extra == null) {
+		    setImplLocked(type, triggerAtTime, triggerElapsed, windowLength, maxElapsed,
+                    interval, operation, directReceiver, listenerTag, flags, true, workSource, alarmClock, callingUid, callingPackage);
+            } else {
+                setImplLocked(type, triggerAtTime, triggerElapsed, windowLength, maxElapsed,
+                     interval, operation, directReceiver, listenerTag, flags, true, workSource, alarmClock, callingUid, callingPackage, extra);
+            }
         }
     }
 
     private void setImplLocked(int type, long when, long whenElapsed, long windowLength,
             long maxWhen, long interval, PendingIntent operation, IAlarmListener directReceiver,
-            String listenerTag, int flags, boolean doValidate, WorkSource workSource,
-            AlarmManager.AlarmClockInfo alarmClock, int callingUid, String callingPackage) {
+            String listenerTag, int flags, boolean doValidate, WorkSource workSource,AlarmManager.AlarmClockInfo alarmClock, int callingUid, String callingPackage) {
+	    setImplLocked(type, when, whenElapsed, windowLength,
+            maxWhen, interval, operation, directReceiver,
+            listenerTag, flags, doValidate, workSource, alarmClock, callingUid, callingPackage, null);
+    }
+            
+ private void setImplLocked(int type, long when, long whenElapsed, long windowLength,
+            long maxWhen, long interval, PendingIntent operation, IAlarmListener directReceiver,
+            String listenerTag, int flags, boolean doValidate, WorkSource workSource,AlarmManager.AlarmClockInfo alarmClock, int callingUid, String callingPackage,  AlarmExtraData extra) {
         Alarm a = new Alarm(type, when, whenElapsed, windowLength, maxWhen, interval,
                 operation, directReceiver, listenerTag, workSource, flags, alarmClock,
                 callingUid, callingPackage);
+				a.extra = extra;
         try {
             if (ActivityManagerNative.getDefault().getAppStartMode(callingUid, callingPackage)
                     == ActivityManager.APP_START_MODE_DISABLED) {
@@ -1416,6 +1460,24 @@ class AlarmManagerService extends SystemService {
                     "getNextAlarmClock", null);
 
             return getNextAlarmClockImpl(userId);
+        }
+
+        @Override
+        public AlarmManager.AppAlarmConfig getAppAlarmConfig(boolean parseXml, boolean update) {
+            int callingUid = Binder.getCallingUid();
+            if (Process.ROOT_UID == callingUid || Process.SYSTEM_UID == callingUid) {
+                return mAlarmAlignmentManager.loadAlarmWindowConfigs(parseXml, update);
+            }
+            return null;
+        }
+
+        @Override
+        public boolean setAppAlarmConfig(AlarmManager.AppAlarmConfig alarmConfig, boolean update, boolean persist) {
+            int callingUid = Binder.getCallingUid();
+            if (Process.ROOT_UID == callingUid || Process.SYSTEM_UID == callingUid) {
+                return mAlarmAlignmentManager.persistAppAlarmConfig(alarmConfig, update, persist);
+            }
+            return false;
         }
 
         @Override
@@ -2123,7 +2185,7 @@ class AlarmManagerService extends SystemService {
                 alarmSeconds = when / 1000;
                 alarmNanoseconds = (when % 1000) * 1000 * 1000;
             }
-            
+
             set(mNativeData, type, alarmSeconds, alarmNanoseconds);
         } else {
             Message msg = Message.obtain();
@@ -2173,6 +2235,7 @@ class AlarmManagerService extends SystemService {
     private native int waitForAlarm(long nativeData);
     private native int setKernelTime(long nativeData, long millis);
     private native int setKernelTimezone(long nativeData, int minuteswest);
+    private native int updateRtcAlarm(long nativeData, boolean exsit, long millis);
 
     boolean triggerAlarmsLocked(ArrayList<Alarm> triggerList, final long nowELAPSED,
             final long nowRTC) {
@@ -2298,11 +2361,12 @@ class AlarmManagerService extends SystemService {
         }
     }
     
-    private static class Alarm {
+    static class Alarm {
         public final int type;
         public final long origWhen;
         public final boolean wakeup;
         public final PendingIntent operation;
+	public final String tag;
         public final IAlarmListener listener;
         public final String listenerTag;
         public final String statsTag;
@@ -2319,6 +2383,7 @@ class AlarmManagerService extends SystemService {
         public long maxWhenElapsed; // also in the elapsed time base
         public long repeatInterval;
         public PriorityClass priorityClass;
+	public AlarmExtraData extra;
 
         public Alarm(int _type, long _when, long _whenElapsed, long _windowLength, long _maxWhen,
                 long _interval, PendingIntent _op, IAlarmListener _rec, String _listenerTag,
@@ -2334,6 +2399,7 @@ class AlarmManagerService extends SystemService {
             maxWhenElapsed = _maxWhen;
             repeatInterval = _interval;
             operation = _op;
+	    tag = makeTag(_op, _listenerTag, _type);
             listener = _rec;
             listenerTag = _listenerTag;
             statsTag = makeTag(_op, _listenerTag, _type);
@@ -2345,6 +2411,15 @@ class AlarmManagerService extends SystemService {
 
             creatorUid = (operation != null) ? operation.getCreatorUid() : uid;
         }
+
+	public void ensureExtra() {
+		if (extra == null) {
+			extra = new AlarmExtraData();
+			extra.orgRepeatInterval = repeatInterval;
+			extra.orgWindowLength = windowLength;
+			extra.triggerDelta = 0L;
+		}
+	}
 
         public static String makeTag(PendingIntent pi, String tag, int type) {
             final String alarmString = type == ELAPSED_REALTIME_WAKEUP || type == RTC_WAKEUP
