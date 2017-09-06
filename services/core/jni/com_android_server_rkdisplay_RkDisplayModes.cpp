@@ -361,11 +361,13 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
     const char *baseparameterfile = GetBaseparameterFile();
     if (!baseparameterfile) {
         ALOGW("base paramter file can not be find");
+        sync();
         return;
     }
     file = open(baseparameterfile, O_RDWR);
     if (file < 0) {
         ALOGW("base paramter file can not be opened");
+        sync();
         return;
     }
     // caculate file's size and read it
@@ -373,6 +375,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
     lseek(file, 0L, SEEK_SET);
     if(length < sizeof(base_paramer)) {
         ALOGE("BASEPARAME data's length is error\n");
+        sync();
         close(file);
         return;
     }
