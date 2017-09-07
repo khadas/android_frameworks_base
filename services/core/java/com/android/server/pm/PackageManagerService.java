@@ -16483,7 +16483,7 @@ public class PackageManagerService extends IPackageManager.Stub {
             if (DEBUG_REMOVE) Slog.d(TAG, "Removing non-system package: " + ps.name);
             ret = deleteInstalledPackageLIF(ps, deleteCodeAndResources, flags, allUserHandles,
                     outInfo, writeSettings, replacingPackage);
-            if (ps.pkg.codePath.contains(VENDOR_BUNDLED_UNINSTALL_GONE_DIR)) {
+            if (ps.pkg!=null && ps.pkg.codePath!=null && ps.pkg.codePath.contains(VENDOR_BUNDLED_UNINSTALL_GONE_DIR)) {
                 File deleteApkFile = new File(DELETE_APK_FILE);
                 if(!deleteApkFile.exists()) {
                     try {
