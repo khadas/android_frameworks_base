@@ -263,6 +263,8 @@ public class SettingsDrawerActivity extends Activity {
     }
 
     public void showMenuIcon() {
+        if (getActionBar() == null) return;
+
         mShowingMenu = true;
         getActionBar().setHomeAsUpIndicator(R.drawable.ic_menu);
         getActionBar().setHomeActionContentDescription(R.string.content_description_menu_button);
@@ -321,14 +323,16 @@ public class SettingsDrawerActivity extends Activity {
     private void updateUserHandlesIfNeeded(Tile tile) {
         List<UserHandle> userHandles = tile.userHandle;
 
-        for (int i = userHandles.size() - 1; i >= 0; i--) {
-            if (mUserManager.getUserInfo(userHandles.get(i).getIdentifier()) == null) {
-                if (DEBUG) {
-                    Log.d(TAG, "Delete the user: " + userHandles.get(i).getIdentifier());
+        if (mUserManager != null) {
+            for (int i = userHandles.size() - 1; i >= 0; i--) {
+               if (mUserManager.getUserInfo(userHandles.get(i).getIdentifier()) == null) {
+                   if (DEBUG) {
+                       Log.d(TAG, "Delete the user: " + userHandles.get(i).getIdentifier());
+                    }
+                    userHandles.remove(i);
                 }
-                userHandles.remove(i);
-            }
-        }
+             }
+         }
     }
 
     protected void onTileClicked(Tile tile) {
