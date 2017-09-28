@@ -103,6 +103,10 @@ public class UsbDeviceManager {
             "/sys/class/android_usb/android0/f_audio_source/pcm";
     private static final String MIDI_ALSA_PATH =
             "/sys/class/android_usb/android0/f_midi/alsa";
+    private static final String USB_CAMERA_MATCH =
+            "DEVPATH=/devices/platform/fe380000.usb";
+    private static final String USB_CAMERA_MATCH1 =
+            "DEVPATH=/devices/platform/usb@fe900000";
 
     private static final int MSG_UPDATE_STATE = 0;
     private static final int MSG_ENABLE_ADB = 1;
@@ -153,6 +157,9 @@ public class UsbDeviceManager {
     private final UsbAlsaManager mUsbAlsaManager;
     private Intent mBroadcastedIntent;
 
+    private long mLastUsbEvent = 0;
+    private String mLastUsbAction = "";
+
     private boolean mCharging=false;
     private class AdbSettingsObserver extends ContentObserver {
         public AdbSettingsObserver() {
@@ -172,7 +179,41 @@ public class UsbDeviceManager {
     private final UEventObserver mUEventObserver = new UEventObserver() {
         @Override
         public void onUEvent(UEventObserver.UEvent event) {
-            if (DEBUG) Slog.v(TAG, "USB UEVENT: " + event.toString());
+            if (true) Slog.v(TAG, "USB UEVENT: " + event.toString());
+
+            String subSystem = event.get("SUBSYSTEM");
+            if ("video4linux".equals(subSystem)) {
+                Slog.i(TAG, "USB UEVENT: " + event.toString());
+                Intent intent = new Intent(Intent.ACTION_USB_CAMERA);
+                String action = event.get("ACTION");
+                try {
+                    if (mLastUsbAction != null && mLastUsbAction.equals(action) 
+                            && SystemClock.uptimeMillis() - mLastUsbEvent < 1200) {
+                        Slog.i(TAG, "USB UEVENT send double, ignore this!");
+                        return;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                mLastUsbAction = action;
+                mLastUsbEvent = SystemClock.uptimeMillis();
+                if ("remove".equals(action)){
+                    Slog.d(TAG,"usb camera remove=====");
+                    intent.setFlags(Intent.FLAG_USB_CAMERA_REMOVE);
+                    SystemProperties.set("persist.sys.usbcamera.status","remove");
+                    SystemProperties.set("sys.usbcam.status.forvideo","removed");
+                } else if ("add".equals(action)) {
+                    Slog.d(TAG,"usb camera add=====");
+                    intent.setFlags(Intent.FLAG_USB_CAMERA_ADD);
+                    SystemProperties.set("persist.sys.usbcamera.status","add");
+                    SystemProperties.set("sys.usbcam.status.forvideo","added");
+                }
+
+                int num = android.hardware.Camera.getNumberOfCameras();
+                mContext.sendBroadcastAsUser(intent,UserHandle.ALL);
+                SystemProperties.set("persist.sys.usbcamera.status","");
+                Slog.d(TAG,"usb camera num"+num);
+            }
 
             String state = event.get("USB_STATE");
             String accessory = event.get("ACCESSORY");
@@ -381,6 +422,9 @@ public class UsbDeviceManager {
                 // Watch for USB configuration changes
                 mUEventObserver.startObserving(USB_STATE_MATCH);
                 mUEventObserver.startObserving(ACCESSORY_START_MATCH);
+
+                mUEventObserver.startObserving(USB_CAMERA_MATCH);
+                mUEventObserver.startObserving(USB_CAMERA_MATCH1);
             } catch (Exception e) {
                 Slog.e(TAG, "Error initializing UsbHandler", e);
             }

@@ -4228,6 +4228,18 @@ public class Intent implements Parcelable, Cloneable {
     }
 
     /**
+     *for Action_USB_CAMRA,remove and add action
+     */
+    /**{@hide}*/
+    public static final int FLAG_USB_CAMERA_REMOVE = 0x00008001;
+    /**{@hide}*/
+    public static final int FLAG_USB_CAMERA_ADD = 0x00008002;
+	
+    //add this action intent for usb remove /add
+    /** {@hide} */
+    public static final String ACTION_USB_CAMERA = "android.intent.action.USB_CAMERA";
+
+    /**
      * If set, the recipient of this Intent will be granted permission to
      * perform read operations on the URI in the Intent's data and any URIs
      * specified in its ClipData.  When applying to an Intent's ClipData,
