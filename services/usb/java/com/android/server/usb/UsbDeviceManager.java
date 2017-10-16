@@ -158,7 +158,7 @@ public class UsbDeviceManager implements ActivityManagerInternal.ScreenObserver 
     // Delay for debouncing USB disconnects.
     // We often get rapid connect/disconnect events when enabling USB functions,
     // which need debouncing.
-    private static final int UPDATE_DELAY = 1000;
+    private static final int UPDATE_DELAY = 2500;
 
     // Timeout for entering USB request mode.
     // Request is cancelled if host does not configure device within 10 seconds.
