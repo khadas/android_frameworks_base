@@ -114,6 +114,8 @@ BootAnimation::BootAnimation(bool shutdown) : Thread(false), mClockEnabled(true)
     mSystemBoot = !property_get_bool(BOOT_COMPLETED_PROP_NAME, 0);
     mShutdown = shutdown;
     mReverseAxis = false;
+    mVideoFile = NULL;
+    mVideoAnimation = false;
     if(mShutdown){
         sp<IBinder> dtoken(SurfaceComposerClient::getBuiltInDisplay(
                                         ISurfaceComposer::eDisplayIdMain)); // primary_display_token
