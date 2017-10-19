@@ -333,6 +333,10 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         }
     }
 
+    public void updateDisplayInfos(){
+        mdrmModes.updateDisplayInfos();
+    }
+
     public int saveConfig() {
         mdrmModes.saveConfig();
         return 0;

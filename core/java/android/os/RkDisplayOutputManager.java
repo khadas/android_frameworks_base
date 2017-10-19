@@ -530,6 +530,22 @@ public class RkDisplayOutputManager {
         }
     }
 
+    /**
+    *
+    * @return
+    * @hide
+    */
+    public int updateDisplayInfos()
+    {
+        try {
+            mService.updateDisplayInfos();
+        } catch (Exception e) {
+            Log.e(TAG, "Error save :" + e);
+            return -1;
+        }
+	return 0;
+    }
+
     /*
     * brightness: [0, 100], default 50
     */

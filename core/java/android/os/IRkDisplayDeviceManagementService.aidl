@@ -105,6 +105,11 @@ interface IRkDisplayDeviceManagementService
     int saveConfig();
 
     /**
+     * updateDisplayInfos
+     */
+    void updateDisplayInfos();
+
+    /**
      * Set brightness
      */
     void setBrightness(int display, int brightness);
