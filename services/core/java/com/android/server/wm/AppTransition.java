@@ -741,7 +741,7 @@ public class AppTransition implements Dump {
         final Animation anim;
         if (enter) {
             final int appWidth = appFrame.width();
-            final int appHeight = appFrame.height();
+            final int appHeight = appFrame.height()+8;
 
             // mTmpRect will contain an area around the launcher icon that was pressed. We will
             // clip reveal from that area in the final area of the app.
