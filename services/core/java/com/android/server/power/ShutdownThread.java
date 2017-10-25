@@ -86,6 +86,8 @@ public final class ShutdownThread extends Thread {
     private static boolean mReboot;
     private static boolean mRebootSafeMode;
     private static boolean mRebootHasProgressBar;
+    private static boolean mReboot2Ubuntu;
+    private static boolean mReboot2LibreELEC;
     private static String mReason;
 
     // Provides shutdown assurance in case the system_server is killed
@@ -132,6 +134,8 @@ public final class ShutdownThread extends Thread {
     public static void shutdown(final Context context, String reason, boolean confirm) {
         mReboot = false;
         mRebootSafeMode = false;
+        mReboot2Ubuntu = false;
+        mReboot2LibreELEC = false;
         mReason = reason;
         shutdownInner(context, confirm);
     }
@@ -213,9 +217,43 @@ public final class ShutdownThread extends Thread {
      * @param confirm true if user confirmation is needed before shutting down.
      */
     public static void reboot(final Context context, String reason, boolean confirm) {
+
         mReboot = true;
         mRebootSafeMode = false;
         mRebootHasProgressBar = false;
+        mReboot2Ubuntu = false;
+        mReboot2LibreELEC = false;
+        mReason = reason;
+        shutdownInner(context, confirm);
+    }
+
+
+    public static void rebootUbuntu(final Context context, String reason, boolean confirm) {
+       try {
+          Runtime.getRuntime().exec("setbootenv ubootenv.var.bls linux");
+        } catch (IOException ioe) {
+            throw new RuntimeException("Error running command setbootenv bls ubuntu", ioe);
+        }
+        mReboot = true;
+        mRebootSafeMode = false;
+        mRebootHasProgressBar = false;
+        mReboot2Ubuntu = true;
+        mReboot2LibreELEC = false;
+        mReason = reason;
+        shutdownInner(context, confirm);
+    }
+
+    public static void rebootLibreELEC(final Context context, String reason, boolean confirm) {
+        try {
+          Runtime.getRuntime().exec("setbootenv ubootenv.var.bls libreelec");
+        } catch (IOException ioe) {
+            throw new RuntimeException("Error running command setbootenv bls libreelec", ioe);
+        }
+        mReboot = true;
+        mRebootSafeMode = false;
+        mRebootHasProgressBar = false;
+        mReboot2Ubuntu = false;
+        mReboot2LibreELEC = true;
         mReason = reason;
         shutdownInner(context, confirm);
     }
@@ -236,6 +274,8 @@ public final class ShutdownThread extends Thread {
         mReboot = true;
         mRebootSafeMode = true;
         mRebootHasProgressBar = false;
+        mReboot2Ubuntu = false;
+        mReboot2LibreELEC = false;
         mReason = null;
         shutdownInner(context, confirm);
     }
@@ -294,9 +334,19 @@ public final class ShutdownThread extends Thread {
             }
         } else if (PowerManager.REBOOT_RECOVERY.equals(mReason)) {
             // Factory reset path. Set the dialog message accordingly.
-            pd.setTitle(context.getText(com.android.internal.R.string.reboot_to_reset_title));
-            pd.setMessage(context.getText(
-                        com.android.internal.R.string.reboot_to_reset_message));
+             if (mReboot2Ubuntu) {
+                   pd.setTitle(context.getText(com.android.internal.R.string.reboot2ubuntu));
+                   pd.setMessage(context.getText(
+                           com.android.internal.R.string.reboot_other_os_progress));
+             } else if (mReboot2LibreELEC) {
+                   pd.setTitle(context.getText(com.android.internal.R.string.reboot2libreelec));
+                   pd.setMessage(context.getText(
+                           com.android.internal.R.string.reboot_other_os_progress));
+             } else {
+                   pd.setTitle(context.getText(com.android.internal.R.string.reboot_to_reset_title));
+                   pd.setMessage(context.getText(
+                           com.android.internal.R.string.reboot_to_reset_message));
+             }
             pd.setIndeterminate(true);
         } else {
             pd.setTitle(context.getText(com.android.internal.R.string.power_off));

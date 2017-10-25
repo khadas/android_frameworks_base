@@ -50,6 +50,9 @@ import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.Vibrator;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageEventListener;
+import android.os.storage.VolumeInfo;
 import android.provider.Settings;
 import android.service.dreams.DreamService;
 import android.service.dreams.IDreamManager;
@@ -80,6 +83,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
 
 /**
  * Helper to show the global actions dialog.  Each item is an {@link Action} that
@@ -126,6 +130,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mHasVibrator;
     private final boolean mShowSilentToggle;
     private final EmergencyAffordanceManager mEmergencyAffordanceManager;
+    private StorageManager mStorageManager;
 
     /**
      * @param context everything needs a context :(
@@ -160,6 +165,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         mShowSilentToggle = SHOW_SILENT_TOGGLE && !mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_useFixedVolume);
+
+        mStorageManager = mContext.getSystemService(StorageManager.class);
 
         mEmergencyAffordanceManager = new EmergencyAffordanceManager(context);
     }
@@ -279,6 +286,66 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             }
             if (GLOBAL_ACTION_KEY_POWER.equals(actionKey)) {
                 mItems.add(new PowerAction());
+                // reboot to other os
+                File ubuntu_f = new File("/dev/block/linux");
+                File libreelec_f = new File("/dev/block/libreelec");
+                boolean hasUbuntu = ubuntu_f.exists();
+                boolean hasLibreELEC = libreelec_f.exists();
+                mStorageManager = mContext.getSystemService(StorageManager.class);
+                final List<VolumeInfo> volumes = mStorageManager.getVolumes();
+                for (VolumeInfo vol : volumes) {
+                    File path = vol.getPath();
+                    if (vol.getType() == VolumeInfo.TYPE_PUBLIC) {
+                            if(path !=null) {
+                                boolean isSd = vol.getDisk().isSd();
+                                if (isSd) {
+                                    File file = new File(path,"boot.ini");
+                                    if (file.exists()) {
+                                        hasLibreELEC = true;
+                                        break;
+                                    }
+                                }
+                            }
+                    }
+                }
+                Log.d(TAG,"hasUbuntu = "+hasUbuntu+"   hasLibreELEC = "+hasLibreELEC);
+                if (hasUbuntu) {
+                    mItems.add(new SinglePressAction(
+                                   com.android.internal.R.drawable.ic_lock_ubuntu,
+                                   R.string.reboot2ubuntu) {
+                           public void onPress() {
+                           mWindowManagerFuncs.rebootUbuntu(false);
+                           }
+                           public boolean onLongPress() {
+                           return true;
+                           }
+                           public boolean showDuringKeyguard() {
+                           return true;
+                           }
+                           public boolean showBeforeProvisioning() {
+                           return true;
+                           }
+                    });
+                 }
+
+                if (hasLibreELEC) {
+                    mItems.add(new SinglePressAction(
+                                   com.android.internal.R.drawable.ic_lock_libreelec,
+                                   R.string.reboot2libreelec) {
+                           public void onPress() {
+                           mWindowManagerFuncs.rebootLibreELEC(false);
+                           }
+                           public boolean onLongPress() {
+                           return true;
+                           }
+                           public boolean showDuringKeyguard() {
+                           return true;
+                           }
+                           public boolean showBeforeProvisioning() {
+                           return true;
+                           }
+                   });
+                }
             } else if (GLOBAL_ACTION_KEY_AIRPLANE.equals(actionKey)) {
                 mItems.add(mAirplaneModeOn);
             } else if (GLOBAL_ACTION_KEY_BUGREPORT.equals(actionKey)) {
@@ -649,6 +716,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             IntentFilter filter = new IntentFilter(AudioManager.RINGER_MODE_CHANGED_ACTION);
             mContext.registerReceiver(mRingerModeReceiver, filter);
         }
+        mStorageManager.registerListener(mStorageListener);
     }
 
     private void refreshSilentMode() {
@@ -670,6 +738,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 Log.w(TAG, ie);
             }
         }
+        mStorageManager.unregisterListener(mStorageListener);
     }
 
     /** {@inheritDoc} */
@@ -1109,6 +1178,24 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     changeAirplaneModeSystemSetting(true);
                 }
             }
+        }
+    };
+
+    StorageEventListener mStorageListener = new StorageEventListener() {
+        @Override
+        public void onVolumeStateChanged(VolumeInfo vol, int oldState, int newState) {
+            if (vol.getType() == VolumeInfo.TYPE_PUBLIC) {
+                 File path = vol.getPath();
+                 if (path !=null) {
+                     boolean isSd = vol.getDisk().isSd();
+                     if (isSd) {
+                            if (mDialog!=null){
+                              if (mDialog.isShowing())
+                                mDialog.dismiss();
+                             }
+                     }
+                 }
+             }
         }
     };
 

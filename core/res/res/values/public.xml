@@ -894,6 +894,8 @@
   <public type="drawable" name="ic_dialog_info" id="0x0108009b" />
   <public type="drawable" name="ic_menu_sort_alphabetically" id="0x0108009c" />
   <public type="drawable" name="ic_menu_sort_by_size" id="0x0108009d" />
+  <public type="drawable" name="ic_lock_ubuntu" id="0x0108009e" />
+  <public type="drawable" name="ic_lock_libreelec" id="0x0108009f" />
 
   <public type="layout" name="activity_list_item" id="0x01090000" />
   <public type="layout" name="expandable_list_content" id="0x01090001" />
@@ -2654,6 +2656,10 @@
     <public type="id" name="accessibilityActionContextClick" id="0x0102003c" />
 
     <public type="string" name="fingerprint_icon_content_description" id="0x01040018" />
+
+    <public type="string" name="reboot2ubuntu" id="0x01040019" />
+    <public type="string" name="reboot2libreelec" id="0x0104001a" />
+    <public type="string" name="reboot_other_os_progress" id="0x0104001b" />
 
   <!-- ===============================================================
        Resources added in version N of the platform

@@ -5831,6 +5831,16 @@ public class WindowManagerService extends IWindowManager.Stub
         ShutdownThread.reboot(mContext, PowerManager.SHUTDOWN_USER_REQUESTED, confirm);
     }
 
+    @Override
+    public void rebootUbuntu(boolean confirm) {
+        ShutdownThread.rebootUbuntu(mContext, "",confirm);
+    }
+
+    @Override
+    public void rebootLibreELEC(boolean confirm) {
+        ShutdownThread.rebootLibreELEC(mContext, "",confirm);
+    }
+
     // Called by window manager policy.  Not exposed externally.
     @Override
     public void rebootSafeMode(boolean confirm) {
