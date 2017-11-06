@@ -130,19 +130,25 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         }
     }
 
-    public void setColorMode(int display, String iface, String format, int depth){
-        StringBuilder builder = new StringBuilder();
+    public String[] getSupportCorlorList(int display, String iface){
+        List<String> corlorList = mdrmModes.getSupportCorlorList(display);
+        if (corlorList != null)
+            return corlorList.toArray(new String[corlorList.size()]);
+        else
+            return null;
+    }
+
+    public void setColorMode(int display, String iface, String format){
         boolean isSameProperty = false;
 
-        builder.append(format).append("-").append(depth).append("bit");
         if (display == MAIN_DISPLAY) {
             String lastColor = SystemProperties.get("persist.sys.color.main");
-            isSameProperty = lastColor.equals(builder.toString());
-            SystemProperties.set("persist.sys.color.main", builder.toString());
+            isSameProperty = lastColor.equals(format);
+            SystemProperties.set("persist.sys.color.main", format);
         } else {
             String lastColor = SystemProperties.get("persist.sys.color.aux");
-            isSameProperty = lastColor.equals(builder.toString());
-            SystemProperties.set("persist.sys.color.aux", builder.toString());
+            isSameProperty = lastColor.equals(format);
+            SystemProperties.set("persist.sys.color.aux", format);
         }
 
         if (!isSameProperty) {

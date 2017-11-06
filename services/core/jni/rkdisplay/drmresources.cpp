@@ -32,8 +32,6 @@
 #include <cutils/properties.h>
 #include <drm_fourcc.h>
 
-#include <inttypes.h>
-
 //you can define it in external/libdrm/include/drm/drm.h
 #define DRM_CLIENT_CAP_SHARE_PLANES     4
 
@@ -46,7 +44,6 @@ DrmResources::DrmResources()  {
 
 DrmResources::~DrmResources() {
 }
-
 
 void DrmResources::ConfigurePossibleDisplays()
 {

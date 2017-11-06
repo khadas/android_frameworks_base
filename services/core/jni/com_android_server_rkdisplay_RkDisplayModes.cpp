@@ -58,6 +58,13 @@ static struct {
     jfieldID vscan;
 } gRkPhysicalDisplayInfoClassInfo;
 
+static struct{
+    jclass clazz;
+    jmethodID ctor;
+    jfieldID color_capa;
+    jfieldID depth_capa;
+}gRkColorModeSupportInfo;
+
 int mFd=0;
 DrmResources *drm_ = NULL;
 DrmConnector* primary=NULL;
@@ -120,6 +127,7 @@ static void hotPlugUpdate(){
         conn->UpdateModes();
 
         drmModeConnection cur_state = conn->state();
+        ALOGD("old_state %d cur_state %d conn->get_type() %d", old_state, cur_state, conn->get_type());
 
         if (cur_state == old_state)
             continue;
@@ -639,6 +647,37 @@ static jint nativeGetBuiltIn(JNIEnv* env, jobject obj, jint dpy)
     return static_cast<jint>(built_in);
 }
 
+static jobject nativeGetCorlorModeConfigs(JNIEnv* env, jclass clazz,
+        jint dpy){
+    int display = dpy;
+    DrmConnector* mCurConnector;
+    uint64_t color_capacity=0;
+    uint64_t depth_capacity=0;
+    jobject infoObj = env->NewObject(gRkColorModeSupportInfo.clazz,
+                gRkColorModeSupportInfo.ctor);
+
+    if (display == HWC_DISPLAY_PRIMARY) {
+        mCurConnector = primary;
+    }else if (display == HWC_DISPLAY_EXTERNAL){
+        mCurConnector = extend;
+    } else {
+        return NULL;
+    }
+
+    if (mCurConnector != NULL) {
+        if (mCurConnector->hdmi_output_mode_capacity_property().id())
+            mCurConnector->hdmi_output_mode_capacity_property().value( &color_capacity);
+
+        if (mCurConnector->hdmi_output_depth_capacity_property().id())
+            mCurConnector->hdmi_output_depth_capacity_property().value(&depth_capacity);
+
+        env->SetIntField(infoObj, gRkColorModeSupportInfo.color_capa, (int)color_capacity);
+        env->SetIntField(infoObj, gRkColorModeSupportInfo.depth_capa, (int)depth_capacity);
+        ALOGD("nativeGetCorlorModeConfigs: corlor=%d depth=%d ",(int)color_capacity,(int)depth_capacity);
+    }
+
+    return infoObj;
+}
 
 static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
         jint dpy) {
@@ -730,6 +769,9 @@ static const JNINativeMethod sRkDrmModeMethods[] = {
             (void*)nativeGetBuiltIn},
     {"nativeGetConnectionState", "(I)I",
             (void*)nativeGetConnectionState},
+    {"nativeGetCorlorModeConfigs", "(I)Lcom/android/server/rkdisplay/RkDisplayModes$RkColorCapacityInfo;",
+            (void*)nativeGetCorlorModeConfigs},
+
 };
 
 
@@ -779,6 +821,12 @@ int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env)
     GET_FIELD_ID(gRkPhysicalDisplayInfoClassInfo.vtotal, gRkPhysicalDisplayInfoClassInfo.clazz, "vtotal", "I");
     GET_FIELD_ID(gRkPhysicalDisplayInfoClassInfo.vscan, gRkPhysicalDisplayInfoClassInfo.clazz, "vscan", "I");
 
+     FIND_CLASS(gRkColorModeSupportInfo.clazz, "com/android/server/rkdisplay/RkDisplayModes$RkColorCapacityInfo");
+     gRkColorModeSupportInfo.clazz = jclass(env->NewGlobalRef(gRkColorModeSupportInfo.clazz));
+     GET_METHOD_ID(gRkColorModeSupportInfo.ctor,
+             gRkColorModeSupportInfo.clazz, "<init>", "()V");
+     GET_FIELD_ID(gRkColorModeSupportInfo.color_capa, gRkColorModeSupportInfo.clazz, "color_capa", "I");
+     GET_FIELD_ID(gRkColorModeSupportInfo.depth_capa, gRkColorModeSupportInfo.clazz, "depth_capa", "I");
     return 0;
 }
 };

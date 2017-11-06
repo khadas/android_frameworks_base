@@ -68,7 +68,12 @@ interface IRkDisplayDeviceManagementService
     /**
      * Set color mode format-depth
      */
-    void setColorMode(int display, String iface, String format, int depth);
+    void setColorMode(int display, String iface, String format);
+
+    /**
+     * Returns a list of supported corlor modes
+     */
+    String[] getSupportCorlorList(int display, String iface);
 
     /**
      * Set hdr mode

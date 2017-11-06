@@ -55,6 +55,16 @@ int DrmConnector::Init() {
     ALOGE("Could not get CRTC_ID property\n");
     return ret;
   }
+
+  ret = drm_->GetConnectorProperty(*this, "hdmi_output_mode_capacity", &hdmi_output_mode_capacity_);
+  if (ret)
+    ALOGW("Could not get hdmi_output_colorimetry property\n");
+
+  ret = drm_->GetConnectorProperty(*this, "hdmi_color_depth_capacity", &hdmi_color_depth_capacity_);
+  if (ret) {
+    ALOGW("Could not get hdmi_output_format property\n");
+  }
+
   return 0;
 }
 
@@ -87,6 +97,7 @@ const DrmMode &DrmConnector::best_mode() const {
 
 int DrmConnector::UpdateModes() {
   int fd = drm_->fd();
+  int ret;
 
   drmModeConnectorPtr c = drmModeGetConnector(fd, id_);
   if (!c) {
@@ -112,10 +123,20 @@ int DrmConnector::UpdateModes() {
       continue;
 
     DrmMode m(&c->modes[i]);
+
     m.set_id(drm_->next_mode_id());
     new_modes.push_back(m);
   }
   modes_.swap(new_modes);
+
+  ret = drm_->GetConnectorProperty(*this, "hdmi_output_mode_capacity", &hdmi_output_mode_capacity_);
+  if (ret)
+    ALOGW("UpdateModes Could not get hdmi_output_colorimetry property\n");
+
+  ret = drm_->GetConnectorProperty(*this, "hdmi_color_depth_capacity", &hdmi_color_depth_capacity_);
+  if (ret) {
+    ALOGW("UpdateModes Could not get hdmi_output_format property\n");
+  }
   return 0;
 }
 
@@ -162,6 +183,14 @@ const DrmProperty &DrmConnector::dpms_property() const {
 
 const DrmProperty &DrmConnector::crtc_id_property() const {
   return crtc_id_property_;
+}
+
+const DrmProperty &DrmConnector::hdmi_output_mode_capacity_property() const {
+  return hdmi_output_mode_capacity_;
+}
+
+const DrmProperty &DrmConnector::hdmi_output_depth_capacity_property() const {
+  return hdmi_color_depth_capacity_;
 }
 
 DrmEncoder *DrmConnector::encoder() const {

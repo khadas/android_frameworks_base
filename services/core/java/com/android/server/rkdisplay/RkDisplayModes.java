@@ -18,6 +18,7 @@ public class RkDisplayModes {
     private static final String TAG = "RkDisplayModes";
     private static native RkDisplayModes.RkPhysicalDisplayInfo[] nativeGetDisplayConfigs(
     int dpy);
+	private static native RkDisplayModes.RkColorCapacityInfo nativeGetCorlorModeConfigs(int dpy);
     private static native void nativeInit();
     private static native void nativeUpdateConnectors();
     private static native void nativeSaveConfig();
@@ -33,6 +34,8 @@ public class RkDisplayModes {
     private static List<String> mWhiteList;
     private static List<ResolutionParser.RkResolutionInfo> resolutions=null;
     private static ResolutionParser mParser=null;
+    private static RkDisplayModes.RkColorCapacityInfo mMainColorInfos;
+    private static RkDisplayModes.RkColorCapacityInfo mAuxColorInfos;
 
     public final int DRM_MODE_CONNECTOR_Unknown = 0;
     public final int DRM_MODE_CONNECTOR_VGA = 1;
@@ -82,8 +85,27 @@ public class RkDisplayModes {
     private static final String MODE_TYPE_USERDEF = "userdef";
     private static final String MODE_TYPE_DRIVER = "driver";
 
-    private static final  String RESOLUTION_XML_PATH = "/system/usr/share/resolution_white.xml";
+    public static int DRM_HDMI_OUTPUT_DEFAULT_RGB = 1<<0; /* default RGB */
+    public static int DRM_HDMI_OUTPUT_YCBCR444 = 1<<1; /* YCBCR 444 */
+    public static int DRM_HDMI_OUTPUT_YCBCR422 = 1<<2; /* YCBCR 422 */
+    public static int DRM_HDMI_OUTPUT_YCBCR420 = 1<<3; /* YCBCR 420 */
 
+    public static int DEPTH_CAPA_BIT0_8BIT = 1<<0;
+    public static int DEPTH_CAPA_BIT1_10BIT = 1<<1;
+    public static int DEPTH_CAPA_BIT4_420_10BIT = 1<<4;
+
+    public static int ROCKCHIP_DEPTH_DEFAULT = 0;
+    public static int ROCKCHIP_HDMI_DEPTH_8 = 8;
+    public static int ROCKCHIP_HDMI_DEPTH_10 = 10;
+
+    private  static String STR_YCBCR444 = "YCBCR444";
+    private  static String STR_YCBCR422 = "YCBCR422";
+    private  static String STR_YCBCR420 = "YCBCR420";
+    private  static String STR_RGB = "RGB";
+    private  static String STR_DEPTH_8BIT = "8bit";
+    private  static String STR_DEPTH_10BIT = "10bit";
+
+    private static final  String RESOLUTION_XML_PATH = "/system/usr/share/resolution_white.xml";
 
     public RkDisplayModes(){
         mWhiteList = new ArrayList<>();
@@ -233,6 +255,92 @@ public class RkDisplayModes {
         }
     }
 
+
+    public static final class RkColorCapacityInfo {
+        public int color_capa;
+        public int depth_capa;
+
+        public RkColorCapacityInfo() {
+        }
+
+        public RkColorCapacityInfo(RkColorCapacityInfo other) {
+            copyFrom(other);
+        }
+
+        public List<String> getCorlorModeList(){
+            boolean is420Support=false;
+            List<String> mCorlorFormatList = new ArrayList<>();
+            List<String> depthList = new ArrayList<>();
+            List<String> colorList = new ArrayList<>();
+
+            if (depth_capa != 0) {
+                if ((depth_capa&DEPTH_CAPA_BIT0_8BIT) >0)
+                    depthList.add(STR_DEPTH_8BIT);
+                if ((depth_capa & DEPTH_CAPA_BIT1_10BIT)>0)
+                    depthList.add(STR_DEPTH_10BIT);
+                if ((depth_capa & DEPTH_CAPA_BIT4_420_10BIT)>0)
+                    is420Support=true;
+            } else {
+                depthList.add(STR_DEPTH_8BIT);
+            }
+            if (color_capa != 0) {
+                if ((color_capa & DRM_HDMI_OUTPUT_DEFAULT_RGB)>0)
+                    colorList.add(STR_RGB);
+                if ((color_capa & DRM_HDMI_OUTPUT_YCBCR444)>0)
+                    colorList.add(STR_YCBCR444);
+                if ((color_capa & DRM_HDMI_OUTPUT_YCBCR422)>0)
+                    colorList.add(STR_YCBCR422);
+                if ((color_capa & DRM_HDMI_OUTPUT_YCBCR420)>0)
+                    colorList.add(STR_YCBCR420);
+            } else {
+                colorList.add(STR_RGB);
+            }
+
+            mCorlorFormatList.add("Auto");
+            for (String color : colorList) {
+                for (String depth : depthList){
+                    if (color.equals(STR_YCBCR420) && depth.equals(STR_DEPTH_10BIT))
+                        if (is420Support==false)
+                            continue;
+                    StringBuilder builder = new StringBuilder();
+                    builder.append(color);
+                    builder.append("-");
+                    builder.append(depth);
+                    mCorlorFormatList.add(builder.toString());
+                    Log.e(TAG, "getCorlorModeList :  " + builder.toString());
+                }
+            }
+            return mCorlorFormatList;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof RkColorCapacityInfo && equals((RkColorCapacityInfo)o);
+        }
+
+        public boolean equals(RkColorCapacityInfo other) {
+            return other != null
+                && color_capa == other.color_capa
+                && depth_capa == other.depth_capa;
+        }
+
+        @Override
+        public int hashCode() {
+            return 0; // don't care
+        }
+
+        public void copyFrom(RkColorCapacityInfo other) {
+            color_capa = other.color_capa;
+            depth_capa = other.depth_capa;
+        }
+
+        // For debugging purposes
+        @Override
+        public String toString() {
+            return "RkColorCapacityInfo{" + color_capa + " x " + depth_capa + "}";
+        }
+    }
+
     public static RkDisplayModes.RkPhysicalDisplayInfo[] getDisplayConfigs(int dpy) {
         if (dpy < 0) {
             throw new IllegalArgumentException("dpy is ilegal");
@@ -248,7 +356,7 @@ public class RkDisplayModes {
         nativeInit();
     }
 
-    public static void updateDisplayInfos() {
+    public  void updateDisplayInfos() {
         nativeUpdateConnectors();
     }
 
@@ -470,5 +578,20 @@ public class RkDisplayModes {
         return iface;
     }
 
+    public  List<String> getSupportCorlorList(int dpy){
+        List<String> colorList = new ArrayList<>();
+        Log.e(TAG, "getSupportCorlorList =========== dpy " + dpy);
+        if (dpy == 0) {
+            mMainColorInfos = nativeGetCorlorModeConfigs(dpy);
+            if (mMainColorInfos != null)
+                return mMainColorInfos.getCorlorModeList();
+        } else {
+            mAuxColorInfos = nativeGetCorlorModeConfigs(dpy);
+            if (mAuxColorInfos != null)
+                return mAuxColorInfos.getCorlorModeList();
+        }
+
+        return null;
+    }
 }
 

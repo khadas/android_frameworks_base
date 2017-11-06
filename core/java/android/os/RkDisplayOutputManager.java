@@ -76,13 +76,6 @@ public class RkDisplayOutputManager {
     public final String COLOR_FORMAT_RGB = "RGB";
    
     public final String DISPLAY_TYPE_HDMI = "HDMI";
-
-    public final String COLOR_FORMAT_YCBCR444 = "YCBCR444";
-    public final String COLOR_FORMAT_YCBCR422 = "YCBCR422";
-    public final String COLOR_FORMAT_YCBCR420 = "YCBCR420";
-    public final int COLOR_DEPTH_8BIT = 8;
-    public final int COLOR_DEPTH_10BIT = 10;
-
     public final int DISPLAY_OVERSCAN_X = 0;
     public final int DISPLAY_OVERSCAN_Y = 1;
     public final int DISPLAY_OVERSCAN_LEFT = 2;
@@ -337,13 +330,30 @@ public class RkDisplayOutputManager {
         }
     }
 
-    public void setColorMode(int display, int type, String format, int depth) {
+    public void setColorMode(int display, int type, String format) {
         String iface = typetoface(type);
         try {
-            mService.setColorMode(display, iface, format, depth);
+            mService.setColorMode(display, iface, format);
         }catch (Exception e) {
             Log.e(TAG, "Error set mode :" + e);
             return;
+        }
+    }
+
+    /**
+    *
+    * @param display
+    * @param type
+    * @return
+    * @hide
+    */
+    public String[] getSupportCorlorList(int display, int type) {
+        String iface = typetoface(type);
+        try {
+            return mService.getSupportCorlorList(display, iface);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get list mode :" + e);
+            return null;
         }
     }
 

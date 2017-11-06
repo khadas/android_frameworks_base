@@ -63,7 +63,8 @@ class DrmConnector {
 
   const DrmProperty &dpms_property() const;
   const DrmProperty &crtc_id_property() const;
-
+  const DrmProperty &hdmi_output_mode_capacity_property() const;
+  const DrmProperty &hdmi_output_depth_capacity_property() const;
   const std::vector<DrmEncoder *> &possible_encoders() const {
     return possible_encoders_;
   }
@@ -82,7 +83,6 @@ class DrmConnector {
   void update_state(drmModeConnection state);
   void update_size(int w, int h);
   void dump_connector(std::ostringstream *out) const;
-
 
  private:
   DrmResources *drm_;
@@ -105,6 +105,9 @@ class DrmConnector {
 
   DrmProperty dpms_property_;
   DrmProperty crtc_id_property_;
+
+  DrmProperty hdmi_output_mode_capacity_;
+  DrmProperty hdmi_color_depth_capacity_;
 
   std::vector<DrmEncoder *> possible_encoders_;
   uint32_t possible_displays_;
