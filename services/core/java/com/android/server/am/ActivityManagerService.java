@@ -647,8 +647,8 @@ public final class ActivityManagerService extends ActivityManagerNative
 
     static final String[] mThirdPartyAppWhiteList = { "com.antutu.ABenchMark:push", 
                             "com.antutu.ABenchMark","com.antutu.ABenchMark:channel",
-                            "com.antutu.benchmark.full"};
-    static final int [] mThirdPartyAppAdj = {7,7,7,7};
+                            "com.antutu.benchmark.full","com.rockchips.android.leanbacklauncher"};
+    static final int [] mThirdPartyAppAdj = {7,7,7,7,200};
 
     public boolean canShowErrorDialogs() {
         return mShowDialogs && !mSleeping && !mShuttingDown
@@ -20650,7 +20650,7 @@ public final class ActivityManagerService extends ActivityManagerNative
                 throw new IllegalArgumentException("mThirdPartyAppWhiteList is not match mThirdPartyAppAdj");
             }
             for (int num = 0; num <= mThirdPartyAppWhiteList.length -1 ;num++) {
-                if (mThirdPartyAppWhiteList[num].equals(app.processName) && app.curAdj > mThirdPartyAppAdj[num]) {
+                if (mThirdPartyAppWhiteList[num].equals(app.processName)) {
                     isThirdPartyAppWhiteProcess = true;
                     mThirdPartyAdj = mThirdPartyAppAdj[num];                      
                 }
