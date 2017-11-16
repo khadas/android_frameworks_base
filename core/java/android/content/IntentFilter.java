@@ -655,6 +655,8 @@ public class IntentFilter implements Parcelable {
      * @param action Name of the action to match, such as Intent.ACTION_VIEW.
      */
     public final void addAction(String action) {
+	if(action==null)
+		return;
         if (!mActions.contains(action)) {
             mActions.add(action.intern());
         }

@@ -2674,14 +2674,14 @@ public class PackageManagerService extends IPackageManager.Stub {
                 int[] stats = performDexOptUpgrade(coreApps, false,
                         getCompilerFilterForReason(REASON_CORE_APP));
 
-                final int elapsedTimeSeconds =
+                /*final int elapsedTimeSeconds =
                         (int) TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - start);
                 MetricsLogger.histogram(mContext, "opt_coreapps_time_s", elapsedTimeSeconds);
 
                 if (DEBUG_DEXOPT) {
                     Slog.i(TAG, "Dex-opt core apps took : " + elapsedTimeSeconds + " seconds (" +
                             stats[0] + ", " + stats[1] + ", " + stats[2] + ")");
-                }
+                }*/
 
 
                 // TODO: Should we log these stats to tron too ?
