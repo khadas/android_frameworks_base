@@ -86,10 +86,10 @@ public final class Events {
      */
     public static boolean isNavigationKeyCode(int keyCode) {
         switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_UP:
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-            case KeyEvent.KEYCODE_DPAD_LEFT:
-            case KeyEvent.KEYCODE_DPAD_RIGHT:
+//            case KeyEvent.KEYCODE_DPAD_UP:
+//            case KeyEvent.KEYCODE_DPAD_DOWN:
+//            case KeyEvent.KEYCODE_DPAD_LEFT:
+//            case KeyEvent.KEYCODE_DPAD_RIGHT:
             case KeyEvent.KEYCODE_MOVE_HOME:
             case KeyEvent.KEYCODE_MOVE_END:
             case KeyEvent.KEYCODE_PAGE_UP:

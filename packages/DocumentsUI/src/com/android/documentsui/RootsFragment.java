@@ -120,7 +120,8 @@ public class RootsFragment extends Fragment {
 
                 mAdapter = new RootsAdapter(context, result, handlerAppIntent, state);
                 mList.setAdapter(mAdapter);
-
+                mList.setItemsCanFocus(true);
+                mList.setSelection(0);
                 onCurrentRootChanged();
             }
 
@@ -204,6 +205,8 @@ public class RootsFragment extends Fragment {
             } else {
                 throw new IllegalStateException("Unknown root: " + item);
             }
+            mList.requestFocus();
+            mList.setSelection(position);
         }
     };
 

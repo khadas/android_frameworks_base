@@ -55,7 +55,7 @@ public class RootsList extends ListView {
             // Prevent left/right arrow keystrokes from shifting focus away from the roots list.
             case KeyEvent.KEYCODE_DPAD_LEFT:
             case KeyEvent.KEYCODE_DPAD_RIGHT:
-                return true;
+                //return true;
             default:
                 return super.onKeyDown(keyCode, event);
         }
