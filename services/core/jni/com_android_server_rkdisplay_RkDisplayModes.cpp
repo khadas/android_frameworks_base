@@ -391,7 +391,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
     read(file, (void*)&base_paramer, sizeof(file_base_paramer));
 
     for (auto &conn : drm_->connectors()) {
-        if (conn->state() == DRM_MODE_CONNECTED && conn->display()==HWC_DISPLAY_PRIMARY) {
+        if (conn->state() == DRM_MODE_CONNECTED && (conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT)) {
             char resolution[PROPERTY_VALUE_MAX];
             int w=0,h=0,hsync_start=0,hsync_end=0,htotal=0;
             int vsync_start=0,vsync_end=0,vtotal=0,flags=0;
@@ -470,7 +470,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
             property_get("persist.sys.resolution_white.main", resolution, "0");
             if (atoi(resolution) > 0)
                 base_paramer.main.feature |= RESOLUTION_WHITE_EN;
-        } else if(conn->state() == DRM_MODE_CONNECTED && conn->display()==HWC_DISPLAY_EXTERNAL) {
+        } else if(conn->state() == DRM_MODE_CONNECTED && (conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT)) {
             char resolution[PROPERTY_VALUE_MAX];
             int w=0,h=0,hsync_start=0,hsync_end=0,htotal=0;
             int vsync_start=0,vsync_end=0,vtotal=0,flags=0;

@@ -330,6 +330,16 @@ public class RkDisplayOutputManager {
         }
     }
 
+    public String getCurrentColorMode(int display, int type) {
+        String iface = typetoface(type);
+        try {
+            return mService.getCurColorMode(display, iface);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get current color mode :" + e);
+            return null;
+        }
+    }
+
     public void setColorMode(int display, int type, String format) {
         String iface = typetoface(type);
         try {

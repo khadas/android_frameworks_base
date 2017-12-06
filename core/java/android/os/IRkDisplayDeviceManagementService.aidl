@@ -76,6 +76,11 @@ interface IRkDisplayDeviceManagementService
     String[] getSupportCorlorList(int display, String iface);
 
     /**
+     * Returns current color mode
+     */
+    String getCurColorMode(int display, String iface);
+
+    /**
      * Set hdr mode
      */
     void setHdrMode(int display, String iface, int hdrMode);

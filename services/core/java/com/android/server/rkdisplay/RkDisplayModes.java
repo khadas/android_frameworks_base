@@ -13,6 +13,8 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import android.os.SystemProperties;
+import java.io.FileReader;
+import java.io.FileNotFoundException;
 
 public class RkDisplayModes {
     private static final String TAG = "RkDisplayModes";
@@ -106,12 +108,55 @@ public class RkDisplayModes {
     private  static String STR_DEPTH_10BIT = "10bit";
 
     private static final  String RESOLUTION_XML_PATH = "/system/usr/share/resolution_white.xml";
+    private final  String HDMI_DBG_STATUS = "/d/dw-hdmi/status";
 
     public RkDisplayModes(){
         mWhiteList = new ArrayList<>();
         //resolutions = new ArrayList<ResolutionParser.RkResolutionInfo>();
         mParser = new ResolutionParser();
         readModeWhiteList(RESOLUTION_XML_PATH);
+    }
+
+    private String readColorFormatFromNode(){
+        FileReader fr=null;
+        BufferedReader br=null;
+        String line="";
+
+        try {
+            fr = new FileReader(HDMI_DBG_STATUS);
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, "Couldn't find or open  file "+HDMI_DBG_STATUS, e);
+            return null;
+        }
+        br=new BufferedReader(fr);
+        try {
+            while ((line=br.readLine())!=null) {
+                if (line.contains("Color Format:")) {
+                    StringBuilder builder = new StringBuilder();
+                    int start = line.indexOf("Format:");
+                    int end = line.indexOf(" ", start+8);
+                    int depthStart = line.indexOf("Depth:");
+                    String format = line.substring(start+7, end);
+                    String depth = line.substring(depthStart+7, depthStart+8);
+                    if (format.contains("YUV444"))
+                        builder.append(STR_YCBCR444).append("-").append(depth).append("bit");
+                    else if (format.contains("YUV422"))
+                       builder.append(STR_YCBCR422).append("-").append(depth).append("bit");
+                    else if (format.contains("YUV420"))
+                       builder.append(STR_YCBCR420).append("-").append(depth).append("bit");
+                    else
+                       builder.append(format).append("-").append(depth).append("bit");
+                    Log.e(TAG, "readColorFormatFromNode :" + builder.toString());
+                    return builder.toString();
+                }
+            }
+            br.close();
+            fr.close();
+            return null;
+        } catch (IOException e) {
+            Log.e(TAG, "Couldn't read  data from /d/dw-hdmi/status", e);
+            return null;
+        }
     }
 
     private  static boolean readModeWhiteList(String pathname) {
@@ -133,7 +178,7 @@ public class RkDisplayModes {
         return true;
     }
 
-     private boolean IsResolutionNeedFilter(int dpy) {
+    private boolean IsResolutionNeedFilter(int dpy) {
         int type = nativeGetBuiltIn(dpy);
         return type==DRM_MODE_CONNECTOR_Unknown || type==DRM_MODE_CONNECTOR_Composite ||
                type==DRM_MODE_CONNECTOR_SVIDEO || type==DRM_MODE_CONNECTOR_LVDS ||
@@ -593,5 +638,33 @@ public class RkDisplayModes {
 
         return null;
     }
-}
 
+    public String getCurColorMode(int dpy) {
+        String mCurColorMode = null;
+        int foundIdx=-1;
+        RkDisplayModes.RkColorCapacityInfo mCurColorInfos;
+
+        if (dpy == MAIN_DISPLAY) {
+            mCurColorMode = SystemProperties.get("persist.sys.color.main", "Auto");
+            mCurColorInfos = mMainColorInfos;
+        } else {
+            mCurColorMode = SystemProperties.get("persist.sys.color.aux", "Auto");
+            mCurColorInfos = mAuxColorInfos;
+        }
+        if (mCurColorInfos != null && mCurColorMode != null && !mCurColorMode.contains("Auto")) {
+            List<String> corlorList = mCurColorInfos.getCorlorModeList();
+            for (int i = 0; i < corlorList.size(); i++) {
+                if (corlorList.get(i).equals(mCurColorMode))
+                    return mCurColorMode;
+            }
+        } else if (mCurColorMode != null && mCurColorMode.contains("Auto")){
+            return mCurColorMode;
+        }
+	
+        String mColorMode = readColorFormatFromNode();
+        if (mColorMode != null)
+            mCurColorMode = mColorMode;
+
+        return mCurColorMode;
+    }
+}

@@ -138,6 +138,11 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
             return null;
     }
 
+    public String getCurColorMode(int display, String iface){
+        String colorMode = mdrmModes.getCurColorMode(display);
+        return colorMode;
+    }
+
     public void setColorMode(int display, String iface, String format){
         boolean isSameProperty = false;
 
