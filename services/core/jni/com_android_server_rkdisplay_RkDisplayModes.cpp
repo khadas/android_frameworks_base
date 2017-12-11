@@ -133,7 +133,7 @@ static void hotPlugUpdate(){
             continue;
         ALOGI("%s event  for connector %u\n",
             cur_state == DRM_MODE_CONNECTED ? "Plug" : "Unplug", conn->id());
-    
+ 
         if (cur_state == DRM_MODE_CONNECTED) {
          if (conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT)
            mextend = conn.get();
@@ -219,18 +219,21 @@ static void nativeInit(JNIEnv* env, jobject obj) {
 #define HDCP1X_EN (1<<2)
 #define RESOLUTION_WHITE_EN (1<<3)
 
-struct Resolution
-{
-    unsigned int hdisplay;
-    unsigned int vdisplay;
-    unsigned int dclk;
-    unsigned int hsync_start;
-    unsigned int hsync_end;
-    unsigned int htotal;
-    unsigned int vsync_start;
-    unsigned int vsync_end;
-    unsigned int vtotal;
+struct drm_display_mode {
+	/* Proposed mode values */
+    int clock;		/* in kHz */
+    int hdisplay;
+    int hsync_start;
+    int hsync_end;
+    int htotal;
+    int vdisplay;
+    int vsync_start;
+    int vsync_end;
+    int vtotal;
+    int vrefresh;
+    int vscan;
     unsigned int flags;
+    int picture_aspect_ratio;
 };
 
 enum output_format {
@@ -258,7 +261,7 @@ struct overscan {
 };
 
 struct disp_info{
-    struct Resolution resolution;
+    struct drm_display_mode resolution;
     struct overscan scan;
     enum output_format  format;
     enum output_depth depthc;
@@ -279,6 +282,7 @@ static char const *const device_template[] =
     "/dev/block/platform/30020000.rksdmmc/by-name/baseparamer",
     "/dev/block/platform/ff0f0000.rksdmmc/by-name/baseparamer",
     "/dev/block/platform/ff520000.rksdmmc/by-name/baseparamer",
+    "/dev/block/platform/fe330000.sdhci/by-name/baseparamer",
     "/dev/block/rknand_baseparamer",
     NULL
 };
@@ -286,8 +290,10 @@ static char const *const device_template[] =
 const char* GetBaseparameterFile(void)
 {
     int i = 0;
+    int err;
 
     while (device_template[i]) {
+        err = access(device_template[i], R_OK | W_OK);
         if (!access(device_template[i], R_OK | W_OK))
             return device_template[i];
         i++;
@@ -358,7 +364,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 info.v_sync_end() == vsync_end &&
                 info.v_total()==vtotal &&
                 atof(formatRefresh)==vfresh) {
-                ALOGD("***********************found main idx %d ****************", (int)c);
+                ALOGD("***********************found aux idx %d ****************", (int)c);
                 foundAuxIdx = c;
                 break;
             }
@@ -368,7 +374,6 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
     int file;
     const char *baseparameterfile = GetBaseparameterFile();
     if (!baseparameterfile) {
-        ALOGW("base paramter file can not be find");
         sync();
         return;
     }
@@ -400,6 +405,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
 
             property_get("persist.sys.resolution.main", resolution, "0x0@0.00-0-0-0-0-0-0-0");
             if (strncmp(resolution, "Auto", 4) != 0 && strncmp(resolution, "0x0p0-0", 7) !=0) {
+		ALOGD("saveConfig resolution = %s", resolution);
                 std::vector<DrmMode> mModes = primary->modes();
                 sscanf(resolution,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,&htotal,&vsync_start,&vsync_end,
                 &vtotal, &flags);
@@ -409,9 +415,9 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 base_paramer.main.resolution.hsync_start = hsync_start;
                 base_paramer.main.resolution.hsync_end = hsync_end;
                 if (foundMainIdx != -1)
-                    base_paramer.main.resolution.dclk = mModes[foundMainIdx].clock();
+                    base_paramer.main.resolution.clock = mModes[foundMainIdx].clock();
                 else
-                    base_paramer.main.resolution.dclk = htotal*vtotal*vfresh;
+                    base_paramer.main.resolution.clock = htotal*vtotal*vfresh;
                 base_paramer.main.resolution.htotal = htotal;
                 base_paramer.main.resolution.vsync_start = vsync_start;
                 base_paramer.main.resolution.vsync_end = vsync_end;
@@ -485,9 +491,9 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 base_paramer.aux.resolution.hdisplay = w;
                 base_paramer.aux.resolution.vdisplay = h;
                 if (foundMainIdx != -1)
-                    base_paramer.aux.resolution.dclk = mModes[foundMainIdx].clock();
+                    base_paramer.aux.resolution.clock = mModes[foundMainIdx].clock();
                 else
-                    base_paramer.aux.resolution.dclk = htotal*vtotal*vfresh;
+                    base_paramer.aux.resolution.clock = htotal*vtotal*vfresh;
                 base_paramer.aux.resolution.hsync_start = hsync_start;
                 base_paramer.aux.resolution.hsync_end = hsync_end;
                 base_paramer.aux.resolution.htotal = htotal;
