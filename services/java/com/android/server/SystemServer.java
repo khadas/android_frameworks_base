@@ -1195,7 +1195,7 @@ public final class SystemServer {
                 }
                 
                 // $_rbox_$_modify_$_zhengyang: added 2012-02-20, for add DisplayDeviceManagementService
-                boolean isUseDisplayd = SystemProperties.getBoolean("ro.rk.displayd.enable", true);
+                boolean isUseDisplayd = SystemProperties.getBoolean("ro.rk.displayd.enable", false);
                 if("box".equals(SystemProperties.get("ro.build.characteristics")) && isUseDisplayd) {
                     try {
                         Slog.i(TAG, "DisplayDeviceManagementService Service");
