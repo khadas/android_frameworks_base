@@ -666,4 +666,14 @@ public class RkDisplayOutputManager {
         return 0;
     }
 
+    public int setGamma(int display, int size, int[] red, int[] green, int[] blue){
+        int ret;
+        try {
+            ret = mService.setGamma(display, size, red, green, blue);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set setGamma :" + e);
+            return -1;
+        }
+        return ret;
+    }
 }

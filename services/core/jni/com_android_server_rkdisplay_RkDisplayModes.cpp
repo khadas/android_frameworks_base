@@ -76,6 +76,11 @@ static bool builtInHdmi(int type){
     return type == DRM_MODE_CONNECTOR_HDMIA || type == DRM_MODE_CONNECTOR_HDMIB;
 }
 
+static bool isGammaSetEnable(int type) {
+    return type == DRM_MODE_CONNECTOR_eDP || type == DRM_MODE_CONNECTOR_LVDS ||
+           type == DRM_MODE_CONNECTOR_DSI;
+}
+
 static void updateConnectors(){
     if (drm_->connectors().size() == 2) {
         bool foundHdmi=false;
@@ -299,6 +304,15 @@ const char* GetBaseparameterFile(void)
         i++;
     }
     return NULL;
+}
+
+static int setGamma(int fd, uint32_t crtc_id, uint32_t size,
+                             uint16_t *red, uint16_t *green, uint16_t *blue)
+{
+    int ret = drmModeCrtcSetGamma(fd, crtc_id, size, red, green, blue);
+    if (ret < 0)
+        ALOGE("fail to SetGamma %d(%s)", ret, strerror(errno));
+    return ret;
 }
 
 static void nativeSaveConfig(JNIEnv* env, jobject obj) {
@@ -685,6 +699,66 @@ static jobject nativeGetCorlorModeConfigs(JNIEnv* env, jclass clazz,
     return infoObj;
 }
 
+
+static jint nativeSetGamma(JNIEnv* env, jobject obj,
+        jint dpy, jint size, jintArray r, jintArray g, jintArray b){
+    int display = dpy;
+    DrmConnector* mCurConnector;
+    int ret=0;
+
+    jsize jrsize = env->GetArrayLength(r);
+    jsize jgsize = env->GetArrayLength(g);
+    jsize jbsize = env->GetArrayLength(b);
+
+    jint* jr_data = env->GetIntArrayElements(r, /* isCopy */ NULL);
+    jint* jg_data = env->GetIntArrayElements(g, /* isCopy */ NULL);
+    jint* jb_data = env->GetIntArrayElements(b, /* isCopy */ NULL);
+
+    uint16_t* red = (uint16_t*)malloc(jrsize*sizeof(uint16_t));
+    uint16_t* green = (uint16_t*)malloc(jgsize*sizeof(uint16_t));
+    uint16_t* blue = (uint16_t*)malloc(jbsize*sizeof(uint16_t));
+
+    for (int i=0;i<jrsize;i++) {
+	    red[i] = jr_data[i];
+    }
+    for (int i=0;i<jgsize;i++) {
+	    green[i] = jg_data[i];
+    }
+    for (int i=0;i<jbsize;i++) {
+	    blue[i] = jb_data[i];
+    }
+
+    if (display == HWC_DISPLAY_PRIMARY) {
+        mCurConnector = primary;
+    }else if (display == HWC_DISPLAY_EXTERNAL){
+        mCurConnector = extend;
+    } else {
+        return -1;
+    }
+
+    if (mCurConnector != NULL) {
+        if (isGammaSetEnable(mCurConnector->get_type())) {
+            int mCurCrtcId = drm_->GetCrtcFromConnector(mCurConnector)->id();
+            ret = setGamma(drm_->fd(), mCurCrtcId, (int)size, (uint16_t*)red, (uint16_t*)green, (uint16_t*)blue);
+            if (ret<0)
+                ALOGD("nativeSetGamma failed: dpy=%d size=%d r[%d %d] rgb_size= %d %d %d red[%d %d]", display, size, 
+                        jr_data[0], jr_data[1],jrsize, jgsize, jbsize
+                        ,red[0], red[1]);
+        }
+    }
+    if (red)
+        free(red);
+    if (green)
+        free(green);
+    if (blue)
+        free(blue);
+    env->ReleaseIntArrayElements(r, jr_data, 0);
+    env->ReleaseIntArrayElements(g, jg_data, 0);
+    env->ReleaseIntArrayElements(b, jb_data, 0);
+    return ret;
+}
+
+
 static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
         jint dpy) {
     int display = dpy;
@@ -777,7 +851,8 @@ static const JNINativeMethod sRkDrmModeMethods[] = {
             (void*)nativeGetConnectionState},
     {"nativeGetCorlorModeConfigs", "(I)Lcom/android/server/rkdisplay/RkDisplayModes$RkColorCapacityInfo;",
             (void*)nativeGetCorlorModeConfigs},
-
+    {"nativeSetGamma", "(II[I[I[I)I",
+            (void*)nativeSetGamma},
 };
 
 

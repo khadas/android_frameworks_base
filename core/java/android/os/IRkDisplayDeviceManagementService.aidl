@@ -20,7 +20,6 @@
 
 package android.os;
 
-
 /**
  * @hide
  */
@@ -135,4 +134,8 @@ interface IRkDisplayDeviceManagementService
       *Set Hue
     */
     void setHue(int display, int degree);
+    /**
+     *setGamma
+    */
+    int setGamma(int dpy,int size,in int[] red, in int[] green,in int[] blue);
 }

@@ -29,6 +29,7 @@ public class RkDisplayModes {
     private static native String nativeGetCurMode(int dpy, int iface_type);
     private static native int nativeGetBuiltIn(int dpy);
     private static native int nativeGetConnectionState(int dpy);
+    private static native int nativeSetGamma(int dpy, int size, int[] r, int[] g, int[] b);
 
     private static RkDisplayModes.RkPhysicalDisplayInfo mDisplayInfos[];
     private static RkDisplayModes.RkPhysicalDisplayInfo mMainDisplayInfos[];
@@ -666,5 +667,9 @@ public class RkDisplayModes {
             mCurColorMode = mColorMode;
 
         return mCurColorMode;
+    }
+
+    public int setGamma(int dpy, int size, int[] red, int[] green, int[] blue) {
+        return nativeSetGamma(dpy, size, red, green, blue);
     }
 }
