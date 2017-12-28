@@ -135,6 +135,14 @@ interface IRkDisplayDeviceManagementService
     */
     void setHue(int display, int degree);
     /**
+     *get Bcsh
+    */
+    int[] getBcsh(int display);
+    /**
+     *get Bcsh
+    */
+    int[] getOverscan(int display);
+    /**
      *setGamma
     */
     int setGamma(int dpy,int size,in int[] red, in int[] green,in int[] blue);

@@ -418,25 +418,15 @@ public class RkDisplayOutputManager {
     * @hide
     */
     public Rect getOverScan(int display) {
-        String OverScan;
-        if(display == MAIN_DISPLAY)
-            OverScan = SystemProperties.get("persist.sys.overscan.main");
-        else if(display == AUX_DISPLAY)
-            OverScan = SystemProperties.get("persist.sys.overscan.aux");
-        else {
-            return new Rect(100,100,100,100);
+        int[] overscan = new int[4];
+        try {
+            overscan = mService.getOverscan(display);
+            Log.d(TAG, "getOverscan :" + overscan[0] +","+ overscan[1] +","+ overscan[2] + ","+overscan[3]);
+        }catch (RemoteException e) {
+            Log.e(TAG, "Error getOverScan :" + e);
         }
-
-        String split = OverScan.substring(9);
-        String [] value = split.split("\\,");
-        if (value != null) {
-            Rect rect = new Rect();
-            rect.left = Integer.parseInt(value[0]);
-            rect.top = Integer.parseInt(value[1]);
-            rect.right = Integer.parseInt(value[2]);
-            rect.bottom = Integer.parseInt(value[3]);
-            return rect;
-        }
+        if (overscan[0] != 0 && overscan[1]!=0 && overscan[2] != 0 && overscan[3] != 0)
+            return new Rect(overscan[0], overscan[1], overscan[2], overscan[3]);
         return new Rect(100,100,100,100);
     }
 
@@ -664,6 +654,72 @@ public class RkDisplayOutputManager {
             return -1;
         }
         return 0;
+    }
+
+    /**
+    *
+    * @param display
+    * @return brightness
+    * @hide
+    */
+    public int getBrightness(int display){
+        int[] bcsh = new int[4];
+        bcsh = getBcsh(display);
+        return bcsh[0];
+    }
+
+    /**
+    *
+    * @param display
+    * @return display
+    * @hide
+    */
+    public int getContrast(int display){
+        int[] bcsh = new int[4];
+        bcsh = getBcsh(display);
+        return bcsh[1];
+    }
+
+    /**
+    *
+    * @param display
+    * @return saturation
+    * @hide
+    */
+    public int getSaturation(int display){
+        int[] bcsh = new int[4];
+        bcsh = getBcsh(display);
+        return bcsh[2];
+    }
+
+    /**
+    *
+    * @param display
+    * @return Hue
+    * @hide
+    */
+    public int getHue(int display){
+        int[] bcsh = new int[4];
+        bcsh = getBcsh(display);
+        return bcsh[3];
+    }
+
+    /**
+    *
+    * @param display
+    * @return order:brightness, con, sat, hue
+    * @hide
+    */
+    public int[] getBcsh(int display)
+    {
+        try {
+            return mService.getBcsh(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get brightness :" + e);
+            int[] bcsh = new int[4];
+			bcsh[0]=bcsh[1]=bcsh[2]=bcsh[3]=50;
+            return bcsh;
+        }
     }
 
     public int setGamma(int display, int size, int[] red, int[] green, int[] blue){

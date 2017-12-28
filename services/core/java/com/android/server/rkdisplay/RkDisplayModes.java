@@ -27,8 +27,11 @@ public class RkDisplayModes {
     private static native int nativeGetNumConnectors();
     private static native void nativeSetMode(int dpy, int iface_type, String mode);
     private static native String nativeGetCurMode(int dpy, int iface_type);
+    private static native String nativeGetCurCorlorMode(int dpy);
     private static native int nativeGetBuiltIn(int dpy);
     private static native int nativeGetConnectionState(int dpy);
+    private static native int[] nativeGetBcsh(int dpy);
+    private static native int[] nativeGetOverscan(int dpy);
     private static native int nativeSetGamma(int dpy, int size, int[] r, int[] g, int[] b);
 
     private static RkDisplayModes.RkPhysicalDisplayInfo mDisplayInfos[];
@@ -465,19 +468,25 @@ public class RkDisplayModes {
     public String getCurMode(int display, String iface){
         int ifaceType = ifacetotype(iface);
         String mCurMode = null;
+        String mAutoMode = null;
+        boolean isAutoMode=false;
         int foundIdx=-1;
         StringBuilder builder = new StringBuilder();
 
+        mCurMode = nativeGetCurMode(display, ifaceType);
+        Log.e(TAG, "nativeGetCurMode:  " + mCurMode);
         RkDisplayModes.RkPhysicalDisplayInfo mCurDisplayInfos[];
         if (display == MAIN_DISPLAY) {
             mCurDisplayInfos = getDisplayConfigs(display);
-            mCurMode = SystemProperties.get("persist.sys.resolution.main", "Auto");
+            mAutoMode = SystemProperties.get("persist.sys.resolution.main", "NULL");
         } else {
             mCurDisplayInfos = getDisplayConfigs(display);
-            mCurMode = SystemProperties.get("persist.sys.resolution.aux", "Auto");
+            mAutoMode = SystemProperties.get("persist.sys.resolution.aux", "NULL");
         }
 
-        if (mCurDisplayInfos != null && mCurMode != null && !mCurMode.contains("Auto")) {
+        if (mAutoMode.equals("Auto"))
+            isAutoMode = true;
+        if (mCurDisplayInfos != null && mCurMode != null && (!isAutoMode && !mCurMode.contains("Auto"))) {
             String[] mode_str = mCurMode.split("-");
             String[] resos = mode_str[0].split("x");
             String[] h_vfresh = resos[1].split("@");
@@ -645,11 +654,10 @@ public class RkDisplayModes {
         int foundIdx=-1;
         RkDisplayModes.RkColorCapacityInfo mCurColorInfos;
 
+        mCurColorMode = nativeGetCurCorlorMode(dpy);
         if (dpy == MAIN_DISPLAY) {
-            mCurColorMode = SystemProperties.get("persist.sys.color.main", "Auto");
             mCurColorInfos = mMainColorInfos;
         } else {
-            mCurColorMode = SystemProperties.get("persist.sys.color.aux", "Auto");
             mCurColorInfos = mAuxColorInfos;
         }
         if (mCurColorInfos != null && mCurColorMode != null && !mCurColorMode.contains("Auto")) {
@@ -661,12 +669,24 @@ public class RkDisplayModes {
         } else if (mCurColorMode != null && mCurColorMode.contains("Auto")){
             return mCurColorMode;
         }
-	
+
         String mColorMode = readColorFormatFromNode();
         if (mColorMode != null)
             mCurColorMode = mColorMode;
+        if (mCurColorMode == null)
+           mCurColorMode = "RGB-8bit";
 
         return mCurColorMode;
+    }
+
+    public int[] getBcsh(int dpy)
+    {
+        return nativeGetBcsh(dpy);
+    }
+
+    public int[] getOverscan(int dpy)
+    {
+        return nativeGetOverscan(dpy);
     }
 
     public int setGamma(int dpy, int size, int[] red, int[] green, int[] blue) {
