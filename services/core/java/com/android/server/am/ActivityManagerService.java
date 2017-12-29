@@ -9895,8 +9895,15 @@ public final class ActivityManagerService extends ActivityManagerNative
     @Override
     public void moveTaskToFront(int taskId, int flags, Bundle bOptions) {
         enforceCallingPermission(android.Manifest.permission.REORDER_TASKS, "moveTaskToFront()");
-
         if (DEBUG_STACK) Slog.d(TAG_STACK, "moveTaskToFront: moving taskId=" + taskId);
+       
+        if(mConfiguration.enableDualScreen()) {
+            if(taskId == mWindowManager.getSecondDisplayTaskId()) {
+                Log.i("DualScreen","ActivityManagerService->moveTaskToFront");
+                return ;
+            }
+        }
+
         synchronized(this) {
             moveTaskToFrontLocked(taskId, flags, bOptions);
         }
@@ -9913,6 +9920,7 @@ public final class ActivityManagerService extends ActivityManagerNative
         final long origId = Binder.clearCallingIdentity();
         try {
             final TaskRecord task = mStackSupervisor.anyTaskForIdLocked(taskId);
+
             if (task == null) {
                 Slog.d(TAG, "Could not find task for id: "+ taskId);
                 return;
@@ -13420,10 +13428,13 @@ public final class ActivityManagerService extends ActivityManagerNative
         final boolean supportsLeanbackOnly =
                 mContext.getPackageManager().hasSystemFeature(FEATURE_LEANBACK_ONLY);
 
+        boolean dualScreenConfig = Settings.System.getInt(resolver, Settings.DUAL_SCREEN_MODE,0) != 0;
         // Transfer any global setting for forcing RTL layout, into a System Property
         SystemProperties.set(DEVELOPMENT_FORCE_RTL, forceRtl ? "1":"0");
 
         final Configuration configuration = new Configuration();
+        configuration.dualscreenflag= dualScreenConfig ?
+            Configuration.ENABLE_DUAL_SCREEN:Configuration.DISABLE_DUAL_SCREEN;
         Settings.System.getConfiguration(resolver, configuration);
         if (forceRtl) {
             // This will take care of setting the correct layout direction flags
@@ -19373,6 +19384,24 @@ public final class ActivityManagerService extends ActivityManagerNative
         return kept;
     }
 
+	public boolean isTaskShowInExtendDisplay(ActivityRecord r){
+		if(r != null){
+			try{
+				int secondDisplayTaskId = getSecondDisplayTaskId();
+				
+				if(r.task != null && r.task.taskId == secondDisplayTaskId)
+				{
+		            Log.i(TAG, "isTaskShowInExtendDisplay:true"+"ActivityRecod:"+r);
+					return true;
+                }
+			}catch(Exception e){
+				
+			}
+		}
+		Log.i(TAG, "isTaskShowInExtendDisplay:false"+"ActivityRecod:"+r);
+		return false;
+    }
+
     /**
      * Decide based on the configuration whether we should shouw the ANR,
      * crash, etc dialogs.  The idea is that if there is no affordence to
@@ -22195,6 +22224,61 @@ public final class ActivityManagerService extends ActivityManagerNative
         }
     }
 
+
+	public int getSecondDisplayTaskId(){
+		return mWindowManager.getSecondDisplayTaskId();
+	}
+	
+	public boolean isShowDualScreen(){
+		return mWindowManager.isShowDualScreen();
+	}
+	
+	
+	@Override
+	public List<Integer> getSecondTaskIds() throws RemoteException{
+		return mWindowManager.getSecondTaskIds();
+	}
+	
+	public boolean isDualConfig(){
+		return mWindowManager.isDualConfig();
+	}
+
+	@Override
+	public List<Integer> getAllTaskIds() throws RemoteException{
+		List<Integer> taskIds = new ArrayList<Integer>();
+		List<StackInfo> stackInfos = getAllStackInfos();
+		if(stackInfos != null && stackInfos.size() > 0){
+			for(StackInfo info : stackInfos){
+				int[] taskIdArray = info.taskIds;
+				reverseArray(taskIdArray);
+				if(taskIdArray != null && taskIdArray.length > 0){
+					for(int taskId : taskIdArray)
+						taskIds.add(taskId);
+				}
+			}
+		}
+		return taskIds;
+	}
+	
+	public void reverseArray(int []arr){
+		if(arr == null || arr.length == 0)
+			return;
+		for(int i = 0; i < arr.length /2 ; ++i){
+			int tmp = arr[i];
+			arr[i] = arr[arr.length -1 - i];
+			arr[arr.length - 1 - i] = tmp;
+		}
+	}
+	
+	public void setIsRemoveSecondTask(boolean isRemove){
+		mWindowManager.setIsRemoveSecondTask(isRemove);
+	}
+	
+	public boolean isRemoveSecondTask(){
+		return mWindowManager.isRemoveSecondTask();
+	}
+
+
     private final class LocalService extends ActivityManagerInternal {
         @Override
         public void grantUriPermissionFromIntent(int callingUid, String targetPkg, Intent intent,
@@ -22574,4 +22658,9 @@ public final class ActivityManagerService extends ActivityManagerNative
         // before the profile user is unlocked.
         return rInfo != null && rInfo.activityInfo != null;
     }
+    
+    public void closedDualScreen() {
+        mWindowManager.updateDisplayShowSynchronization();
+    }
+
 }

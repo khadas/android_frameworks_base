@@ -729,6 +729,11 @@ public class MockContext extends Context {
     }
 
     @Override
+    public void setDualScreen(boolean enable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Context createDeviceProtectedStorageContext() {
         throw new UnsupportedOperationException();
     }

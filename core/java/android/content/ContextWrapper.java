@@ -819,6 +819,10 @@ public class ContextWrapper extends Context {
         return mBase.getDisplayAdjustments(displayId);
     }
 
+   @Override
+    public void setDualScreen(boolean enable) {
+        mBase.setDualScreen(enable);
+    }
     /**
      * @hide
      */

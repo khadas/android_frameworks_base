@@ -2068,6 +2068,7 @@ public class ActivityManager {
      * hint that the user is leaving.
      */
     public static final int MOVE_TASK_NO_USER_ACTION = 0x00000002;
+	public static final int MOVE_TASK_NO_ANIMATION = 0x00000004;
 
     /**
      * Equivalent to calling {@link #moveTaskToFront(int, int, Bundle)}

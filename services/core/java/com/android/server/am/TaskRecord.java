@@ -92,7 +92,7 @@ import static com.android.server.am.ActivityRecord.HOME_ACTIVITY_TYPE;
 import static com.android.server.am.ActivityRecord.RECENTS_ACTIVITY_TYPE;
 import static com.android.server.am.ActivityRecord.STARTING_WINDOW_SHOWN;
 
-final class TaskRecord {
+public final class TaskRecord {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "TaskRecord" : TAG_AM;
     private static final String TAG_ADD_REMOVE = TAG + POSTFIX_ADD_REMOVE;
     private static final String TAG_RECENTS = TAG + POSTFIX_RECENTS;
@@ -138,7 +138,7 @@ final class TaskRecord {
     static final int INVALID_TASK_ID = -1;
     static final int INVALID_MIN_SIZE = -1;
 
-    final int taskId;       // Unique identifier for this task.
+    public final int taskId;       // Unique identifier for this task.
     String affinity;        // The affinity name for this task, or null; may change identity.
     String rootAffinity;    // Initial base affinity, or null; does not change from initial root.
     final IVoiceInteractionSession voiceSession;    // Voice interaction session driving task
@@ -197,7 +197,7 @@ final class TaskRecord {
     TaskDescription lastTaskDescription = new TaskDescription();
 
     /** List of all activities in the task arranged in history order */
-    final ArrayList<ActivityRecord> mActivities;
+    public final ArrayList<ActivityRecord> mActivities;
 
     /** Current stack */
     ActivityStack stack;
@@ -680,6 +680,11 @@ final class TaskRecord {
             for (int activityNdx = mActivities.size() - 1; activityNdx >= 0; --activityNdx) {
                 ActivityRecord r = mActivities.get(activityNdx);
                 if (!r.finishing && stack.okToShowLocked(r)) {
+                    if(mService.mConfiguration.enableDualScreen()) { 
+                        if (mService.isDualConfig() && mService.isTaskShowInExtendDisplay(r)) {
+                            continue;
+                        }
+                    }
                     return r;
                 }
             }

@@ -946,6 +946,7 @@ public interface WindowManagerPolicy {
      *                 so you can use its Rect.  Otherwise null.
      */
     public void layoutWindowLw(WindowState win, WindowState attached);
+    public void layoutWindowLw(WindowState win, WindowState attached,int width,int height);
 
 
     /**

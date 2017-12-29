@@ -4306,7 +4306,8 @@ public abstract class Context {
     public boolean isRestricted() {
         return false;
     }
-
+    
+    public abstract void setDualScreen(boolean enable);
     /**
      * Indicates if the storage APIs of this Context are backed by
      * device-protected storage.

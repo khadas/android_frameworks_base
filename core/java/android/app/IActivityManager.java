@@ -683,6 +683,9 @@ public interface IActivityManager extends IInterface {
      */
     public boolean canBypassWorkChallenge(PendingIntent intent) throws RemoteException;
 
+	public List<Integer> getAllTaskIds() throws RemoteException;
+	
+	public List<Integer> getSecondTaskIds() throws RemoteException;
     /*
      * Private non-Binder interfaces
      */

@@ -40,6 +40,7 @@ import android.view.WindowContentFrameStats;
 import android.view.Surface.OutOfResourcesException;
 
 import android.util.Slog;
+import android.util.Log;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ class WindowSurfaceController {
 
     final WindowStateAnimator mAnimator;
 
-    SurfaceControl mSurfaceControl;
+    public SurfaceControl mSurfaceControl;
 
     private boolean mSurfaceShown = false;
     private float mSurfaceX = 0;
@@ -137,7 +138,6 @@ class WindowSurfaceController {
         try {
             mSurfaceX = left;
             mSurfaceY = top;
-
             try {
                 if (SHOW_TRANSACTIONS) logSurface(
                         "POS (setPositionAndLayer) @ (" + left + "," + top + ")", null);
@@ -305,7 +305,6 @@ class WindowSurfaceController {
         if (surfaceResized) {
             mSurfaceW = width;
             mSurfaceH = height;
-
             try {
                 if (SHOW_TRANSACTIONS) logSurface(
                         "SIZE " + width + "x" + height, null);

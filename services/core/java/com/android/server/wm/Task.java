@@ -56,7 +56,7 @@ class Task implements DimLayer.DimLayerUser {
 
     TaskStack mStack;
     final AppTokenList mAppTokens = new AppTokenList();
-    final int mTaskId;
+    public final int mTaskId;
     final int mUserId;
     boolean mDeferRemoval = false;
     final WindowManagerService mService;

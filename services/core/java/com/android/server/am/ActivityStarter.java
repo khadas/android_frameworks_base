@@ -1039,7 +1039,15 @@ class ActivityStarter {
 
         final int preferredLaunchStackId =
                 (mOptions != null) ? mOptions.getLaunchStackId() : INVALID_STACK_ID;
-
+   
+        if(mService.mConfiguration.enableDualScreen()) { 
+            if(mReusedActivity!=null && mService.isShowDualScreen()) {
+                if(mReusedActivity.task.taskId == mService.getSecondDisplayTaskId()) {
+                Slog.v("DualScreen"," mReusedActivity = "+mReusedActivity +" mService.getSecondDisplayTaskId()="+mService.getSecondDisplayTaskId());
+                    return START_DELIVERED_TO_TOP;  //no open screen application
+                }
+            }
+        }
         if (mReusedActivity != null) {
             // When the flags NEW_TASK and CLEAR_TASK are set, then the task gets reused but
             // still needs to be a lock task mode violation since the task gets cleared out and

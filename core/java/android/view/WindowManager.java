@@ -177,6 +177,7 @@ public interface WindowManager extends ViewManager {
         @ViewDebug.ExportedProperty
         public int y;
 
+		public int taskId;
         /**
          * Indicates how much of the extra space will be allocated horizontally
          * to the view associated with these LayoutParams. Specify 0 if the view
@@ -1769,12 +1770,14 @@ public interface WindowManager extends ViewManager {
             super(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
             type = TYPE_APPLICATION;
             format = PixelFormat.OPAQUE;
+            taskId = -1;
         }
 
         public LayoutParams(int _type) {
             super(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
             type = _type;
             format = PixelFormat.OPAQUE;
+            taskId = -1;
         }
 
         public LayoutParams(int _type, int _flags) {
@@ -1782,6 +1785,7 @@ public interface WindowManager extends ViewManager {
             type = _type;
             flags = _flags;
             format = PixelFormat.OPAQUE;
+            taskId = -1;
         }
 
         public LayoutParams(int _type, int _flags, int _format) {
@@ -1789,6 +1793,7 @@ public interface WindowManager extends ViewManager {
             type = _type;
             flags = _flags;
             format = _format;
+            taskId = -1;
         }
 
         public LayoutParams(int w, int h, int _type, int _flags, int _format) {
@@ -1796,6 +1801,7 @@ public interface WindowManager extends ViewManager {
             type = _type;
             flags = _flags;
             format = _format;
+            taskId = -1;
         }
 
         public LayoutParams(int w, int h, int xpos, int ypos, int _type,
@@ -1806,6 +1812,7 @@ public interface WindowManager extends ViewManager {
             type = _type;
             flags = _flags;
             format = _format;
+            taskId = -1;
         }
 
         public final void setTitle(CharSequence title) {
@@ -1861,6 +1868,7 @@ public interface WindowManager extends ViewManager {
         }
 
         public void writeToParcel(Parcel out, int parcelableFlags) {
+            out.writeInt(taskId);
             out.writeInt(width);
             out.writeInt(height);
             out.writeInt(x);
@@ -1915,6 +1923,7 @@ public interface WindowManager extends ViewManager {
 
 
         public LayoutParams(Parcel in) {
+            taskId = in.readInt();
             width = in.readInt();
             height = in.readInt();
             x = in.readInt();
@@ -2004,6 +2013,12 @@ public interface WindowManager extends ViewManager {
 
         public final int copyFrom(LayoutParams o) {
             int changes = 0;
+
+			if (taskId != o.taskId) {
+				taskId = o.taskId;
+				changes |= LAYOUT_CHANGED;
+			}
+
 
             if (width != o.width) {
                 width = o.width;
@@ -2204,6 +2219,7 @@ public interface WindowManager extends ViewManager {
             sb.append('x');
             sb.append((height== MATCH_PARENT ?"fill":(height==WRAP_CONTENT?"wrap":height)));
             sb.append(")");
+			sb.append(" taskId=");sb.append(taskId);
             if (horizontalMargin != 0) {
                 sb.append(" hm=");
                 sb.append(horizontalMargin);

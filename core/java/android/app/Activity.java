@@ -784,7 +784,7 @@ public class Activity extends ContextThemeWrapper
     }
     /* package */ NonConfigurationInstances mLastNonConfigurationInstances;
 
-    private Window mWindow;
+    public Window mWindow;
 
     private WindowManager mWindowManager;
     /*package*/ View mDecor = null;

@@ -90,7 +90,7 @@ import org.xmlpull.v1.XmlSerializer;
 /**
  * An entry in the history stack, representing an activity.
  */
-final class ActivityRecord {
+public final class ActivityRecord {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ActivityRecord" : TAG_AM;
     private static final String TAG_STATES = TAG + POSTFIX_STATES;
     private static final String TAG_SWITCH = TAG + POSTFIX_SWITCH;
@@ -110,7 +110,7 @@ final class ActivityRecord {
     static final String ACTIVITY_ICON_SUFFIX = "_activity_icon_";
 
     final ActivityManagerService service; // owner
-    final IApplicationToken.Stub appToken; // window manager token
+    public final IApplicationToken.Stub appToken; // window manager token
     final ActivityInfo info; // all about me
     final ApplicationInfo appInfo; // information about activity's app
     final int launchedFromUid; // always the uid who started the activity.
@@ -141,7 +141,7 @@ final class ActivityRecord {
     int theme;              // resource identifier of activity's theme.
     int realTheme;          // actual theme resource we will use, never 0.
     int windowFlags;        // custom window flags for preview window.
-    TaskRecord task;        // the task this is in.
+    public TaskRecord task;        // the task this is in.
     long createTime = System.currentTimeMillis();
     long displayStartTime;  // when we started launching this activity
     long fullyDrawnStartTime; // when we started launching this activity
@@ -168,7 +168,8 @@ final class ActivityRecord {
     HashSet<ConnectionRecord> connections; // All ConnectionRecord we hold
     UriPermissionOwner uriPermissions; // current special URI access perms.
     ProcessRecord app;      // if non-null, hosting application
-    ActivityState state;    // current state we are in
+    public ActivityState state;    // current state we are in
+    public boolean isHomeActivity = false;
     Bundle  icicle;         // last saved activity state
     PersistableBundle persistentState; // last persistently saved activity state
     boolean frontOfTask;    // is this the root activity of its task?
@@ -272,6 +273,7 @@ final class ActivityRecord {
         pw.print(prefix); pw.print("stateNotNeeded="); pw.print(stateNotNeeded);
                 pw.print(" componentSpecified="); pw.print(componentSpecified);
                 pw.print(" mActivityType="); pw.println(mActivityType);
+                pw.print(" isHomeActivity="); pw.println(isHomeActivity);
         if (rootVoiceInteraction) {
             pw.print(prefix); pw.print("rootVoiceInteraction="); pw.println(rootVoiceInteraction);
         }
@@ -589,6 +591,15 @@ final class ActivityRecord {
             sb.append('}');
             return sb.toString();
         }
+
+        @Override
+        public boolean isHomeActivity() throws RemoteException{
+            ActivityRecord activity = weakActivity.get();
+            if (activity != null && activity.isHomeActivity()) {
+                return true;
+            }
+            return false;
+        }
     }
 
     static ActivityRecord forTokenLocked(IBinder token) {
@@ -771,10 +782,13 @@ final class ActivityRecord {
                 && isHomeIntent(intent) && !isResolverActivity()) {
             // This sure looks like a home activity!
             mActivityType = HOME_ACTIVITY_TYPE;
+            isHomeActivity = true;
         } else if (realActivity.getClassName().contains(RECENTS_PACKAGE_NAME)) {
             mActivityType = RECENTS_ACTIVITY_TYPE;
+            isHomeActivity = false;
         } else {
             mActivityType = APPLICATION_ACTIVITY_TYPE;
+            isHomeActivity = false;
         }
     }
 

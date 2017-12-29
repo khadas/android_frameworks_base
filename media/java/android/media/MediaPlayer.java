@@ -678,6 +678,23 @@ public class MediaPlayer extends PlayerBase
 	private static final int MEDIAPLAYER_SET_VIDEO_SURFACEVIEW_ZORDER = 970;	
 	private static final int MEDIAPLAYER_SET_MAX_QUEUE_SIZE = 971;	
 	private static final int MEDIAPLAYER_GET_WHETHER_DOBLY = 972;
+    private static final int INVOKE_ID_SET_SUBTITLE_LAYERSTACK = 16;
+    public int setSubtitleLayerStack(int layerstack) 
+    { 
+        Parcel request = Parcel.obtain(); 
+        Parcel reply = Parcel.obtain(); 
+        try { 
+            request.writeInterfaceToken(IMEDIA_PLAYER); 
+            request.writeInt(INVOKE_ID_SET_SUBTITLE_LAYERSTACK); 
+            request.writeInt(layerstack); 
+            invoke(request, reply); 
+            int result = reply.readInt(); 
+            return result; 
+         } finally { 
+            request.recycle(); 
+            reply.recycle(); 
+        } 
+    }
     /*
     * add by hh for ffplayer
     */

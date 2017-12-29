@@ -270,7 +270,7 @@ public abstract class Window {
      */
     public static final int DECOR_CAPTION_SHADE_DARK = 2;
 
-    private final Context mContext;
+    public final Context mContext;
 
     private TypedArray mWindowStyle;
     private Callback mCallback;

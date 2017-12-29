@@ -79,6 +79,10 @@ import java.util.Set;
  */
 public final class Settings {
 
+    public static final String DUAL_SCREEN_MODE = "dual_screen_mode";
+    public static final String DUAL_SCREEN_ICON_USED = "dual_screen_icon_used";
+    
+
     // Intent actions for Settings
 
     /**

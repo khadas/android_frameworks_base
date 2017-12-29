@@ -536,6 +536,7 @@ public final class ActivityStackSupervisor implements DisplayListener {
         synchronized (mService) {
             mWindowManager = wm;
 
+			mWindowManager.setStackSupervisor(this);
             mDisplayManager =
                     (DisplayManager)mService.mContext.getSystemService(Context.DISPLAY_SERVICE);
             mDisplayManager.registerDisplayListener(this, null);
@@ -575,7 +576,6 @@ public final class ActivityStackSupervisor implements DisplayListener {
         if (stack == null) {
             return false;
         }
-
         final ActivityRecord parent = stack.mActivityContainer.mParentActivity;
         if (parent != null) {
             stack = parent.task.stack;
@@ -833,6 +833,12 @@ public final class ActivityStackSupervisor implements DisplayListener {
         return candidateTaskId;
     }
 
+    public ArrayList<TaskRecord> getAllTasks() {
+        if (mFocusedStack != null) 
+                return mFocusedStack.getAllTasks();
+        return null;
+    }
+
     ActivityRecord resumedAppLocked() {
         ActivityStack stack = mFocusedStack;
         if (stack == null) {
@@ -908,6 +914,13 @@ public final class ActivityStackSupervisor implements DisplayListener {
             for (int stackNdx = stacks.size() - 1; stackNdx >= 0; --stackNdx) {
                 final ActivityStack stack = stacks.get(stackNdx);
                 if (isFocusedStack(stack)) {
+                    if(mService.mConfiguration.enableDualScreen()) {
+                        if(!mService.isShowDualScreen() && mService.isRemoveSecondTask()) {
+                            mService.setIsRemoveSecondTask(false);
+                            return false;
+                        }
+                    }
+
                     final ActivityRecord r = stack.mResumedActivity;
                     if (r != null && r.state != RESUMED) {
                         return false;
@@ -955,11 +968,19 @@ public final class ActivityStackSupervisor implements DisplayListener {
             ArrayList<ActivityStack> stacks = mActivityDisplays.valueAt(displayNdx).mStacks;
             for (int stackNdx = stacks.size() - 1; stackNdx >= 0; --stackNdx) {
                 final ActivityStack stack = stacks.get(stackNdx);
-                if (!isFocusedStack(stack) && stack.mResumedActivity != null) {
-                    if (DEBUG_STATES) Slog.d(TAG_STATES, "pauseBackStacks: stack=" + stack +
+                boolean config = true;
+                if(mService.mConfiguration.enableDualScreen()) { 
+                    if(mService.isTaskShowInExtendDisplay(stack.mResumedActivity)) {
+                        config = false; 
+                    }
+                }
+                if(config) {
+                    if (!isFocusedStack(stack) && stack.mResumedActivity != null) {
+                        if (DEBUG_STATES) Slog.d(TAG_STATES, "pauseBackStacks: stack=" + stack +
                             " mResumedActivity=" + stack.mResumedActivity);
-                    someActivityPaused |= stack.startPausingLocked(userLeaving, false, resuming,
-                            dontWait);
+                        someActivityPaused |= stack.startPausingLocked(userLeaving, false, resuming,
+                             dontWait);
+                    }
                 }
             }
         }
@@ -1310,7 +1331,7 @@ public final class ActivityStackSupervisor implements DisplayListener {
                     System.identityHashCode(r), r.info, new Configuration(mService.mConfiguration),
                     new Configuration(task.mOverrideConfig), r.compat, r.launchedFromPackage,
                     task.voiceInteractor, app.repProcState, r.icicle, r.persistentState, results,
-                    newIntents, !andResume, mService.isNextTransitionForward(), profilerInfo);
+                    newIntents, !andResume, mService.isNextTransitionForward(), profilerInfo,r.task.taskId);
 
             if ((app.info.privateFlags&ApplicationInfo.PRIVATE_FLAG_CANT_SAVE_STATE) != 0) {
                 // This may be a heavy-weight process!  Note that the package
@@ -1825,11 +1846,20 @@ public final class ActivityStackSupervisor implements DisplayListener {
 
     boolean resumeFocusedStackTopActivityLocked(
             ActivityStack targetStack, ActivityRecord target, ActivityOptions targetOptions) {
+        if(mService.mConfiguration.enableDualScreen()) { 
+            if (targetStack == null) {
+                targetStack = mFocusedStack;
+            }
+        }
+
         if (targetStack != null && isFocusedStack(targetStack)) {
+
+            Slog.i("DualScreen","ass->resumeFocusedStackTopActivityLocked() targetStack = "+targetStack);
             return targetStack.resumeTopActivityUncheckedLocked(target, targetOptions);
         }
         final ActivityRecord r = mFocusedStack.topRunningActivityLocked();
         if (r == null || r.state != RESUMED) {
+            Slog.i("DualScreen","ass->resumeFocusedStackTopActivityLocked()  mFocusedStack");
             mFocusedStack.resumeTopActivityUncheckedLocked(null, null);
         }
         return false;
@@ -1953,7 +1983,7 @@ public final class ActivityStackSupervisor implements DisplayListener {
         return createStackOnDisplay(stackId, Display.DEFAULT_DISPLAY, createOnTop);
     }
 
-    ArrayList<ActivityStack> getStacks() {
+    public ArrayList<ActivityStack> getStacks() {
         ArrayList<ActivityStack> allStacks = new ArrayList<>();
         for (int displayNdx = mActivityDisplays.size() - 1; displayNdx >= 0; --displayNdx) {
             allStacks.addAll(mActivityDisplays.valueAt(displayNdx).mStacks);

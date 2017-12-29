@@ -650,4 +650,14 @@ final class Session extends IWindowSession.Stub
 	Binder.restoreCallingIdentity(origId);
     }
 
+	/**
+	*只是显示在一个屏幕上
+	*/
+	public void setOnlyShowInExtendDisplay(IWindow window,int transit){
+		mService.setOnlyShowInExtendDisplay(this, window,transit);
+    }
+
+	public void updateSyncDisplay(){
+		mService.updateDisplayShowSynchronization();
+	}
 }

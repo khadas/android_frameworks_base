@@ -73,7 +73,7 @@ import android.view.DisplayAdjustments;
 
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.util.Preconditions;
-
+import android.provider.Settings;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -2200,6 +2200,21 @@ class ContextImpl extends Context {
         return result;
     }
 
+   @Override
+    public void setDualScreen(boolean enable) {
+       int value = enable ? 1:0;
+       Settings.System.putInt(getContentResolver(), Settings.DUAL_SCREEN_MODE, value);
+       try {
+               IActivityManager am = ActivityManagerNative.getDefault();
+               Configuration config = am.getConfiguration();
+                // Will set userSetLocale to indicate this isn't some passing default - the user
+                // wants this remembered
+                config.setDualScreenFlag(enable);
+                am.updateConfiguration(config);
+        } catch (RemoteException e) {
+                // Intentionally left blank
+        }
+    }
     // ----------------------------------------------------------------------
     // ----------------------------------------------------------------------
     // ----------------------------------------------------------------------

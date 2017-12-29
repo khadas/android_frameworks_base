@@ -148,6 +148,8 @@ import dalvik.system.CloseGuard;
 import dalvik.system.VMDebug;
 import dalvik.system.VMRuntime;
 import org.apache.harmony.dalvik.ddmc.DdmVmInternal;
+import com.android.internal.policy.PhoneWindow;
+
 
 final class RemoteServiceException extends AndroidRuntimeException {
     public RemoteServiceException(String msg) {
@@ -348,6 +350,7 @@ public final class ActivityThread {
 
         Window mPendingRemoveWindow;
         WindowManager mPendingRemoveWindowManager;
+        int taskId;
         boolean mPreserveWindow;
 
         // Set for relaunch requests, indicates the order number of the relaunch operation, so it
@@ -365,6 +368,7 @@ public final class ActivityThread {
             stopped = false;
             hideForNow = false;
             nextIdle = null;
+            taskId = -1;
         }
 
         public boolean isPreHoneycomb() {
@@ -385,7 +389,7 @@ public final class ActivityThread {
                 + Integer.toHexString(System.identityHashCode(this))
                 + " token=" + token + " " + (componentName == null
                         ? "no component name" : componentName.toShortString())
-                + "}";
+                + "}" + "taskId = "+taskId;
         }
 
         public String getStateString() {
@@ -693,12 +697,12 @@ public final class ActivityThread {
         }
 
         public final void scheduleResumeActivity(IBinder token, int processState,
-                boolean isForward, Bundle resumeArgs) {
+                boolean isForward, boolean ignoreCallback, Bundle resumeArgs) {
             int seq = getLifecycleSeq();
             if (DEBUG_ORDER) Slog.d(TAG, "resumeActivity " + ActivityThread.this
                     + " operation received seq: " + seq);
             updateProcessState(processState, false);
-            sendMessage(H.RESUME_ACTIVITY, token, isForward ? 1 : 0, 0, seq);
+            sendMessage(H.RESUME_ACTIVITY, token, isForward ? 1 : 0, ignoreCallback?1:0, seq);
         }
 
         public final void scheduleSendResult(IBinder token, List<ResultInfo> results) {
@@ -716,7 +720,7 @@ public final class ActivityThread {
                 CompatibilityInfo compatInfo, String referrer, IVoiceInteractor voiceInteractor,
                 int procState, Bundle state, PersistableBundle persistentState,
                 List<ResultInfo> pendingResults, List<ReferrerIntent> pendingNewIntents,
-                boolean notResumed, boolean isForward, ProfilerInfo profilerInfo) {
+                boolean notResumed, boolean isForward, ProfilerInfo profilerInfo,int taskId_param) {
 
             updateProcessState(procState, false);
 
@@ -741,6 +745,7 @@ public final class ActivityThread {
             r.profilerInfo = profilerInfo;
 
             r.overrideConfig = overrideConfig;
+            r.taskId = taskId_param;
             updatePendingConfiguration(curConfig);
 
             sendMessage(H.LAUNCH_ACTIVITY, r);
@@ -4656,7 +4661,22 @@ public final class ActivityThread {
         if (activity != null) {
             activity.mCalled = false;
         }
+        try {
+            if(PhoneWindow.WindowManagerHolder.sWindowManager.getDualScreenFlag()) {
+                if(activity!=null && activity.mWindow!=null && activity.mWindow.mContext!=null) {// 使异显后的activity Configuation不随旋转改变
+                    if(PhoneWindow.WindowManagerHolder.sWindowManager.isShowDualScreen()) {
+                        String packageName = activity.mWindow.mContext.getPackageName();
+                        String secondPackageName = PhoneWindow.WindowManagerHolder.sWindowManager.getSecondPackageName();
+                        //Slog.v("DualScreen", "  packageName = "+packageName+ "   secondPackageName = "+secondPackageName+ "  bool "+packageName.equals(secondPackageName));
+                        if(packageName.equals(secondPackageName)){ 
+                           return;
+                        }
+                    }
+                } 
+            }   
+        } catch (Exception e) {
 
+        }
         boolean shouldChangeConfig = false;
         if ((activity == null) || (activity.mCurrentConfig == null)) {
             shouldChangeConfig = true;

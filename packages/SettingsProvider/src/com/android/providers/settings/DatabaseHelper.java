@@ -2373,6 +2373,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
             // Set default tty mode
             loadSetting(stmt, Settings.System.TTY_MODE, 0);
 
+
+            //dual screen
+            loadSetting(stmt, Settings.DUAL_SCREEN_MODE, 0);
+            loadSetting(stmt, Settings.DUAL_SCREEN_ICON_USED, 0);
+
             loadIntegerSetting(stmt, Settings.System.SCREEN_BRIGHTNESS,
                     R.integer.def_screen_brightness);
 

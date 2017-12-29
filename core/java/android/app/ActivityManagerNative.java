@@ -3071,6 +3071,34 @@ class ActivityManagerProxy implements IActivityManager
         return mRemote;
     }
 
+	@Override
+	public List<Integer> getSecondTaskIds() throws RemoteException{
+		return null;
+	}
+	public List<Integer> getAllTaskIds() throws RemoteException{
+		List<Integer> taskIds = new ArrayList<Integer>();
+		List<StackInfo> stackInfos = getAllStackInfos();
+		if(stackInfos != null && stackInfos.size() > 0){
+			for(StackInfo info : stackInfos){
+				int[] taskIdArray = info.taskIds;
+				reverseArray(taskIdArray);
+				if(taskIdArray != null && taskIdArray.length > 0){
+					for(int taskId : taskIdArray)
+						taskIds.add(taskId);
+				}
+			}
+		}
+		return taskIds;
+	}
+	public void reverseArray(int []arr){
+		if(arr == null || arr.length == 0)
+			return;
+		for(int i = 0; i < arr.length /2 ; ++i){
+			int tmp = arr[i];
+			arr[i] = arr[arr.length -1 - i];
+			arr[arr.length - 1 - i] = tmp;
+		}
+	}
     public int startActivity(IApplicationThread caller, String callingPackage, Intent intent,
             String resolvedType, IBinder resultTo, String resultWho, int requestCode,
             int startFlags, ProfilerInfo profilerInfo, Bundle options) throws RemoteException {

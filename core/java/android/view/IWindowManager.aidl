@@ -439,4 +439,9 @@ interface IWindowManager
      * Remove the input consumer for wallpaper events.
      */
     void removeWallpaperInputConsumer();
+    boolean isShowDualScreen();
+    String getSecondPackageName();
+    boolean isDualConfig();
+    boolean getDualScreenFlag();
+    int getSecondDisplayTaskId();
 }

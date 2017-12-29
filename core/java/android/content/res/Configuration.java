@@ -230,6 +230,18 @@ public final class Configuration implements Parcelable, Comparable<Configuration
      * Multiple Screens</a> for more information.</p>
      */
     public int screenLayout;
+   //GaoFei Add
+   /** @hide */
+    public static final int UNDEFINE_DUAL_SCREEN = 0x00;
+    /** @hide */
+    public static final int DISABLE_DUAL_SCREEN = 0x01;
+    /** @hide */
+    public static final int ENABLE_DUAL_SCREEN = 0x02;
+
+    /**
+     *@hide
+     */
+    public int dualscreenflag;
 
     /** @hide */
     static public int resetScreenLayout(int curLayout) {
@@ -749,6 +761,7 @@ public final class Configuration implements Parcelable, Comparable<Configuration
     }
 
     public void setTo(Configuration o) {
+        dualscreenflag = o.dualscreenflag;
         fontScale = o.fontScale;
         mcc = o.mcc;
         mnc = o.mnc;
@@ -780,6 +793,16 @@ public final class Configuration implements Parcelable, Comparable<Configuration
         sb.append("{");
         sb.append(fontScale);
         sb.append(" ");
+        if(dualscreenflag != UNDEFINE_DUAL_SCREEN){
+            sb.append("dualscreenflag=");
+            if(dualscreenflag == UNDEFINE_DUAL_SCREEN){
+                sb.append("UNDEFINE ");
+            }else if(dualscreenflag == ENABLE_DUAL_SCREEN){
+                sb.append("ENABLE ");
+            }else if(dualscreenflag == DISABLE_DUAL_SCREEN){
+                sb.append("DISABLE ");
+            }
+        }
         if (mcc != 0) {
             sb.append(mcc);
             sb.append("mcc");
@@ -919,6 +942,7 @@ public final class Configuration implements Parcelable, Comparable<Configuration
      */
     public void setToDefaults() {
         fontScale = 1;
+        dualscreenflag = DISABLE_DUAL_SCREEN;//UNDEFINE_DUAL_SCREEN;
         mcc = mnc = 0;
         mLocaleList = LocaleList.getEmptyLocaleList();
         locale = null;
@@ -953,7 +977,12 @@ public final class Configuration implements Parcelable, Comparable<Configuration
      */
     public @Config int updateFrom(@NonNull Configuration delta) {
         int changed = 0;
-        if (delta.fontScale > 0 && fontScale != delta.fontScale) {
+ 
+        if(delta.dualscreenflag != UNDEFINE_DUAL_SCREEN && dualscreenflag != delta.dualscreenflag){
+            changed |= ActivityInfo.CONFIG_DUAL_SCREEN;
+            dualscreenflag = delta.dualscreenflag;
+        }
+       if (delta.fontScale > 0 && fontScale != delta.fontScale) {
             changed |= ActivityInfo.CONFIG_FONT_SCALE;
             fontScale = delta.fontScale;
         }
@@ -1119,6 +1148,9 @@ public final class Configuration implements Parcelable, Comparable<Configuration
      */
     public int diff(Configuration delta) {
         int changed = 0;
+        if(delta.dualscreenflag != UNDEFINE_DUAL_SCREEN && dualscreenflag != delta.dualscreenflag){
+            changed |= ActivityInfo.CONFIG_DUAL_SCREEN;
+        }
         if (delta.fontScale > 0 && fontScale != delta.fontScale) {
             changed |= ActivityInfo.CONFIG_FONT_SCALE;
         }
@@ -1251,6 +1283,7 @@ public final class Configuration implements Parcelable, Comparable<Configuration
     }
 
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(dualscreenflag);
         dest.writeFloat(fontScale);
         dest.writeInt(mcc);
         dest.writeInt(mnc);
@@ -1288,6 +1321,7 @@ public final class Configuration implements Parcelable, Comparable<Configuration
     }
 
     public void readFromParcel(Parcel source) {
+        dualscreenflag= source.readInt();
         fontScale = source.readFloat();
         mcc = source.readInt();
         mnc = source.readInt();
@@ -1340,6 +1374,8 @@ public final class Configuration implements Parcelable, Comparable<Configuration
 
     public int compareTo(Configuration that) {
         int n;
+        n = this.dualscreenflag - that.dualscreenflag;
+        if(n != 0)return n;
         float a = this.fontScale;
         float b = that.fontScale;
         if (a < b) return -1;
@@ -1420,6 +1456,7 @@ public final class Configuration implements Parcelable, Comparable<Configuration
 
     public int hashCode() {
         int result = 17;
+        result = 31 * result + dualscreenflag;
         result = 31 * result + Float.floatToIntBits(fontScale);
         result = 31 * result + mcc;
         result = 31 * result + mnc;
@@ -1817,6 +1854,13 @@ public final class Configuration implements Parcelable, Comparable<Configuration
         return TextUtils.join("-", parts);
     }
 
+    public void setDualScreenFlag(boolean enable){
+        dualscreenflag = enable ? ENABLE_DUAL_SCREEN : DISABLE_DUAL_SCREEN;
+    }
+
+    public boolean enableDualScreen(){
+       return dualscreenflag == ENABLE_DUAL_SCREEN;
+    }
     /**
      * Generate a delta Configuration between <code>base</code> and <code>change</code>. The
      * resulting delta can be used with {@link #updateFrom(Configuration)}.

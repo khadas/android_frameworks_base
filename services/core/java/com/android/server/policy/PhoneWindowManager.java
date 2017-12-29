@@ -161,6 +161,8 @@ import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.List;
 
+import android.os.Parcel;
+import com.android.server.am.ActivityStackSupervisor;
 /**
  * WindowManagerPolicy implementation for the Android phone UI.  This
  * introduces a new method suffix, Lp, for an internal lock of the
@@ -4597,6 +4599,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     /** {@inheritDoc} */
     @Override
     public void layoutWindowLw(WindowState win, WindowState attached) {
+    }
+    
+    public void layoutWindowLw(WindowState win, WindowState attached, int width, int height) {
         // We've already done the navigation bar and status bar. If the status bar can receive
         // input, we need to layout it again to accomodate for the IME window.
         if ((win == mStatusBar && !canReceiveInput(win)) || win == mNavigationBar) {
@@ -4650,6 +4655,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         = mOverscanScreenLeft + mOverscanScreenWidth;
                 pf.bottom = df.bottom = of.bottom = cf.bottom
                         = mOverscanScreenTop + mOverscanScreenHeight;
+                
+                pf.left = df.left = of.left = cf.left = vf.left = 0;
+                pf.top = df.top = of.top = cf.top = vf.top = 0;
+                pf.right = df.right = of.right = cf.right = vf.right = width;
+                pf.bottom = df.bottom = of.bottom = cf.bottom = vf.bottom = height;
             }
         } else if (attrs.type == TYPE_INPUT_METHOD) {
             pf.left = df.left = of.left = cf.left = vf.left = mDockLeft;
@@ -6090,6 +6100,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
 
             case KeyEvent.KEYCODE_POWER: {
+                try {
+                    if (mWindowManager.getDualScreenFlag()) {
+                        if (mWindowManager.getSecondDisplayTaskId() != -1) {
+                            break;
+                        }
+                    }
+                } catch (RemoteException e) {
+
+                }
                 result &= ~ACTION_PASS_TO_USER;
                 isWakeKey = false; // wake-up will be handled separately
                 if (down) {

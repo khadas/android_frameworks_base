@@ -98,9 +98,11 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
+import java.util.Arrays;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import android.os.SystemClock;
+import android.os.SystemProperties;
 
 /**
  * Android-specific Window.
@@ -224,6 +226,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     private boolean mLoadElevation = true;
     private float mElevation;
 
+
     /** Whether window content should be clipped to the background outline. */
     private boolean mClipToOutline;
 
@@ -287,8 +290,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
     private boolean mUseDecorContext = false;
 
-    static class WindowManagerHolder {
-        static final IWindowManager sWindowManager = IWindowManager.Stub.asInterface(
+    public static class WindowManagerHolder {
+        public static final IWindowManager sWindowManager = IWindowManager.Stub.asInterface(
                 ServiceManager.getService("window"));
     }
 
@@ -3801,4 +3804,5 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             mDecor.updateLogTag(params);
         }
     }
+
 }

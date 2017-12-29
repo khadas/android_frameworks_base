@@ -19,6 +19,7 @@ package com.android.internal.policy;
 import com.android.internal.R;
 import com.android.internal.policy.PhoneWindow.PanelFeatureState;
 import com.android.internal.policy.PhoneWindow.PhoneWindowMenuCallback;
+import com.android.internal.policy.PhoneWindow.WindowManagerHolder;
 import com.android.internal.view.FloatingActionMode;
 import com.android.internal.view.RootViewSurfaceTaker;
 import com.android.internal.view.StandaloneActionMode;
@@ -30,6 +31,10 @@ import com.android.internal.widget.DecorCaptionView;
 import com.android.internal.widget.FloatingToolbar;
 
 import java.util.List;
+import android.text.TextUtils;
+import java.util.Arrays;
+import android.os.SystemProperties;
+import android.os.SystemClock;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -199,6 +204,18 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
 
     ViewGroup mContentRoot;
 
+    /**KeyCodes for triger diff display in double screen*/
+    private int[] mDualScreenCodes;
+    /**check value for double screen on keydown*/
+    private boolean[] mDualScreenChecks;
+    /**the times for different double screen keycode time*/
+    private long[] mDualScreenDownTimes;
+    /**the times for double screen keycode onkeyup time*/
+    private long[] mDualScreenUpTimes;
+       
+    private long mDualScreenCodeInterval = 2000L;
+
+
     private Rect mTempRect;
     private Rect mOutsets = new Rect();
 
@@ -257,6 +274,76 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
         mResizeShadowSize = context.getResources().getDimensionPixelSize(
                 R.dimen.resize_shadow_size);
         initResizingPaints();
+        initDualScreenConfig();
+    }
+
+    public void initDualScreenConfig() {
+        
+               String dualScreenKeyCodes = SystemProperties.get("sys.dual_screen.keycodes");
+			   String[] strKeyCodes = new String[]{String.valueOf(KeyEvent.KEYCODE_VOLUME_UP), String.valueOf(KeyEvent.KEYCODE_VOLUME_DOWN)};
+               mDualScreenCodes = new int[strKeyCodes.length];
+               if(!TextUtils.isEmpty(dualScreenKeyCodes)){
+                       strKeyCodes = dualScreenKeyCodes.split(",");
+                       mDualScreenCodes = new int[strKeyCodes.length];
+               }
+               mDualScreenChecks = new boolean[mDualScreenCodes.length];
+               mDualScreenDownTimes = new long[mDualScreenCodes.length];
+               mDualScreenUpTimes = new long[mDualScreenChecks.length];
+               mDualScreenCodeInterval = SystemProperties.getLong("sys.dual_screen.interval", 2000L);
+               for(int i = 0; i != mDualScreenCodes.length; ++i){
+                       mDualScreenCodes[i] = Integer.parseInt(strKeyCodes[i]);
+                       mDualScreenChecks[i] = false;
+                       mDualScreenDownTimes[i] = -1;
+                       mDualScreenUpTimes[i] = -1;
+               }
+               
+               Arrays.sort(mDualScreenCodes);
+    }
+    public void trigerDualScreen(){     
+        if(isAllTrue(mDualScreenChecks)){
+            try{
+                setAllFalse(mDualScreenChecks);
+                Log.i("DualScreen", "DecorView->trigerDualScreen");
+                //start dual screen
+                getRootWindowSession().setOnlyShowInExtendDisplay(getWindow(),-1);
+            }catch (Exception e){
+                Log.i("DualScreen", "DecorView->trigerDualScreen->exception:" + e);
+            }               
+       }
+    }
+       
+    public void trigerSyncScreen(){
+        if(isAllTrue(mDualScreenChecks)) {
+            try{
+                setAllFalse(mDualScreenChecks);
+                //start dual screen
+                Log.i("DualScreen", "DecorView->trigerSyncScreen ");
+                getRootWindowSession().updateSyncDisplay();
+            }catch (Exception e){
+                Log.i("DualScreen", "DecorView->trigerDualScreen:" + e);
+            }           
+        }
+    }
+    public boolean isAllTrue(boolean[] array){
+        if(array == null || array.length == 0)
+           return false;
+        for(boolean indexValue : array){
+            if(!indexValue)
+               return false;
+        }  
+        return true;
+    }
+       
+   public void setAllFalse(boolean[] array){
+       Arrays.fill(array, false);
+    }
+       
+   public boolean isLessThan(long[] array, long interval){
+       if(array == null || array.length == 0)
+           return false;
+       long[] copyArray = Arrays.copyOf(array, array.length);
+       Arrays.sort(copyArray);
+       return Math.abs(copyArray[0] -  copyArray[copyArray.length - 1]) < interval;
     }
 
     void setBackgroundFallback(int resId) {
@@ -295,7 +382,50 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
         final int keyCode = event.getKeyCode();
         final int action = event.getAction();
         final boolean isDown = action == KeyEvent.ACTION_DOWN;
+        
+		int dualScreenCodeIndex = Arrays.binarySearch(mDualScreenCodes, keyCode);
+		boolean isDualScreenFlag = false;
+        try{
+			isDualScreenFlag =PhoneWindow.WindowManagerHolder.sWindowManager.isDualConfig();
+		}catch (Exception e){
+            Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->exception0:" + e);
+		}
+        
+		if(dualScreenCodeIndex >= 0 && isDualScreenFlag && isDown){
+            long currentDownTime = SystemClock.elapsedRealtime();
+            if(mDualScreenChecks[0]==false&&mDualScreenChecks[1]==false){
+	        	mDualScreenChecks[dualScreenCodeIndex] = true;
+		    	mDualScreenDownTimes[dualScreenCodeIndex] = SystemClock.elapsedRealtime();
+			    Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->isDualScreenFlag:" + isDualScreenFlag);
+		    }else if (mDualScreenChecks[dualScreenCodeIndex] == true){
+			    mDualScreenDownTimes[dualScreenCodeIndex] = SystemClock.elapsedRealtime();
+			    Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->isDualScreenFlag:" + isDualScreenFlag);
+		    }else if(mDualScreenChecks[dualScreenCodeIndex] == false){
+			    if(dualScreenCodeIndex==0&&currentDownTime - mDualScreenDownTimes[1] < mDualScreenCodeInterval)
+				    mDualScreenChecks[dualScreenCodeIndex] = true;
+			    if(dualScreenCodeIndex==1&&currentDownTime - mDualScreenDownTimes[0] < mDualScreenCodeInterval)
+				    mDualScreenChecks[dualScreenCodeIndex] = true;
+		    }   
+            try{
+                if(isAllTrue(mDualScreenChecks)) {
+                    if(PhoneWindow.WindowManagerHolder.sWindowManager.getSecondDisplayTaskId() != -1){
+					    Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->isShowDualScreen:trigerSyncScreen" );
+                        trigerSyncScreen();
+                    }else{
+					    Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->isShowDualScreen:trigerDualScreen" );
+                        trigerDualScreen();
+                    }
+                    return true;
+                }
+            }catch (Exception e){
+                Log.i("DualScreen", "DecorView->onKeyDown->exception1:" + e);
+            }           
+                       
+        }
 
+			
+        
+        
         if (isDown && (event.getRepeatCount() == 0)) {
             // First handle chording of panel key: if a panel key is held
             // but not released, try to execute a shortcut in it.

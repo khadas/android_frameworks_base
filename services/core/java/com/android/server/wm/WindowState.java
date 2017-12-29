@@ -513,9 +513,13 @@ final class WindowState implements WindowManagerPolicy.WindowState {
      */
     boolean mSeamlesslyRotated = false;
 
+    public int taskId = -1;
+	private boolean mIsPrimaryDisplay;
+
     WindowState(WindowManagerService service, Session s, IWindow c, WindowToken token,
            WindowState attachedWindow, int appOp, int seq, WindowManager.LayoutParams a,
            int viewVisibility, final DisplayContent displayContent) {
+        taskId = a.taskId;
         mService = service;
         mSession = s;
         mClient = c;
@@ -642,6 +646,20 @@ final class WindowState implements WindowManagerPolicy.WindowState {
                 // device is locked.
                 mAttrs.flags |= FLAG_SHOW_WHEN_LOCKED;
             }
+        }
+        if(mService.getDualScreenFlag()) {
+	       if (mService.getSecondDisplayTaskId() != -1) {
+	            WindowList winlist = mService.getSecondWindowState();
+	            if(winlist != null) {
+		            for (int i=0;i<winlist.size();i++) {
+			            WindowState win = winlist.get(i);//Sub window
+			            //Slog.v("DualScreen"," win =  "+win+ " win.mRootToken = " + win.mRootToken );
+			            if(win.mRootToken == mRootToken) {
+		    		        mDisplayContent = win.mDisplayContent;
+		    	        }
+		            }	
+	            }
+    	    }
         }
 
         mWinAnimator = new WindowStateAnimator(this);
@@ -1080,6 +1098,9 @@ final class WindowState implements WindowManagerPolicy.WindowState {
     public DisplayContent getDisplayContent() {
         if (mAppToken == null || mNotOnAppsDisplay) {
             return mDisplayContent;
+        }
+		if(mDisplayContent!=null && mService.isDualConfig()) {
+			return mDisplayContent;
         }
         final TaskStack stack = getStack();
         return stack == null ? mDisplayContent : stack.getDisplayContent();
@@ -2456,7 +2477,7 @@ final class WindowState implements WindowManagerPolicy.WindowState {
             return mService.mCurrentFocus == this;
         }
     }
-
+	
     boolean inFreeformWorkspace() {
         final Task task = getTask();
         return task != null && task.inFreeformWorkspace();

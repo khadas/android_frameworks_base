@@ -197,7 +197,6 @@ class WindowSurfacePlacer {
                     + Debug.getCallers(3));
             return;
         }
-
         if (mService.mWaitingForConfig) {
             // Our configuration has changed (most likely rotation), but we
             // don't yet have the complete configuration to report to
@@ -619,7 +618,6 @@ class WindowSurfacePlacer {
             mDisplayHasContent = false;
             mPreferredRefreshRate = 0;
             mPreferredModeId = 0;
-
             int repeats = 0;
             do {
                 repeats++;
@@ -745,7 +743,6 @@ class WindowSurfacePlacer {
 
                 //Slog.i(TAG, "Window " + this + " clearing mContentChanged - done placing");
                 w.mContentChanged = false;
-
                 // Moved from updateWindowsAndWallpaperLocked().
                 if (w.mHasSurface) {
                     // Take care of the window being ready to display.
@@ -994,14 +991,20 @@ class WindowSurfacePlacer {
                     }
                     win.mLayoutNeeded = false;
                     win.prelayout();
-                    mService.mPolicy.layoutWindowLw(win, null);
+                    //mService.mPolicy.layoutWindowLw(win, null);
+                    DisplayInfo defaultDisplayInfo = mService.getDefaultDisplayInfoLocked();
+                    mService.mPolicy.layoutWindowLw(win ,null ,defaultDisplayInfo.logicalWidth,defaultDisplayInfo.logicalHeight);
+  
                     win.mLayoutSeq = seq;
-
                     // Window frames may have changed. Update dim layer with the new bounds.
                     final Task task = win.getTask();
                     if (task != null) {
-                        displayContent.mDimLayerController.updateDimLayer(task);
-                    }
+                       try{
+                            displayContent.mDimLayerController.updateDimLayer(task);
+                        }catch (Exception e) {
+                            Slog.i("DualScreen","exception e displayContent e = "+e);
+                        }
+                     }
 
                     if (DEBUG_LAYOUT) Slog.v(TAG,
                             "  LAYOUT: mFrame="
@@ -1043,7 +1046,10 @@ class WindowSurfacePlacer {
                     }
                     win.mLayoutNeeded = false;
                     win.prelayout();
-                    mService.mPolicy.layoutWindowLw(win, win.mAttachedWindow);
+                    //mService.mPolicy.layoutWindowLw(win, win.mAttachedWindow);
+                    DisplayInfo defaultDisplayInfo = mService.getDefaultDisplayInfoLocked();
+                    mService.mPolicy.layoutWindowLw(win, win.mAttachedWindow, defaultDisplayInfo.logicalWidth,defaultDisplayInfo.logicalHeight);
+ 
                     win.mLayoutSeq = seq;
                     if (DEBUG_LAYOUT) Slog.v(TAG,
                             "  LAYOUT: mFrame=" + win.mFrame + " mContainingFrame="

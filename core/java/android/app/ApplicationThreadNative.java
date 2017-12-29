@@ -121,8 +121,9 @@ public abstract class ApplicationThreadNative extends Binder
             IBinder b = data.readStrongBinder();
             int procState = data.readInt();
             boolean isForward = data.readInt() != 0;
+            boolean ignoreCallback = data.readInt()!=0;
             Bundle resumeArgs = data.readBundle();
-            scheduleResumeActivity(b, procState, isForward, resumeArgs);
+            scheduleResumeActivity(b, procState, isForward,ignoreCallback, resumeArgs);
             return true;
         }
 
@@ -160,9 +161,10 @@ public abstract class ApplicationThreadNative extends Binder
             boolean isForward = data.readInt() != 0;
             ProfilerInfo profilerInfo = data.readInt() != 0
                     ? ProfilerInfo.CREATOR.createFromParcel(data) : null;
+            int taskId = data.readInt();
             scheduleLaunchActivity(intent, b, ident, info, curConfig, overrideConfig, compatInfo,
                     referrer, voiceInteractor, procState, state, persistentState, ri, pi,
-                    notResumed, isForward, profilerInfo);
+                    notResumed, isForward, profilerInfo,taskId);
             return true;
         }
 
@@ -822,13 +824,14 @@ class ApplicationThreadProxy implements IApplicationThread {
     }
 
     public final void scheduleResumeActivity(IBinder token, int procState, boolean isForward,
-            Bundle resumeArgs)
+            boolean ignoreCallback,Bundle resumeArgs)
             throws RemoteException {
         Parcel data = Parcel.obtain();
         data.writeInterfaceToken(IApplicationThread.descriptor);
         data.writeStrongBinder(token);
         data.writeInt(procState);
         data.writeInt(isForward ? 1 : 0);
+        data.writeInt(ignoreCallback?1:0);
         data.writeBundle(resumeArgs);
         mRemote.transact(SCHEDULE_RESUME_ACTIVITY_TRANSACTION, data, null,
                 IBinder.FLAG_ONEWAY);
@@ -851,7 +854,7 @@ class ApplicationThreadProxy implements IApplicationThread {
             CompatibilityInfo compatInfo, String referrer, IVoiceInteractor voiceInteractor,
             int procState, Bundle state, PersistableBundle persistentState,
             List<ResultInfo> pendingResults, List<ReferrerIntent> pendingNewIntents,
-            boolean notResumed, boolean isForward, ProfilerInfo profilerInfo) throws RemoteException {
+            boolean notResumed, boolean isForward, ProfilerInfo profilerInfo,int taskId) throws RemoteException {
         Parcel data = Parcel.obtain();
         data.writeInterfaceToken(IApplicationThread.descriptor);
         intent.writeToParcel(data, 0);
@@ -881,6 +884,7 @@ class ApplicationThreadProxy implements IApplicationThread {
         } else {
             data.writeInt(0);
         }
+        data.writeInt(taskId);
         mRemote.transact(SCHEDULE_LAUNCH_ACTIVITY_TRANSACTION, data, null,
                 IBinder.FLAG_ONEWAY);
         data.recycle();

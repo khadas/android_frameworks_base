@@ -69,7 +69,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.AnimationUtils;
 import android.view.animation.Transformation;
-
+import android.os.SystemProperties;
 import com.android.server.wm.WindowManagerService.H;
 
 import java.io.PrintWriter;
@@ -1161,7 +1161,7 @@ class WindowStateAnimator {
             mDtDy = mWin.mGlobalScale;
         }
     }
-
+    
     private void calculateSystemDecorRect() {
         final WindowState w = mWin;
         final Rect decorRect = w.mDecorFrame;
@@ -1191,7 +1191,6 @@ class WindowStateAnimator {
         } else {
             mSystemDecorRect.set(0, 0, width, height);
         }
-
         // If a freeform window is animating from a position where it would be cutoff, it would be
         // cutoff during the animation. We don't want that, so for the duration of the animation
         // we ignore the decor cropping and depend on layering to position windows correctly.
@@ -1217,6 +1216,7 @@ class WindowStateAnimator {
         }
     }
 
+    DisplayInfo tempInfo = null;
     void calculateSurfaceWindowCrop(Rect clipRect, Rect finalClipRect) {
         final WindowState w = mWin;
         final DisplayContent displayContent = w.getDisplayContent();
@@ -1225,18 +1225,28 @@ class WindowStateAnimator {
             finalClipRect.setEmpty();
             return;
         }
-        final DisplayInfo displayInfo = displayContent.getDisplayInfo();
+        DisplayInfo displayInfo = displayContent.getDisplayInfo();
         if (DEBUG_WINDOW_CROP) Slog.d(TAG,
                 "Updating crop win=" + w + " mLastCrop=" + mLastClipRect);
-
+        if(!mService.isShowDualScreen()) {
+            tempInfo = null;
+        }
         // Need to recompute a new system decor rect each time.
         if (!w.isDefaultDisplay()) {
             // On a different display there is no system decor.  Crop the window
-            // by the screen boundaries.
-            mSystemDecorRect.set(0, 0, w.mCompatFrame.width(), w.mCompatFrame.height());
-            mSystemDecorRect.intersect(-w.mCompatFrame.left, -w.mCompatFrame.top,
-                    displayInfo.logicalWidth - w.mCompatFrame.left,
-                    displayInfo.logicalHeight - w.mCompatFrame.top);
+            // by the screen boundaries
+            if(mService.getDualScreenFlag()) {
+                    if (tempInfo == null) {
+                        tempInfo = new DisplayInfo(mService.getDefaultDisplayInfoLocked()); 
+                    }
+                    mSystemDecorRect.set(0, 0, tempInfo.logicalWidth, tempInfo.logicalHeight );
+            } else {
+                mSystemDecorRect.set(0, 0, w.mCompatFrame.width(), w.mCompatFrame.height());
+                mSystemDecorRect.intersect(-w.mCompatFrame.left, -w.mCompatFrame.top,
+                        displayInfo.logicalWidth - w.mCompatFrame.left,
+                        displayInfo.logicalHeight - w.mCompatFrame.top);
+
+            }
         } else if (w.mLayer >= mService.mSystemDecorLayer) {
             // Above the decor layer is easy, just use the entire window.
             mSystemDecorRect.set(0, 0, w.mCompatFrame.width(), w.mCompatFrame.height());
@@ -1404,12 +1414,10 @@ class WindowStateAnimator {
     void setSurfaceBoundariesLocked(final boolean recoveringMemory) {
         final WindowState w = mWin;
         final Task task = w.getTask();
-
         // We got resized, so block all updates until we got the new surface.
         if (w.isResizedWhileNotDragResizing() && !w.isGoneForLayoutLw()) {
             return;
         }
-
         mTmpSize.set(w.mShownPosition.x, w.mShownPosition.y, 0, 0);
         calculateSurfaceBounds(w, w.getAttrs());
 
@@ -1427,8 +1435,8 @@ class WindowStateAnimator {
         // of producing a frame at the old size, having just completed layout
         // to find the surface size changed underneath it.
         if (!w.mRelayoutCalled || w.mInRelayout) {
-            mSurfaceResized = mSurfaceController.setSizeInTransaction(
-                    mTmpSize.width(), mTmpSize.height(), recoveringMemory);
+                mSurfaceResized = mSurfaceController.setSizeInTransaction(
+                        mTmpSize.width(), mTmpSize.height(), recoveringMemory);
         } else {
             mSurfaceResized = false;
         }
