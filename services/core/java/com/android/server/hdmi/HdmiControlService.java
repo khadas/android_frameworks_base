@@ -2439,6 +2439,10 @@ public final class HdmiControlService extends SystemService {
 
 //tell the tv ,wake up now
 	public void touchTv(){
+              if (!isControlEnabled() ||!readBooleanSetting(Global.HDMI_CONTROL_AUTO_WAKEUP_ENABLED, true)) {
+                      Log.i(TAG, "touchTv-1 fail:isControlEnabled:"+isControlEnabled()+",readBooleanSetting:"+readBooleanSetting(Global.HDMI_CONTROL_AUTO_WAKEUP_ENABLED, true));
+                        return;
+                    }
                 assertRunOnServiceThread();
 		Log.i(TAG, "touchTv-1");
                 oneTouchPlay( new IHdmiControlCallback.Stub() {
