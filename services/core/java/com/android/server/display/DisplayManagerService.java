@@ -881,15 +881,12 @@ public final class DisplayManagerService extends SystemService {
                 isDefaultDisplay = true;
             } else {
                 isDefaultDisplay = false;
-                String value = SystemProperties.get("persist.orientation.vhshow");
-                if("true".equals(value)) {
-                     String rotation = SystemProperties.get("persist.orientation.vhinit");
-                     int default_value = (device.getDisplayDeviceInfoLocked().width < device.getDisplayDeviceInfoLocked().height)?1:0;
-                     if(default_value == 1) {//竖屏
-                        device.getDisplayDeviceInfoLocked().rotation = ("0".equals(rotation))?1:0;
-                     } else if(default_value == 0) {//横屏
-                        device.getDisplayDeviceInfoLocked().rotation = ("1".equals(rotation))?1:0;
-                     }
+                String rotation = SystemProperties.get("persist.orientation.vhinit");
+                int default_value = (device.getDisplayDeviceInfoLocked().width < device.getDisplayDeviceInfoLocked().height)?1:0;
+                if(default_value == 1) {//竖屏
+                   device.getDisplayDeviceInfoLocked().rotation = ("0".equals(rotation))?1:0;
+                } else if(default_value == 0) {//横屏
+                   device.getDisplayDeviceInfoLocked().rotation = ("1".equals(rotation))?1:0;
                 }
             }
             configureDisplayInTransactionLocked(device);
