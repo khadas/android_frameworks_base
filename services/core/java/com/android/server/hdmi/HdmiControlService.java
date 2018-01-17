@@ -729,9 +729,11 @@ public class HdmiControlService extends SystemService {
                 new HdmiCecConfig.SettingChangeListener() {
                     @Override
                     public void onChange(String setting) {
-                        if (isTvDeviceEnabled()) {
-                            setCecOption(OptionKey.WAKEUP, tv().getAutoWakeup());
-                        }
+                        //if (isTvDeviceEnabled()) {
+                            setCecOption(OptionKey.WAKEUP, getHdmiCecConfig().getIntValue(
+                                    HdmiControlManager.CEC_SETTING_NAME_TV_WAKE_ON_ONE_TOUCH_PLAY)
+                                      == HdmiControlManager.TV_WAKE_ON_ONE_TOUCH_PLAY_ENABLED);//tv().getAutoWakeup());
+                        //}
                     }
                 }, mServiceThreadExecutor);
     }
@@ -853,9 +855,9 @@ public class HdmiControlService extends SystemService {
         updatePowerStatusOnInitializeCecComplete();
         mWakeUpMessageReceived = false;
 
-        if (isTvDeviceEnabled()) {
-            mCecController.setOption(OptionKey.WAKEUP, tv().getAutoWakeup());
-        }
+        //if (isTvDeviceEnabled()) {
+            mCecController.setOption(OptionKey.WAKEUP, true);//tv().getAutoWakeup());
+        //}
         int reason = -1;
         switch (initiatedBy) {
             case INITIATED_BY_BOOT_UP:
@@ -3613,7 +3615,6 @@ public class HdmiControlService extends SystemService {
         mCecController.setOption(OptionKey.ENABLE_CEC, true);
         mCecController.setOption(OptionKey.SYSTEM_CEC_CONTROL, true);
         mMhlController.setOption(OPTION_MHL_ENABLE, ENABLED);
-
         initializeCec(INITIATED_BY_ENABLE_CEC);
     }
 

@@ -152,6 +152,9 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
                 broadcastActiveSource();
                 finishWithCallback(HdmiControlManager.RESULT_SUCCESS);
             }
+
+            if (status == HdmiControlManager.POWER_STATUS_STANDBY)
+                sendCommand(HdmiCecMessageBuilder.buildTextViewOn(getSourceAddress(), mTargetAddress));
             return true;
         }
         return false;

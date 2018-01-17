@@ -119,6 +119,11 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
                     });
         }
         launchDeviceDiscovery();
+        /* add one touch play after hdmi plug in and cec initialization */
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildActiveSource(
+                getDeviceInfo().getLogicalAddress(), mService.getPhysicalAddress()));
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildTextViewOn(
+                getDeviceInfo().getLogicalAddress(), Constants.ADDR_TV));
         startQueuedActions();
     }
 
@@ -248,11 +253,10 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
         }
         boolean wasActiveSource = isActiveSource();
         // Invalidate the internal active source record when going to standby
-        mService.setActiveSource(Constants.ADDR_INVALID, Constants.INVALID_PHYSICAL_ADDRESS,
-                "HdmiCecLocalDevicePlayback#onStandby()");
-        if (!wasActiveSource) {
+        mService.setActiveSource(Constants.ADDR_INVALID, Constants.INVALID_PHYSICAL_ADDRESS,"HdmiCecLocalDevicePlayback#onStandby()");
+        /*if (!wasActiveSource) {
             return;
-        }
+        }*/
         if (initiatedByCec) {
             mService.sendCecCommand(
                     HdmiCecMessageBuilder.buildInactiveSource(
@@ -265,6 +269,8 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
                 @HdmiControlManager.PowerControlMode
                 String powerControlMode = mService.getHdmiCecConfig().getStringValue(
                         HdmiControlManager.CEC_SETTING_NAME_POWER_CONTROL_MODE);
+	    /* cec cts specification requires that standby message must be broadcast */
+		mService.sendCecCommand(HdmiCecMessageBuilder.buildStandby(getDeviceInfo().getLogicalAddress(), Constants.ADDR_BROADCAST));
                 switch (powerControlMode) {
                     case HdmiControlManager.POWER_CONTROL_MODE_TV:
                         mService.sendCecCommand(
@@ -336,7 +342,7 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
     private ActiveWakeLock getWakeLock() {
         assertRunOnServiceThread();
         if (mWakeLock == null) {
-            if (SystemProperties.getBoolean(Constants.PROPERTY_KEEP_AWAKE, true)) {
+            if (SystemProperties.getBoolean(Constants.PROPERTY_KEEP_AWAKE, false)) {
                 mWakeLock = new SystemWakeLock();
             } else {
                 // Create a stub lock object that doesn't do anything about wake lock,
@@ -396,6 +402,11 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
         try {
             String iso3Language = new String(message.getParams(), 0, 3, "US-ASCII");
             Locale currentLocale = mService.getContext().getResources().getConfiguration().locale;
+	    /* android recognizes all chinese as zho */
+            if (iso3Language.equals("chi")) {
+                Slog.i(TAG, "android set all chinese zho");
+                iso3Language = "zho";
+            }
             String curIso3Language = mService.localeToMenuLanguage(currentLocale);
             HdmiLogger.debug("handleSetMenuLanguage " + iso3Language + " cur:" + curIso3Language);
             if (curIso3Language.equals(iso3Language)) {
@@ -538,6 +549,15 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
             return Constants.ADDR_AUDIO_SYSTEM;
         }
         return Constants.ADDR_TV;
+    }
+
+    @ServiceThreadOnly
+    protected void sendStandby(int deviceId) {
+        assertRunOnServiceThread();
+
+        /* cec cts specification requires that standby message must be broadcast */
+        int targetAddress = Constants.ADDR_BROADCAST;
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildStandby(getDeviceInfo().getLogicalAddress(), targetAddress));
     }
 
     @Override
