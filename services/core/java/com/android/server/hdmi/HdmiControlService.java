@@ -2295,9 +2295,9 @@ public final class HdmiControlService extends SystemService {
 
     @ServiceThreadOnly
     private void enableHdmiControlService() {
-        mCecController.setOption(OptionKey.SYSTEM_CEC_CONTROL, true);
+        /* fix original code err,enable cec function */
+        mCecController.setOption(OptionKey.ENABLE_CEC, true);
         mMhlController.setOption(OPTION_MHL_ENABLE, ENABLED);
-
         initializeCec(INITIATED_BY_ENABLE_CEC);
     }
 

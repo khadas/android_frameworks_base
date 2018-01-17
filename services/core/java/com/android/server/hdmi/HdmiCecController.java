@@ -602,7 +602,13 @@ final class HdmiCecController {
                             cecMessage.getDestination(), body);
                     if (errorCode == SendMessageResult.SUCCESS) {
                         break;
-                    }
+                    } else {
+                        /* If send msg failed, we need delay before retransmission */
+                        try {
+                           Thread.sleep(300);
+                        } catch (InterruptedException ignore) {
+                        }
+		    }
                 } while (i++ < HdmiConfig.RETRANSMISSION_COUNT);
 
                 final int finalError = errorCode;
