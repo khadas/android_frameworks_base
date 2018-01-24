@@ -209,7 +209,7 @@ public class RkDisplayModes {
                 builder.append(info.width).append("x").append(info.height);
                 if (info.interlaceFlag == true) {
                     builder.append("i");
-                    builder.append(String.format("%.2f", info.refreshRate*2));
+                    builder.append(String.format("%.2f", info.refreshRate));
                 } else {
                     builder.append("p");
                     builder.append(String.format("%.2f", info.refreshRate));
@@ -447,10 +447,7 @@ public class RkDisplayModes {
             builder.append("p");
 */
         builder.append("@");
-        if (info.interlaceFlag == true)
-            builder.append(String.format("%.2f", info.refreshRate*2));
-        else
-           builder.append(String.format("%.2f", info.refreshRate)); 
+        builder.append(String.format("%.2f", info.refreshRate)); 
         builder.append("-");
         builder.append(info.hsync_start);
         builder.append("-");
@@ -504,10 +501,7 @@ public class RkDisplayModes {
                 String vfresh;
                 boolean isSameVfresh = false;
 
-                if (info.interlaceFlag)
-                    vfresh = String.format("%.2f", info.refreshRate*2);
-                else
-                    vfresh = String.format("%.2f", info.refreshRate);
+                vfresh = String.format("%.2f", info.refreshRate);
                 if (h_vfresh.length == 2)
                     isSameVfresh = vfresh.equals(h_vfresh[1]);
 
@@ -525,7 +519,7 @@ public class RkDisplayModes {
                     builder.append(info.width).append("x").append(info.height);
                     if (info.interlaceFlag == true) {
                         builder.append("i");
-                        builder.append(String.format("%.2f", info.refreshRate*2));
+                        builder.append(String.format("%.2f", info.refreshRate));
                     } else {
                         builder.append("p");
                         builder.append(String.format("%.2f", info.refreshRate));

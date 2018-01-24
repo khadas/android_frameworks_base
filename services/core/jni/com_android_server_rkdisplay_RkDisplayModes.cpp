@@ -594,6 +594,8 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 base_paramer.main.resolution.hsync_end = hsync_end;
                 if (foundMainIdx != -1)
                     base_paramer.main.resolution.clock = mModes[foundMainIdx].clock();
+                else if (flags & DRM_MODE_FLAG_INTERLACE)
+                    base_paramer.main.resolution.clock = htotal*vtotal*vfresh/2;
                 else
                     base_paramer.main.resolution.clock = htotal*vtotal*vfresh;
                 base_paramer.main.resolution.htotal = htotal;
@@ -681,6 +683,8 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 base_paramer.aux.resolution.vdisplay = h;
                 if (foundMainIdx != -1)
                     base_paramer.aux.resolution.clock = mModes[foundMainIdx].clock();
+                else if (flags & DRM_MODE_FLAG_INTERLACE)
+                    base_paramer.aux.resolution.clock = htotal*vtotal*vfresh/2;
                 else
                     base_paramer.aux.resolution.clock = htotal*vtotal*vfresh;
                 base_paramer.aux.resolution.hsync_start = hsync_start;
@@ -886,7 +890,10 @@ static bool getResolutionInfo(int dpy, char* resolution)
 
                 float vfresh;
                 drm_mode = (struct drm_mode_modeinfo *)blob->data;
-                vfresh = drm_mode->clock/ (float)(drm_mode->vtotal * drm_mode->htotal) * 1000.0f;
+                if (drm_mode->flags & DRM_MODE_FLAG_INTERLACE)
+                    vfresh = drm_mode->clock *2/ (float)(drm_mode->vtotal * drm_mode->htotal) * 1000.0f;
+                else
+                    vfresh = drm_mode->clock / (float)(drm_mode->vtotal * drm_mode->htotal) * 1000.0f;
                 ALOGD("nativeGetCurMode: crtc_id=%d clock=%d w=%d %d %d %d %d %d flag=0x%x vfresh %.2f drm.vrefresh=%.2f", 
                 crtc->id(), drm_mode->clock, drm_mode->hdisplay, drm_mode->hsync_start,
                 drm_mode->hsync_end, drm_mode->vdisplay, drm_mode->vsync_start, drm_mode->vsync_end, drm_mode->flags,
@@ -1309,7 +1316,10 @@ static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
     for (size_t c = 0; c < mModes.size(); ++c) {
         const DrmMode& info = mModes[c];
         float vfresh;
-        vfresh = info.clock()/ (float)(info.v_total()* info.h_total()) * 1000.0f;
+        if (info.flags() & DRM_MODE_FLAG_INTERLACE)
+            vfresh = info.clock()*2 / (float)(info.v_total()* info.h_total()) * 1000.0f;
+        else
+            vfresh = info.clock()/ (float)(info.v_total()* info.h_total()) * 1000.0f;
         jobject infoObj = env->NewObject(gRkPhysicalDisplayInfoClassInfo.clazz,
                 gRkPhysicalDisplayInfoClassInfo.ctor);
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.width, info.h_display());
