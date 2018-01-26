@@ -148,6 +148,7 @@ import java.util.Set;
 public final class ActivityStack {
 
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ActivityStack" : TAG_AM;
+    private static final String TAG_DUALSCREEN = "DualScreen";
     private static final String TAG_ADD_REMOVE = TAG + POSTFIX_ADD_REMOVE;
     private static final String TAG_APP = TAG + POSTFIX_APP;
     private static final String TAG_CLEANUP = TAG + POSTFIX_CLEANUP;
@@ -1104,7 +1105,7 @@ public final class ActivityStack {
             }
         }
         ActivityRecord prev = mResumedActivity;
-        Slog.i("DualScreen","ActivityStack->startPauSingLocked() prev = "+ prev);
+        if(DEBUG_APP) Slog.i(TAG_DUALSCREEN,"ActivityStack->startPauSingLocked() prev = "+ prev);
         if (prev == null) {
             if (resuming == null) {
                 Slog.wtf(TAG, "Trying to pause when nothing is resumed");
@@ -1128,7 +1129,7 @@ public final class ActivityStack {
         prev.state = ActivityState.PAUSING;
         prev.task.touchActiveTime();
         clearLaunchTime(prev);
-        Slog.i("DualScreen","ActivityStack  prev = "+ prev+ " prev.state = "+prev.state);
+        if(DEBUG_APP) Slog.i(TAG_DUALSCREEN,"ActivityStack  prev = "+ prev+ " prev.state = "+prev.state);
         final ActivityRecord next = mStackSupervisor.topRunningActivityLocked();
         if (mService.mHasRecents
                 && (next == null || next.noDisplay || next.task != prev.task || uiSleeping)) {
@@ -1215,7 +1216,7 @@ public final class ActivityStack {
             mHandler.removeMessages(PAUSE_TIMEOUT_MSG, r);
             
             if(mService.mConfiguration.enableDualScreen()) {
-                Log.i("DualScreen","Activity->activityPauseLocked->task = "+r.task.taskId+"  getSecondDisplayTaskId = "+mService.getSecondDisplayTaskId());
+                if(DEBUG_APP) Log.i(TAG_DUALSCREEN,"Activity->activityPauseLocked->task = "+r.task.taskId+"  getSecondDisplayTaskId = "+mService.getSecondDisplayTaskId());
                 if (mService.isShowDualScreen() && r.task != null && r.task.taskId == mService.getSecondDisplayTaskId()) {
                     return;
                 }
@@ -1223,7 +1224,7 @@ public final class ActivityStack {
             boolean cond = false; 
             if (mService.mConfiguration.enableDualScreen()) {
                 cond = r != null;
-                Log.i("DualScreen", "ActivityStack->activityPausedLocked->enableDualScreen->cond:" + cond);
+                if(DEBUG_APP) Log.i(TAG_DUALSCREEN, "ActivityStack->activityPausedLocked->enableDualScreen->cond:" + cond);
             } else {
                 cond = mPausingActivity == r;
             }
@@ -1767,7 +1768,7 @@ public final class ActivityStack {
             boolean preserveWindows) {
         
         boolean dualconfig = mService.mConfiguration.enableDualScreen();
-        Slog.i("DualScreen", "ActivityStack->ensureActivitiesVisibleLocked()  starting = "+starting);
+         if(DEBUG_APP) Slog.i(TAG_DUALSCREEN, "ActivityStack->ensureActivitiesVisibleLocked()  starting = "+starting);
         ActivityRecord top = topRunningActivityLocked();
         if (DEBUG_VISIBILITY) Slog.v(TAG_VISIBILITY, "ensureActivitiesVisible behind " + top
                 + " configChanges=0x" + Integer.toHexString(configChanges));
@@ -2252,8 +2253,8 @@ public final class ActivityStack {
     private boolean resumeTopActivityInnerLocked(ActivityRecord prev, ActivityOptions options) {
         if (DEBUG_LOCKSCREEN) mService.logLockScreen("");
 
-		Log.i("DualScreen", "ActivityStack->resumeTopActivityInnerLocked:" + this);
-		Log.i("DualScreen", "ActivityStack->resumeTopActivityInnerLocked->mResumedActivity:" + mResumedActivity);
+		if(DEBUG_APP) Log.i(TAG_DUALSCREEN, "ActivityStack->resumeTopActivityInnerLocked:" + this);
+		if(DEBUG_APP) Log.i(TAG_DUALSCREEN, "ActivityStack->resumeTopActivityInnerLocked->mResumedActivity:" + mResumedActivity);
         if (!mService.mBooting && !mService.mBooted) {
             // Not ready yet!
             return false;
@@ -2271,7 +2272,7 @@ public final class ActivityStack {
 
         // Find the first activity that is not finishing.
         final ActivityRecord next = topRunningActivityLocked();
-        Slog.i("DualScreen", "ActivityStack->resumeTopActivityInnerLocked->next:" + next);
+        if(DEBUG_APP) Slog.i(TAG_DUALSCREEN, "ActivityStack->resumeTopActivityInnerLocked->next:" + next);
      
         // Remember how we'll process this pause/resume situation, and ensure
         // that the state is reset however we wind up proceeding.
@@ -2306,7 +2307,6 @@ public final class ActivityStack {
         boolean con = true;
         if(mService.mConfiguration.enableDualScreen()) {
             if(SystemProperties.get("sys.dual_screen.sync").equals("sync")){  
-                Slog.v("BrowserActivity","con = false");
                con = false;   
             }else {
                 if(mResumedActivity != next && next.state == ActivityState.RESUMED &&
@@ -2325,7 +2325,7 @@ public final class ActivityStack {
                 mWindowManager.executeAppTransition();
                 mNoAnimActivities.clear();
                 ActivityOptions.abort(options);
-                Slog.i("DualScreen", "mResumedActivity == next && next.state == ActivityState.RESUMED &&  mStackSupervisor.allResumedActivitiesComplete()，return false");
+                if(DEBUG_APP) Slog.i(TAG_DUALSCREEN, "mResumedActivity == next && next.state == ActivityState.RESUMED &&  mStackSupervisor.allResumedActivitiesComplete()，return false");
                 if (DEBUG_STATES) Slog.d(TAG_STATES,
                     "resumeTopActivityLocked: Top activity resumed " + next);
                 if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
@@ -2411,14 +2411,14 @@ public final class ActivityStack {
         boolean pausing = mStackSupervisor.pauseBackStacks(userLeaving, next, dontWaitForPause);
         boolean condition = false;
         if(mService.mConfiguration.enableDualScreen()) {
-		    Log.i("DualScreen", "ActivityStack->resumeTopActivityInnerLocked->isTaskShowInExtendDisplay:" + mService.isTaskShowInExtendDisplay(mResumedActivity));
-		    Log.i("DualScreen", "ActivityStack->resumeTopActivityInnerLocked->next.task:" + next.task);
+		    if(DEBUG_APP) Log.i(TAG_DUALSCREEN, "ActivityStack->resumeTopActivityInnerLocked->isTaskShowInExtendDisplay:" + mService.isTaskShowInExtendDisplay(mResumedActivity));
+		    if(DEBUG_APP)  Log.i(TAG_DUALSCREEN, "ActivityStack->resumeTopActivityInnerLocked->next.task:" + next.task);
             if(mService.isShowDualScreen()) {
                 condition = mResumedActivity != null && (!mService.isTaskShowInExtendDisplay(mResumedActivity));
             } else {
                 condition = mResumedActivity != null;
             }
-		    Log.i("DualScreen", "ActivityStack->resumeTopActivityInnerLocked->condition:" + condition);
+		    if(DEBUG_APP) Log.i(TAG_DUALSCREEN, "ActivityStack->resumeTopActivityInnerLocked->condition:" + condition);
         } else {
             if(mResumedActivity != null) {
                 condition = true;
@@ -2841,7 +2841,7 @@ public final class ActivityStack {
             ActivityOptions options) {
         TaskRecord rTask = r.task;
         final int taskId = rTask.taskId;
-        Log.i("DualScreen","ActivityStack->startActivityLocked()");
+        if(DEBUG_APP) Log.i(TAG_DUALSCREEN,"ActivityStack->startActivityLocked()");
         // mLaunchTaskBehind tasks get placed at the back of the task stack.
         if (!r.mLaunchTaskBehind && (taskForIdLocked(taskId) == null || newTask)) {
             // Last activity in task had been removed or ActivityManagerService is reusing task.
@@ -3643,7 +3643,7 @@ public final class ActivityStack {
     final boolean finishActivityLocked(ActivityRecord r, int resultCode, Intent resultData,
             String reason, boolean oomAdj) {
         if(mService.mConfiguration.enableDualScreen()) {
-            Slog.i("DualScreen","ActivityStack->finishActivityLocjed() r = "+ r);
+            if(DEBUG_APP) Slog.i(TAG_DUALSCREEN,"ActivityStack->finishActivityLocjed() r = "+ r);
             if(mService.isShowDualScreen() && r.task.taskId==mService.getSecondDisplayTaskId()) {
                 try{
                     mService.closedDualScreen();
@@ -3726,7 +3726,7 @@ public final class ActivityStack {
     final void startPausingLastNoCallbackLocked(ActivityRecord record, boolean userLeaving, boolean uiSleeping) {
 
 
-		Log.i("DualScreen", "ActivityStack->startPausingLastNoCallbackLocked");
+		if(DEBUG_APP) Log.i(TAG_DUALSCREEN, "ActivityStack->startPausingLastNoCallbackLocked");
         ActivityRecord prev = record;
         if (prev == null) {
             Slog.e(TAG, "Trying to pause when nothing is resumed",
@@ -4041,7 +4041,7 @@ public final class ActivityStack {
         r.frozenBeforeDestroy = false;
 
         if(mService.mConfiguration.enableDualScreen()) {
-            Slog.i("DualScreen","ActivityStack->finishActivityLocjed() r = "+ r);  //防止某些应用卡在DESTROYED
+            if(DEBUG_APP) Slog.i(TAG_DUALSCREEN,"ActivityStack->finishActivityLocjed() r = "+ r);  //Prevent some applications from being stuck DESTROYED
             if(mService.isShowDualScreen() && r.task.taskId==mService.getSecondDisplayTaskId()) {
                 try{
                     mService.closedDualScreen();

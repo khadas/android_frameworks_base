@@ -1002,7 +1002,7 @@ class WindowSurfacePlacer {
                        try{
                             displayContent.mDimLayerController.updateDimLayer(task);
                         }catch (Exception e) {
-                            Slog.i("DualScreen","exception e displayContent e = "+e);
+                            Slog.i(TAG,"exception e displayContent e = "+e);
                         }
                      }
 

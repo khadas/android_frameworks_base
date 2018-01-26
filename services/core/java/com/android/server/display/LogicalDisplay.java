@@ -66,6 +66,8 @@ final class LogicalDisplay {
     // of its content from appearing.
     private static final int BLANK_LAYER_STACK = -1;
 
+    private static final String TAG_DUALSCREEN = "DualScreen";
+    private final boolean DEBUG_DUALSCREEN = false;
     private final int mDisplayId;
     private final int mLayerStack;
     private DisplayInfo mOverrideDisplayInfo; // set by the window manager
@@ -308,7 +310,7 @@ final class LogicalDisplay {
                 isDualScreen = wm.getSecondDisplayTaskId() != -1;
                 if(wm.isDualConfig()){
                     displayInfo = info != null?info:getDisplayInfoLocked();
-                    Slog.v("DualScreen","LogicalDisplay configurDisplay  displayInfo = "+displayInfo);
+                    if(DEBUG_DUALSCREEN) Slog.v(TAG_DUALSCREEN,"LogicalDisplay configurDisplay  displayInfo = "+displayInfo);
                 }
             }
         }catch(Exception e){
@@ -386,18 +388,18 @@ final class LogicalDisplay {
                 int height=displayDeviceInfo.height;
                 device.setProjectionInTransactionLocked(orientation, displayRect, new Rect(0,0,width,height));
                 return ;
-                //mTempLayerStackRect和mTempDisplayRect crop 不变 旋转后 不会拉伸
+                //Keep mTempLayerStackRect、mTempDisplayRect、crop unchanged, will not stretch after rotation
             }
         } else {
             try{
                 if(wm.getDualScreenFlag()) {
                     Rect stackRect = new Rect(mTempLayerStackRect);
                     Rect displayRect = new Rect(mTempDisplayRect);
-                    Slog.v("DualScreenVH","mTempDisplayRect ="+mTempDisplayRect);
+                    if(DEBUG_DUALSCREEN) Slog.v(TAG_DUALSCREEN,"mTempDisplayRect ="+mTempDisplayRect);
                     if(displayVhShow == true) {
                         displayVhShow = false;
                       //  displayRect = new Rect(diffDisplayRect);                    
-                        Slog.v("DualScreenVH","diffDisplayRect  ------------------ ="+diffDisplayRect);
+                        if(DEBUG_DUALSCREEN) Slog.v(TAG_DUALSCREEN,"diffDisplayRect  ------------------ ="+diffDisplayRect);
                         diffStackRect = null;
                         diffDisplayRect = null;
                     }
@@ -412,7 +414,7 @@ final class LogicalDisplay {
                         }
                         diffStackRect = new Rect(stackRect);
                         diffDisplayRect = new Rect(displayRect);
-                        Slog.v("DualScreenVH","diffDisplayRect ="+diffDisplayRect);
+                        if(DEBUG_DUALSCREEN) Slog.v(TAG_DUALSCREEN,"diffDisplayRect ="+diffDisplayRect);
                         device.setProjectionInTransactionLocked(orientation, stackRect, displayRect);
                         return ;
                     } 

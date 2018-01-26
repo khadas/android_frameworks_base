@@ -265,6 +265,8 @@ public class WindowManagerService extends IWindowManager.Stub
         implements Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "WindowManagerService" : TAG_WM;
 
+    private static final String TAG_DUALSCREEN = "DualScreen";
+
     static final int LAYOUT_REPEAT_THRESHOLD = 4;
 
     static final boolean PROFILE_ORIENTATION = false;
@@ -1121,7 +1123,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
 	/**双屏显示设置*/
 	public void setOnlyShowInExtendDisplay(Session session,IWindow client,int transit){
-		Log.i("DualScreen", "setOnlyShowInExtendDisplay");
+		if(DEBUG) Log.i(TAG_DUALSCREEN, "setOnlyShowInExtendDisplay");
 		long origId = Binder.clearCallingIdentity();
 		synchronized(mWindowMap){
 			if(mDisplayContents == null || mDisplayContents.size() <= 1){
@@ -1162,7 +1164,7 @@ public class WindowManagerService extends IWindowManager.Stub
 
 
     public void updateDisplayShowSynchronization() {
-        Log.i("DualScreen","updateDisplayShowSynchronization");
+        if(DEBUG) Log.i(TAG_DUALSCREEN,"updateDisplayShowSynchronization");
 		if(!isShowDualScreen())
 			return;
 		long origId = Binder.clearCallingIdentity();
@@ -1172,7 +1174,7 @@ public class WindowManagerService extends IWindowManager.Stub
 		try{
 			allTaskIds = mActivityManager.getAllTaskIds();
 		}catch (Exception e){
-			Log.i("DualScreen", "WindowManagerService->getAllTaskIds->e:" + e);
+			if(DEBUG) Log.i(TAG_DUALSCREEN, "WindowManagerService->getAllTaskIds->e:" + e);
 		}
 		
 		if(allTaskIds == null || allTaskIds.size() < 2) {
@@ -1187,7 +1189,7 @@ public class WindowManagerService extends IWindowManager.Stub
 			DisplayContent defaultContent = getDefaultDisplayContentLocked();
 			DisplayContent secondDisplayContent = null;
 			WindowList defaultWindows = defaultContent.getWindowList();
-			Log.i("DualScreen", "updateDisplayShowSynchronization->defaultWindows:" + defaultWindows);
+			if(DEBUG) Log.i(TAG_DUALSCREEN, "updateDisplayShowSynchronization->defaultWindows:" + defaultWindows);
 			WindowState win = null;
 			for(int i = 0; i != displayCount; ++i){
 				DisplayContent content = mDisplayContents.valueAt(i);
@@ -1199,7 +1201,7 @@ public class WindowManagerService extends IWindowManager.Stub
 				return;
             }
 			WindowList secondWindows = secondDisplayContent.getWindowList();
-			Log.i("DualScreen", "updateDisplayShowSynchronization->secondWindows:" + secondWindows);
+			if(DEBUG) Log.i(TAG_DUALSCREEN, "updateDisplayShowSynchronization->secondWindows:" + secondWindows);
 		    try {
 			    SurfaceControl.openTransaction();
 			    //The primary display windows
@@ -1209,11 +1211,11 @@ public class WindowManagerService extends IWindowManager.Stub
 			    for(int t = 0;t < secondWindows.size(); ){
 				    win = secondWindows.get(t);
 				    if(win == null){
-				    	Log.i(TAG, "win == null");
+				    	if(DEBUG) Log.i(TAG_DUALSCREEN, "win == null");
 					    continue;
 				    }
 				    if(win.mAppToken == null){
-					    Log.i(TAG, "win.mAppToken == null");
+					    if(DEBUG) Log.i(TAG_DUALSCREEN, "win.mAppToken == null");
            			    continue;
 				    }
 				    secondWindows.remove(win);
@@ -1229,7 +1231,7 @@ public class WindowManagerService extends IWindowManager.Stub
 				    defaultWindows.add(win);
 			    }
 			
-			    Log.i(TAG, "primaryWindows:"+primaryWindows); 
+			    if(DEBUG) Log.i(TAG_DUALSCREEN, "primaryWindows:"+primaryWindows); 
 			    defaultWindows.addAll(primaryWindows);
 			    secondWindows.clear();
 				for (int i = 0; i < displayCount; i++) {
@@ -1255,7 +1257,7 @@ public class WindowManagerService extends IWindowManager.Stub
 	/**
 	move window to second display
 	*/
- 	public void moveTransitionToSecondDisplay(int groupId,int transit){
+ 	public void moveTransitionToSecondDisplay(){
 		if(!isShowDualScreen()){
 			mSecondTaskIds.clear();
 		}else{
@@ -1268,7 +1270,7 @@ public class WindowManagerService extends IWindowManager.Stub
 		try{
 			allTaskIds = mActivityManager.getAllTaskIds();
 		}catch (Exception e){
-			Log.i("DualScreen", "WindowManagerService->getAllTaskIds->e:" + e);
+			if(DEBUG) Log.i(TAG_DUALSCREEN, "WindowManagerService->getAllTaskIds->e:" + e);
 		}
 		
 		if(allTaskIds == null || allTaskIds.size() < 2)
@@ -1289,7 +1291,7 @@ public class WindowManagerService extends IWindowManager.Stub
 				if(content != defaultContent){
 					secondDisplayContent = content;
 					displayId = secondDisplayContent.getDisplayId();
-					Log.d("DualScreen", "moveTransitionToSecondDisplay->secondDisplayId:" + displayId);
+					if(DEBUG) Log.d(TAG_DUALSCREEN, "moveTransitionToSecondDisplay->secondDisplayId:" + displayId);
 					break;
 				}
 			}
@@ -1303,12 +1305,12 @@ public class WindowManagerService extends IWindowManager.Stub
 			SurfaceControl.openTransaction();
 			WindowState win = null;
 			WindowList defaultWindows = defaultContent.getWindowList();
-			Log.i("DualScreen", "moveTransitionToSecondDisplay->defaultWindows:" + defaultWindows);
+			if(DEBUG) Log.i(TAG_DUALSCREEN, "moveTransitionToSecondDisplay->defaultWindows:" + defaultWindows);
 			try{
 				WindowList secondDisplayAddList = new WindowList();
 				WindowList secondDisplayWindows = secondDisplayContent.getWindowList();
-				Log.i("DualScreen", "moveTransitionToSecondDisplay->secondDisplayWindows0:" + secondDisplayWindows);
-				Log.i("DualScreen", "moveTransitionToSecondDisplay->allTaskIds = " + allTaskIds);
+				if(DEBUG) Log.i(TAG_DUALSCREEN, "moveTransitionToSecondDisplay->secondDisplayWindows0:" + secondDisplayWindows);
+				if(DEBUG) Log.i(TAG_DUALSCREEN, "moveTransitionToSecondDisplay->allTaskIds = " + allTaskIds);
 				int topTaskId = -1;
 				if(allTaskIds != null && allTaskIds.size() > 0){
 					topTaskId = allTaskIds.get(0);
@@ -1336,11 +1338,11 @@ public class WindowManagerService extends IWindowManager.Stub
 						windowTaskId = win.mAppToken.mTask.mTaskId;
 					}
 					if(windowTaskId == topTaskId||isSurface){
-						Log.i("DualScreen", "moveTransitionToSecondDisplay->add win:" + win);
+						if(DEBUG) Log.i(TAG_DUALSCREEN, "moveTransitionToSecondDisplay->add win:" + win);
 						defaultWindows.remove(win);
 						mTempWindowList.add(win);
 						win.mDisplayContent = secondDisplayContent;
-					    Log.i("DualScreen","win.mDisplayContent = "+win.mDisplayContent+ "   secondDisplayContent = "+secondDisplayContent)	;
+					    if(DEBUG) Log.i(TAG_DUALSCREEN,"win.mDisplayContent = "+win.mDisplayContent+ "   secondDisplayContent = "+secondDisplayContent);
 						if(win.mWinAnimator != null){
 							int layerStack = secondDisplayContent.getDisplay().getLayerStack();
 							if(win.mWinAnimator.mSurfaceController!= null){
@@ -1350,7 +1352,6 @@ public class WindowManagerService extends IWindowManager.Stub
 						}
 						secondDisplayAddList.add(0,win);
                         mSecondTopPackageName = win.getOwningPackage();
-                        //Log.i("DualScreen","mSecondTopPackageName = "+mSecondTopPackageName);
 					}
 				}
 			    //if(SystemProperties.getBoolean("ro.orientation.vhshow",false)){
@@ -1368,8 +1369,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 //}
 				secondDisplayWindows.clear();
 				secondDisplayWindows.addAll(secondDisplayAddList);			
-				Log.i("DualScreen", "moveTransitionToSecondDisplay->secondDisplayWindows1:" + secondDisplayWindows);
-		    	Log.i("DualScreen", "moveTransitionToSecondDisplay->defaultWindows:" + defaultContent.getWindowList());
+				if(DEBUG) Log.i(TAG_DUALSCREEN, "moveTransitionToSecondDisplay->secondDisplayWindows1:" + secondDisplayWindows);
+		    	if(DEBUG) Log.i(TAG_DUALSCREEN, "moveTransitionToSecondDisplay->defaultWindows:" + defaultContent.getWindowList());
 				for (int i = 0; i < displayCount; i++) {
 					final DisplayContent content = mDisplayContents.valueAt(i);
 					mLayersController.assignLayersLocked(content.getWindowList());
@@ -1382,7 +1383,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 if (curMoveTaskId == -1) {
                     curMoveTaskId = allTaskIds.get(1); 
                 }
-				Log.i("DualScreen", "WindowManagerService->curMoveTaskId:" + curMoveTaskId );
+				if(DEBUG) Log.i(TAG_DUALSCREEN, "WindowManagerService->curMoveTaskId:" + curMoveTaskId );
 				switchFocusWindow(curMoveTaskId);
                 updateFocusedWindowLocked(UPDATE_FOCUS_WILL_PLACE_SURFACES, false);
 				mAppTransition.setReady();
@@ -1449,9 +1450,9 @@ public class WindowManagerService extends IWindowManager.Stub
 	}
 
    public void moveAppToBack(int taskId){
-       Log.i("DualScreen", "moveAppToBack->taskId:" + taskId); //52 
+       if(DEBUG) Log.i(TAG_DUALSCREEN, "moveAppToBack->taskId:" + taskId);
        ArrayList<ActivityStack> allStacks = getAllStacks();
-       Log.i("DualScreen", "moveAppToBack->allStacks:" + allStacks);
+       if(DEBUG) Log.i(TAG_DUALSCREEN, "moveAppToBack->allStacks:" + allStacks);
        for(int i = allStacks.size() - 1; i >= 0; --i){
            ActivityStack itemStack = allStacks.get(i);
            //ArrayList<TaskRecord> getAllTasks()
@@ -1464,10 +1465,10 @@ public class WindowManagerService extends IWindowManager.Stub
                        for(int j = itemActivities.size() - 1; j >= 0; --j){
                            ActivityRecord itemActivity = itemActivities.get(j);
                            try{
-                               Log.i("DualScreen", "moveActivityTaskToBack->taskId:" + itemActivity.appToken);//
+                               if(DEBUG) Log.i(TAG_DUALSCREEN, "moveActivityTaskToBack->taskId:" + itemActivity.appToken);
                                ActivityManagerNative.getDefault().moveActivityTaskToBack(itemActivity.appToken,true);
                            }catch(Exception e){
-                               Log.i("DualScreen", "moveAppToBack->exception:" + e);
+                               if(DEBUG) Log.i(TAG_DUALSCREEN, "moveAppToBack->exception:" + e);
                            }
                            
                        }
@@ -1505,7 +1506,7 @@ public class WindowManagerService extends IWindowManager.Stub
 		try{
 			isShowDualScreen = Settings.System.getInt(mContext.getContentResolver(), Settings.DUAL_SCREEN_ICON_USED,0) == 1;
 		}catch (Exception e){
-			Log.i("DualScreen", "WindowManagerService->isShowDualScreen->exception:" + e);
+			if(DEBUG) Log.i(TAG_DUALSCREEN, "WindowManagerService->isShowDualScreen->exception:" + e);
 			isShowDualScreen = false;
 		}
 		return isShowDualScreen;
@@ -8882,7 +8883,7 @@ public class WindowManagerService extends IWindowManager.Stub
             switch (msg.what) {
                 case DO_TASK_DISPLAY_CHANGED: {
 					synchronized (mWindowMap) {
-                        moveTransitionToSecondDisplay(msg.arg1,msg.arg2);
+                        moveTransitionToSecondDisplay();
 					}
                     break;
                 }

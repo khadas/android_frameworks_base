@@ -179,6 +179,7 @@ import static com.android.server.wm.AppTransition.TRANSIT_DOCK_TASK_FROM_RECENTS
 
 public final class ActivityStackSupervisor implements DisplayListener {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ActivityStackSupervisor" : TAG_AM;
+    private static final String TAG_DUALSCREEN = "DualScreen";
     private static final String TAG_CONTAINERS = TAG + POSTFIX_CONTAINERS;
     private static final String TAG_IDLE = TAG + POSTFIX_IDLE;
     private static final String TAG_LOCKTASK = TAG + POSTFIX_LOCKTASK;
@@ -1854,12 +1855,12 @@ public final class ActivityStackSupervisor implements DisplayListener {
 
         if (targetStack != null && isFocusedStack(targetStack)) {
 
-            Slog.i("DualScreen","ass->resumeFocusedStackTopActivityLocked() targetStack = "+targetStack);
+            if(DEBUG_ALL) Slog.i(TAG_DUALSCREEN,"ass->resumeFocusedStackTopActivityLocked() targetStack = "+targetStack);
             return targetStack.resumeTopActivityUncheckedLocked(target, targetOptions);
         }
         final ActivityRecord r = mFocusedStack.topRunningActivityLocked();
         if (r == null || r.state != RESUMED) {
-            Slog.i("DualScreen","ass->resumeFocusedStackTopActivityLocked()  mFocusedStack");
+            if(DEBUG_ALL) Slog.i(TAG_DUALSCREEN,"ass->resumeFocusedStackTopActivityLocked()  mFocusedStack");
             mFocusedStack.resumeTopActivityUncheckedLocked(null, null);
         }
         return false;

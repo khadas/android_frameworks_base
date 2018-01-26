@@ -1043,7 +1043,7 @@ class ActivityStarter {
         if(mService.mConfiguration.enableDualScreen()) { 
             if(mReusedActivity!=null && mService.isShowDualScreen()) {
                 if(mReusedActivity.task.taskId == mService.getSecondDisplayTaskId()) {
-                Slog.v("DualScreen"," mReusedActivity = "+mReusedActivity +" mService.getSecondDisplayTaskId()="+mService.getSecondDisplayTaskId());
+                //Slog.v("DualScreen"," mReusedActivity = "+mReusedActivity +" mService.getSecondDisplayTaskId()="+mService.getSecondDisplayTaskId());
                     return START_DELIVERED_TO_TOP;  //no open screen application
                 }
             }

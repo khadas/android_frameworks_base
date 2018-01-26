@@ -113,7 +113,8 @@ import static com.android.internal.policy.PhoneWindow.FEATURE_OPTIONS_PANEL;
 /** @hide */
 public class DecorView extends FrameLayout implements RootViewSurfaceTaker, WindowCallbacks {
     private static final String TAG = "DecorView";
-
+    private static final String TAG_DUALSCREEN = "DualScreen";
+    
     private static final boolean DEBUG_MEASURE = false;
 
     private static final boolean SWEEP_OPEN_MENU = false;
@@ -303,11 +304,11 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
         if(isAllTrue(mDualScreenChecks)){
             try{
                 setAllFalse(mDualScreenChecks);
-                Log.i("DualScreen", "DecorView->trigerDualScreen");
+                if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->trigerDualScreen");
                 //start dual screen
                 getRootWindowSession().setOnlyShowInExtendDisplay(getWindow(),-1);
             }catch (Exception e){
-                Log.i("DualScreen", "DecorView->trigerDualScreen->exception:" + e);
+                if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->trigerDualScreen->exception:" + e);
             }               
        }
     }
@@ -317,10 +318,10 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
             try{
                 setAllFalse(mDualScreenChecks);
                 //start dual screen
-                Log.i("DualScreen", "DecorView->trigerSyncScreen ");
+                if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->trigerSyncScreen ");
                 getRootWindowSession().updateSyncDisplay();
             }catch (Exception e){
-                Log.i("DualScreen", "DecorView->trigerDualScreen:" + e);
+                if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->trigerDualScreen:" + e);
             }           
         }
     }
@@ -388,7 +389,7 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
         try{
 			isDualScreenFlag =PhoneWindow.WindowManagerHolder.sWindowManager.isDualConfig();
 		}catch (Exception e){
-            Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->exception0:" + e);
+            if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->interceptKeyBeforeDispatching->exception0:" + e);
 		}
         
 		if(dualScreenCodeIndex >= 0 && isDualScreenFlag && isDown){
@@ -396,10 +397,10 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
             if(mDualScreenChecks[0]==false&&mDualScreenChecks[1]==false){
 	        	mDualScreenChecks[dualScreenCodeIndex] = true;
 		    	mDualScreenDownTimes[dualScreenCodeIndex] = SystemClock.elapsedRealtime();
-			    Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->isDualScreenFlag:" + isDualScreenFlag);
+			    if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->interceptKeyBeforeDispatching->isDualScreenFlag:" + isDualScreenFlag);
 		    }else if (mDualScreenChecks[dualScreenCodeIndex] == true){
 			    mDualScreenDownTimes[dualScreenCodeIndex] = SystemClock.elapsedRealtime();
-			    Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->isDualScreenFlag:" + isDualScreenFlag);
+			    if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->interceptKeyBeforeDispatching->isDualScreenFlag:" + isDualScreenFlag);
 		    }else if(mDualScreenChecks[dualScreenCodeIndex] == false){
 			    if(dualScreenCodeIndex==0&&currentDownTime - mDualScreenDownTimes[1] < mDualScreenCodeInterval)
 				    mDualScreenChecks[dualScreenCodeIndex] = true;
@@ -409,16 +410,16 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
             try{
                 if(isAllTrue(mDualScreenChecks)) {
                     if(PhoneWindow.WindowManagerHolder.sWindowManager.getSecondDisplayTaskId() != -1){
-					    Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->isShowDualScreen:trigerSyncScreen" );
+					    if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->interceptKeyBeforeDispatching->isShowDualScreen:trigerSyncScreen" );
                         trigerSyncScreen();
                     }else{
-					    Log.i("DualScreen", "DecorView->interceptKeyBeforeDispatching->isShowDualScreen:trigerDualScreen" );
+					    if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->interceptKeyBeforeDispatching->isShowDualScreen:trigerDualScreen" );
                         trigerDualScreen();
                     }
                     return true;
                 }
             }catch (Exception e){
-                Log.i("DualScreen", "DecorView->onKeyDown->exception1:" + e);
+                if (DEBUG_MEASURE) Log.i(TAG_DUALSCREEN, "DecorView->onKeyDown->exception1:" + e);
             }           
                        
         }

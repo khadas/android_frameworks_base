@@ -379,6 +379,8 @@ public final class ActivityManagerService extends ActivityManagerNative
         implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {
 
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ActivityManagerService" : TAG_AM;
+    private static final String TAG_DUALSCREEN = "DualScreen";
+    private static final boolean DEBUG_DUALSCREEN = false;
     private static final String TAG_BACKUP = TAG + POSTFIX_BACKUP;
     private static final String TAG_BROADCAST = TAG + POSTFIX_BROADCAST;
     private static final String TAG_CLEANUP = TAG + POSTFIX_CLEANUP;
@@ -9899,7 +9901,7 @@ public final class ActivityManagerService extends ActivityManagerNative
        
         if(mConfiguration.enableDualScreen()) {
             if(taskId == mWindowManager.getSecondDisplayTaskId()) {
-                Log.i("DualScreen","ActivityManagerService->moveTaskToFront");
+                if(DEBUG_DUALSCREEN) Log.i(TAG_DUALSCREEN,"ActivityManagerService->moveTaskToFront");
                 return ;
             }
         }
@@ -19391,14 +19393,14 @@ public final class ActivityManagerService extends ActivityManagerNative
 				
 				if(r.task != null && r.task.taskId == secondDisplayTaskId)
 				{
-		            Log.i(TAG, "isTaskShowInExtendDisplay:true"+"ActivityRecod:"+r);
+		            if(DEBUG_DUALSCREEN) Log.i(TAG_DUALSCREEN, "isTaskShowInExtendDisplay:true"+"ActivityRecod:"+r);
 					return true;
                 }
 			}catch(Exception e){
 				
 			}
 		}
-		Log.i(TAG, "isTaskShowInExtendDisplay:false"+"ActivityRecod:"+r);
+		if(DEBUG_DUALSCREEN) Log.i(TAG_DUALSCREEN, "isTaskShowInExtendDisplay:false"+"ActivityRecod:"+r);
 		return false;
     }
 
