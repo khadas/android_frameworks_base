@@ -123,9 +123,9 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         lastMode = mdrmModes.getCurMode(display, iface);
         mdrmModes.setMode(display, iface, mode);
         isSameProperty = lastMode.equals(mode);
-        Log.d(TAG, "setMode ---- lastMode: "+lastMode + "mode:"+ mode +"  isSameProperty  "+ isSameProperty);
-        Log.v(TAG, "lastMode " + lastMode + "display " +display);
-        if (!isSameProperty) {
+        Log.d(TAG, "setMode ---- lastMode: "+lastMode + "  mode:"+ mode +"  isSameProperty  "+ isSameProperty);
+        Log.v(TAG, "lastMode " + lastMode + " display " +display);
+        if (!isSameProperty || mode.equals("Auto")) {
             timeline++;
             SystemProperties.set("sys.display.timeline", Integer.toString(timeline));
         }
