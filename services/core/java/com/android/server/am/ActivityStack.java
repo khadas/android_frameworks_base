@@ -2310,7 +2310,7 @@ public final class ActivityStack {
                con = false;   
             }else {
                 if(mResumedActivity != next && next.state == ActivityState.RESUMED &&
-                    mStackSupervisor.allResumedActivitiesComplete()){
+                    mStackSupervisor.allResumedActivitiesComplete()){//Browser repeatedly invokes resume
                     mResumedActivity = next;
                 }
             } 

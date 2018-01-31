@@ -1162,6 +1162,13 @@ public class WindowManagerService extends IWindowManager.Stub
 		Binder.restoreCallingIdentity(origId);
     }
 
+    public void InitDualScreen() {
+        if(DEBUG) Log.i(TAG_DUALSCREEN,"InitDualScreenUsed");
+        if(mSecondDisplayTaskId == -1) {
+		    Settings.System.getInt(mContext.getContentResolver(), Settings.DUAL_SCREEN_ICON_USED, 0);
+		    Settings.System.putInt(mContext.getContentResolver(), Settings.DUAL_SCREEN_ICON_USED, 0);
+        }
+    }
 
     public void updateDisplayShowSynchronization() {
         if(DEBUG) Log.i(TAG_DUALSCREEN,"updateDisplayShowSynchronization");

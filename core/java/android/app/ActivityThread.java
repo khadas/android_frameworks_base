@@ -4663,7 +4663,7 @@ public final class ActivityThread {
         }
         try {
             if(PhoneWindow.WindowManagerHolder.sWindowManager.getDualScreenFlag()) {
-                if(activity!=null && activity.mWindow!=null && activity.mWindow.mContext!=null) {// 使异显后的activity Configuation不随旋转改变
+                if(activity!=null && activity.mWindow!=null && activity.mWindow.mContext!=null) {//dual screen activity Configuation rotation, no change
                     if(PhoneWindow.WindowManagerHolder.sWindowManager.isShowDualScreen()) {
                         String packageName = activity.mWindow.mContext.getPackageName();
                         String secondPackageName = PhoneWindow.WindowManagerHolder.sWindowManager.getSecondPackageName();

@@ -6901,10 +6901,16 @@ public final class ActivityManagerService extends ActivityManagerNative
                 finishBooting ? 1 : 0, enableScreen ? 1 : 0));
     }
 
+    static boolean initdual = false;
     void enableScreenAfterBoot() {
         EventLog.writeEvent(EventLogTags.BOOT_PROGRESS_ENABLE_SCREEN,
                 SystemClock.uptimeMillis());
         mWindowManager.enableScreenAfterBoot();
+        if(initdual == false) {
+            if(DEBUG_DUALSCREEN) Log.i(TAG_DUALSCREEN,"InitDualScreen DB");
+            mWindowManager.InitDualScreen();
+            initdual = true;
+        }
         synchronized (this) {
             updateEventDispatchingLocked();
         }
