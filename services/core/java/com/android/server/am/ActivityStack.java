@@ -1101,8 +1101,8 @@ public final class ActivityStack {
                 // Avoid recursion among check for sleep and complete pause during sleeping.
                 // Because activity will be paused immediately after resume, just let pause
                 // be completed by the order of activity paused from clients.
-                completePauseLocked(false, resuming);
-            }
+                completePauseLocked(false, resuming, null);
+            } 
         }
         ActivityRecord prev = mResumedActivity;
         if(DEBUG_APP) Slog.i(TAG_DUALSCREEN,"ActivityStack->startPauSingLocked() prev = "+ prev);
@@ -1181,7 +1181,7 @@ public final class ActivityStack {
             if (dontWait) {
                 // If the caller said they don't want to wait for the pause, then complete
                 // the pause now.
-                completePauseLocked(false, resuming);
+                completePauseLocked(false, resuming, null);
                 return false;
 
             } else {
@@ -1232,9 +1232,9 @@ public final class ActivityStack {
                 if (DEBUG_STATES) Slog.v(TAG_STATES, "Moving to PAUSED: " + r
                         + (timeout ? " (due to timeout)" : " (pause complete)"));
                 if(mService.mConfiguration.enableDualScreen()) {
-                    completePauseLocked(true, r);
+                    completePauseLocked(true, null, r);
                 } else {
-                    completePauseLocked(true, null);
+                    completePauseLocked(true, null, null);
                 }
                 return;
             } else {
@@ -1307,11 +1307,11 @@ public final class ActivityStack {
         }
     }
 
-    private void completePauseLocked(boolean resumeNext, ActivityRecord resuming) {
+    private void completePauseLocked(boolean resumeNext, ActivityRecord resuming, ActivityRecord r) {
         ActivityRecord prev = mPausingActivity;
         if(mService.mConfiguration.enableDualScreen()) { 
-            if(prev != resuming) {
-                prev = resuming;
+            if(r != null) {
+                prev = r;
             }
         }
         if (DEBUG_PAUSE) Slog.v(TAG_PAUSE, "Complete pause: " + prev);
