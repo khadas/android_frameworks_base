@@ -623,29 +623,26 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
             memset(resolution,0,sizeof(resolution));
             property_get("persist.sys.color.main", resolution, "Auto");
             if (strncmp(resolution, "Auto", 4) != 0){
-                char color[16];
-                char depth[16];
-
-                sscanf(resolution, "%s-%s", color, depth);
-                if (strncmp(color, "RGB", 3) == 0)
+                if (strstr(resolution, "RGB") != 0)
                     base_paramer.main.format = output_rgb;
-                else if (strncmp(color, "YCBCR444", 8) == 0)
+                else if (strstr(resolution, "YCBCR444") != 0)
                     base_paramer.main.format = output_ycbcr444;
-                else if (strncmp(color, "YCBCR422", 8) == 0)
+                else if (strstr(resolution, "YCBCR422") != 0)
                     base_paramer.main.format = output_ycbcr422;
-                else if (strncmp(color, "YCBCR420", 8) == 0)
+                else if (strstr(resolution, "YCBCR420") != 0)
                     base_paramer.main.format = output_ycbcr420;
                 else {
                    base_paramer.main.feature |= COLOR_AUTO;
                    base_paramer.main.format = output_ycbcr_high_subsampling;
                 }
 
-                if (strstr(depth, "8bit") != NULL)
+                if (strstr(resolution, "8bit") != NULL)
                     base_paramer.main.depthc = depth_24bit;
-                else if (strstr(depth, "10bit") != NULL)
+                else if (strstr(resolution, "10bit") != NULL)
                     base_paramer.main.depthc = depth_30bit;
                 else
                     base_paramer.main.depthc = Automatic;
+                ALOGD("saveConfig: color=%d-%d", base_paramer.main.format, base_paramer.main.depthc);
             } else {
                 base_paramer.main.depthc = Automatic;
                 base_paramer.main.format = output_ycbcr_high_subsampling;
