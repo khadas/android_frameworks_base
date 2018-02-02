@@ -4198,6 +4198,12 @@ public class WindowManagerService extends IWindowManager.Stub
                 getDefaultDisplayContentLocked().mDividerControllerLocked.isMinimizedDock();
         for (int taskNdx = tasks.size() - 1; taskNdx >= 0; --taskNdx) {
             AppTokenList tokens = tasks.get(taskNdx).mAppTokens;
+            if(mSecondDisplayTaskId != -1) { //dual screen
+                if(DEBUG) Log.i(TAG_DUALSCREEN,"getAppSpecifiedOrientation  taskId = "+tasks.get(taskNdx).mTaskId +" mSecondDisplayTaskId = "+mSecondDisplayTaskId);
+                if(tasks.get(taskNdx).mTaskId  == mSecondDisplayTaskId){ //Secondary screen application forced rotation
+                    return mLastOrientation;//keep the current orientation
+                }
+            }
             final int firstToken = tokens.size() - 1;
             for (int tokenNdx = firstToken; tokenNdx >= 0; --tokenNdx) {
                 final AppWindowToken atoken = tokens.get(tokenNdx);
