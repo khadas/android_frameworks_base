@@ -2686,6 +2686,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
             loadSetting(stmt, Settings.Global.SET_INSTALL_LOCATION, 0);
             loadSetting(stmt, Settings.Global.DEFAULT_INSTALL_LOCATION,
                     PackageHelper.APP_INSTALL_AUTO);
+            loadSetting(stmt, Settings.Global.STATUS_BAR_UPPER, 0);
+            loadSetting(stmt, Settings.Global.STATUS_BAR_BOTTOM, 0);
 
             // Set default cdma emergency tone
             loadSetting(stmt, Settings.Global.EMERGENCY_TONE, 0);

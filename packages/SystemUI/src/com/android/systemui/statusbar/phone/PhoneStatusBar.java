@@ -88,7 +88,6 @@ import android.os.SystemClock;
 import android.os.Trace;
 import android.os.SystemProperties;
 import android.os.UserHandle;
-import android.os.SystemProperties;
 import android.os.UserManager;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -694,7 +693,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         // TODO: use MediaSessionManager.SessionListener to hook us up to future updates
         // in session state
 
-        if("true".equals(SystemProperties.get("persist.sys.status.bar.bottom","false")))
+        if(Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_BOTTOM, 0) == 1)
             addBottomBarInside();
 
         // Lastly, call to the icon policy to install/update all the icons.
@@ -1438,7 +1437,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             if (mNavigationBarView != null) {
               addNavigationBar();
               mBottomBarIsAdd = true;
-              SystemProperties.set("persist.sys.status.bar.bottom","true");
+              Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_BOTTOM, 1);
             }
         }
     }
@@ -1449,7 +1448,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
            if (mNavigationBarView != null) {
              mWindowManager.removeView(mNavigationBarView);
              mBottomBarIsAdd = false;
-             SystemProperties.set("persist.sys.status.bar.bottom","false");
+             Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_BOTTOM, 0);
            }
        }
     }
@@ -1471,7 +1470,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
           if (mStatusBarWindow != null) {
               mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
               mUpperBarIsAdd = true;
-              SystemProperties.set("persist.sys.status.bar.upper","true");
+              Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 1);
            }
         }
     }
@@ -1483,7 +1482,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
          if (mStatusBarWindow != null) {
               mWindowManager.removeView(mStatusBarWindow);
               mUpperBarIsAdd = false;
-              SystemProperties.set("persist.sys.status.bar.upper","false");
+              Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0);
           }
        }
     }
@@ -1573,7 +1572,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             Entry oldEntry) {
         if (DEBUG) Log.d(TAG, "addNotification key=" + notification.getKey());
 
-        if("false".equals(SystemProperties.get("persist.sys.status.bar.upper","false"))) return;
+        if(Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0) == 0)  return;
 
         mNotificationData.updateRanking(ranking);
         Entry shadeEntry = createNotificationViews(notification);
@@ -3533,9 +3532,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 mHeadsUpManager);
         mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
         mUpperBarIsAdd = true;
-        if("false".equals(SystemProperties.get("persist.sys.status.bar.upper","false"))) {
+        if (Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0) == 0)
             removeUpperBar();
-        }
     }
 
     // called by makeStatusbar and also by PhoneStatusBarView
