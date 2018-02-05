@@ -544,7 +544,7 @@ public class IpReachabilityMonitor {
                     continue;
                 }
 
-                evaluateRtNetlinkNeighborMessage((RtNetlinkNeighborMessage) nlMsg, whenMs);
+              //  evaluateRtNetlinkNeighborMessage((RtNetlinkNeighborMessage) nlMsg, whenMs);
             }
         }
 
