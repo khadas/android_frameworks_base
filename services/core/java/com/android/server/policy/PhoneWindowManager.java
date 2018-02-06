@@ -43,6 +43,7 @@ import android.app.ActivityManager.StackId;
 import android.app.ActivityManagerInternal;
 import android.app.ActivityManagerInternal.SleepToken;
 import android.app.ActivityManagerNative;
+import android.app.ActivityManager.RunningTaskInfo;
 import android.app.AppOpsManager;
 import android.app.IUiModeManager;
 import android.app.ProgressDialog;
@@ -3435,7 +3436,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 dispatchDirectAudioEvent(event);
                 return -1;
             }
+        } else if(keyCode == KeyEvent.KEYCODE_DVB_SAT) { //Fast Link to DTV APK
+            startCustomApk("com.superdtv", "com.superdtv.DtvMainActivity");
         }
+
 
         // Toggle Caps Lock on META-ALT.
         boolean actionTriggered = false;
@@ -7434,6 +7438,72 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         startActivityAsUser(intent, UserHandle.CURRENT);
+    }
+
+    public boolean isForeground(final String cls) {
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        List<RunningTaskInfo> tasks = am.getRunningTasks(1);
+        if (!tasks.isEmpty()) {
+            ComponentName topActivity = tasks.get(0).topActivity;
+            if (topActivity.getPackageName().equals(cls)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean tryBroughtClsToFront(final String cls, String activity) {
+        Intent intent = mContext.getPackageManager().getLaunchIntentForPackage(cls);
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        List<RunningTaskInfo> tasks = am.getRunningTasks(100);
+        for (RunningTaskInfo info : tasks) {
+                if (info.topActivity.getPackageName().equals(cls) || info.baseActivity.getPackageName().equals(cls)) {
+                    intent.setAction(Intent.ACTION_MAIN);
+                    intent.addCategory(Intent.CATEGORY_LAUNCHER);
+                    intent.setClassName(cls, activity);
+
+                    intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                            | Intent.FLAG_ACTIVITY_NEW_TASK
+                            | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                    mContext.startActivity(intent);
+
+                    return true;
+                }
+        }
+
+        return false;
+    }
+
+    private boolean isAppInstalled(String packageName) {
+        boolean installed = false;
+        try {
+            mContext.getPackageManager().getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
+            installed = true;
+        } catch (PackageManager.NameNotFoundException e) {
+            installed = false;
+		}
+        return installed;
+    }
+
+    void startCustomApk(String cls, String activity)
+    {
+        if(!isAppInstalled(cls))
+                return;
+
+        if(isForeground(cls))
+                return;
+
+        if(!tryBroughtClsToFront(cls,activity)){
+                awakenDreams();
+
+                Intent intent1 = new Intent();
+                intent1.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                        | Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                intent1.setClassName(cls, activity);
+
+                mContext.startActivityAsUser(intent1, UserHandle.CURRENT);
+        }
     }
 
     /**

@@ -805,6 +805,15 @@ public class KeyEvent extends InputEvent implements Parcelable {
     /** Key code constant: Consumed by the system for navigation right */
     public static final int KEYCODE_SYSTEM_NAVIGATION_RIGHT = 283;
 
+    /** Key for dvb ***/
+    public static final int KEYCODE_DVB_TV_RADIO = 300;
+    public static final int KEYCODE_DVB_SAT      = 301;
+    public static final int KEYCODE_DVB_RECALL   = 302;
+    public static final int KEYCODE_DVB_REC      = 303;
+    public static final int KEYCODE_DVB_APPS     = 304;
+    public static final int KEYCODE_DVB_RECORD_LIST = 305;
+    public static final int KEYCODE_DVB_FAV = 306;
+
     private static final int LAST_KEYCODE = KEYCODE_SYSTEM_NAVIGATION_RIGHT;
 
     // NOTE: If you add a new keycode here you must also add it to:

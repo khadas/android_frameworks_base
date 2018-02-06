@@ -493,6 +493,27 @@
     <protected-broadcast android:name="com.android.server.retaildemo.ACTION_RESET_DEMO" />
 
     <!-- ====================================================================== -->
+    <!--                          for dtv special  start                        -->
+    <!-- ====================================================================== -->
+
+    <protected-broadcast android:name="com.android.music.musicservicecommand.pause" />
+    <protected-broadcast android:name="com.dtv.player" />
+    <protected-broadcast android:name="com.dtv.stop" />
+    <protected-broadcast android:name="com.dtv.play.status" />
+    <protected-broadcast android:name="com.dtv.pswd.ok" />
+    <protected-broadcast android:name="com.dtv.mute.icon.show" />
+    <protected-broadcast android:name="com.dtv.mute.icon.hide" />
+    <protected-broadcast android:name="com.dtv.DTVLauncher.shortcuts_change" />
+    <protected-broadcast android:name="com.dtv.bookevent.showtimerdialog" />
+    <protected-broadcast android:name="com.dtv.timezone" />
+    <protected-broadcast android:name="com.dtv.REFRESH_CONNECT_STATUS" />
+    <protected-broadcast android:name="com.dtv.DEVICE_MOUNTED" />
+    <protected-broadcast android:name="com.dtv.DEVICE_REMOVED" />
+    <protected-broadcast android:name="com.dtv.data.factory.success" />
+
+    <!-- ====================================================================== -->
+    <!--                          for dtv special  end                          -->
+    <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->
     <!-- ====================================================================== -->
     <eat-comment />
