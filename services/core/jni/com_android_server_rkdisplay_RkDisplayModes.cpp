@@ -324,6 +324,7 @@ static char const *const device_template[] =
     "/dev/block/platform/ff520000.rksdmmc/by-name/baseparameter",
     "/dev/block/platform/fe330000.sdhci/by-name/baseparameter",
     "/dev/block/platform/ff520000.dwmmc/by-name/baseparameter",
+    "/dev/block/platform/ff0f0000.dwmmc/by-name/baseparameter",
     "/dev/block/rknand_baseparameter",
     NULL
 };
@@ -483,17 +484,23 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
         char resolution[PROPERTY_VALUE_MAX];
         unsigned int w=0,h=0,hsync_start=0,hsync_end=0,htotal=0;
         unsigned int vsync_start=0,vsync_end=0,vtotal=0,flags=0;
-        float vfresh=0;
+        float vfresh=0.0000;
 
         property_get("persist.sys.resolution.main", resolution, "0x0@0.00-0-0-0-0-0-0-0");
         if (strncmp(resolution, "Auto", 4) != 0 && strncmp(resolution, "0x0p0-0", 7) !=0)
-            sscanf(resolution,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,&htotal,&vsync_start,&vsync_end,
-            &vtotal, &flags);
+            sscanf(resolution,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,
+                                &htotal,&vsync_start,&vsync_end, &vtotal, &flags);
         for (size_t c = 0; c < mModes.size(); ++c){
             const DrmMode& info = mModes[c];
-            char formatRefresh[16];
-            sprintf(formatRefresh, "%.2f", info.v_refresh());
-
+            char curDrmModeRefresh[16];
+            char curRefresh[16];
+            float mModeRefresh;
+            if (info.flags() & DRM_MODE_FLAG_INTERLACE)
+                mModeRefresh = info.clock()*2 / (float)(info.v_total()* info.h_total()) * 1000.0f;
+            else
+                mModeRefresh = info.clock()/ (float)(info.v_total()* info.h_total()) * 1000.0f;
+            sprintf(curDrmModeRefresh, "%.2f", mModeRefresh);
+            sprintf(curRefresh, "%.2f", vfresh);
             if (info.h_display() == w &&
                 info.v_display() == h &&
                 info.h_sync_start() == hsync_start &&
@@ -502,7 +509,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 info.v_sync_start() == vsync_start &&
                 info.v_sync_end() == vsync_end &&
                 info.v_total()==vtotal &&
-                atof(formatRefresh)==vfresh) {
+                atof(curDrmModeRefresh)==atof(curRefresh)) {
                 ALOGD("***********************found main idx %d ****************", (int)c);
                 foundMainIdx = c;
                 sprintf(buf, "display=%d,iface=%d,enable=%d,mode=%s\n",
@@ -525,8 +532,15 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
             &vtotal, &flags);
         for (size_t c = 0; c < mModes.size(); ++c){
             const DrmMode& info = mModes[c];
-            char formatRefresh[16];
-            sprintf(formatRefresh, "%.2f", info.v_refresh());
+            char curDrmModeRefresh[16];
+            char curRefresh[16];
+            float mModeRefresh;
+            if (info.flags() & DRM_MODE_FLAG_INTERLACE)
+                mModeRefresh = info.clock()*2 / (float)(info.v_total()* info.h_total()) * 1000.0f;
+            else
+                mModeRefresh = info.clock()/ (float)(info.v_total()* info.h_total()) * 1000.0f;
+            sprintf(curDrmModeRefresh, "%.2f", mModeRefresh);
+            sprintf(curRefresh, "%.2f", vfresh);
             if (info.h_display() == w &&
                 info.v_display() == h &&
                 info.h_sync_start() == hsync_start &&
@@ -535,7 +549,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 info.v_sync_start() == vsync_start &&
                 info.v_sync_end() == vsync_end &&
                 info.v_total()==vtotal &&
-                atof(formatRefresh)==vfresh) {
+                atof(curDrmModeRefresh)==atoi(curRefresh)) {
                 ALOGD("***********************found aux idx %d ****************", (int)c);
                 foundAuxIdx = c;
                 break;
@@ -585,9 +599,10 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 sscanf(resolution,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,&htotal,&vsync_start,&vsync_end,
                                   &vtotal, &flags);
 
-                ALOGD("last base_paramer.main.resolution.hdisplay = %d,  vdisplay=%d(%s@%f)", base_paramer.main.resolution.hdisplay,
-                     base_paramer.main.resolution.vdisplay,
-                     base_paramer.main.hwc_info.device,  base_paramer.main.hwc_info.fps);
+                ALOGD("last base_paramer.main.resolution.hdisplay = %d,  vdisplay=%d(%s@%f)",
+                        base_paramer.main.resolution.hdisplay,
+                        base_paramer.main.resolution.vdisplay,
+                        base_paramer.main.hwc_info.device,  base_paramer.main.hwc_info.fps);
                 base_paramer.main.resolution.hdisplay = w;
                 base_paramer.main.resolution.vdisplay = h;
                 base_paramer.main.resolution.hsync_start = hsync_start;
@@ -595,14 +610,15 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 if (foundMainIdx != -1)
                     base_paramer.main.resolution.clock = mModes[foundMainIdx].clock();
                 else if (flags & DRM_MODE_FLAG_INTERLACE)
-                    base_paramer.main.resolution.clock = htotal*vtotal*vfresh/2;
+                    base_paramer.main.resolution.clock = (htotal*vtotal*vfresh/2)/1000.0f;
                 else
-                    base_paramer.main.resolution.clock = htotal*vtotal*vfresh;
+                    base_paramer.main.resolution.clock = (htotal*vtotal*vfresh)/1000.0f;
                 base_paramer.main.resolution.htotal = htotal;
                 base_paramer.main.resolution.vsync_start = vsync_start;
                 base_paramer.main.resolution.vsync_end = vsync_end;
                 base_paramer.main.resolution.vtotal = vtotal;
                 base_paramer.main.resolution.flags = flags;
+                ALOGD("saveBaseParameter foundMainIdx=%d clock=%d", foundMainIdx, base_paramer.main.resolution.clock);
             } else {
                 base_paramer.main.feature|= RESOLUTION_AUTO;
                 memset(&base_paramer.main.resolution, 0, sizeof(base_paramer.main.resolution));
@@ -681,9 +697,9 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
                 if (foundMainIdx != -1)
                     base_paramer.aux.resolution.clock = mModes[foundMainIdx].clock();
                 else if (flags & DRM_MODE_FLAG_INTERLACE)
-                    base_paramer.aux.resolution.clock = htotal*vtotal*vfresh/2;
+                    base_paramer.aux.resolution.clock = (htotal*vtotal*vfresh/2) / 1000.0f;
                 else
-                    base_paramer.aux.resolution.clock = htotal*vtotal*vfresh;
+                    base_paramer.aux.resolution.clock = (htotal*vtotal*vfresh) / 1000.0f;
                 base_paramer.aux.resolution.hsync_start = hsync_start;
                 base_paramer.aux.resolution.hsync_end = hsync_end;
                 base_paramer.aux.resolution.htotal = htotal;
