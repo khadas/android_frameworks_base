@@ -312,6 +312,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+
 /**
  * Keep track of all those APKs everywhere.
  * <p>
@@ -501,6 +508,12 @@ public class PackageManagerService extends IPackageManager.Stub {
 
     /** Canonical intent used to identify what counts as a "web browser" app */
     private static final Intent sBrowserIntent;
+    /**support performance  for rk3399 **/
+    private static String platform=SystemProperties.get("ro.board.platform", "unknow");
+    private static boolean rk3399_platform=platform.equals("rk3399");
+    private static final String GOVERNOR_PATH="/sys/devices/system/cpu/cpu4/cpufreq/scaling_governor";
+    private static final String PERFORMANCE_MODE="performance";
+    private String cur_performance_mode="interactive";
     static {
         sBrowserIntent = new Intent();
         sBrowserIntent.setAction(Intent.ACTION_VIEW);
@@ -1240,6 +1253,9 @@ public class PackageManagerService extends IPackageManager.Stub {
                 }
                 case MCS_BOUND: {
                     if (DEBUG_INSTALL) Slog.i(TAG, "mcs_bound");
+                    cur_performance_mode=getCurrentPerformance();
+                    if(rk3399_platform && !cur_performance_mode.equals(PERFORMANCE_MODE))
+                        setCurrentPerformance(PERFORMANCE_MODE);
                     if (msg.obj != null) {
                         mContainerService = (IMediaContainerService) msg.obj;
                         Trace.asyncTraceEnd(TRACE_TAG_PACKAGE_MANAGER, "bindingMCS",
@@ -1342,7 +1358,8 @@ public class PackageManagerService extends IPackageManager.Stub {
                         // of next pending install.
                         mHandler.sendEmptyMessage(MCS_BOUND);
                     }
-
+                    if(rk3399_platform && !cur_performance_mode.equals(getCurrentPerformance()))
+                        setCurrentPerformance(cur_performance_mode);
                     break;
                 }
                 case MCS_GIVE_UP: {
@@ -21386,5 +21403,36 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
             mSettings.mPerformancePackages.add(0, setting);
         }
         mSettings.writeLPr();
+    }
+
+
+    public String getCurrentPerformance(){
+        File file = new File(GOVERNOR_PATH);
+        String str=null;
+        try {
+            FileReader fread = new FileReader(file);
+            BufferedReader buffer = new BufferedReader(fread);
+            str=buffer.readLine();
+            buffer.close();
+            fread.close();
+            //Slog.d(TAG,"getCurrentPerformance:"+str);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return str;
+    }
+
+    public void setCurrentPerformance(String per_mode){
+        Slog.d(TAG,"setCurrentPerformance:"+per_mode);
+        File per_file = new File(GOVERNOR_PATH);
+        FileWriter fr;
+        try {
+            fr = new FileWriter(per_file);
+            fr.write(per_mode);
+            fr.close();
+        }
+        catch (IOException e) {
+              e.printStackTrace();
+        }
     }
 }
