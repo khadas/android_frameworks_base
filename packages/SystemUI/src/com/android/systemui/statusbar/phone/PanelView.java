@@ -44,6 +44,8 @@ import com.android.systemui.statusbar.policy.HeadsUpManager;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import android.os.SystemProperties;
+import android.app.KeyguardManager;
 
 public abstract class PanelView extends FrameLayout {
     public static final boolean DEBUG = PanelBar.DEBUG;
@@ -223,7 +225,10 @@ public abstract class PanelView extends FrameLayout {
         }
 
         // On expanding, single mouse click expands the panel instead of dragging.
-        if (isFullyCollapsed() && event.isFromSource(InputDevice.SOURCE_MOUSE)) {
+        String platform = SystemProperties.get("ro.board.platform");
+        if (isFullyCollapsed() && event.isFromSource(InputDevice.SOURCE_MOUSE)
+                && !"rk312x".equals(platform) && !"rk3126c".equals(platform)
+		&& !"rk3399".equals(platform)) {
             if (event.getAction() == MotionEvent.ACTION_UP) {
                 expand(true);
             }
@@ -401,7 +406,14 @@ public abstract class PanelView extends FrameLayout {
                                 EventLogConstants.SYSUI_LOCKSCREEN_GESTURE_SWIPE_UP_UNLOCK,
                                 heightDp, velocityDp);
                     }
-            fling(vel, expand, isFalseTouch(x, y));
+	    String platform = SystemProperties.get("ro.board.platform");
+	    if("rk312x".equals(platform) || "rk3126c".equals(platform) ||
+		"rk3399".equals(platform)){
+	    	if(mExpandedFraction>0f)
+			fling(vel, expand, isFalseTouch(x, y));
+	    }else
+	    	fling(vel, expand, isFalseTouch(x, y));
+
             onTrackingStopped(expand);
             mUpdateFlingOnLayout = expand && mPanelClosedOnDown && !mHasLayoutedSinceDown;
             if (mUpdateFlingOnLayout) {
@@ -754,6 +766,17 @@ public abstract class PanelView extends FrameLayout {
         }
 
         mExpandedHeight = Math.max(0, mExpandedHeight);
+
+	String platform = SystemProperties.get("ro.board.platform");
+        if("rk312x".equals(platform) || "rk3126c".equals(platform) || "rk3399".equals(platform)){
+            KeyguardManager mKeyguardManager = (KeyguardManager) getContext().getSystemService(Context.KEYGUARD_SERVICE);
+            boolean flag = mKeyguardManager.inKeyguardRestrictedInputMode();
+            if(flag){
+                if(mExpandedHeight <= fhWithoutOverExpansion/1.5){
+                    mExpandedHeight = 0;
+                }
+            }
+        }
         mExpandedFraction = Math.min(1f, fhWithoutOverExpansion == 0
                 ? 0
                 : mExpandedHeight / fhWithoutOverExpansion);
