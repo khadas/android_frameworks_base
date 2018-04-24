@@ -208,6 +208,9 @@ static void hotPlugUpdate(){
         }
     }
     drm_->SetExtendDisplay(mextend);
+    drm_->DisplayChanged();
+    drm_->UpdateDisplayRoute();
+    drm_->ClearDisplay();
 
     updateConnectors();
 }
