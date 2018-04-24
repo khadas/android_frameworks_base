@@ -140,8 +140,9 @@ public class RkDisplayModes {
                     int start = line.indexOf("Format:");
                     int end = line.indexOf(" ", start+8);
                     int depthStart = line.indexOf("Depth:");
+                    int depthEnd = line.indexOf(" ", depthStart+7);
                     String format = line.substring(start+7, end);
-                    String depth = line.substring(depthStart+7, depthStart+8);
+                    String depth = line.substring(depthStart+7, depthEnd);
                     if (format.contains("YUV444"))
                         builder.append(STR_YCBCR444).append("-").append(depth).append("bit");
                     else if (format.contains("YUV422"))
@@ -655,10 +656,12 @@ public class RkDisplayModes {
             mCurColorInfos = mAuxColorInfos;
         }
         if (mCurColorInfos != null && mCurColorMode != null && !mCurColorMode.contains("Auto")) {
-            List<String> corlorList = mCurColorInfos.getCorlorModeList();
+            List<String> corlorList = getSupportCorlorList(dpy);
             for (int i = 0; i < corlorList.size(); i++) {
-                if (corlorList.get(i).equals(mCurColorMode))
+                if (corlorList.get(i).equals(mCurColorMode)) {
+                    Log.d(TAG, "getCurColorMode 1===========  " + mCurColorMode);
                     return mCurColorMode;
+                }
             }
         } else if (mCurColorMode != null && mCurColorMode.contains("Auto")){
             return mCurColorMode;
@@ -669,7 +672,7 @@ public class RkDisplayModes {
             mCurColorMode = mColorMode;
         if (mCurColorMode == null)
            mCurColorMode = "RGB-8bit";
-
+        Log.d(TAG, "getCurColorMode ===========  " + mCurColorMode);
         return mCurColorMode;
     }
 

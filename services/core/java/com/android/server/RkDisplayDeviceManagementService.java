@@ -150,13 +150,14 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         if (display == MAIN_DISPLAY) {
             String lastColor = SystemProperties.get("persist.sys.color.main");
             isSameProperty = lastColor.equals(format);
+            Log.d(TAG, "dpy:"+display+"   lastColor:"+lastColor+"	 format:"+format+"	 update:"+isSameProperty);
             SystemProperties.set("persist.sys.color.main", format);
         } else {
             String lastColor = SystemProperties.get("persist.sys.color.aux");
             isSameProperty = lastColor.equals(format);
+            Log.d(TAG, "dpy:"+display+"   iface:"+iface+"	 format:"+format+"	 update:"+isSameProperty);
             SystemProperties.set("persist.sys.color.aux", format);
         }
-
         if (!isSameProperty) {
             timeline++;
             SystemProperties.set("sys.display.timeline", Integer.toString(timeline));

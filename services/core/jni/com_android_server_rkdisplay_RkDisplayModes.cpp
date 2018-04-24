@@ -96,7 +96,7 @@ static bool builtInHdmi(int type){
 
 static bool isGammaSetEnable(int type) {
     return type == DRM_MODE_CONNECTOR_eDP || type == DRM_MODE_CONNECTOR_LVDS ||
-           type == DRM_MODE_CONNECTOR_DSI;
+        type == DRM_MODE_CONNECTOR_DSI;
 }
 
 static void updateConnectors(){
@@ -111,7 +111,7 @@ static void updateConnectors(){
                 ALOGD("encoderId2: %d", conn->encoder()->id());
                 crtcId2 = drm_->GetCrtcFromConnector(conn.get())->id();
             }
-            
+
             if (builtInHdmi(conn->get_type()))
                 foundHdmi=true;
             cnt++;
@@ -133,7 +133,7 @@ static void updateConnectors(){
             primary = drm_->GetConnectorFromType(HWC_DISPLAY_PRIMARY);
             extend = drm_->GetConnectorFromType(HWC_DISPLAY_EXTERNAL);
         }
-        
+
     } else {
         primary = drm_->GetConnectorFromType(HWC_DISPLAY_PRIMARY);
         extend = drm_->GetConnectorFromType(HWC_DISPLAY_EXTERNAL);
@@ -155,33 +155,33 @@ static void hotPlugUpdate(){
         if (cur_state == old_state)
             continue;
         ALOGI("%s event  for connector %u\n",
-            cur_state == DRM_MODE_CONNECTED ? "Plug" : "Unplug", conn->id());
- 
+                cur_state == DRM_MODE_CONNECTED ? "Plug" : "Unplug", conn->id());
+
         if (cur_state == DRM_MODE_CONNECTED) {
-         if (conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT)
-           mextend = conn.get();
-         else if (conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT)
-           mprimary = conn.get();
+            if (conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT)
+                mextend = conn.get();
+            else if (conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT)
+                mprimary = conn.get();
         }
     }
 
     /*
-    * status changed?
-    */
+     * status changed?
+     */
     drm_->DisplayChanged();
 
     DrmConnector *old_primary = drm_->GetConnectorFromType(HWC_DISPLAY_PRIMARY);
     mprimary = mprimary ? mprimary : old_primary;
     if (!mprimary || mprimary->state() != DRM_MODE_CONNECTED) {
-    mprimary = NULL;
-    for (auto &conn : drm_->connectors()) {
-     if (!(conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT))
-       continue;
-     if (conn->state() == DRM_MODE_CONNECTED) {
-       mprimary = conn.get();
-       break;
-     }
-    }
+        mprimary = NULL;
+        for (auto &conn : drm_->connectors()) {
+            if (!(conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT))
+                continue;
+            if (conn->state() == DRM_MODE_CONNECTED) {
+                mprimary = conn.get();
+                break;
+            }
+        }
     }
 
     if (!mprimary) {
@@ -245,7 +245,7 @@ static void nativeInit(JNIEnv* env, jobject obj) {
 #define RESOLUTION_WHITE_EN (1<<3)
 
 struct drm_display_mode {
-	/* Proposed mode values */
+    /* Proposed mode values */
     int clock;		/* in kHz */
     int hdisplay;
     int hsync_start;
@@ -299,12 +299,17 @@ struct bcsh_info {
     unsigned short hue;
 };
 
-struct disp_info{
+struct screen_info {
+    int type;
     struct drm_display_mode resolution;// 52 bytes
-    struct overscan scan;//12 bytes
     enum output_format  format; // 4 bytes
     enum output_depth depthc; // 4 bytes
     unsigned int feature;//4 //4 bytes
+};
+
+struct disp_info {
+    struct screen_info screen_list[5];
+    struct overscan scan;//12 bytes
     struct hwc_inital_info hwc_info; //140 bytes
     struct bcsh_info bcsh;
     unsigned int reserve[128];
@@ -344,7 +349,7 @@ const char* GetBaseparameterFile(void)
 }
 
 static int setGamma(int fd, uint32_t crtc_id, uint32_t size,
-                             uint16_t *red, uint16_t *green, uint16_t *blue)
+        uint16_t *red, uint16_t *green, uint16_t *blue)
 {
     int ret = drmModeCrtcSetGamma(fd, crtc_id, size, red, green, blue);
     if (ret < 0)
@@ -367,26 +372,45 @@ static void saveHwcInitalInfo(struct file_base_paramer *base_paramer, int dpy){
             base_paramer->main.hwc_info.device[0]='\0';
         }
     } else {
-		int len;
+        int len;
         char property[PROPERTY_VALUE_MAX];
         base_paramer->aux.hwc_info.framebuffer_width = 1920;
         base_paramer->aux.hwc_info.framebuffer_height = 1080;
         base_paramer->aux.hwc_info.fps = 60.00;
         memset(property,0,sizeof(property));
         len = property_get("sys.hwc.device.extend", property, NULL);
-		if (len)
-			memcpy(base_paramer->aux.hwc_info.device, property, strlen(property));
-		else
-			base_paramer->aux.hwc_info.device[0]='\0';
+        if (len)
+            memcpy(base_paramer->aux.hwc_info.device, property, strlen(property));
+        else
+            base_paramer->aux.hwc_info.device[0]='\0';
     }
 }
 #endif
 
 static void freeLutInfo(){
     if (mlut) {
-       free(mlut);
-       mlut=NULL;
+        free(mlut);
+        mlut=NULL;
     }
+}
+
+static int findSuitableInfoSlot(struct disp_info* info, int type) 
+{
+    int found=0;
+    for (int i=0;i<5;i++) {
+        if (info->screen_list[i].type !=0 && info->screen_list[i].type == type) {
+            found = i;
+            break;
+        } else if (info->screen_list[i].type !=0 && found == false){
+            found++;
+        }
+    }
+    if (found == -1) {
+        found = 0;
+        ALOGD("noting saved, used the first slot");
+    }
+    ALOGD("findSuitableInfoSlot: %d type=%d", found, type);
+    return found;
 }
 
 static bool getBaseParameterInfo(struct file_base_paramer* base_paramer)
@@ -477,6 +501,8 @@ static void saveBcshConfig(struct file_base_paramer *base_paramer, int dpy){
 
 static void nativeSaveConfig(JNIEnv* env, jobject obj) {
     char buf[BUFFER_LENGTH];
+    bool isMainHdmiConnected=false;
+    bool isAuxHdmiConnected = false;
     int foundMainIdx=-1,foundAuxIdx=-1;
     struct file_base_paramer base_paramer;
 
@@ -490,7 +516,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
         property_get("persist.sys.resolution.main", resolution, "0x0@0.00-0-0-0-0-0-0-0");
         if (strncmp(resolution, "Auto", 4) != 0 && strncmp(resolution, "0x0p0-0", 7) !=0)
             sscanf(resolution,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,
-                                &htotal,&vsync_start,&vsync_end, &vtotal, &flags);
+                    &htotal,&vsync_start,&vsync_end, &vtotal, &flags);
         for (size_t c = 0; c < mModes.size(); ++c){
             const DrmMode& info = mModes[c];
             char curDrmModeRefresh[16];
@@ -503,18 +529,18 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
             sprintf(curDrmModeRefresh, "%.2f", mModeRefresh);
             sprintf(curRefresh, "%.2f", vfresh);
             if (info.h_display() == w &&
-                info.v_display() == h &&
-                info.h_sync_start() == hsync_start &&
-                info.h_sync_end() == hsync_end &&
-                info.h_total() == htotal &&
-                info.v_sync_start() == vsync_start &&
-                info.v_sync_end() == vsync_end &&
-                info.v_total()==vtotal &&
-                atof(curDrmModeRefresh)==atof(curRefresh)) {
+                    info.v_display() == h &&
+                    info.h_sync_start() == hsync_start &&
+                    info.h_sync_end() == hsync_end &&
+                    info.h_total() == htotal &&
+                    info.v_sync_start() == vsync_start &&
+                    info.v_sync_end() == vsync_end &&
+                    info.v_total()==vtotal &&
+                    atof(curDrmModeRefresh)==atof(curRefresh)) {
                 ALOGD("***********************found main idx %d ****************", (int)c);
                 foundMainIdx = c;
                 sprintf(buf, "display=%d,iface=%d,enable=%d,mode=%s\n",
-                primary->display(), primary->get_type(), primary->state(), resolution);
+                        primary->display(), primary->get_type(), primary->state(), resolution);
                 break;
             }
         }
@@ -530,7 +556,7 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
         property_get("persist.sys.resolution.aux", resolution, "0x0@0.00-0-0-0-0-0-0-0");
         if (strncmp(resolution, "Auto", 4) != 0 && strncmp(resolution, "0x0p0-0", 7) !=0)
             sscanf(resolution,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,&htotal,&vsync_start,&vsync_end,
-            &vtotal, &flags);
+                    &vtotal, &flags);
         for (size_t c = 0; c < mModes.size(); ++c){
             const DrmMode& info = mModes[c];
             char curDrmModeRefresh[16];
@@ -543,14 +569,14 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
             sprintf(curDrmModeRefresh, "%.2f", mModeRefresh);
             sprintf(curRefresh, "%.2f", vfresh);
             if (info.h_display() == w &&
-                info.v_display() == h &&
-                info.h_sync_start() == hsync_start &&
-                info.h_sync_end() == hsync_end &&
-                info.h_total() == htotal &&
-                info.v_sync_start() == vsync_start &&
-                info.v_sync_end() == vsync_end &&
-                info.v_total()==vtotal &&
-                atof(curDrmModeRefresh)==atoi(curRefresh)) {
+                    info.v_display() == h &&
+                    info.h_sync_start() == hsync_start &&
+                    info.h_sync_end() == hsync_end &&
+                    info.h_total() == htotal &&
+                    info.v_sync_start() == vsync_start &&
+                    info.v_sync_end() == vsync_end &&
+                    info.v_total()==vtotal &&
+                    atof(curDrmModeRefresh)==atoi(curRefresh)) {
                 ALOGD("***********************found aux idx %d ****************", (int)c);
                 foundAuxIdx = c;
                 break;
@@ -585,49 +611,65 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
     read(file, (void*)&(base_paramer.aux), sizeof(base_paramer.aux));
 
     for (auto &conn : drm_->connectors()) {
-        if (conn->state() == DRM_MODE_CONNECTED && (conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT)) {
-            char resolution[PROPERTY_VALUE_MAX];
+        if (conn->state() == DRM_MODE_CONNECTED 
+                && (conn->get_type() == DRM_MODE_CONNECTOR_HDMIA)
+                && (conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT))
+            isMainHdmiConnected = true;
+        else if(conn->state() == DRM_MODE_CONNECTED 
+                && (conn->get_type() == DRM_MODE_CONNECTOR_HDMIA)
+                && (conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT))
+            isAuxHdmiConnected = true;
+    }
+    ALOGD("nativeSaveConfig: size=%d isMainHdmiConnected=%d", (int)sizeof(base_paramer.main), isMainHdmiConnected);
+    for (auto &conn : drm_->connectors()) {
+        if (conn->state() == DRM_MODE_CONNECTED 
+                && (conn->possible_displays() & HWC_DISPLAY_PRIMARY_BIT)) {
+            char property[PROPERTY_VALUE_MAX];
             int w=0,h=0,hsync_start=0,hsync_end=0,htotal=0;
             int vsync_start=0,vsync_end=0,vtotal=0,flags=0;
             int left=0,top=0,right=0,bottom=0;
             float vfresh=0;
+            int slot = findSuitableInfoSlot(&base_paramer.main, conn->get_type());
+            if (isMainHdmiConnected && conn->get_type() == DRM_MODE_CONNECTOR_TV)
+                continue;
 
-            base_paramer.main.feature &= AUTO_BIT_RESET;
-            property_get("persist.sys.resolution.main", resolution, "0x0@0.00-0-0-0-0-0-0-0");
-            if (strncmp(resolution, "Auto", 4) != 0 && strncmp(resolution, "0x0p0-0", 7) !=0) {
-                ALOGD("saveConfig resolution = %s", resolution);
+            base_paramer.main.screen_list[slot].type = conn->get_type();
+            base_paramer.main.screen_list[slot].feature &= AUTO_BIT_RESET;
+            property_get("persist.sys.resolution.main", property, "0x0@0.00-0-0-0-0-0-0-0");
+            if (strncmp(property, "Auto", 4) != 0 && strncmp(property, "0x0p0-0", 7) !=0) {
+                ALOGD("saveConfig resolution = %s", property);
                 std::vector<DrmMode> mModes = primary->modes();
-                sscanf(resolution,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,&htotal,&vsync_start,&vsync_end,
-                                  &vtotal, &flags);
+                sscanf(property,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,&htotal,&vsync_start,&vsync_end,
+                        &vtotal, &flags);
 
                 ALOGD("last base_paramer.main.resolution.hdisplay = %d,  vdisplay=%d(%s@%f)",
-                        base_paramer.main.resolution.hdisplay,
-                        base_paramer.main.resolution.vdisplay,
+                        base_paramer.main.screen_list[slot].resolution.hdisplay,
+                        base_paramer.main.screen_list[slot].resolution.vdisplay,
                         base_paramer.main.hwc_info.device,  base_paramer.main.hwc_info.fps);
-                base_paramer.main.resolution.hdisplay = w;
-                base_paramer.main.resolution.vdisplay = h;
-                base_paramer.main.resolution.hsync_start = hsync_start;
-                base_paramer.main.resolution.hsync_end = hsync_end;
+                base_paramer.main.screen_list[slot].resolution.hdisplay = w;
+                base_paramer.main.screen_list[slot].resolution.vdisplay = h;
+                base_paramer.main.screen_list[slot].resolution.hsync_start = hsync_start;
+                base_paramer.main.screen_list[slot].resolution.hsync_end = hsync_end;
                 if (foundMainIdx != -1)
-                    base_paramer.main.resolution.clock = mModes[foundMainIdx].clock();
+                    base_paramer.main.screen_list[slot].resolution.clock = mModes[foundMainIdx].clock();
                 else if (flags & DRM_MODE_FLAG_INTERLACE)
-                    base_paramer.main.resolution.clock = (htotal*vtotal*vfresh/2)/1000.0f;
+                    base_paramer.main.screen_list[slot].resolution.clock = (htotal*vtotal*vfresh/2)/1000.0f;
                 else
-                    base_paramer.main.resolution.clock = (htotal*vtotal*vfresh)/1000.0f;
-                base_paramer.main.resolution.htotal = htotal;
-                base_paramer.main.resolution.vsync_start = vsync_start;
-                base_paramer.main.resolution.vsync_end = vsync_end;
-                base_paramer.main.resolution.vtotal = vtotal;
-                base_paramer.main.resolution.flags = flags;
-                ALOGD("saveBaseParameter foundMainIdx=%d clock=%d", foundMainIdx, base_paramer.main.resolution.clock);
+                    base_paramer.main.screen_list[slot].resolution.clock = (htotal*vtotal*vfresh)/1000.0f;
+                base_paramer.main.screen_list[slot].resolution.htotal = htotal;
+                base_paramer.main.screen_list[slot].resolution.vsync_start = vsync_start;
+                base_paramer.main.screen_list[slot].resolution.vsync_end = vsync_end;
+                base_paramer.main.screen_list[slot].resolution.vtotal = vtotal;
+                base_paramer.main.screen_list[slot].resolution.flags = flags;
+                ALOGD("saveBaseParameter foundMainIdx=%d clock=%d", foundMainIdx, base_paramer.main.screen_list[slot].resolution.clock);
             } else {
-                base_paramer.main.feature|= RESOLUTION_AUTO;
-                memset(&base_paramer.main.resolution, 0, sizeof(base_paramer.main.resolution));
+                base_paramer.main.screen_list[slot].feature|= RESOLUTION_AUTO;
+                memset(&base_paramer.main.screen_list[slot].resolution, 0, sizeof(base_paramer.main.screen_list[slot].resolution));
             }
 
-            memset(resolution,0,sizeof(resolution));
-            property_get("persist.sys.overscan.main", resolution, "overscan 100,100,100,100");
-            sscanf(resolution, "overscan %d,%d,%d,%d",
+            memset(property,0,sizeof(property));
+            property_get("persist.sys.overscan.main", property, "overscan 100,100,100,100");
+            sscanf(property, "overscan %d,%d,%d,%d",
                     &left,
                     &top,
                     &right,
@@ -637,85 +679,92 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
             base_paramer.main.scan.rightscale = (unsigned short)right;
             base_paramer.main.scan.bottomscale = (unsigned short)bottom;
 
-            memset(resolution,0,sizeof(resolution));
-            property_get("persist.sys.color.main", resolution, "Auto");
-            if (strncmp(resolution, "Auto", 4) != 0){
-                if (strstr(resolution, "RGB") != 0)
-                    base_paramer.main.format = output_rgb;
-                else if (strstr(resolution, "YCBCR444") != 0)
-                    base_paramer.main.format = output_ycbcr444;
-                else if (strstr(resolution, "YCBCR422") != 0)
-                    base_paramer.main.format = output_ycbcr422;
-                else if (strstr(resolution, "YCBCR420") != 0)
-                    base_paramer.main.format = output_ycbcr420;
+            memset(property,0,sizeof(property));
+            property_get("persist.sys.color.main", property, "Auto");
+            if (strncmp(property, "Auto", 4) != 0){
+                if (strstr(property, "RGB") != 0)
+                    base_paramer.main.screen_list[slot].format = output_rgb;
+                else if (strstr(property, "YCBCR444") != 0)
+                    base_paramer.main.screen_list[slot].format = output_ycbcr444;
+                else if (strstr(property, "YCBCR422") != 0)
+                    base_paramer.main.screen_list[slot].format = output_ycbcr422;
+                else if (strstr(property, "YCBCR420") != 0)
+                    base_paramer.main.screen_list[slot].format = output_ycbcr420;
                 else {
-                   base_paramer.main.feature |= COLOR_AUTO;
-                   base_paramer.main.format = output_ycbcr_high_subsampling;
+                    base_paramer.main.screen_list[slot].feature |= COLOR_AUTO;
+                    base_paramer.main.screen_list[slot].format = output_ycbcr_high_subsampling;
                 }
 
-                if (strstr(resolution, "8bit") != NULL)
-                    base_paramer.main.depthc = depth_24bit;
-                else if (strstr(resolution, "10bit") != NULL)
-                    base_paramer.main.depthc = depth_30bit;
+                if (strstr(property, "8bit") != NULL)
+                    base_paramer.main.screen_list[slot].depthc = depth_24bit;
+                else if (strstr(property, "10bit") != NULL)
+                    base_paramer.main.screen_list[slot].depthc = depth_30bit;
                 else
-                    base_paramer.main.depthc = Automatic;
-                ALOGD("saveConfig: color=%d-%d", base_paramer.main.format, base_paramer.main.depthc);
+                    base_paramer.main.screen_list[slot].depthc = Automatic;
+                ALOGD("saveConfig: color=%d-%d", base_paramer.main.screen_list[slot].format, base_paramer.main.screen_list[slot].depthc);
             } else {
-                base_paramer.main.depthc = Automatic;
-                base_paramer.main.format = output_ycbcr_high_subsampling;
-                base_paramer.main.feature |= COLOR_AUTO;
+                base_paramer.main.screen_list[slot].depthc = Automatic;
+                base_paramer.main.screen_list[slot].format = output_ycbcr_high_subsampling;
+                base_paramer.main.screen_list[slot].feature |= COLOR_AUTO;
             }
 
-            memset(resolution,0,sizeof(resolution));
-            property_get("persist.sys.hdcp1x.main", resolution, "0");
-            if (atoi(resolution) > 0)
-                base_paramer.main.feature |= HDCP1X_EN;
+            memset(property,0,sizeof(property));
+            property_get("persist.sys.hdcp1x.main", property, "0");
+            if (atoi(property) > 0)
+                base_paramer.main.screen_list[slot].feature |= HDCP1X_EN;
 
-            memset(resolution,0,sizeof(resolution));
-            property_get("persist.sys.resolution_white.main", resolution, "0");
-            if (atoi(resolution) > 0)
-                base_paramer.main.feature |= RESOLUTION_WHITE_EN;
+            memset(property,0,sizeof(property));
+            property_get("persist.sys.resolution_white.main", property, "0");
+            if (atoi(property) > 0)
+                base_paramer.main.screen_list[slot].feature |= RESOLUTION_WHITE_EN;
             saveBcshConfig(&base_paramer, HWC_DISPLAY_PRIMARY_BIT);
 #ifdef TEST_BASE_PARMARTER
             /*save aux fb & device*/
             saveHwcInitalInfo(&base_paramer, HWC_DISPLAY_PRIMARY_BIT);
 #endif
-        } else if(conn->state() == DRM_MODE_CONNECTED && (conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT)) {
-            char resolution[PROPERTY_VALUE_MAX];
+        } else if(conn->state() == DRM_MODE_CONNECTED 
+                && (conn->possible_displays() & HWC_DISPLAY_EXTERNAL_BIT) 
+                && (conn->encoder() != NULL)) {
+            char property[PROPERTY_VALUE_MAX];
             int w=0,h=0,hsync_start=0,hsync_end=0,htotal=0;
             int vsync_start=0,vsync_end=0,vtotal=0,flags=0;
             float vfresh=0;
             int left=0,top=0,right=0,bottom=0;
+            int slot = findSuitableInfoSlot(&base_paramer.aux, conn->get_type());
 
-            base_paramer.aux.feature &= AUTO_BIT_RESET;
-            property_get("persist.sys.resolution.aux", resolution, "0x0p0-0");
-            if (strncmp(resolution, "Auto", 4) != 0 && strncmp(resolution, "0x0p0-0", 7) !=0) {
+            if (isAuxHdmiConnected && conn->get_type() == DRM_MODE_CONNECTOR_TV)
+                continue;
+
+            base_paramer.aux.screen_list[slot].type = conn->get_type();
+            base_paramer.aux.screen_list[slot].feature &= AUTO_BIT_RESET;
+            property_get("persist.sys.resolution.aux", property, "0x0p0-0");
+            if (strncmp(property, "Auto", 4) != 0 && strncmp(property, "0x0p0-0", 7) !=0) {
                 std::vector<DrmMode> mModes = extend->modes();
-                sscanf(resolution,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,&htotal,&vsync_start,&vsync_end,
-                &vtotal, &flags);
-                base_paramer.aux.resolution.hdisplay = w;
-                base_paramer.aux.resolution.vdisplay = h;
+                sscanf(property,"%dx%d@%f-%d-%d-%d-%d-%d-%d-%x", &w, &h, &vfresh, &hsync_start,&hsync_end,&htotal,&vsync_start,&vsync_end,
+                        &vtotal, &flags);
+                base_paramer.aux.screen_list[slot].resolution.hdisplay = w;
+                base_paramer.aux.screen_list[slot].resolution.vdisplay = h;
                 if (foundMainIdx != -1)
-                    base_paramer.aux.resolution.clock = mModes[foundMainIdx].clock();
+                    base_paramer.aux.screen_list[slot].resolution.clock = mModes[foundMainIdx].clock();
                 else if (flags & DRM_MODE_FLAG_INTERLACE)
-                    base_paramer.aux.resolution.clock = (htotal*vtotal*vfresh/2) / 1000.0f;
+                    base_paramer.aux.screen_list[slot].resolution.clock = (htotal*vtotal*vfresh/2) / 1000.0f;
                 else
-                    base_paramer.aux.resolution.clock = (htotal*vtotal*vfresh) / 1000.0f;
-                base_paramer.aux.resolution.hsync_start = hsync_start;
-                base_paramer.aux.resolution.hsync_end = hsync_end;
-                base_paramer.aux.resolution.htotal = htotal;
-                base_paramer.aux.resolution.vsync_start = vsync_start;
-                base_paramer.aux.resolution.vsync_end = vsync_end;
-                base_paramer.aux.resolution.vtotal = vtotal;
-                base_paramer.aux.resolution.flags = flags;
+                    base_paramer.aux.screen_list[slot].resolution.clock = (htotal*vtotal*vfresh) / 1000.0f;
+                base_paramer.aux.screen_list[slot].resolution.hsync_start = hsync_start;
+                base_paramer.aux.screen_list[slot].resolution.hsync_end = hsync_end;
+                base_paramer.aux.screen_list[slot].resolution.htotal = htotal;
+                base_paramer.aux.screen_list[slot].resolution.vsync_start = vsync_start;
+                base_paramer.aux.screen_list[slot].resolution.vsync_end = vsync_end;
+                base_paramer.aux.screen_list[slot].resolution.vtotal = vtotal;
+                base_paramer.aux.screen_list[slot].resolution.flags = flags;
             } else {
-                base_paramer.aux.feature |= RESOLUTION_AUTO;
-                memset(&base_paramer.aux.resolution, 0, sizeof(base_paramer.aux.resolution));
+                base_paramer.aux.screen_list[slot].feature |= RESOLUTION_AUTO;
+                memset(&base_paramer.aux.screen_list[slot].resolution, 0, sizeof(base_paramer.aux.screen_list[slot].resolution));
             }
 
-            memset(resolution,0,sizeof(resolution));
-            property_get("persist.sys.overscan.aux", resolution, "overscan 100,100,100,100");
-            sscanf(resolution, "overscan %d,%d,%d,%d",
+            memset(property,0,sizeof(property));
+            property_get("persist.sys.overscan.aux", property, "overscan 100,100,100,100");
+            sscanf(property, "overscan %d,%d,%d,%d",
                     &left,
                     &top,
                     &right,
@@ -725,47 +774,47 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
             base_paramer.aux.scan.rightscale = (unsigned short)right;
             base_paramer.aux.scan.bottomscale = (unsigned short)bottom;
 
-            memset(resolution,0,sizeof(resolution));
-            property_get("persist.sys.color.aux", resolution, "Auto");
-            if (strncmp(resolution, "Auto", 4) != 0){
+            memset(property,0,sizeof(property));
+            property_get("persist.sys.color.aux", property, "Auto");
+            if (strncmp(property, "Auto", 4) != 0){
                 char color[16];
                 char depth[16];
 
-                sscanf(resolution, "%s-%s", color, depth);
+                sscanf(property, "%s-%s", color, depth);
                 if (strncmp(color, "RGB", 3) == 0)
-                    base_paramer.aux.format = output_rgb;
+                    base_paramer.aux.screen_list[slot].format = output_rgb;
                 else if (strncmp(color, "YCBCR444", 8) == 0)
-                    base_paramer.aux.format = output_ycbcr444;
+                    base_paramer.aux.screen_list[slot].format = output_ycbcr444;
                 else if (strncmp(color, "YCBCR422", 8) == 0)
-                    base_paramer.aux.format = output_ycbcr422;
+                    base_paramer.aux.screen_list[slot].format = output_ycbcr422;
                 else if (strncmp(color, "YCBCR420", 8) == 0)
-                    base_paramer.aux.format = output_ycbcr420;
+                    base_paramer.aux.screen_list[slot].format = output_ycbcr420;
                 else {
-                    base_paramer.aux.feature |= COLOR_AUTO;
-                    base_paramer.aux.format = output_ycbcr_high_subsampling;
+                    base_paramer.aux.screen_list[slot].feature |= COLOR_AUTO;
+                    base_paramer.aux.screen_list[slot].format = output_ycbcr_high_subsampling;
                 }
 
                 if (strncmp(depth, "8bit", 4) == 0)
-                    base_paramer.aux.depthc = depth_24bit;
+                    base_paramer.aux.screen_list[slot].depthc = depth_24bit;
                 else if (strncmp(depth, "10bit", 5) == 0)
-                    base_paramer.aux.depthc = depth_30bit;
+                    base_paramer.aux.screen_list[slot].depthc = depth_30bit;
                 else
-                    base_paramer.aux.depthc = Automatic;
+                    base_paramer.aux.screen_list[slot].depthc = Automatic;
             } else {
-                base_paramer.aux.feature |= COLOR_AUTO;
-                base_paramer.aux.depthc = Automatic;
-                base_paramer.aux.format = output_ycbcr_high_subsampling;
+                base_paramer.aux.screen_list[slot].feature |= COLOR_AUTO;
+                base_paramer.aux.screen_list[slot].depthc = Automatic;
+                base_paramer.aux.screen_list[slot].format = output_ycbcr_high_subsampling;
             }
 
-            memset(resolution,0,sizeof(resolution));
-            property_get("persist.sys.hdcp1x.aux", resolution, "0");
-            if (atoi(resolution) > 0)
-                base_paramer.aux.feature |= HDCP1X_EN;
+            memset(property,0,sizeof(property));
+            property_get("persist.sys.hdcp1x.aux", property, "0");
+            if (atoi(property) > 0)
+                base_paramer.aux.screen_list[slot].feature |= HDCP1X_EN;
 
-            memset(resolution,0,sizeof(resolution));
-            property_get("persist.sys.resolution_white.aux", resolution, "0");
-            if (atoi(resolution) > 0)
-                base_paramer.aux.feature |= RESOLUTION_WHITE_EN;
+            memset(property,0,sizeof(property));
+            property_get("persist.sys.resolution_white.aux", property, "0");
+            if (atoi(property) > 0)
+                base_paramer.aux.screen_list[slot].feature |= RESOLUTION_WHITE_EN;
             /*add for BCSH*/
             saveBcshConfig(&base_paramer, HWC_DISPLAY_EXTERNAL_BIT);
 #ifdef TEST_BASE_PARMARTER
@@ -799,25 +848,25 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
     write(file, (char*)(&base_paramer.aux), sizeof(base_paramer.aux));
     close(file);
     sync();
+    /*
+       ALOGD("[%s] hdmi:%d,%d,%d,%d,%d,%d foundMainIdx %d\n", __FUNCTION__,
+       base_paramer.main.resolution.hdisplay,
+       base_paramer.main.resolution.vdisplay,
+       base_paramer.main.resolution.hsync_start,
+       base_paramer.main.resolution.hsync_end,
+       base_paramer.main.resolution.htotal,
+       base_paramer.main.resolution.flags,
+       foundMainIdx);
 
-    ALOGD("[%s] hdmi:%d,%d,%d,%d,%d,%d foundMainIdx %d\n", __FUNCTION__,
-            base_paramer.main.resolution.hdisplay,
-            base_paramer.main.resolution.vdisplay,
-            base_paramer.main.resolution.hsync_start,
-            base_paramer.main.resolution.hsync_end,
-            base_paramer.main.resolution.htotal,
-            base_paramer.main.resolution.flags,
-            foundMainIdx);
-
-    ALOGD("[%s] tve:%d,%d,%d,%d,%d,%d foundAuxIdx %d\n", __FUNCTION__,
-            base_paramer.aux.resolution.hdisplay,
-            base_paramer.aux.resolution.vdisplay,
-            base_paramer.aux.resolution.hsync_start,
-            base_paramer.aux.resolution.hsync_end,
-            base_paramer.aux.resolution.htotal,
-            base_paramer.aux.resolution.flags,
-            foundAuxIdx);
-
+       ALOGD("[%s] tve:%d,%d,%d,%d,%d,%d foundAuxIdx %d\n", __FUNCTION__,
+       base_paramer.aux.resolution.hdisplay,
+       base_paramer.aux.resolution.vdisplay,
+       base_paramer.aux.resolution.hsync_start,
+       base_paramer.aux.resolution.hsync_end,
+       base_paramer.aux.resolution.htotal,
+       base_paramer.aux.resolution.flags,
+       foundAuxIdx);
+     */
 }
 
 static void nativeUpdateConnectors(JNIEnv* env, jobject obj){
@@ -849,6 +898,7 @@ static bool getResolutionInfo(int dpy, char* resolution)
     struct file_base_paramer base_paramer;
     int value;
     bool found = false;
+    int slot = 0;
 
     if (dpy == HWC_DISPLAY_PRIMARY) {
         mCurConnector = primary;
@@ -858,16 +908,18 @@ static bool getResolutionInfo(int dpy, char* resolution)
 
     if (getBaseParameterInfo(&base_paramer)) {
         if (dpy == HWC_DISPLAY_PRIMARY) {
-            if (!base_paramer.main.resolution.hdisplay ||
-                !base_paramer.main.resolution.clock ||
-                !base_paramer.main.resolution.vdisplay) {
+            slot = findSuitableInfoSlot(&base_paramer.main, mCurConnector->get_type());
+            if (!base_paramer.main.screen_list[slot].resolution.hdisplay ||
+                    !base_paramer.main.screen_list[slot].resolution.clock ||
+                    !base_paramer.main.screen_list[slot].resolution.vdisplay) {
                 sprintf(resolution, "%s", "Auto");
                 return resolution;
             }
         } else if (dpy == HWC_DISPLAY_EXTERNAL) {
-            if (!base_paramer.aux.resolution.hdisplay ||
-                !base_paramer.aux.resolution.clock ||
-                !base_paramer.aux.resolution.vdisplay) {
+            slot = findSuitableInfoSlot(&base_paramer.aux, mCurConnector->get_type());
+            if (!base_paramer.aux.screen_list[slot].resolution.hdisplay ||
+                    !base_paramer.aux.screen_list[slot].resolution.clock ||
+                    !base_paramer.aux.screen_list[slot].resolution.vdisplay) {
                 sprintf(resolution, "%s", "Auto");
                 return resolution;
             }
@@ -909,13 +961,13 @@ static bool getResolutionInfo(int dpy, char* resolution)
                 else
                     vfresh = drm_mode->clock / (float)(drm_mode->vtotal * drm_mode->htotal) * 1000.0f;
                 ALOGD("nativeGetCurMode: crtc_id=%d clock=%d w=%d %d %d %d %d %d flag=0x%x vfresh %.2f drm.vrefresh=%.2f", 
-                crtc->id(), drm_mode->clock, drm_mode->hdisplay, drm_mode->hsync_start,
-                drm_mode->hsync_end, drm_mode->vdisplay, drm_mode->vsync_start, drm_mode->vsync_end, drm_mode->flags,
-                vfresh, (float)drm_mode->vrefresh);
+                        crtc->id(), drm_mode->clock, drm_mode->hdisplay, drm_mode->hsync_start,
+                        drm_mode->hsync_end, drm_mode->vdisplay, drm_mode->vsync_start, drm_mode->vsync_end, drm_mode->flags,
+                        vfresh, (float)drm_mode->vrefresh);
                 sprintf(resolution, "%dx%d@%.2f-%d-%d-%d-%d-%d-%d-%x", drm_mode->hdisplay, drm_mode->vdisplay, vfresh,
-                                    drm_mode->hsync_start, drm_mode->hsync_end, drm_mode->htotal, 
-                                    drm_mode->vsync_start, drm_mode->vsync_end, drm_mode->vtotal,
-                                    drm_mode->flags);
+                        drm_mode->hsync_start, drm_mode->hsync_end, drm_mode->htotal, 
+                        drm_mode->vsync_start, drm_mode->vsync_end, drm_mode->vtotal,
+                        drm_mode->flags);
                 drmModeFreePropertyBlob(blob);
             }
             drmModeFreeProperty(p);
@@ -933,6 +985,7 @@ static jstring nativeGetCurCorlorMode(JNIEnv* env, jobject obj, jint dpy)
     char colorMode[PROPERTY_VALUE_MAX];
     struct file_base_paramer base_paramer;
     int len=0;
+    DrmConnector* mCurConnector;
 
     if (dpy == HWC_DISPLAY_PRIMARY) {
         len = property_get("persist.sys.color.main", colorMode, NULL);
@@ -941,31 +994,41 @@ static jstring nativeGetCurCorlorMode(JNIEnv* env, jobject obj, jint dpy)
     }
 
     ALOGD("nativeGetCurCorlorMode: property=%s", colorMode);
-
+    if (dpy == HWC_DISPLAY_PRIMARY) {
+        mCurConnector = primary;
+    }else if (dpy == HWC_DISPLAY_EXTERNAL){
+        mCurConnector = extend;
+    } 
     if (!len) {
-        if (getBaseParameterInfo(&base_paramer)) {
+        if (getBaseParameterInfo(&base_paramer) && mCurConnector != NULL) {
+            int slot = 0;
+            if (dpy == HWC_DISPLAY_PRIMARY)
+                slot = findSuitableInfoSlot(&base_paramer.main, mCurConnector->get_type());
+            else
+                slot = findSuitableInfoSlot(&base_paramer.aux, mCurConnector->get_type());
+
             if (dpy == HWC_DISPLAY_PRIMARY) {
-                if (base_paramer.main.depthc == Automatic &&
-                    base_paramer.main.format == output_ycbcr_high_subsampling)
+                if (base_paramer.main.screen_list[slot].depthc == Automatic &&
+                        base_paramer.main.screen_list[slot].format == output_ycbcr_high_subsampling)
                     sprintf(colorMode, "%s", "Auto");
             } else if (dpy == HWC_DISPLAY_EXTERNAL) {
-                if (base_paramer.aux.depthc == Automatic &&
-                    base_paramer.aux.format == output_ycbcr_high_subsampling)
+                if (base_paramer.aux.screen_list[slot].depthc == Automatic &&
+                        base_paramer.aux.screen_list[slot].format == output_ycbcr_high_subsampling)
                     sprintf(colorMode, "%s", "Auto");
             }
-        } else {
-            sprintf(colorMode, "%s", "NULL");
+            ALOGD("nativeGetCurCorlorMode:  %d-%d", 
+                    base_paramer.main.screen_list[slot].format, base_paramer.main.screen_list[slot].depthc);
         }
     }
-    ALOGD("nativeGetCurCorlorMode: colorMode=%s, %d-%d", colorMode, base_paramer.main.format, base_paramer.main.depthc);
-	return env->NewStringUTF(colorMode);
+    ALOGD("nativeGetCurCorlorMode: colorMode=%s", colorMode);
+    return env->NewStringUTF(colorMode);
 }
 
 static jstring nativeGetCurMode(JNIEnv* env, jobject obj, jint dpy, jint iface_type)
 {
 #if 0
     int display=dpy;
-	int type = iface_type;
+    int type = iface_type;
     char resolution[PROPERTY_VALUE_MAX];
     ALOGD("nativeGetCurMode: dpy %d iface_type %d", display, type);
     if (display == HWC_DISPLAY_PRIMARY) {
@@ -1028,7 +1091,7 @@ static jobject nativeGetCorlorModeConfigs(JNIEnv* env, jclass clazz,
     uint64_t color_capacity=0;
     uint64_t depth_capacity=0;
     jobject infoObj = env->NewObject(gRkColorModeSupportInfo.clazz,
-                gRkColorModeSupportInfo.ctor);
+            gRkColorModeSupportInfo.ctor);
 
     if (display == HWC_DISPLAY_PRIMARY) {
         mCurConnector = primary;
@@ -1137,7 +1200,7 @@ static jintArray nativeGetOverscan(JNIEnv* env, jobject obj, jint dpy)
     ALOGD("nativeGetOverscan: property=%s value=%d,%d,%d,%d", mOverscanProperty, mOverscan[0], mOverscan[1], mOverscan[2], mOverscan[3]);
     env->SetIntArrayRegion(jOverscanArray, 0, 4, mOverscan);
     if (mOverscan!=NULL)
-    delete[] mOverscan;
+        delete[] mOverscan;
     return jOverscanArray;
 }
 
@@ -1181,7 +1244,7 @@ static jintArray nativeGetBcsh(JNIEnv* env, jobject obj, jint dpy)
             mBcsh[2] = base_paramer.main.bcsh.hue;
         else
             mBcsh[3] = DEFAULT_HUE;
-	} else if (dpy == HWC_DISPLAY_EXTERNAL){
+    } else if (dpy == HWC_DISPLAY_EXTERNAL){
         if (property_get("persist.sys.brightness.aux", mBcshProperty, NULL) > 0)
             mBcsh[0] = atoi(mBcshProperty);
         else if (foudBaseParameter)
@@ -1212,10 +1275,10 @@ static jintArray nativeGetBcsh(JNIEnv* env, jobject obj, jint dpy)
             mBcsh[2] = base_paramer.aux.bcsh.hue;
         else
             mBcsh[3] = DEFAULT_HUE;
-	}
+    }
     checkBcshInfo(mBcsh);
     ALOGD("Bcsh: %d %d %d %d main.bcsh: %d %d %d %d", mBcsh[0], mBcsh[1], mBcsh[2], mBcsh[3],
-          base_paramer.main.bcsh.brightness, base_paramer.main.bcsh.contrast, base_paramer.main.bcsh.saturation, base_paramer.main.bcsh.hue);
+            base_paramer.main.bcsh.brightness, base_paramer.main.bcsh.contrast, base_paramer.main.bcsh.saturation, base_paramer.main.bcsh.hue);
     env->SetIntArrayRegion(jBcshArray, 0, 4, mBcsh);
     if (mBcsh!=NULL)
         delete[] mBcsh;
@@ -1241,13 +1304,13 @@ static jint nativeSetGamma(JNIEnv* env, jobject obj,
     uint16_t* blue = (uint16_t*)malloc(jbsize*sizeof(uint16_t));
 
     for (int i=0;i<jrsize;i++) {
-	    red[i] = jr_data[i];
+        red[i] = jr_data[i];
     }
     for (int i=0;i<jgsize;i++) {
-	    green[i] = jg_data[i];
+        green[i] = jg_data[i];
     }
     for (int i=0;i<jbsize;i++) {
-	    blue[i] = jb_data[i];
+        blue[i] = jb_data[i];
     }
 
     if (display == HWC_DISPLAY_PRIMARY) {
@@ -1267,20 +1330,20 @@ static jint nativeSetGamma(JNIEnv* env, jobject obj,
                         jr_data[0], jr_data[1],jrsize, jgsize, jbsize
                         ,red[0], red[1]);
             else {
-                    if (mlut == NULL) {
-                        mlut = (lut_info*)malloc(sizeof(*mlut));
-                    }
-                    if (display == HWC_DISPLAY_PRIMARY) {
-                        mlut->main.size = size;
-                        memcpy(mlut->main.lred, red, jrsize*sizeof(uint16_t));
-                        memcpy(mlut->main.lgreen, red, jgsize*sizeof(uint16_t));
-                        memcpy(mlut->main.lblue, red, jbsize*sizeof(uint16_t));
-                    } else {
-                        mlut->aux.size = size;
-                        memcpy(mlut->aux.lred, red, jrsize*sizeof(uint16_t));
-                        memcpy(mlut->aux.lgreen, red, jgsize*sizeof(uint16_t));
-                        memcpy(mlut->aux.lblue, red, jbsize*sizeof(uint16_t));
-                    }
+                if (mlut == NULL) {
+                    mlut = (lut_info*)malloc(sizeof(*mlut));
+                }
+                if (display == HWC_DISPLAY_PRIMARY) {
+                    mlut->main.size = size;
+                    memcpy(mlut->main.lred, red, jrsize*sizeof(uint16_t));
+                    memcpy(mlut->main.lgreen, red, jgsize*sizeof(uint16_t));
+                    memcpy(mlut->main.lblue, red, jbsize*sizeof(uint16_t));
+                } else {
+                    mlut->aux.size = size;
+                    memcpy(mlut->aux.lred, red, jrsize*sizeof(uint16_t));
+                    memcpy(mlut->aux.lgreen, red, jgsize*sizeof(uint16_t));
+                    memcpy(mlut->aux.lblue, red, jbsize*sizeof(uint16_t));
+                }
             }
         }
     }
@@ -1356,10 +1419,10 @@ static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.vscan, info.v_scan());
         idx++;
         ALOGV("display%d. mode[%d]  %dx%d info.fps %f clock %d   hsync_start %d hsync_enc %d htotal %d hskew %d", 
-            display,(int)c, info.h_display(), info.v_display(), info.v_refresh(), info.clock(),  info.h_sync_start(),info.h_sync_end(),
-            info.h_total(), info.h_skew());
+                display,(int)c, info.h_display(), info.v_display(), info.v_refresh(), info.clock(),  info.h_sync_start(),info.h_sync_end(),
+                info.h_total(), info.h_skew());
         ALOGV("vsync_start %d vsync_end %d vtotal %d vscan %d flags 0x%x", info.v_sync_start(), info.v_sync_end(),
-            info.v_total(), info.v_scan(), info.flags());
+                info.v_total(), info.v_scan(), info.flags());
 
         env->SetObjectArrayElement(configArray, static_cast<jsize>(c), infoObj);
         env->DeleteLocalRef(infoObj);
@@ -1373,47 +1436,46 @@ static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
 //com.android.server.rkdisplay
 static const JNINativeMethod sRkDrmModeMethods[] = {
     {"nativeInit", "()V",
-            (void*) nativeInit},
+        (void*) nativeInit},
     {"nativeUpdateConnectors", "()V",
-            (void*) nativeUpdateConnectors},
+        (void*) nativeUpdateConnectors},
     {"nativeSaveConfig", "()V",
-            (void*) nativeSaveConfig},
+        (void*) nativeSaveConfig},
     {"nativeGetDisplayConfigs", "(I)[Lcom/android/server/rkdisplay/RkDisplayModes$RkPhysicalDisplayInfo;",
-            (void*)nativeGetDisplayConfigs},
+        (void*)nativeGetDisplayConfigs},
     {"nativeGetNumConnectors", "()I",
-            (void*)nativeGetNumConnectors},
+        (void*)nativeGetNumConnectors},
     {"nativeSetMode", "(IILjava/lang/String;)V",
-            (void*)nativeSetMode},
+        (void*)nativeSetMode},
     {"nativeGetCurMode", "(II)Ljava/lang/String;",
-            (void*)nativeGetCurMode},
+        (void*)nativeGetCurMode},
     {"nativeGetCurCorlorMode", "(I)Ljava/lang/String;",
-            (void*)nativeGetCurCorlorMode},
+        (void*)nativeGetCurCorlorMode},
     {"nativeGetBuiltIn", "(I)I",
-            (void*)nativeGetBuiltIn},
+        (void*)nativeGetBuiltIn},
     {"nativeGetConnectionState", "(I)I",
-            (void*)nativeGetConnectionState},
+        (void*)nativeGetConnectionState},
     {"nativeGetCorlorModeConfigs", "(I)Lcom/android/server/rkdisplay/RkDisplayModes$RkColorCapacityInfo;",
-            (void*)nativeGetCorlorModeConfigs},
+        (void*)nativeGetCorlorModeConfigs},
     {"nativeGetBcsh", "(I)[I",
-            (void*)nativeGetBcsh},
+        (void*)nativeGetBcsh},
     {"nativeGetOverscan", "(I)[I",
-            (void*)nativeGetOverscan},
+        (void*)nativeGetOverscan},
     {"nativeSetGamma", "(II[I[I[I)I",
-            (void*)nativeSetGamma},
+        (void*)nativeSetGamma},
 };
 
-
 #define FIND_CLASS(var, className) \
-        var = env->FindClass(className); \
-        LOG_FATAL_IF(! var, "Unable to find class " className);
+    var = env->FindClass(className); \
+    LOG_FATAL_IF(! var, "Unable to find class " className);
 
 #define GET_METHOD_ID(var, clazz, methodName, methodDescriptor) \
-        var = env->GetMethodID(clazz, methodName, methodDescriptor); \
-        LOG_FATAL_IF(! var, "Unable to find method " methodName);
+    var = env->GetMethodID(clazz, methodName, methodDescriptor); \
+    LOG_FATAL_IF(! var, "Unable to find method " methodName);
 
 #define GET_FIELD_ID(var, clazz, fieldName, fieldDescriptor) \
-        var = env->GetFieldID(clazz, fieldName, fieldDescriptor); \
-        LOG_FATAL_IF(! var, "Unable to find field " fieldName);
+    var = env->GetFieldID(clazz, fieldName, fieldDescriptor); \
+    LOG_FATAL_IF(! var, "Unable to find field " fieldName);
 
 int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env)
 {
@@ -1449,12 +1511,12 @@ int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env)
     GET_FIELD_ID(gRkPhysicalDisplayInfoClassInfo.vtotal, gRkPhysicalDisplayInfoClassInfo.clazz, "vtotal", "I");
     GET_FIELD_ID(gRkPhysicalDisplayInfoClassInfo.vscan, gRkPhysicalDisplayInfoClassInfo.clazz, "vscan", "I");
 
-     FIND_CLASS(gRkColorModeSupportInfo.clazz, "com/android/server/rkdisplay/RkDisplayModes$RkColorCapacityInfo");
-     gRkColorModeSupportInfo.clazz = jclass(env->NewGlobalRef(gRkColorModeSupportInfo.clazz));
-     GET_METHOD_ID(gRkColorModeSupportInfo.ctor,
-             gRkColorModeSupportInfo.clazz, "<init>", "()V");
-     GET_FIELD_ID(gRkColorModeSupportInfo.color_capa, gRkColorModeSupportInfo.clazz, "color_capa", "I");
-     GET_FIELD_ID(gRkColorModeSupportInfo.depth_capa, gRkColorModeSupportInfo.clazz, "depth_capa", "I");
+    FIND_CLASS(gRkColorModeSupportInfo.clazz, "com/android/server/rkdisplay/RkDisplayModes$RkColorCapacityInfo");
+    gRkColorModeSupportInfo.clazz = jclass(env->NewGlobalRef(gRkColorModeSupportInfo.clazz));
+    GET_METHOD_ID(gRkColorModeSupportInfo.ctor,
+            gRkColorModeSupportInfo.clazz, "<init>", "()V");
+    GET_FIELD_ID(gRkColorModeSupportInfo.color_capa, gRkColorModeSupportInfo.clazz, "color_capa", "I");
+    GET_FIELD_ID(gRkColorModeSupportInfo.depth_capa, gRkColorModeSupportInfo.clazz, "depth_capa", "I");
     return 0;
 }
 };
