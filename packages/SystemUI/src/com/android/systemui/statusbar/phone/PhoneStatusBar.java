@@ -4961,11 +4961,13 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                     // When exiting refresh disabled flags.
                     mNavigationBarView.setDisabledFlags(mDisabled1, true);
                     return true;
-                } else if ((v.getId() == R.id.back)
-                        && !mNavigationBarView.getRecentsButton().getCurrentView().isPressed()) {
-                    // If we aren't pressing recents right now then they presses
-                    // won't be together, so send the standard long-press action.
-                    sendBackLongPress = true;
+                } else if (v.getId() == R.id.back){
+                    View currentView = mNavigationBarView.getRecentsButton().getCurrentView();
+                    if (null != currentView && !currentView.isPressed()) {
+                        // If we aren't pressing recents right now then they presses
+                        // won't be together, so send the standard long-press action.
+                        sendBackLongPress = true;
+                    }
                 }
                 mLastLockToAppLongPress = time;
             } else {
