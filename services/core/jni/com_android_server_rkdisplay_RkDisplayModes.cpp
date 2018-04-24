@@ -215,8 +215,6 @@ static void hotPlugUpdate(){
     updateConnectors();
 }
 
-
-
 static void nativeInit(JNIEnv* env, jobject obj) {
     if (drm_ == NULL) {
         drm_ = new DrmResources();
