@@ -17,7 +17,7 @@ package com.android.server.policy;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Slog;
-
+import android.os.SystemProperties;
 import com.android.server.LocalServices;
 import com.android.server.policy.WindowManagerPolicy.WindowManagerFuncs;
 import com.android.server.policy.GlobalActionsProvider;
@@ -64,7 +64,9 @@ class GlobalActions implements GlobalActionsProvider.GlobalActionsListener {
         mKeyguardShowing = keyguardShowing;
         mDeviceProvisioned = deviceProvisioned;
         mShowing = true;
-        if (mGlobalActionsAvailable) {
+        boolean isTvProduct = SystemProperties.get("ro.target.product","unknown").equals("atv") ||
+                           SystemProperties.get("ro.target.product","unknown").equals("box");
+        if (mGlobalActionsAvailable && !isTvProduct) {
             mHandler.postDelayed(mShowTimeout, 5000);
             mGlobalActionsProvider.showGlobalActions();
         } else {
