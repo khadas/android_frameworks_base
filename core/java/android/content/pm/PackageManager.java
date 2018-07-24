@@ -6175,5 +6175,13 @@ public abstract class PackageManager {
         throw new UnsupportedOperationException(
             "isPackageStateProtected not implemented in subclass");
     }
+    /**
+     * @hide
+     */
+    public abstract int getPackagePerformanceMode(String pkgName);
 
+    /**
+     * @hide
+     */
+    public abstract void setPackagePerformanceMode(String pkgName, int mode);
 }

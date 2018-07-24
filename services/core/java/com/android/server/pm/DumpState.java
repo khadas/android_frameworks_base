@@ -43,6 +43,7 @@ public final class DumpState {
     public static final int DUMP_SERVICE_PERMISSIONS = 1 << 24;
 
     public static final int OPTION_SHOW_FILTERS = 1 << 0;
+    public static final int DUMP_PERF_MODE = 1 << 16;
 
     private int mTypes;
 

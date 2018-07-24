@@ -2404,6 +2404,8 @@ class ActivityStack<T extends StackWindowController> extends ConfigurationContai
 
         if (DEBUG_SWITCH) Slog.v(TAG_SWITCH, "Resuming " + next);
 
+        adjustPackagePerformanceMode();
+
         // If we are currently pausing an activity, then don't do anything until that is done.
         if (!mStackSupervisor.allPausedActivitiesComplete()) {
             if (DEBUG_SWITCH || DEBUG_PAUSE || DEBUG_STATES) Slog.v(TAG_PAUSE,
@@ -5363,5 +5365,19 @@ class ActivityStack<T extends StackWindowController> extends ConfigurationContai
         // TODO: Remove, no longer needed with windowingMode.
         proto.write(FULLSCREEN, matchParentBounds());
         proto.end(token);
+    }
+
+    private void adjustPackagePerformanceMode() {
+        if (mService.mUsePerformanceTunner) {
+            int mode = mService.getFrontActivityPerformanceModeLocked(false);
+            mService.mDevicePerformanceTunner.setPerformanceMode(mode);
+        }
+
+    }
+
+    public void forcePerformanceMode(int mode) {
+        if (mService.mUsePerformanceTunner) {
+            mService.mDevicePerformanceTunner.setPerformanceMode(mode);
+        }
     }
 }

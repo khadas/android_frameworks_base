@@ -78,6 +78,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.os.storage.StorageManager;
 import android.os.storage.VolumeInfo;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -2600,6 +2601,25 @@ public class ApplicationPackageManager extends PackageManager {
             return mPM.getInstallReason(packageName, user.getIdentifier());
         } catch (RemoteException e) {
             throw e.rethrowFromSystemServer();
+        }
+    }
+
+    @Override
+    public int getPackagePerformanceMode(String pkgName) {
+        try {
+            return mPM.getPackagePerformanceMode(pkgName);
+        } catch (RemoteException e) {
+            // Should never happen!
+        }
+        return PowerManager.PERFORMANCE_MODE_NORMAL;
+    }
+
+    @Override
+    public void setPackagePerformanceMode(String pkgName, int mode) {
+        try {
+            mPM.setPackagePerformanceMode(pkgName, mode);
+        } catch (RemoteException e) {
+            // Should never happen!
         }
     }
 
