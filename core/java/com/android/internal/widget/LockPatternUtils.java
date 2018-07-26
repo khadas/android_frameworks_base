@@ -639,8 +639,9 @@ public class LockPatternUtils {
                         + MIN_LOCK_PATTERN_SIZE + " dots long.");
             }
 
-            setLong(PASSWORD_TYPE_KEY, DevicePolicyManager.PASSWORD_QUALITY_SOMETHING, userId);
+//            setLong(PASSWORD_TYPE_KEY, DevicePolicyManager.PASSWORD_QUALITY_SOMETHING, userId);
             getLockSettings().setLockPattern(patternToString(pattern), savedPattern, userId);
+            setLong(PASSWORD_TYPE_KEY, DevicePolicyManager.PASSWORD_QUALITY_SOMETHING, userId);
             DevicePolicyManager dpm = getDevicePolicyManager();
 
             // Update the device encryption password.
@@ -859,8 +860,9 @@ public class LockPatternUtils {
             }
 
             final int computedQuality = computePasswordQuality(password);
-            setLong(PASSWORD_TYPE_KEY, Math.max(quality, computedQuality), userHandle);
+//            setLong(PASSWORD_TYPE_KEY, Math.max(quality, computedQuality), userHandle);
             getLockSettings().setLockPassword(password, savedPassword, userHandle);
+            setLong(PASSWORD_TYPE_KEY, Math.max(quality, computedQuality), userHandle);
 
             // Update the device encryption password.
             if (userHandle == UserHandle.USER_SYSTEM
