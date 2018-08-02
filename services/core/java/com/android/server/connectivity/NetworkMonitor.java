@@ -866,7 +866,7 @@ public class NetworkMonitor extends StateMachine {
 
     public boolean getIsCaptivePortalCheckEnabled() {
         String symbol = Settings.Global.CAPTIVE_PORTAL_MODE;
-        int defaultValue = Settings.Global.CAPTIVE_PORTAL_MODE_PROMPT;
+        int defaultValue = Settings.Global.CAPTIVE_PORTAL_MODE_IGNORE;
         int mode = mSettings.getSetting(mContext, symbol, defaultValue);
         return mode != Settings.Global.CAPTIVE_PORTAL_MODE_IGNORE;
     }
