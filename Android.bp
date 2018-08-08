@@ -105,6 +105,7 @@ java_library {
         "core/java/android/app/usage/ICacheQuotaService.aidl",
         "core/java/android/app/usage/IStorageStatsManager.aidl",
         "core/java/android/app/usage/IUsageStatsManager.aidl",
+        "core/java/android/os/IRkDisplayDeviceManagementService.aidl",
         ":libbluetooth-binder-aidl",
         "core/java/android/content/IClipboard.aidl",
         "core/java/android/content/IContentService.aidl",

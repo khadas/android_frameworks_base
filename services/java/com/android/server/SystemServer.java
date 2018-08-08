@@ -1208,6 +1208,14 @@ public final class SystemServer {
             }
             traceEnd();
 
+             // $_rbox_$_modify_$_aisx: added 2017-06-27, add RkDisplayDeviceManagementService
+            try {
+                ServiceManager.addService(
+                    "drm_device_management",
+                    new RkDisplayDeviceManagementService(context));
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting kDisplayDeviceManagement Service", e);
+            }
             traceBeginAndSlog("StartNotificationManager");
             mSystemServiceManager.startService(NotificationManagerService.class);
             SystemNotificationChannels.createAll(context);
