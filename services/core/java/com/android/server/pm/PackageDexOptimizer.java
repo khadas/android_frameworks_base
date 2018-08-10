@@ -285,17 +285,17 @@ public class PackageDexOptimizer {
                 ||pkg.applicationInfo.packageName.contains("android.media.cts")
                 ||pkg.applicationInfo.packageName.contains("android.mediastress.cts")
                 ||pkg.applicationInfo.packageName.contains("android.security.cts")){//maybe  endsWith(".cts") ?
-            SystemProperties.set("cts_gts.status","true");
+            SystemProperties.set("vendor.cts_gts.status","true");
         }
         if(pkg.applicationInfo.packageName.contains("com.google.android.exoplayer.gts")){
-            SystemProperties.set("cts_gts.exo.gts","true");
+            SystemProperties.set("vendor.cts_gts.exo.gts","true");
         }else if("true".equals(SystemProperties.get("cts_gts.exo.gts"))){
-            SystemProperties.set("cts_gts.exo.gts","");
+            SystemProperties.set("vendor.cts_gts.exo.gts","");
         }
         if(pkg.applicationInfo.packageName.contains("com.google.android.media.gts")){
-            SystemProperties.set("cts_gts.media.gts","true");
+            SystemProperties.set("vendor.cts_gts.media.gts","true");
         }else if("true".equals(SystemProperties.get("cts_gts.media.gts"))){
-            SystemProperties.set("cts_gts.media.gts","");
+            SystemProperties.set("vendor.cts_gts.media.gts","");
         }
 
         try {
