@@ -3557,7 +3557,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             final int orientation = super.getOrientation();
             boolean isCar = mService.mContext.getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_AUTOMOTIVE);
-            if (isCar) {
+	    boolean isTV = mService.mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_LEANBACK);
+            if (isCar||isTV) {
                 // In a car, you cannot physically rotate the screen, so it doesn't make sense to
                 // allow anything but the default orientation.
                 if (DEBUG_ORIENTATION) Slog.v(TAG_WM,
