@@ -4043,7 +4043,7 @@ public class NotificationManagerService extends SystemService {
             boolean appNotificationsOff = mRankingHelper.getImportance(pkg, notificationUid)
                     == NotificationManager.IMPORTANCE_NONE;
 
-            if (!appNotificationsOff) {
+            if (!appNotificationsOff && !mIsTelevision) {
                 doChannelWarningToast("Developer warning for package \"" + pkg + "\"\n" +
                         "Failed to post notification on channel \"" + channelId + "\"\n" +
                         "See log for more details");
