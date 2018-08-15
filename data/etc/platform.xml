@@ -210,6 +210,11 @@
 
     <!-- These are the packages that are white-listed to be able to run as system user -->
     <system-user-whitelisted-app package="com.android.settings" />
+    <system-user-whitelisted-app package="com.DeviceTest" />
+    <system-user-whitelisted-app package="com.cghs.stresstest" />
+    <system-user-whitelisted-app package="android.rockchip.update.service" />
+    <system-user-whitelisted-app package="com.rockchips.mediacenter" />
+    <system-user-whitelisted-app package="com.google.android.tv.frameworkpackagestubs" />
 
     <!-- These are the packages that shouldn't run as system user -->
     <system-user-blacklisted-app package="com.android.wallpaper.livepicker" />
