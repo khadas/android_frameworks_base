@@ -1021,6 +1021,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             updateSettings();
         }
 
+        // this method is added for shutdown animation.
+        public void unRegister() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.unregisterContentObserver(this);
+        }
+
         @Override public void onChange(boolean selfChange) {
             updateSettings();
             updateRotation(false);
@@ -2179,7 +2185,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // register for multiuser-relevant broadcasts
         filter = new IntentFilter(Intent.ACTION_USER_SWITCHED);
-        context.registerReceiver(mMultiuserReceiver, filter);
+		context.registerReceiver(mMultiuserReceiver, filter);
+        
+        filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SHUTDOWN);
+        context.registerReceiver(mShutdownanimationReceiver, filter);
+
 
         // monitor for system gestures
         // TODO(multi-display): Needs to be display specific.
@@ -6735,6 +6746,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mLastSystemUiFlags = 0;
                     updateSystemUiVisibilityLw();
                 }
+            }
+        }
+    };
+
+    BroadcastReceiver mShutdownanimationReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_SHUTDOWN.equals(intent.getAction())
+                    && intent.getIntExtra("PLAY_SHUTDOWN_ANIMATION",0)==1) {
+                mSettingsObserver.unRegister();
+                mOrientationListener.disable();
             }
         }
     };

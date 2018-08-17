@@ -51,6 +51,7 @@ static const std::vector<std::string> PLAY_SOUND_BOOTREASON_BLACKLIST {
   "Panic",
   "Watchdog",
 };
+bool mShutdown;
 
 class InitAudioThread : public Thread {
 public:
@@ -71,7 +72,7 @@ private:
 
 bool playSoundsAllowed() {
     // Only play sounds for system boots, not runtime restarts.
-    if (android::base::GetBoolProperty(BOOT_COMPLETED_PROP_NAME, false)) {
+    if (android::base::GetBoolProperty(BOOT_COMPLETED_PROP_NAME, false) && !mShutdown) {
         return false;
     }
     // no audio while shutting down
@@ -142,7 +143,7 @@ private:
 }  // namespace
 
 
-int main()
+int main(int argc, char** argv)
 {
     setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_DISPLAY);
 
@@ -156,8 +157,17 @@ int main()
         waitForSurfaceFlinger();
 
         // create the boot animation object
-        sp<BootAnimation> boot = new BootAnimation(new AudioAnimationCallbacks());
         ALOGV("Boot animation set up. Joining pool.");
+		
+        sp<BootAnimation> boot;
+        if(argc > 1){
+            if(strcmp(argv[1], "shutdown") == 0){
+                boot = new BootAnimation(new AudioAnimationCallbacks(),true);
+                mShutdown=true;
+            }
+        }else{
+            boot = new BootAnimation(new AudioAnimationCallbacks(),false);
+        }
 
         IPCThreadState::self()->joinThreadPool();
     }
