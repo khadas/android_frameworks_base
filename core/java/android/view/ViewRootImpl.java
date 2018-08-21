@@ -175,6 +175,7 @@ public final class ViewRootImpl implements ViewParent,
     static final ArrayList<Runnable> sFirstDrawHandlers = new ArrayList();
     static boolean sFirstDrawComplete = false;
 
+    static int    sDisplayStatus = 0;
     private FrameDrawingCallback mNextRtFrameCallback;
 
     /**
@@ -1711,6 +1712,11 @@ public final class ViewRootImpl implements ViewParent,
             mWindowAttributesChanged = false;
             surfaceChanged = true;
             params = lp;
+        }
+        int newDisplayState = mAttachInfo.mDisplayState;
+        if (newDisplayState != sDisplayStatus ) {
+            params = lp;
+            sDisplayStatus = newDisplayState;
         }
         CompatibilityInfo compatibilityInfo =
                 mDisplay.getDisplayAdjustments().getCompatibilityInfo();
