@@ -3750,6 +3750,20 @@ public final class Settings {
                 BOOLEAN_VALIDATOR;
 
         /**
+         * screenshot location.
+         *
+         * @hide
+         */
+        public static final String SCREENSHOT_LOCATION = "screenshot_location";
+
+        /**
+         * screenshot button show.
+         *
+         * @hide
+         */
+        public static final String SCREENSHOT_BUTTON_SHOW = "screenshot_button_show";
+
+        /**
          * Whether the phone vibrates when it is ringing due to an incoming call. This will
          * be used by Phone and Setting apps; it shouldn't affect other apps.
          * The value is boolean (1 or 0).

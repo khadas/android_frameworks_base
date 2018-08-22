@@ -46,6 +46,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
+import android.view.Display.Mode;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -128,6 +129,9 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
     private KeyButtonDrawable mImeIcon;
     private KeyButtonDrawable mMenuIcon;
     private KeyButtonDrawable mAccessibilityIcon;
+    private KeyButtonDrawable mVolumeAddIcon;
+    private KeyButtonDrawable mVolumeSubIcon;
+    private KeyButtonDrawable mScreenshotIcon;
     private TintedKeyButtonDrawable mRotateSuggestionIcon;
 
     private GestureHelper mGestureHelper;
@@ -160,6 +164,8 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
     private NotificationPanelView mPanelView;
 
     private int mRotateBtnStyle = R.style.RotateButtonCCWStart90;
+
+    private boolean mIsRot0Landscape = true;
 
     private class NavTransitionListener implements TransitionListener {
         private boolean mBackTransitioning;
@@ -286,6 +292,11 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         mConfiguration.updateFrom(context.getResources().getConfiguration());
         reloadNavIcons();
 
+        Display display = ((WindowManager)context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        Mode displayMode = display.getMode();
+        mIsRot0Landscape = displayMode.getPhysicalWidth() > displayMode.getPhysicalHeight();
+        Log.v(TAG, "PW=" + displayMode.getPhysicalWidth() + ", PH=" + displayMode.getPhysicalHeight());
+
         mBarTransitions = new NavigationBarTransitions(this);
 
         mButtonDispatchers.put(R.id.back, new ButtonDispatcher(R.id.back));
@@ -295,6 +306,9 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         mButtonDispatchers.put(R.id.ime_switcher, new ButtonDispatcher(R.id.ime_switcher));
         mButtonDispatchers.put(R.id.accessibility_button,
                 new ButtonDispatcher(R.id.accessibility_button));
+        mButtonDispatchers.put(R.id.screenshot, new ButtonDispatcher(R.id.screenshot));
+        mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
+        mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
         mButtonDispatchers.put(R.id.rotate_suggestion,
                 new ButtonDispatcher(R.id.rotate_suggestion));
         mButtonDispatchers.put(R.id.menu_container,
@@ -400,6 +414,18 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         return mRotatedViews;
     }
 
+    public ButtonDispatcher getScreenshotButton() {
+        return mButtonDispatchers.get(R.id.screenshot);
+    }
+
+    public ButtonDispatcher getVolumeAddButton() {
+        return mButtonDispatchers.get(R.id.volume_add);
+    }
+
+    public ButtonDispatcher getVolumeSubButton() {
+        return mButtonDispatchers.get(R.id.volume_sub);
+    }
+
     public ButtonDispatcher getRecentsButton() {
         return mButtonDispatchers.get(R.id.recent_apps);
     }
@@ -492,6 +518,10 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
 
             mImeIcon = getDrawable(lightContext, darkContext, R.drawable.ic_ime_switcher_default,
                     false /* hasShadow */);
+
+            mVolumeAddIcon = getDrawable(lightContext, darkContext, R.drawable.ic_sysbar_volume_add_button);
+            mVolumeSubIcon = getDrawable(lightContext, darkContext, R.drawable.ic_sysbar_volume_sub_button);
+            mScreenshotIcon = getDrawable(lightContext, darkContext, R.drawable.ic_sysbar_capture_button);
 
             updateRotateSuggestionButtonStyle(mRotateBtnStyle, false);
 
@@ -626,6 +656,9 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         }
         getHomeButton().setImageDrawable(homeIcon);
         getBackButton().setImageDrawable(backIcon);
+        getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
+        getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
+        getScreenshotButton().setImageDrawable(mScreenshotIcon);
 
         updateRecentsIcon();
 
@@ -952,6 +985,13 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
     }
 
     private void updateRotatedViews() {
+    if (mIsRot0Landscape) {
+        Log.w(TAG, "NBV updateRotatedViews mVertical= true, change rot0 rot90");
+        mRotatedViews[Surface.ROTATION_0] = mRotatedViews[Surface.ROTATION_180] = findViewById(R.id.rot90);
+        mRotatedViews[Surface.ROTATION_270] = mRotatedViews[Surface.ROTATION_90] = findViewById(R.id.rot0);
+        updateCurrentView();
+        return;
+    }
         mRotatedViews[Surface.ROTATION_0] =
                 mRotatedViews[Surface.ROTATION_180] = findViewById(R.id.rot0);
         mRotatedViews[Surface.ROTATION_270] =
@@ -1208,6 +1248,7 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         dumpButton(pw, "rcnt", getRecentsButton());
         dumpButton(pw, "menu", getMenuButton());
         dumpButton(pw, "a11y", getAccessibilityButton());
+        dumpButton(pw, "screenshot", getScreenshotButton());
 
         mRecentsOnboarding.dump(pw);
 

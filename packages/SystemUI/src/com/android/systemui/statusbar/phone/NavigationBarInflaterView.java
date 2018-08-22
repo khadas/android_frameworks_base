@@ -69,6 +69,9 @@ public class NavigationBarInflaterView extends FrameLayout
     public static final String LEFT = "left";
     public static final String RIGHT = "right";
     public static final String CONTEXTUAL = "contextual";
+    public static final String SCREENSHOT = "screenshot";
+    public static final String VOLUME_ADD = "volume_add";
+    public static final String VOLUME_SUB = "volume_sub";
 
     public static final String GRAVITY_SEPARATOR = ";";
     public static final String BUTTON_SEPARATOR = ",";
@@ -100,11 +103,13 @@ public class NavigationBarInflaterView extends FrameLayout
 
     private boolean mAlternativeOrder;
     private boolean mUsingCustomLayout;
+    private int mDensity;
 
     private OverviewProxyService mOverviewProxyService;
 
     public NavigationBarInflaterView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        mDensity = context.getResources().getConfiguration().densityDpi;
         createInflaters();
         mDisplay = ((WindowManager)
                 context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
@@ -127,6 +132,16 @@ public class NavigationBarInflaterView extends FrameLayout
         inflateChildren();
         clearViews();
         inflateLayout(getDefaultLayout());
+    }
+
+    @Override
+    protected void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if(mDensity != newConfig.densityDpi || mDensity < 600){
+            mDensity = newConfig.densityDpi;
+            clearViews();
+            inflateLayout(mCurrentLayout);
+        }
     }
 
     private void inflateChildren() {
@@ -393,6 +408,12 @@ public class NavigationBarInflaterView extends FrameLayout
             v = inflater.inflate(R.layout.clipboard, parent, false);
         } else if (CONTEXTUAL.equals(button)) {
             v = inflater.inflate(R.layout.contextual, parent, false);
+        } else if (SCREENSHOT.equals(button)) {
+            v = inflater.inflate(R.layout.screenshot, parent, false);
+        } else if (VOLUME_ADD.equals(button)) {
+            v = inflater.inflate(R.layout.volume_add, parent, false);
+        } else if (VOLUME_SUB.equals(button)) {
+            v = inflater.inflate(R.layout.volume_sub, parent, false);
         } else if (button.startsWith(KEY)) {
             String uri = extractImage(button);
             int code = extractKeycode(button);

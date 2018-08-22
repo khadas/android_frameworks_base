@@ -55,6 +55,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.support.annotation.VisibleForTesting;
@@ -134,6 +135,7 @@ public class NavigationBarFragment extends Fragment implements Callbacks {
     private boolean mAccessibilityFeedbackEnabled;
     private AccessibilityManager mAccessibilityManager;
     private MagnificationContentObserver mMagnificationObserver;
+    private ContentObserver mScreenshotShowObserver;
     private ContentResolver mContentResolver;
     private final MetricsLogger mMetricsLogger = Dependency.get(MetricsLogger.class);
 
@@ -215,6 +217,17 @@ public class NavigationBarFragment extends Fragment implements Callbacks {
         mContentResolver.registerContentObserver(Settings.Secure.getUriFor(
                 Settings.Secure.ACCESSIBILITY_DISPLAY_MAGNIFICATION_NAVBAR_ENABLED), false,
                 mMagnificationObserver, UserHandle.USER_ALL);
+        mScreenshotShowObserver = new ContentObserver( getContext().getMainThreadHandler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                boolean isShow = Settings.System.getInt(getContext().getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 1) == 1;
+                ButtonDispatcher screenshotButton = mNavigationBarView.getScreenshotButton();
+                screenshotButton.setVisibility(isShow ? View.VISIBLE : View.GONE);
+            }
+        };
+        mContentResolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.SCREENSHOT_BUTTON_SHOW), true,
+                mScreenshotShowObserver, UserHandle.USER_ALL);
 
         if (savedInstanceState != null) {
             mDisabledFlags1 = savedInstanceState.getInt(EXTRA_DISABLE_STATE, 0);
@@ -251,6 +264,9 @@ public class NavigationBarFragment extends Fragment implements Callbacks {
         Dependency.get(AccessibilityManagerWrapper.class).removeCallback(
                 mAccessibilityListener);
         mContentResolver.unregisterContentObserver(mMagnificationObserver);
+        if(null != mScreenshotShowObserver){
+            mContentResolver.unregisterContentObserver(mScreenshotShowObserver);
+        }
         try {
             WindowManagerGlobal.getWindowManagerService()
                     .removeRotationWatcher(mRotationWatcher);
@@ -767,6 +783,31 @@ public class NavigationBarFragment extends Fragment implements Callbacks {
         rotateSuggestionButton.setOnClickListener(this::onRotateSuggestionClick);
         rotateSuggestionButton.setOnHoverListener(this::onRotateSuggestionHover);
         updateScreenPinningGestures();
+
+        ButtonDispatcher screenshotButton = mNavigationBarView.getScreenshotButton();
+        screenshotButton.setOnClickListener(this:: screenshotClick);
+        screenshotButton.setOnTouchListener(this:: screenshotTouch);
+        boolean isShow=Settings.System.getInt(getContext().getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 1) == 1;
+        if(isShow){
+            screenshotButton.setVisibility(View.VISIBLE);
+        }else{
+            screenshotButton.setVisibility(View.GONE);
+        }
+
+        ButtonDispatcher volumeAddButton=mNavigationBarView.getVolumeAddButton();
+        ButtonDispatcher volumeSubButton=mNavigationBarView.getVolumeSubButton();
+        boolean isShowVolumeButton="true".equals(SystemProperties.get("ro.rk.systembar.voiceicon","true"));
+        if(isShowVolumeButton){
+            volumeAddButton.setVisibility(View.VISIBLE);
+            volumeSubButton.setVisibility(View.VISIBLE);
+        }else{
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
+        if (getContext().getResources().getConfiguration().smallestScreenWidthDp < 400) {
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
     }
 
     private boolean onHomeTouch(View v, MotionEvent event) {
@@ -943,6 +984,19 @@ public class NavigationBarFragment extends Fragment implements Callbacks {
 
         return mStatusBar.toggleSplitScreenMode(MetricsEvent.ACTION_WINDOW_DOCK_LONGPRESS,
                 MetricsEvent.ACTION_WINDOW_UNDOCK_LONGPRESS);
+    }
+
+    private boolean screenshotTouch(View v, MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+            Intent intent=new Intent("android.intent.action.SCREENSHOT");
+            getContext().sendBroadcast(intent);
+        }
+        return false;
+    }
+
+    private void screenshotClick(View v) {
+        Intent intent=new Intent("android.intent.action.SCREENSHOT");
+        getContext().sendBroadcast(intent);
     }
 
     private void onAccessibilityClick(View v) {
