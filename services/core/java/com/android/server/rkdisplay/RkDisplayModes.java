@@ -32,6 +32,7 @@ public class RkDisplayModes {
     private static native int nativeGetConnectionState(int dpy);
     private static native int[] nativeGetBcsh(int dpy);
     private static native int[] nativeGetOverscan(int dpy);
+    private static native int[] nativeGetGamma(int dpy);
     private static native int nativeSetGamma(int dpy, int size, int[] r, int[] g, int[] b);
 
     private static RkDisplayModes.RkPhysicalDisplayInfo mDisplayInfos[];
@@ -688,5 +689,10 @@ public class RkDisplayModes {
 
     public int setGamma(int dpy, int size, int[] red, int[] green, int[] blue) {
         return nativeSetGamma(dpy, size, red, green, blue);
+    }
+
+    public int[] getGamma(int dpy)
+    {
+        return nativeGetGamma(dpy);
     }
 }

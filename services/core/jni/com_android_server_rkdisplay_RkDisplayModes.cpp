@@ -830,15 +830,15 @@ static void nativeSaveConfig(JNIEnv* env, jobject obj) {
         if (mainLutSize) {
             base_paramer.main.mlutdata.size = mlut->main.size;
             memcpy(base_paramer.main.mlutdata.lred, mlut->main.lred, mainLutSize);
-            memcpy(base_paramer.main.mlutdata.lgreen, mlut->main.lred, mainLutSize);
-            memcpy(base_paramer.main.mlutdata.lblue, mlut->main.lred, mainLutSize);
+            memcpy(base_paramer.main.mlutdata.lgreen, mlut->main.lgreen, mainLutSize);
+            memcpy(base_paramer.main.mlutdata.lblue, mlut->main.lblue, mainLutSize);
         }
 
         if (auxLutSize) {
             base_paramer.aux.mlutdata.size = mlut->aux.size;
             memcpy(base_paramer.aux.mlutdata.lred, mlut->aux.lred, mainLutSize);
-            memcpy(base_paramer.aux.mlutdata.lgreen, mlut->aux.lred, mainLutSize);
-            memcpy(base_paramer.aux.mlutdata.lblue, mlut->aux.lred, mainLutSize);
+            memcpy(base_paramer.aux.mlutdata.lgreen, mlut->aux.lgreen, mainLutSize);
+            memcpy(base_paramer.aux.mlutdata.lblue, mlut->aux.lblue, mainLutSize);
         }
     }
     freeLutInfo();
@@ -1285,6 +1285,47 @@ static jintArray nativeGetBcsh(JNIEnv* env, jobject obj, jint dpy)
     return jBcshArray;
 }
 
+static jintArray nativeGetGamma(JNIEnv* env, jobject obj, jint dpy)
+{
+    int display = dpy;
+    struct file_base_paramer base_paramer;
+    jintArray jErrorArray = env->NewIntArray(1);
+
+    if (getBaseParameterInfo(&base_paramer)) {
+        if (display == HWC_DISPLAY_PRIMARY) {
+            int size = base_paramer.main.mlutdata.size;
+
+            if (size != 0) {
+                jintArray jLutArray = env->NewIntArray(size*3);
+                jint* mTmp = env->GetIntArrayElements(jLutArray, 0);
+
+                for (int i=0;i<size;i++) {
+                    mTmp[i] = base_paramer.main.mlutdata.lred[i];
+                    mTmp[size+i] = base_paramer.main.mlutdata.lgreen[i];
+                    mTmp[size*2+i] = base_paramer.main.mlutdata.lblue[i];
+                }
+                env->ReleaseIntArrayElements(jLutArray, mTmp, 0);
+                return jLutArray;
+            }
+        } else if (display == HWC_DISPLAY_EXTERNAL) {
+            int size = base_paramer.aux.mlutdata.size;
+
+            if (size != 0) {
+                jintArray jLutArray = env->NewIntArray(size*3);
+                jint* mTmp = env->GetIntArrayElements(jLutArray, 0);
+
+                for (int i=0;i<size;i++) {
+                    mTmp[i] = base_paramer.aux.mlutdata.lred[i];
+                    mTmp[size+i] = base_paramer.aux.mlutdata.lgreen[i];
+                    mTmp[size*2+i] = base_paramer.aux.mlutdata.lblue[i];
+                }
+                env->ReleaseIntArrayElements(jLutArray, mTmp, 0);
+                return jLutArray;
+            }
+        }
+    }
+    return jErrorArray;
+}
 static jint nativeSetGamma(JNIEnv* env, jobject obj,
         jint dpy, jint size, jintArray r, jintArray g, jintArray b){
     int display = dpy;
@@ -1336,13 +1377,13 @@ static jint nativeSetGamma(JNIEnv* env, jobject obj,
                 if (display == HWC_DISPLAY_PRIMARY) {
                     mlut->main.size = size;
                     memcpy(mlut->main.lred, red, jrsize*sizeof(uint16_t));
-                    memcpy(mlut->main.lgreen, red, jgsize*sizeof(uint16_t));
-                    memcpy(mlut->main.lblue, red, jbsize*sizeof(uint16_t));
+                    memcpy(mlut->main.lgreen, green, jgsize*sizeof(uint16_t));
+                    memcpy(mlut->main.lblue, blue, jbsize*sizeof(uint16_t));
                 } else {
                     mlut->aux.size = size;
                     memcpy(mlut->aux.lred, red, jrsize*sizeof(uint16_t));
-                    memcpy(mlut->aux.lgreen, red, jgsize*sizeof(uint16_t));
-                    memcpy(mlut->aux.lblue, red, jbsize*sizeof(uint16_t));
+                    memcpy(mlut->aux.lgreen, green, jgsize*sizeof(uint16_t));
+                    memcpy(mlut->aux.lblue, blue, jbsize*sizeof(uint16_t));
                 }
             }
         }
@@ -1463,6 +1504,8 @@ static const JNINativeMethod sRkDrmModeMethods[] = {
         (void*)nativeGetOverscan},
     {"nativeSetGamma", "(II[I[I[I)I",
         (void*)nativeSetGamma},
+    {"nativeGetGamma", "(I)[I",
+        (void*)nativeGetGamma},
 };
 
 #define FIND_CLASS(var, className) \

@@ -732,4 +732,17 @@ public class RkDisplayOutputManager {
         }
         return ret;
     }
+
+    public int[] getGamma(int display)
+    {
+        try {
+            return mService.getGamma(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get Gamma :" + e);
+            int[] gamma = new int[2];
+                       gamma[0]=gamma[1]=0;
+            return gamma;
+        }
+    }
+
 }

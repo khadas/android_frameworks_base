@@ -146,4 +146,8 @@ interface IRkDisplayDeviceManagementService
      *setGamma
     */
     int setGamma(int dpy,int size,in int[] red, in int[] green,in int[] blue);
+    /**
+     *getGamma
+    */
+    int[] getGamma(int dpy);
 }
