@@ -203,6 +203,7 @@
     <!-- This is a core platform component that needs to freely run in the background -->
     <allow-in-power-save package="com.android.cellbroadcastreceiver" />
     <allow-in-power-save package="com.android.shell" />
+    <allow-in-power-save package="com.android.gallery3d" />
 
     <!-- Whitelist system providers -->
     <allow-in-power-save-except-idle package="com.android.providers.calendar" />
@@ -215,6 +216,11 @@
     <system-user-whitelisted-app package="android.rockchip.update.service" />
     <system-user-whitelisted-app package="com.rockchips.mediacenter" />
     <system-user-whitelisted-app package="com.google.android.tv.frameworkpackagestubs" />
+
+    <!-- Some customer may use these aosp app, adapt to api 26 -->
+    <system-user-whitelisted-app package="com.android.gallery3d" />
+    <system-user-whitelisted-app package="com.android.music" />
+    <system-user-whitelisted-app package="android.rk.RockVideoPlayer" />
 
     <!-- These are the packages that shouldn't run as system user -->
     <system-user-blacklisted-app package="com.android.wallpaper.livepicker" />
