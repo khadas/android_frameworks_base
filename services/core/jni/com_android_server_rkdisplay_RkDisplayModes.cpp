@@ -406,8 +406,9 @@ static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
         env->SetFloatField(infoObj, gRkPhysicalDisplayInfoClassInfo.refreshRate, tmpMode.refreshRate);//1000 * 1000 * 1000 /
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.clock, tmpMode.clock);
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.flags, tmpMode.flags);
-        env->SetBooleanField(infoObj, gRkPhysicalDisplayInfoClassInfo.interlaceFlag, tmpMode.interlaceFlag);
-        env->SetBooleanField(infoObj, gRkPhysicalDisplayInfoClassInfo.yuvFlag, tmpMode.yuvFlag);
+        env->SetBooleanField(infoObj, gRkPhysicalDisplayInfoClassInfo.interlaceFlag,
+                             tmpMode.interlaceFlag>0?1:0);
+        env->SetBooleanField(infoObj, gRkPhysicalDisplayInfoClassInfo.yuvFlag, tmpMode.yuvFlag>0?1:0);
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.connectorId, tmpMode.connectorId);//mode_type
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.mode_type, tmpMode.mode_type);
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.idx, tmpMode.idx);
@@ -419,10 +420,12 @@ static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.vsync_end, tmpMode.vsync_end);
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.vtotal, tmpMode.vtotal);
         env->SetIntField(infoObj, gRkPhysicalDisplayInfoClassInfo.vscan, tmpMode.vscan);
-        ALOGV("display%d. mode[%d]  %dx%d info.fps %f clock %d   hsync_start %d hsync_enc %d htotal %d hskew %d", 
-                dpy,(int)c, tmpMode.width, tmpMode.height, tmpMode.refreshRate, tmpMode.clock, tmpMode.flags, tmpMode.hsync_start,
+        ALOGV("dpy%d %dx%d info.fps %f clock %d hsync_start %d hsync_enc %d htotal %d hskew %d",
+                dpy, tmpMode.width, tmpMode.height, tmpMode.refreshRate,
+                tmpMode.clock, tmpMode.flags, tmpMode.hsync_start,
                 tmpMode.htotal, tmpMode.hskew);
-        ALOGV("vsync_start %d vsync_end %d vtotal %d vscan %d flags 0x%x", tmpMode.vsync_start, tmpMode.vsync_end,
+        ALOGV("vsync_start %d vsync_end %d vtotal %d vscan %d flags 0x%x",
+                tmpMode.vsync_start, tmpMode.vsync_end,
                 tmpMode.vtotal, tmpMode.vscan, tmpMode.flags);
 
         env->SetObjectArrayElement(configArray, static_cast<jsize>(c), infoObj);
