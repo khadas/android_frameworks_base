@@ -1322,6 +1322,14 @@ public abstract class PackageManager {
      */
     public static final int INSTALL_FAILED_BAD_DEX_METADATA = -117;
 
+    /**
+     * Used for prebundles
+     * Installation failed for a prebundled app because the user previously uninstalled it
+     * and we don't want to bring it back
+     * @hide
+     */
+    public static final int INSTALL_FAILED_UNINSTALLED_PREBUNDLE = -403;
+
     /** @hide */
     @IntDef(flag = true, prefix = { "DELETE_" }, value = {
             DELETE_KEEP_DATA,
