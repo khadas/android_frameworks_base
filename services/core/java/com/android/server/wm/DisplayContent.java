@@ -1377,6 +1377,10 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         // Let the policy update hidden states.
         config.keyboardHidden = Configuration.KEYBOARDHIDDEN_NO;
         config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
+        boolean isTV = mService.mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_LEANBACK);
+        if(isTV)
+               config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
         config.navigationHidden = Configuration.NAVIGATIONHIDDEN_NO;
         mService.mPolicy.adjustConfigurationLw(config, keyboardPresence, navigationPresence);
     }
