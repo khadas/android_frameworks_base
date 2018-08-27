@@ -92,6 +92,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.UUID;
 import java.util.Vector;
+import android.media.iso.ISOManager;
 
 
 /**
@@ -1164,6 +1165,17 @@ public class MediaPlayer extends PlayerBase
         setDataSource(path, keys, values, cookies);
     }
 
+    /**
+     * @hide
+     */
+    private boolean isAtv() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("box") || product.equals("atv")) {
+            return true;
+        }
+        return false;
+    }
+
     private void setDataSource(String path, String[] keys, String[] values,
             List<HttpCookie> cookies)
             throws IOException, IllegalArgumentException, SecurityException, IllegalStateException {
@@ -1179,6 +1191,11 @@ public class MediaPlayer extends PlayerBase
                 keys,
                 values);
             return;
+        } else {
+            if(isAtv() && ISOManager.isBDDirectory(path)){
+                nativeSetDataSource(null,path,keys,values);
+                return;
+            }
         }
 
         final File file = new File(path);
