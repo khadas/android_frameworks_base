@@ -483,15 +483,16 @@ public class RkDisplayModes {
         RkDisplayModes.RkPhysicalDisplayInfo mCurDisplayInfos[];
         if (display == MAIN_DISPLAY) {
             mCurDisplayInfos = getDisplayConfigs(display);
-            mAutoMode = SystemProperties.get("persist.sys.resolution.main", "NULL");
+            mAutoMode = SystemProperties.get("persist.vendor.resolution.main", "NULL");
         } else {
             mCurDisplayInfos = getDisplayConfigs(display);
-            mAutoMode = SystemProperties.get("persist.sys.resolution.aux", "NULL");
+            mAutoMode = SystemProperties.get("persist.vendor.resolution.aux", "NULL");
         }
 
         if (mAutoMode.equals("Auto"))
             isAutoMode = true;
-        if (mCurDisplayInfos != null && mCurMode != null && (!isAutoMode && !mCurMode.contains("Auto"))) {
+        if (mCurDisplayInfos != null && mCurMode != null
+            && (!isAutoMode && !mCurMode.contains("Auto"))) {
             String[] mode_str = mCurMode.split("-");
             String[] resos = mode_str[0].split("x");
             String[] h_vfresh = resos[1].split("@");
@@ -666,7 +667,6 @@ public class RkDisplayModes {
             List<String> corlorList = getSupportCorlorList(dpy);
             for (int i = 0; i < corlorList.size(); i++) {
                 if (corlorList.get(i).equals(mCurColorMode)) {
-                    Log.d(TAG, "getCurColorMode 1===========  " + mCurColorMode);
                     return mCurColorMode;
                 }
             }
