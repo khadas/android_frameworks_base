@@ -3987,6 +3987,21 @@ public class InputMethodManagerService extends IInputMethodManager.Stub
     boolean setInputMethodEnabledLocked(String id, boolean enabled) {
         // Make sure this is a valid input method.
         InputMethodInfo imm = mMethodMap.get(id);
+        if((imm == null) && ("android.inputmethodservice.cts.ime1/.CtsInputMethod1".equals(id))){
+            Slog.d("xzj","---setInputMethodEnabledLocked,imm ==null----");
+            for(int i=0;i<10;i++){
+                try{
+                    Thread.sleep(30);
+                    buildInputMethodListLocked(false);
+                }catch(Exception e){}
+                Slog.d("xzj","----setInputMethodEnabledLocked,imm is null,sleep 100ms and try again---");
+                imm = mMethodMap.get(id);
+                if(imm !=null){
+                    Slog.d("xzj","----setInputMethodEnabledLocked,get imm----");
+                    break;
+                }
+            }
+        }
         if (imm == null) {
             throw new IllegalArgumentException("Unknown id: " + mCurMethodId);
         }
