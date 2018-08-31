@@ -154,6 +154,7 @@ import static com.android.server.wm.WindowManagerPolicyProto.WINDOW_MANAGER_DRAW
 
 import android.annotation.Nullable;
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningTaskInfo;
 import android.app.ActivityManagerInternal;
 import android.app.ActivityManagerInternal.SleepToken;
 import android.app.ActivityThread;
@@ -165,6 +166,7 @@ import android.app.StatusBarManager;
 import android.app.UiModeManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -195,6 +197,7 @@ import android.media.AudioManagerInternal;
 import android.media.AudioSystem;
 import android.media.IAudioService;
 import android.media.session.MediaSessionLegacyHelper;
+import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.FactoryTest;
@@ -6457,6 +6460,41 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             ComponentName comp = new ComponentName(package_name,activity_path);
                             intent.setComponent(comp);
+                            mContext.startActivity(intent);
+                        }
+                    }
+                }
+                break;
+            }
+            case KeyEvent.KEYCODE_STEM_1: {
+                boolean isWakeup = !mAwake;
+                result &= ~ACTION_PASS_TO_USER;
+                isWakeKey = false;
+                if (down) {
+                    wakeUp(event.getEventTime(), mAllowTheaterModeWakeFromPowerKey, "android.policy:KEY");
+                    if (mContext.getPackageManager().hasSystemFeature("droidlogic.software.netflix")) {
+                        boolean isNeflixRunning = false;
+                        try {
+                            List<RunningTaskInfo> tasks = ActivityManager.getService().getTasks(1);
+                            ComponentName componentInfo = tasks.get(0).topActivity;
+                            if (componentInfo.getPackageName().equals("com.netflix.ninja")) {
+                                isNeflixRunning = true;
+                            }
+                        } catch (Exception e) {}
+
+                        Log.i(TAG, "Netflix running: " + isNeflixRunning + ", isWakeup: " + isWakeup);
+                        if (isNeflixRunning) {
+                            Intent netflixIntent = new Intent();
+                            netflixIntent.setAction("com.netflix.ninja.intent.action.NETFLIX_KEY");
+                            netflixIntent.putExtra("power_on", isWakeup);
+                            netflixIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                            netflixIntent.addFlags(Intent.FLAG_RECEIVER_INCLUDE_BACKGROUND);
+                            mContext.sendBroadcast(netflixIntent,"com.netflix.ninja.permission.NETFLIX_KEY");
+                        } else {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("nflx://www.netflix.com/"));
+                            intent.putExtra("deeplink", "&source_type=" + (isWakeup ? 19 : 1)); // 19 - power on
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                             mContext.startActivity(intent);
                         }
                     }
