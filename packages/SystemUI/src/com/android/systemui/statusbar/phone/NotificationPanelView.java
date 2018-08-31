@@ -2480,17 +2480,23 @@ public class NotificationPanelView extends PanelView implements
             x = getWidth() / 2;
         }
         x = Math.min(rightMost, Math.max(leftMost, x));
-        setVerticalPanelTranslation(x -
-                (mNotificationStackScroller.getLeft() + mNotificationStackScroller.getWidth() / 2));
+        setVerticalPanelTranslation((int)(x -
+                (mNotificationStackScroller.getLeft() + mNotificationStackScroller.getWidth() / 2)));
      }
 
     private void resetVerticalPanelPosition() {
-        setVerticalPanelTranslation(0f);
+        setVerticalPanelTranslation(0);
     }
 
-    protected void setVerticalPanelTranslation(float translation) {
-        mNotificationStackScroller.setTranslationX(translation);
-        mQsFrame.setTranslationX(translation);
+    protected void setVerticalPanelTranslation(int translation) {
+//        mNotificationStackScroller.setTranslationX(translation);
+//        mQsFrame.setTranslationX(translation);
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mNotificationStackScroller.getLayoutParams();
+        lp.leftMargin = translation;
+        mNotificationStackScroller.setLayoutParams(lp);
+        lp = (FrameLayout.LayoutParams) mQsFrame.getLayoutParams();
+        lp.leftMargin = translation;
+        mQsFrame.setLayoutParams(lp);
         int size = mVerticalTranslationListener.size();
         for (int i = 0; i < size; i++) {
             mVerticalTranslationListener.get(i).run();
