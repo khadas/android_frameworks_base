@@ -1494,6 +1494,9 @@ public class UsbDeviceManager implements ActivityManagerInternal.ScreenObserver 
                 forceRestart = true;
             }
 
+            if (usbFunctions == 0){
+                forceRestart = true;
+            }
             /**
              * Try to set the enabled functions.
              */
