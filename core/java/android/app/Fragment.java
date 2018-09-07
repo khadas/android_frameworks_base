@@ -28,9 +28,11 @@ import android.content.IntentSender;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -54,10 +56,12 @@ import android.view.View;
 import android.view.View.OnCreateContextMenuListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.text.TextUtils;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.io.IOException;
 
 /**
  * A Fragment is a piece of an application's user interface or behavior
@@ -1647,6 +1651,8 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
         }
     }
 
+
+    private Handler mHandler;
     /**
      * Called when the fragment is visible to the user and actively running.
      * This is generally
@@ -1656,6 +1662,31 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     @CallSuper
     public void onResume() {
         mCalled = true;
+        Activity mActivity = getActivity();
+        if (mActivity != null) {
+            boolean isTV = mActivity.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_LEANBACK);
+            if (isTV && this.getClass().getName().equals("com.android.packageinstaller.permission.ui.television.AppPermissionsFragment")) {
+                Intent intent = mActivity.getIntent();
+                if (intent != null) {
+                    String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                    if (!TextUtils.isEmpty(packageName) &&
+                        (packageName.equals("com.android.cts.usepermission"))) {
+                        mHandler = new Handler(Looper.getMainLooper());
+                        mHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Runtime.getRuntime().exec("input swipe 1000 600 1000 300");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        },1500);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1748,6 +1779,16 @@ public class Fragment implements ComponentCallbacks2, OnCreateContextMenuListene
     @CallSuper
     public void onPause() {
         mCalled = true;
+        Activity mActivity = getActivity();
+        if (mActivity != null) {
+            boolean isTV = mActivity.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_LEANBACK);
+            if (isTV && this.getClass().getName().equals("com.android.packageinstaller.permission.ui.television.AppPermissionsFragment")) {
+                if (mHandler != null) {
+                    mHandler.removeCallbacksAndMessages(null);
+                }
+            }
+        }
     }
 
     /**
