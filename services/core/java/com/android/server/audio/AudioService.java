@@ -747,7 +747,9 @@ public class AudioService extends IAudioService.Stub
         if (maxMusicVolume != -1) {
             MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] = maxMusicVolume;
         }
-
+        if(isAtv()){
+            mFixedVolumeDevices = 0;
+        }
         int defaultMusicVolume = SystemProperties.getInt("ro.config.media_vol_default", -1);
         if (defaultMusicVolume != -1 &&
                 defaultMusicVolume <= MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC]) {
@@ -4685,6 +4687,8 @@ public class AudioService extends IAudioService.Stub
                 device = AudioSystem.DEVICE_OUT_SPDIF;
             } else if ((device & AudioSystem.DEVICE_OUT_AUX_LINE) != 0) {
                 device = AudioSystem.DEVICE_OUT_AUX_LINE;
+            } else if ((device & AudioSystem.DEVICE_OUT_AUX_DIGITAL) != 0) {
+                device = AudioSystem.DEVICE_OUT_AUX_DIGITAL;
             } else {
                 device &= AudioSystem.DEVICE_OUT_ALL_A2DP;
             }
@@ -5081,6 +5085,18 @@ public class AudioService extends IAudioService.Stub
         public boolean adjustIndex(int deltaIndex, int device, String caller) {
             return setIndex(getIndex(device) + deltaIndex, device, caller);
         }
+       
+        public void restoreAllDeviceIndex(){
+            if(mStreamType == AudioSystem.STREAM_MUSIC){
+                for (int i = 0; i < mIndexMap.size(); i++) {
+                    int device = mIndexMap.keyAt(i);
+                    System.putIntForUser(mContentResolver,
+                          getSettingNameForDevice(device),
+                         (getIndex(device) + 5)/ 10,
+                          UserHandle.USER_CURRENT);
+                }
+            }
+        }
 
         public boolean setIndex(int index, int device, String caller) {
             boolean changed;
@@ -5093,7 +5109,13 @@ public class AudioService extends IAudioService.Stub
                         index = mIndexMax;
                     }
                     mIndexMap.put(device, index);
-
+                    if(isAtv()){
+                       if(mStreamType == AudioSystem.STREAM_MUSIC){
+                          for (int i = 0;i<mIndexMap.size();i++){
+                             mIndexMap.put(mIndexMap.keyAt(i), index);
+                          }
+                       }
+                    }
                     changed = oldIndex != index;
                     // Apply change to all streams using this one as alias if:
                     // - the index actually changed OR
@@ -5418,6 +5440,8 @@ public class AudioService extends IAudioService.Stub
                         streamState.getSettingNameForDevice(device),
                         (streamState.getIndex(device) + 5)/ 10,
                         UserHandle.USER_CURRENT);
+               if(isAtv())
+                  streamState.restoreAllDeviceIndex();
             }
         }
 
@@ -6535,7 +6559,11 @@ public class AudioService extends IAudioService.Stub
                 }
                 // Television devices without CEC service apply software volume on HDMI output
                 if (isPlatformTelevision() && ((device & AudioSystem.DEVICE_OUT_HDMI) != 0)) {
-                    mFixedVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
+                    if(isAtv()){
+                        mFixedVolumeDevices = 0;
+                    } else {
+                        mFixedVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
+                    }
                     checkAllFixedVolumeDevices();
                     if (mHdmiManager != null) {
                         synchronized (mHdmiManager) {
