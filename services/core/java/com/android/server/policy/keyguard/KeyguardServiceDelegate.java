@@ -112,6 +112,7 @@ public class KeyguardServiceDelegate {
 		Log.d("xzj","----keygurad drawn done,exit bootanim----");
 	    	android.os.SystemProperties.set("service.bootanim.exit", "1");
         	SystemService.stop("bootanim");
+		android.os.SystemProperties.set("sys.bootvideo.closed", "1");
 	    }
             if (mDrawnListener != null) {
                 mDrawnListener.onDrawn();
