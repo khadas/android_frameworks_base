@@ -322,6 +322,14 @@ GraphicBuffer* Bitmap::graphicBuffer() {
 sk_sp<SkImage> Bitmap::makeImage(sk_sp<SkColorFilter>* outputColorFilter) {
     sk_sp<SkImage> image = mImage;
     if (!image) {
+        int w = info().width();
+        int h = info().height();
+        if ( w <= 0 || h <= 0 )
+        {
+            ALOGW("Bitmap::makeImage() : invalid width or height : w : %d, h : %d.", w, h);
+            return NULL;
+        }
+
         SkASSERT(!(isHardware() && uirenderer::Properties::isSkiaEnabled()));
         SkBitmap skiaBitmap;
         skiaBitmap.setInfo(info(), rowBytes());
@@ -332,6 +340,7 @@ sk_sp<SkImage> Bitmap::makeImage(sk_sp<SkColorFilter>* outputColorFilter) {
         // TODO: refactor Bitmap to not derive from SkPixelRef, which would allow caching here.
         image = SkMakeImageFromRasterBitmap(skiaBitmap, kNever_SkCopyPixelsMode);
     }
+
     if (uirenderer::Properties::isSkiaEnabled() && image->colorSpace() != nullptr &&
         !image->colorSpace()->isSRGB()) {
         *outputColorFilter = SkToSRGBColorFilter::Make(image->refColorSpace());
