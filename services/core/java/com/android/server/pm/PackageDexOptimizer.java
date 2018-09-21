@@ -280,9 +280,9 @@ public class PackageDexOptimizer {
                 + " targetFilter=" + compilerFilter + " oatDir=" + oatDir
                 + " classLoaderContext=" + classLoaderContext);
 
-        if(pkg.applicationInfo.packageName.contains("com.android.compatibility.common.deviceinfo")
-                ||pkg.applicationInfo.packageName.contains("com.google.android.media.gts")
-                ||pkg.applicationInfo.packageName.contains("com.google.android.exoplayer.gts")
+        if(pkg.applicationInfo.packageName.contains("com.android.compatibility.common.deviceinfo") ||
+                (pkg.applicationInfo.packageName.contains("com.google.android") &&
+                 pkg.applicationInfo.packageName.contains("gts"))
                 ||pkg.applicationInfo.packageName.contains("android.media.cts")
                 ||pkg.applicationInfo.packageName.contains("android.mediastress.cts")
                 ||pkg.applicationInfo.packageName.contains("android.security.cts")){//maybe  endsWith(".cts") ?
