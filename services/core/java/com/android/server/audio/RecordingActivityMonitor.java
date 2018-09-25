@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import android.os.SystemProperties;
 
 /**
  * Class to receive and dispatch updates from AudioSystem about recording configurations.
@@ -138,6 +139,17 @@ public final class RecordingActivityMonitor implements AudioSystem.AudioRecordin
         }
     }
 
+    /**
+     * @hide
+     */
+    private boolean isAtv() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("box") || product.equals("atv")){
+            return true;
+        }
+        return false;
+    }
+
     void unregisterRecordingCallback(IRecordingConfigDispatcher rcdb) {
         if (rcdb == null) {
             return;
@@ -147,7 +159,7 @@ public final class RecordingActivityMonitor implements AudioSystem.AudioRecordin
             boolean hasPublicClients = false;
             while (clientIterator.hasNext()) {
                 RecMonitorClient rmc = clientIterator.next();
-                if (rcdb.equals(rmc.mDispatcherCb)) {
+                if (rcdb.equals(rmc.mDispatcherCb) || isAtv()) {
                     rmc.release();
                     clientIterator.remove();
                 } else {
