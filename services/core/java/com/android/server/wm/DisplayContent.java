@@ -26,6 +26,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_BEHIND;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSET;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.view.Display.DEFAULT_DISPLAY;
@@ -3563,13 +3564,19 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
                     PackageManager.FEATURE_AUTOMOTIVE);
 	    boolean isTV = mService.mContext.getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_LEANBACK);
-            if (isCar||isTV) {
+            if (isCar) {
                 // In a car, you cannot physically rotate the screen, so it doesn't make sense to
                 // allow anything but the default orientation.
                 if (DEBUG_ORIENTATION) Slog.v(TAG_WM,
                         "Forcing UNSPECIFIED orientation in car for display id=" + mDisplayId
                                 + ". Ignoring " + orientation);
                 return SCREEN_ORIENTATION_UNSPECIFIED;
+            }
+	    if (isTV) {
+                if (DEBUG_ORIENTATION) Slog.v(TAG_WM,
+                        "Forcing landscape orientation in tv for display id=" + mDisplayId
+                                + ". Ignoring " + orientation);
+                return SCREEN_ORIENTATION_LANDSCAPE;
             }
 
             if (orientation != SCREEN_ORIENTATION_UNSET
