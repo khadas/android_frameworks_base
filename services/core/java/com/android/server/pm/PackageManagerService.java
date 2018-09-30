@@ -18351,6 +18351,12 @@ public class PackageManagerService extends IPackageManager.Stub
             }
         }
 
+        if("android.security.cts".equals(packageName) && "true".equals(SystemProperties.get("vendor.cts_gts.status", "false"))){
+            Log.d("xzj","---after test android.security.cts,enable com.google.android.apps.mediashell---");
+            setApplicationEnabledSetting("com.google.android.apps.mediashell",
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, 0,mContext.getUserId(), mContext.getOpPackageName());
+        }
+
         return res ? PackageManager.DELETE_SUCCEEDED : PackageManager.DELETE_FAILED_INTERNAL_ERROR;
     }
 

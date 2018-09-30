@@ -19,6 +19,7 @@ package com.android.server.pm;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
 import android.content.pm.dex.ArtManager;
 import android.content.pm.dex.DexMetadataHelper;
@@ -287,6 +288,13 @@ public class PackageDexOptimizer {
                 ||pkg.applicationInfo.packageName.contains("android.mediastress.cts")
                 ||pkg.applicationInfo.packageName.contains("android.security.cts")){//maybe  endsWith(".cts") ?
             SystemProperties.set("vendor.cts_gts.status","true");
+        }
+
+        if(pkg.applicationInfo.packageName.equals("android.security.cts")
+            && "true".equals(SystemProperties.get("vendor.cts_gts.status", "false"))){ //disable com.google.android.apps.mediashell
+            Log.d("xzj","----start android.security.cts,disable com.google.android.apps.mediashell---");
+            mInstaller.getContext().getPackageManager().setApplicationEnabledSetting("com.google.android.apps.mediashell",
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED, 0);
         }
 
         try {
