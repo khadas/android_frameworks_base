@@ -17,6 +17,6 @@
 <resources>
 
     <!-- The width of the view containing navigation buttons -->
-    <dimen name="navigation_key_width">70dp</dimen>
+    <dimen name="navigation_key_width">80dip</dimen>
 </resources>
 
