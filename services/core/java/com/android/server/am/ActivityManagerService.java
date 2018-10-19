@@ -4569,6 +4569,20 @@ public class ActivityManagerService extends IActivityManager.Stub
         buf.append(':');
         buf.append(app.processName);
         buf.append('/');
+
+        // for gts exoplayer & not odex app workaround
+        if (app.processName.contains("com.google.android.exoplayer.gts")) {
+            SystemProperties.set("vendor.cts_gts.exo.gts", "true");
+        } else if ("true".equals(SystemProperties.get("vendor.cts_gts.exo.gts"))) {
+            SystemProperties.set("vendor.cts_gts.exo.gts", "");
+        }
+
+        if (app.processName.contains("com.google.android.media.gts")) {
+            SystemProperties.set("vendor.cts_gts.media.gts", "true");
+        } else if ("true".equals(SystemProperties.get("vendor.cts_gts.media.gts"))) {
+            SystemProperties.set("vendor.cts_gts.media.gts", "");
+        }
+
         UserHandle.formatUid(buf, app.startUid);
         if (app.isolatedEntryPoint != null) {
             buf.append(" [");
