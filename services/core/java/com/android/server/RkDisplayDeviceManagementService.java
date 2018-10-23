@@ -373,6 +373,11 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         return mGamma;
     }
 
+    public int setFramebuffer(int dpy, int width, int height, int fps)
+    {
+        return mdrmModes.setFramebuffer(dpy, width, height, fps);
+    }
+
     public void updateDisplayInfos(){
         mdrmModes.updateDisplayInfos();
     }

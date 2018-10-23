@@ -34,6 +34,7 @@ public class RkDisplayModes {
     private static native int[] nativeGetOverscan(int dpy);
     private static native int[] nativeGetGamma(int dpy);
     private static native int nativeSetGamma(int dpy, int size, int[] r, int[] g, int[] b);
+    private static native int nativeSetFramebuffer(int dpy, int width, int height, int fps);
 
     private static RkDisplayModes.RkPhysicalDisplayInfo mDisplayInfos[];
     private static RkDisplayModes.RkPhysicalDisplayInfo mMainDisplayInfos[];
@@ -694,5 +695,10 @@ public class RkDisplayModes {
     public int[] getGamma(int dpy)
     {
         return nativeGetGamma(dpy);
+    }
+
+    public int setFramebuffer(int dpy, int width, int height, int fps)
+    {
+        return nativeSetFramebuffer(dpy, width, height, fps);
     }
 }

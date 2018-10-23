@@ -1400,6 +1400,56 @@ static jint nativeSetGamma(JNIEnv* env, jobject obj,
     return ret;
 }
 
+static jint nativeSetFramebuffer(JNIEnv* env, jobject obj, jint dpy, jint width, jint height, jint fps){
+    int file;
+    struct file_base_paramer base_paramer;
+    const char *baseparameterfile = GetBaseparameterFile();
+
+    if (!baseparameterfile) {
+        sync();
+        return -1;
+    }
+    file = open(baseparameterfile, O_RDWR);
+    if (file < 0) {
+        ALOGW("base paramter file can not be opened");
+        sync();
+        return -1;
+    }
+    // caculate file's size and read it
+    unsigned int length = lseek(file, 0L, SEEK_END);
+    if(length < sizeof(base_paramer)) {
+        ALOGE("BASEPARAME data's length is error\n");
+        sync();
+        close(file);
+        return -1;
+    }
+    lseek(file, 0L, SEEK_SET);
+    read(file, (void*)&(base_paramer.main), sizeof(base_paramer.main));
+    lseek(file, BASE_OFFSET, SEEK_SET);
+    read(file, (void*)&(base_paramer.aux), sizeof(base_paramer.aux));
+
+    if (dpy == HWC_DISPLAY_PRIMARY) {
+        base_paramer.main.hwc_info.framebuffer_width = width;
+        base_paramer.main.hwc_info.framebuffer_height = height;
+        base_paramer.main.hwc_info.fps = fps;
+    } else if (dpy == HWC_DISPLAY_EXTERNAL) {
+        base_paramer.aux.hwc_info.framebuffer_width = width;
+        base_paramer.aux.hwc_info.framebuffer_height = height;
+    base_paramer.aux.hwc_info.fps = fps;
+    } else {
+        sync();
+        close(file);
+        return -1;
+    }
+
+    lseek(file, 0L, SEEK_SET);
+    write(file, (char*)(&base_paramer.main), sizeof(base_paramer.main));
+    lseek(file, BASE_OFFSET, SEEK_SET);
+    write(file, (char*)(&base_paramer.aux), sizeof(base_paramer.aux));
+    sync();
+    close(file);
+    return 0;
+}
 
 static jobjectArray nativeGetDisplayConfigs(JNIEnv* env, jclass clazz,
         jint dpy) {
@@ -1506,6 +1556,8 @@ static const JNINativeMethod sRkDrmModeMethods[] = {
         (void*)nativeSetGamma},
     {"nativeGetGamma", "(I)[I",
         (void*)nativeGetGamma},
+    {"nativeSetFramebuffer", "(IIII)I",
+        (void*)nativeSetFramebuffer},
 };
 
 #define FIND_CLASS(var, className) \

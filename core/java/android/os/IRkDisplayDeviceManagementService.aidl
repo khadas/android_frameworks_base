@@ -150,4 +150,8 @@ interface IRkDisplayDeviceManagementService
      *getGamma
     */
     int[] getGamma(int dpy);
+    /**
+     *setFramebuffer
+    */
+    int setFramebuffer(int dpy , int width, int height, int fps);
 }

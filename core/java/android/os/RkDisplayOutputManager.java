@@ -745,4 +745,15 @@ public class RkDisplayOutputManager {
         }
     }
 
+    public int setFramebuffer(int display, int width, int height, int fps){
+        int ret;
+        try {
+            ret = mService.setFramebuffer(display, width, height, fps);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set setFramebuffer :" + e);
+            return -1;
+        }
+        return ret;
+    }
+
 }
