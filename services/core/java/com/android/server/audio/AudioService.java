@@ -5977,14 +5977,12 @@ public class AudioService extends IAudioService.Stub
                 // Send to AudioPolicyManager
                 sendEncodedSurroundMode(newMode, "SettingsObserver");
                 synchronized(mConnectedDevices) {
-                    // Is spdif connected? if no connect, connect it
-                    String key = makeDeviceListKey(AudioSystem.DEVICE_OUT_SPDIF, "");
-                    DeviceListSpec deviceSpec = mConnectedDevices.get(key);
-                    if (deviceSpec == null) {
-                        setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_SPDIF,
-                                AudioSystem.DEVICE_STATE_AVAILABLE, "", "RK_SET_BITSTREAM_DEVICE",
-                                "android"); // connect
-                    }
+                    setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_SPDIF,
+                            AudioSystem.DEVICE_STATE_UNAVAILABLE, "", "RK_SET_BITSTREAM_DEVICE",
+                            "android"); // disconnect
+                    setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_SPDIF,
+                            AudioSystem.DEVICE_STATE_AVAILABLE, "", "RK_SET_BITSTREAM_DEVICE",
+                            "android"); // connect
                 }
                 mSpdifBitstreamMode = newMode;
                 mSpdifModeChanged = true;
