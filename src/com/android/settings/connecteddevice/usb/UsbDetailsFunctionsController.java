@@ -102,7 +102,7 @@ public class UsbDetailsFunctionsController extends UsbDetailsController
             Log.d(TAG, "refresh() connected : " + connected + ", functions : " + functions
                     + ", powerRole : " + powerRole + ", dataRole : " + dataRole);
         }
-        if (!connected || dataRole != DATA_ROLE_DEVICE) {
+        if (!connected) {
             mProfilesContainer.setEnabled(false);
         } else {
             // Functions are only available in device mode
