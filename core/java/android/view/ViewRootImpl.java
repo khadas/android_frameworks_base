@@ -1355,7 +1355,9 @@ public final class ViewRootImpl implements ViewParent,
 
             if (mStopped) {
                 boolean isTV = mContext.getPackageManager().hasSystemFeature(
-                    PackageManager.FEATURE_LEANBACK);
+                    PackageManager.FEATURE_LEANBACK) 
+                            || mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEVISION);
                 if(!isTV)
                     mSurface.release();
             }
