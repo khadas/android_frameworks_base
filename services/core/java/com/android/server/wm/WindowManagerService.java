@@ -1249,13 +1249,14 @@ public class WindowManagerService extends IWindowManager.Stub
 	            mSecondDisplayTaskId = -1;
 				updateFocusedWindowLocked(UPDATE_FOCUS_WILL_PLACE_SURFACES, false);
                 SystemProperties.set("sys.dual_screen.sync","sync");
-                switchFocusWindow(mFocusedApp.mTask.mTaskId);
+                //switchFocusWindow(mFocusedApp.mTask.mTaskId);
 				mAppTransition.setReady();
                 mWindowPlacerLocked.performSurfacePlacement();
 		    } finally {
 			    SurfaceControl.closeTransaction();
 		    }
         }
+        switchFocusWindow(mFocusedApp.mTask.mTaskId);
         Settings.System.putInt(mContext.getContentResolver(), Settings.System.SCREEN_OFF_TIMEOUT,(int)currentTimeout);
         Binder.restoreCallingIdentity(origId);
     }
