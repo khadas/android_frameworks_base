@@ -78,7 +78,7 @@ public interface StatusBarIconController {
     public static ArraySet<String> getIconBlacklist(String blackListStr) {
         ArraySet<String> ret = new ArraySet<>();
         if (blackListStr == null) {
-            blackListStr = "rotate,headset";
+            blackListStr = "rotate";
         }
         String[] blacklist = blackListStr.split(",");
         for (String slot : blacklist) {
