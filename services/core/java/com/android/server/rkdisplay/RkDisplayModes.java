@@ -351,13 +351,14 @@ public class RkDisplayModes {
                 if ((color_capa & DRM_HDMI_OUTPUT_YCBCR420)>0)
                     colorList.add(STR_YCBCR420);
             } else {
-                if (builtIn == DRM_MODE_CONNECTOR_TV)
-                    colorList.add(STR_YCBCR420);
-                else
+                if (builtIn != DRM_MODE_CONNECTOR_TV)
                     colorList.add(STR_RGB);
             }
 
-            mCorlorFormatList.add("Auto");
+            if (builtIn != DRM_MODE_CONNECTOR_TV)
+                mCorlorFormatList.add("Auto");
+            else
+                mCorlorFormatList.add("YUV");
             for (String color : colorList) {
                 for (String depth : depthList){
                     if (color.equals(STR_YCBCR420) && depth.equals(STR_DEPTH_10BIT))
