@@ -63,7 +63,7 @@ public class RkDisplayModes {
     public final int DRM_MODE_CONNECTOR_DisplayPort = 10;
     public final int DRM_MODE_CONNECTOR_HDMIA = 11;
     public final int DRM_MODE_CONNECTOR_HDMIB = 12;
-    public final int DRM_MODE_CONNECTOR_TV = 13;
+    static final int DRM_MODE_CONNECTOR_TV = 13;
     public final int DRM_MODE_CONNECTOR_eDP = 14;
     public final int DRM_MODE_CONNECTOR_VIRTUAL = 15;
     public final int DRM_MODE_CONNECTOR_DSI = 16;
@@ -325,7 +325,7 @@ public class RkDisplayModes {
             copyFrom(other);
         }
 
-        public List<String> getCorlorModeList(){
+        public List<String> getCorlorModeList(int builtIn){
             boolean is420Support=false;
             List<String> mCorlorFormatList = new ArrayList<>();
             List<String> depthList = new ArrayList<>();
@@ -351,7 +351,10 @@ public class RkDisplayModes {
                 if ((color_capa & DRM_HDMI_OUTPUT_YCBCR420)>0)
                     colorList.add(STR_YCBCR420);
             } else {
-                colorList.add(STR_RGB);
+                if (builtIn == DRM_MODE_CONNECTOR_TV)
+                    colorList.add(STR_YCBCR420);
+                else
+                    colorList.add(STR_RGB);
             }
 
             mCorlorFormatList.add("Auto");
@@ -638,15 +641,17 @@ public class RkDisplayModes {
 
     public  List<String> getSupportCorlorList(int dpy){
         List<String> colorList = new ArrayList<>();
+        int builtIn = nativeGetBuiltIn(dpy);
+
         Log.e(TAG, "getSupportCorlorList =========== dpy " + dpy);
         if (dpy == 0) {
             mMainColorInfos = nativeGetCorlorModeConfigs(dpy);
             if (mMainColorInfos != null)
-                return mMainColorInfos.getCorlorModeList();
+                return mMainColorInfos.getCorlorModeList(builtIn);
         } else {
             mAuxColorInfos = nativeGetCorlorModeConfigs(dpy);
             if (mAuxColorInfos != null)
-                return mAuxColorInfos.getCorlorModeList();
+                return mAuxColorInfos.getCorlorModeList(builtIn);
         }
 
         return null;
