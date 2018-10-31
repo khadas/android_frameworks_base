@@ -16400,6 +16400,21 @@ public class PackageManagerService extends IPackageManager.Stub
         // Remember this for later, in case we need to rollback this install
         String pkgName = pkg.packageName;
 
+        if (DEBUG_INSTALL) Slog.d(TAG, "installNewPackageLI pkg.packageName : " + pkgName);
+        // for gts exoplayer & not odex app workaround
+        if (pkgName.contains("com.google.android.exoplayer.gts")) {
+            SystemProperties.set("vendor.cts_gts.exo.gts", "true");
+        } else if ("true".equals(SystemProperties.get("vendor.cts_gts.exo.gts"))) {
+            SystemProperties.set("vendor.cts_gts.exo.gts", "");
+        }
+
+        if (pkgName.contains("com.google.android.media.gts")) {
+            SystemProperties.set("vendor.cts_gts.media.gts", "true");
+        } else if ("true".equals(SystemProperties.get("vendor.cts_gts.media.gts"))) {
+            SystemProperties.set("vendor.cts_gts.media.gts", "");
+        }
+
+
         if (DEBUG_INSTALL) Slog.d(TAG, "installNewPackageLI: " + pkg);
 
         synchronized(mPackages) {
