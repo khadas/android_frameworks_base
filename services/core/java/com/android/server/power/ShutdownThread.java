@@ -57,6 +57,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import android.view.IWindowManager;
+import android.os.Message;
  
 
 public final class ShutdownThread extends Thread {
@@ -417,6 +418,18 @@ public final class ShutdownThread extends Thread {
         }
     }
 
+    private Handler handler11 = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what){
+                case 100:
+                    rebootOrShutdown(mContext, mReboot, mReason);
+                    Log.d(TAG, ".............in handler..............");
+                break;
+            }
+        }
+    };
+
     /**
      * Makes sure we handle the shutdown gracefully.
      * Shuts off power regardless of radio state if the allotted time has passed.
@@ -505,6 +518,24 @@ public final class ShutdownThread extends Thread {
         }
 
         Log.i(TAG, "Shutting down activity manager...");
+
+        Log.d(TAG,"------------start------------");
+        new Thread(){
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(5000);
+                    Message message = new Message();
+                    message.what = 100;
+                    handler11.sendMessage(message);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+        Log.d(TAG,"------------end------------");
+
         shutdownTimingLog.traceBegin("ShutdownActivityManager");
         metricStarted(METRIC_AM);
 
@@ -564,6 +595,8 @@ public final class ShutdownThread extends Thread {
             wait_shutdownanim_end();
         }
 
+        Log.d(TAG, ".............remove handler..............");
+        handler11.removeMessages(100);
         rebootOrShutdown(mContext, mReboot, mReason);
     }
 
