@@ -1392,7 +1392,7 @@ public class WindowManagerService extends IWindowManager.Stub
                     curMoveTaskId = allTaskIds.get(1); 
                 }
 				if(DEBUG) Log.i(TAG_DUALSCREEN, "WindowManagerService->curMoveTaskId:" + curMoveTaskId );
-				switchFocusWindow(curMoveTaskId);
+				//switchFocusWindow(curMoveTaskId);
                 updateFocusedWindowLocked(UPDATE_FOCUS_WILL_PLACE_SURFACES, false);
 				mAppTransition.setReady();
                 mWindowPlacerLocked.performSurfacePlacement();
@@ -1400,6 +1400,7 @@ public class WindowManagerService extends IWindowManager.Stub
 				SurfaceControl.closeTransaction();
 			}
 		}
+        switchFocusWindow(curMoveTaskId); 
         currentTimeout = Settings.System.getLong(mContext.getContentResolver(),Settings.System.SCREEN_OFF_TIMEOUT,3000);
         Settings.System.putInt(mContext.getContentResolver(), Settings.System.SCREEN_OFF_TIMEOUT,2147483647);
 		Binder.restoreCallingIdentity(origId);
@@ -8896,9 +8897,9 @@ public class WindowManagerService extends IWindowManager.Stub
             }
             switch (msg.what) {
                 case DO_TASK_DISPLAY_CHANGED: {
-					synchronized (mWindowMap) {
+					//synchronized (mWindowMap) {
                         moveTransitionToSecondDisplay();
-					}
+					//}
                     break;
                 }
                 case REPORT_FOCUS_CHANGE: {
