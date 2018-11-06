@@ -620,7 +620,14 @@ public class Camera {
     public final void release() {
         native_release();
         mFaceDetectionRunning = false;
-        releaseAppOps();
+    }
+
+   /**
+    *@hide
+    */
+    public final boolean isReleased() {
+        if (mNativeContext == 0) return true;
+        return false;
     }
 
     /**
