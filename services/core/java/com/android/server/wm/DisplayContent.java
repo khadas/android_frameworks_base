@@ -1379,7 +1379,9 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         config.keyboardHidden = Configuration.KEYBOARDHIDDEN_NO;
         config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
         boolean isTV = mService.mContext.getPackageManager().hasSystemFeature(
-                    PackageManager.FEATURE_LEANBACK);
+                       PackageManager.FEATURE_LEANBACK) ||
+                       mService.mContext.getPackageManager().hasSystemFeature(
+                       PackageManager.FEATURE_TELEVISION);
         if(isTV)
                config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
         config.navigationHidden = Configuration.NAVIGATIONHIDDEN_NO;
