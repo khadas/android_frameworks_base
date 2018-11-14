@@ -57,6 +57,7 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -147,6 +148,14 @@ public final class HdmiControlService extends SystemService {
                 case Intent.ACTION_SCREEN_OFF:
                     if (isPowerOnOrTransient()) {
                         onStandby(STANDBY_SCREEN_OFF);
+                        if (readBooleanSetting(Global.HDMI_CONTROL_ENABLED, true)) {
+                            if (mWakeLock != null) {
+                                mWakeLock.release();
+                                mWakeLock = null;
+                            }
+                            mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+                            mWakeLock.acquire();
+                        }
                     }
                     break;
                 case Intent.ACTION_SCREEN_ON:
@@ -265,6 +274,8 @@ public final class HdmiControlService extends SystemService {
 
     @ServiceThreadOnly
     private boolean mWakeUpMessageReceived = false;
+
+    private WakeLock mWakeLock;
 
     @ServiceThreadOnly
     private int mActivePortId = Constants.INVALID_PORT_ID;
@@ -2154,6 +2165,10 @@ public final class HdmiControlService extends SystemService {
         Slog.v(TAG, "onStandbyCompleted");
 
         if (mPowerStatus != HdmiControlManager.POWER_STATUS_TRANSIENT_TO_STANDBY) {
+            if (mWakeLock != null) {
+                mWakeLock.release();
+                mWakeLock = null;
+            }
             return;
         }
         mPowerStatus = HdmiControlManager.POWER_STATUS_STANDBY;
@@ -2161,8 +2176,20 @@ public final class HdmiControlService extends SystemService {
             device.onStandby(mStandbyMessageReceived, standbyAction);
         }
         mStandbyMessageReceived = false;
-        mCecController.setOption(OptionKey.SYSTEM_CEC_CONTROL, false);
-        mMhlController.setOption(OPTION_MHL_SERVICE_CONTROL, DISABLED);
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (mWakeLock != null) {
+                    mWakeLock.release();
+                    mWakeLock = null;
+                }
+                if (isTvDeviceEnabled()) {
+                    tv().changeSystemAudioStatus(false);
+                }
+                mCecController.setOption(OptionKey.SYSTEM_CEC_CONTROL, false);
+                mMhlController.setOption(OPTION_MHL_SERVICE_CONTROL, DISABLED);
+            }
+        }, 120);
     }
 
     private void addVendorCommandListener(IHdmiVendorCommandListener listener, int deviceType) {
