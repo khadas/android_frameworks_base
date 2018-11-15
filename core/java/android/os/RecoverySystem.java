@@ -68,6 +68,7 @@ import java.util.zip.ZipInputStream;
 
 import sun.security.pkcs.PKCS7;
 import sun.security.pkcs.SignerInfo;
+import android.os.SystemProperties;
 
 /**
  * RecoverySystem contains methods for interacting with the Android
@@ -389,7 +390,7 @@ public class RecoverySystem {
             throws IOException {
         try (ZipFile zip = new ZipFile(packageFile)) {
             ZipEntry entry = zip.getEntry("compatibility.zip");
-            if (entry == null) {
+            if (entry == null || "box".equals(SystemProperties.get("ro.target.product","unknown"))) {
                 return true;
             }
             InputStream inputStream = zip.getInputStream(entry);
