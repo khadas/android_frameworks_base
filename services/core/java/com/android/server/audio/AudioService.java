@@ -836,6 +836,8 @@ public class AudioService extends IAudioService.Stub
         // mSafeUsbMediaVolumeIndex must be initialized after createStreamStates() because it
         // relies on audio policy having correct ranges for volume indexes.
         mSafeUsbMediaVolumeIndex = getSafeUsbMediaVolumeIndex();
+        if("box".equals(SystemProperties.get("ro.target.product","unkown")))
+           mSafeUsbMediaVolumeIndex = mSafeMediaVolumeIndex;
 
         mPlaybackMonitor =
                 new PlaybackActivityMonitor(context, MAX_STREAM_VOLUME[AudioSystem.STREAM_ALARM]);
@@ -7220,7 +7222,11 @@ public class AudioService extends IAudioService.Stub
         VolumeStreamState streamState = mStreamStates[AudioSystem.STREAM_MUSIC];
         int devices = mSafeMediaVolumeDevices;
         int i = 0;
-
+        if(isAtv() &&
+           ("false".equals(SystemProperties.get("persist.sys.audio.enforce_safevolume","true")))){
+             Log.d(TAG,"no need enforce safe media volume now!");
+               return ;
+        }
         while (devices != 0) {
             int device = 1 << i++;
             if ((device & devices) == 0) {
