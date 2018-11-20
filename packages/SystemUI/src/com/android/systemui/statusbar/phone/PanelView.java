@@ -20,10 +20,12 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
+import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.VibrationEffect;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -268,7 +270,8 @@ public abstract class PanelView extends FrameLayout {
         }
 
         // On expanding, single mouse click expands the panel instead of dragging.
-        if (isFullyCollapsed() && event.isFromSource(InputDevice.SOURCE_MOUSE)) {
+        if (isFullyCollapsed() && event.isFromSource(InputDevice.SOURCE_MOUSE)
+            && !isQuicklyUnlockMachine()) {
             if (event.getAction() == MotionEvent.ACTION_UP) {
                 expand(true);
             }
@@ -482,7 +485,14 @@ public abstract class PanelView extends FrameLayout {
                                 MetricsEvent.ACTION_LS_UNLOCK,
                                 heightDp, velocityDp);
                     }
-            fling(vel, expand, isFalseTouch(x, y));
+            if (isQuicklyUnlockMachine()) {
+                if (mExpandedFraction > 0f) {
+                    fling(vel, expand, isFalseTouch(x, y));
+                }
+            } else {
+                fling(vel, expand, isFalseTouch(x, y));
+            }
+
             onTrackingStopped(expand);
             mUpdateFlingOnLayout = expand && mPanelClosedOnDown && !mHasLayoutedSinceDown;
             if (mUpdateFlingOnLayout) {
@@ -896,10 +906,32 @@ public abstract class PanelView extends FrameLayout {
                 mHeightAnimator.end();
             }
         }
+
+        if (isQuicklyUnlockMachine()) {
+            KeyguardManager mKeyguardManager = (KeyguardManager) getContext().getSystemService(Context.KEYGUARD_SERVICE);
+            boolean flag = mKeyguardManager.inKeyguardRestrictedInputMode();
+            if(flag){
+                if(mExpandedHeight <= fhWithoutOverExpansion/1.5){
+                    mExpandedHeight = 0;
+                }
+            }
+        }
+
         mExpandedFraction = Math.min(1f,
                 fhWithoutOverExpansion == 0 ? 0 : mExpandedHeight / fhWithoutOverExpansion);
         onHeightUpdated(mExpandedHeight);
         notifyBarPanelExpansionChanged();
+    }
+
+    private boolean isQuicklyUnlockMachine() {
+        String platformName = SystemProperties.get("ro.board.platform");
+        if ("rk312x".equals(platformName)
+            || "rk3126c".equals(platformName)
+            || "rk3326".equals(platformName)
+            || "rk3399".equals(platformName)) {
+            return true;
+        }
+        return false;
     }
 
     /**
