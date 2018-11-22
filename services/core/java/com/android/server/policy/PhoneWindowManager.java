@@ -164,6 +164,7 @@ import android.service.dreams.IDreamManager;
 import android.service.vr.IPersistentVrStateCallbacks;
 import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.MutableBoolean;
 import android.util.PrintWriterPrinter;
@@ -946,7 +947,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 case SHORT_PRESS_POWER_NOTHING:
                     break;
                 case SHORT_PRESS_POWER_GO_TO_SLEEP:
-                    sleepDefaultDisplayFromPowerButton(eventTime, 0);
+                    String product = SystemProperties.get("ro.target.product","");
+                    if (!TextUtils.isEmpty(product) && (product.equals("box") || product.equals("atv"))) {
+                        int powerKey = SystemProperties.getInt("persist.sys.power_key",0);
+                        Slog.i("ROCKCHIP", "powerKey = " + powerKey);
+                        if (powerKey == 1) {
+                            shutDown();
+                        } else if (powerKey == 2) {
+                            reboot();
+                        } else {
+                            sleepDefaultDisplayFromPowerButton(eventTime, 0);
+                        }
+                    } else {
+                        sleepDefaultDisplayFromPowerButton(eventTime, 0);
+                    }
                     break;
                 case SHORT_PRESS_POWER_REALLY_GO_TO_SLEEP:
                     sleepDefaultDisplayFromPowerButton(eventTime,
@@ -1013,6 +1027,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private void sleepDefaultDisplay(long eventTime, int reason, int flags) {
         mRequestedOrSleepingDefaultDisplay = true;
         mPowerManager.goToSleep(eventTime, reason, flags);
+    }
+
+    //add by wengtao for Power Key Definition
+    private void reboot() {
+        Intent reboot = new Intent(Intent.ACTION_REBOOT);
+        reboot.putExtra("nowait",1);
+        reboot.putExtra("interval",1);
+        reboot.putExtra("window",0);
+        mContext.sendBroadcast(reboot);
+    }
+
+    //add by wengtao for Power Key Definition
+    private void shutDown() {
+        Intent shutDown = new Intent(Intent.ACTION_REQUEST_SHUTDOWN);
+        shutDown.putExtra(Intent.EXTRA_KEY_CONFIRM, false);
+        shutDown.putExtra(Intent.EXTRA_REASON, PowerManager.SHUTDOWN_REASON_SHUTDOWN);
+        shutDown.putExtra(Intent.EXTRA_USER_REQUESTED_SHUTDOWN, false);
+        shutDown.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivityAsUser(shutDown, UserHandle.CURRENT);
     }
 
     private void shortPressPowerGoHome() {
