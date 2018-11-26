@@ -823,7 +823,7 @@ public class UsbDeviceManager implements ActivityManagerInternal.ScreenObserver 
                                     && mScreenUnlockedFunctions != UsbManager.FUNCTION_NONE) {
                                 setScreenUnlockedFunctions();
                             } else {
-                                setEnabledFunctions(UsbManager.FUNCTION_NONE, false);
+                                setEnabledFunctions(UsbManager.FUNCTION_NONE, true);
                             }
                         }
                         updateUsbFunctions();
