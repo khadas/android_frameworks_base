@@ -145,6 +145,12 @@ public class CastTile extends QSTileImpl<BooleanState> {
     }
 
     @Override
+    public boolean isAvailable() {
+        String strProduct = android.os.SystemProperties.get("ro.target.product");
+        return !"tablet".equals(strProduct);
+    }
+
+    @Override
     protected void handleUpdateState(BooleanState state, Object arg) {
         state.label = mContext.getString(R.string.quick_settings_cast_title);
         state.contentDescription = state.label;
