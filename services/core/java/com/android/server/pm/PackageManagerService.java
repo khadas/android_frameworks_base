@@ -514,6 +514,7 @@ public class PackageManagerService extends IPackageManager.Stub {
     private static final String GOVERNOR_PATH="/sys/devices/system/cpu/cpu4/cpufreq/scaling_governor";
     private static final String PERFORMANCE_MODE="performance";
     private String cur_performance_mode="interactive";
+    private static boolean governor_change =false;
     static {
         sBrowserIntent = new Intent();
         sBrowserIntent.setAction(Intent.ACTION_VIEW);
@@ -1253,9 +1254,6 @@ public class PackageManagerService extends IPackageManager.Stub {
                 }
                 case MCS_BOUND: {
                     if (DEBUG_INSTALL) Slog.i(TAG, "mcs_bound");
-                    cur_performance_mode=getCurrentPerformance();
-                    if(rk3399_platform && !cur_performance_mode.equals(PERFORMANCE_MODE))
-                        setCurrentPerformance(PERFORMANCE_MODE);
                     if (msg.obj != null) {
                         mContainerService = (IMediaContainerService) msg.obj;
                         Trace.asyncTraceEnd(TRACE_TAG_PACKAGE_MANAGER, "bindingMCS",
@@ -1358,8 +1356,11 @@ public class PackageManagerService extends IPackageManager.Stub {
                         // of next pending install.
                         mHandler.sendEmptyMessage(MCS_BOUND);
                     }
-                    if(rk3399_platform && !cur_performance_mode.equals(getCurrentPerformance()))
+                    if(rk3399_platform && governor_change && !cur_performance_mode.equals(getCurrentPerformance()))
+                    {
                         setCurrentPerformance(cur_performance_mode);
+                        governor_change=false;
+                    }
                     break;
                 }
                 case MCS_GIVE_UP: {
@@ -15074,6 +15075,12 @@ public class PackageManagerService extends IPackageManager.Stub {
     }
 
     private void installPackageTracedLI(InstallArgs args, PackageInstalledInfo res) {
+        cur_performance_mode=getCurrentPerformance();
+        if(rk3399_platform && !cur_performance_mode.equals(PERFORMANCE_MODE))
+        {
+            setCurrentPerformance(PERFORMANCE_MODE);
+            governor_change=true;
+        }
         try {
             Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "installPackage");
             installPackageLI(args, res);
@@ -21415,7 +21422,7 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
             str=buffer.readLine();
             buffer.close();
             fread.close();
-            //Slog.d(TAG,"getCurrentPerformance:"+str);
+            Slog.d(TAG,"getCurrentPerformance:"+str);
         } catch (IOException e) {
             e.printStackTrace();
         }
