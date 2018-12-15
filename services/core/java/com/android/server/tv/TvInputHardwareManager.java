@@ -32,6 +32,11 @@ import android.hardware.hdmi.IHdmiControlService;
 import android.hardware.hdmi.IHdmiDeviceEventListener;
 import android.hardware.hdmi.IHdmiHotplugEventListener;
 import android.hardware.hdmi.IHdmiSystemAudioModeChangeListener;
+import android.hardware.usb.UsbConfiguration;
+import android.hardware.usb.UsbConstants;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbInterface;
+import android.hardware.usb.UsbManager;
 import android.media.AudioDevicePort;
 import android.media.AudioFormat;
 import android.media.AudioGain;
@@ -148,6 +153,50 @@ class TvInputHardwareManager implements TvInputHal.Callback {
             filter.addAction(AudioManager.STREAM_MUTE_CHANGED_ACTION);
             mContext.registerReceiver(mVolumeReceiver, filter);
             updateVolume();
+
+            BroadcastReceiver hostReceiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    boolean hasUsbAudioDevice = false;
+                    UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    if (device == null) {
+                        return;
+                    }
+                    int count = device.getConfigurationCount();
+                    for (int i = 0; i < count; i++) {
+                        UsbConfiguration configuration = device.getConfiguration(i);
+                        if (configuration == null) {
+                            return;
+                        }
+                        int interfaceCount = configuration.getInterfaceCount();
+                        for (int j = 0; j < interfaceCount; j++) {
+                            UsbInterface usbInterface = configuration.getInterface(j);
+                            if (usbInterface != null &&
+                                    usbInterface.getInterfaceClass() == UsbConstants.USB_CLASS_AUDIO) {
+                                hasUsbAudioDevice = true;
+                            }
+                        }
+                    }
+                    if (hasUsbAudioDevice) {
+                        mHandler.postDelayed(new Runnable() {
+                            public void run() {
+                                synchronized (mLock) {
+                                    for (int i = 0; i < mConnections.size(); ++i) {
+                                        TvInputHardwareImpl impl = mConnections.valueAt(i).getHardwareImplLocked();
+                                        if (impl != null) {
+                                            impl.handleAudioSinkUpdated();
+                                        }
+                                    }
+                                }
+                            }
+                        }, UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(intent.getAction()) ? 0 : 1200);
+                    }
+                }
+            };
+            final IntentFilter usbFilter =
+                    new IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED);
+            usbFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+            mContext.registerReceiver(hostReceiver, usbFilter);
         }
     }
 
@@ -790,15 +839,20 @@ class TvInputHardwareManager implements TvInputHal.Callback {
 
         private void findAudioSinkFromAudioPolicy(List<AudioDevicePort> sinks) {
             sinks.clear();
-            ArrayList<AudioDevicePort> devicePorts = new ArrayList<>();
-            if (mAudioManager.listAudioDevicePorts(devicePorts) != AudioManager.SUCCESS) {
+            ArrayList<AudioPort> audioPorts = new ArrayList<>();
+            int[] portGeneration = new int[1];
+            if (AudioSystem.listAudioPorts(audioPorts, portGeneration) != AudioManager.SUCCESS) {
                 return;
             }
             int sinkDevice = mAudioManager.getDevicesForStream(AudioManager.STREAM_MUSIC);
-            for (AudioDevicePort port : devicePorts) {
-                if ((port.type() & sinkDevice) != 0 &&
-                    (port.type() & AudioSystem.DEVICE_BIT_IN) == 0) {
-                    sinks.add(port);
+            AudioDevicePort port;
+            for (AudioPort audioPort : audioPorts) {
+                if (audioPort instanceof AudioDevicePort) {
+                    port = (AudioDevicePort)audioPort;
+                    if ((port.type() & sinkDevice) != 0 &&
+                            (port.type() & AudioSystem.DEVICE_BIT_IN) == 0) {
+                        sinks.add(port);
+                    }
                 }
             }
         }
@@ -807,13 +861,18 @@ class TvInputHardwareManager implements TvInputHal.Callback {
             if (type == AudioManager.DEVICE_NONE) {
                 return null;
             }
-            ArrayList<AudioDevicePort> devicePorts = new ArrayList<>();
-            if (mAudioManager.listAudioDevicePorts(devicePorts) != AudioManager.SUCCESS) {
+            ArrayList<AudioPort> audioPorts = new ArrayList<>();
+            int[] portGeneration = new int[1];
+            if (AudioSystem.listAudioPorts(audioPorts, portGeneration) != AudioManager.SUCCESS) {
                 return null;
             }
-            for (AudioDevicePort port : devicePorts) {
-                if (port.type() == type && port.address().equals(address)) {
-                    return port;
+            AudioDevicePort port;
+            for (AudioPort audioPort : audioPorts) {
+                if (audioPort instanceof AudioDevicePort) {
+                    port = (AudioDevicePort)audioPort;
+                    if (port.type() == type && port.address().equals(address)) {
+                        return port;
+                    }
                 }
             }
             return null;
@@ -1293,14 +1352,18 @@ class TvInputHardwareManager implements TvInputHal.Callback {
         IHdmiSystemAudioModeChangeListener.Stub {
         @Override
         public void onStatusChanged(boolean enabled) throws RemoteException {
-            synchronized (mLock) {
-                for (int i = 0; i < mConnections.size(); ++i) {
-                    TvInputHardwareImpl impl = mConnections.valueAt(i).getHardwareImplLocked();
-                    if (impl != null) {
-                        impl.handleAudioSinkUpdated();
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    synchronized (mLock) {
+                        for (int i = 0; i < mConnections.size(); ++i) {
+                            TvInputHardwareImpl impl = mConnections.valueAt(i).getHardwareImplLocked();
+                            if (impl != null) {
+                                impl.handleAudioSinkUpdated();
+                            }
+                        }
                     }
                 }
-            }
+            }, enabled ? 0 : 500);
         }
     }
 }
