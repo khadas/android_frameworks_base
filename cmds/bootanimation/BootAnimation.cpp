@@ -340,6 +340,25 @@ status_t BootAnimation::readyToRun() {
     bool encryptedAnimation = atoi(decrypt) != 0 ||
         !strcmp("trigger_restart_min_framework", decrypt);
 
+            ALOGD("mVideoAnimation 11111= true");
+    //add for boot video
+       mVideoAnimation = false;
+       if (access(SYSTEM_BOOTVIDEO_FILE, R_OK) == 0){
+          mVideoFile = (char*)SYSTEM_BOOTVIDEO_FILE;
+       } else if (access(DATA_BOOTVIDEO_FILE, R_OK) == 0){
+          mVideoFile = (char*)DATA_BOOTVIDEO_FILE;
+       }
+       property_get("persist.sys.bootvideo.enable",decrypt, "false");
+       char value[PROPERTY_VALUE_MAX];
+       property_get("persist.sys.bootvideo.showtime", value, "-1");
+       if(mVideoFile != NULL && !strcmp(decrypt, "true") &&(atoi(value)!=0)) {
+            mVideoAnimation = true; 
+            ALOGD("mVideoAnimation = true");
+       }else{
+            ALOGD("bootvideo:No boot video animation,EXIT_VIDEO_NAME:%s,bootvideo.showtime:%s\n",decrypt,value);
+       }
+       //add end
+
     if (!mShuttingDown && encryptedAnimation) {
         static const char* encryptedBootFiles[] =
             {PRODUCT_ENCRYPTED_BOOTANIMATION_FILE, SYSTEM_ENCRYPTED_BOOTANIMATION_FILE};
@@ -361,22 +380,6 @@ status_t BootAnimation::readyToRun() {
             return NO_ERROR;
          }
      }
-       //add for boot video
-       mVideoAnimation = false;
-       if (access(SYSTEM_BOOTVIDEO_FILE, R_OK) == 0){
-          mVideoFile = (char*)SYSTEM_BOOTVIDEO_FILE;
-       } else if (access(DATA_BOOTVIDEO_FILE, R_OK) == 0){
-          mVideoFile = (char*)DATA_BOOTVIDEO_FILE;
-       }
-       property_get("persist.sys.bootvideo.enable",decrypt, "false");
-       char value[PROPERTY_VALUE_MAX];
-       property_get("persist.sys.bootvideo.showtime", value, "-1");
-       if(mVideoFile != NULL && !strcmp(decrypt, "true") &&(atoi(value)!=0)) {
-            mVideoAnimation = true;
-       }else{
-            ALOGD("bootvideo:No boot video animation,EXIT_VIDEO_NAME:%s,bootvideo.showtime:%s\n",decrypt,value);
-       }
-       //add end
     return NO_ERROR;
 }
 
