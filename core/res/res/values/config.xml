@@ -3518,8 +3518,4 @@
 
     <!-- Brand value for attestation of misprovisioned device. -->
     <string name="config_misprovisionedBrandValue" translatable="false"></string>
-  
-    <!-- Component name for default assistant on this device -->
-    <string name="config_defaultAssistantComponentName"></string>
-
-  </resources>
+</resources>
