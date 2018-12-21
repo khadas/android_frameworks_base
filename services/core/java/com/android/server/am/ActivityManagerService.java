@@ -5955,7 +5955,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             mWindowManager.continueSurfaceLayout();
         }
 
-        // TODO (b/67683350)
+        // Hack for pi
         // When an app process is removed, activities from the process may be relaunched. In the
         // case of forceStopPackageLocked the activities are finished before any window is drawn,
         // and the launch time is not cleared. This will be incorrectly used to calculate launch
