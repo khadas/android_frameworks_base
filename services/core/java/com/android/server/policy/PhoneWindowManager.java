@@ -39,6 +39,7 @@ import static android.view.WindowManagerPolicy.WindowManagerFuncs.LID_CLOSED;
 import static android.view.WindowManagerPolicy.WindowManagerFuncs.LID_OPEN;
 
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningTaskInfo;
 import android.app.ActivityManager.StackId;
 import android.app.ActivityManagerInternal;
 import android.app.ActivityManagerInternal.SleepToken;
@@ -273,6 +274,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             "com.android.systemui.screenshot.TakeScreenshotService";
     private static final String SYSUI_SCREENSHOT_ERROR_RECEIVER =
             "com.android.systemui.screenshot.ScreenshotServiceErrorReceiver";
+    private static final String LAUNCHER_PACKNAME= "com.android.launcher3";
 
     private static final int NAV_BAR_BOTTOM = 0;
     private static final int NAV_BAR_RIGHT = 1;
@@ -3220,6 +3222,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
         };
 
+    private int isGoLauncherApplicationMenu() {
+       ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+       List<RunningTaskInfo> list = am.getRunningTasks(100);
+       if(list!=null && list.size()>0) {
+           String packName=list.get(0).topActivity.getPackageName();
+           if(packName.equals(LAUNCHER_PACKNAME))
+           {
+               if ("1".equals(SystemProperties.get("sys.launcher.state", "1")))
+                    return 1;
+           } else {
+               return 0;
+           }
+      }
+      return 0;
+    }
     /** {@inheritDoc} */
     @Override
     public long interceptKeyBeforeDispatching(WindowState win, KeyEvent event, int policyFlags) {
@@ -3315,6 +3332,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     return -1;
                 }
 
+                if (isGoLauncherApplicationMenu() == 1) {
+                    final Intent statusIntent = new Intent("action.launcher.application.menu");
+                    statusIntent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                           mContext.sendBroadcastAsUser(statusIntent, UserHandle.ALL);
+                        }
+                   });
+                   return -1;
+                }
                 handleShortPressOnHome();
                 return -1;
             }
