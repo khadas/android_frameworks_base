@@ -20,6 +20,7 @@ import static android.app.ActivityThread.DEBUG_CONFIGURATION;
 
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.app.AppGlobals;
 import android.content.pm.ActivityInfo;
 import android.content.res.ApkAssets;
 import android.content.res.AssetManager;
@@ -30,14 +31,19 @@ import android.content.res.Resources;
 import android.content.res.ResourcesImpl;
 import android.content.res.ResourcesKey;
 import android.hardware.display.DisplayManagerGlobal;
+import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.os.Trace;
+import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.LruCache;
 import android.util.Pair;
 import android.util.Slog;
+import android.util.Xml;
 import android.view.Display;
 import android.view.DisplayAdjustments;
 
@@ -45,11 +51,20 @@ import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.IndentingPrintWriter;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.WeakHashMap;
 import java.util.function.Predicate;
@@ -58,6 +73,7 @@ import java.util.function.Predicate;
 public class ResourcesManager {
     static final String TAG = "ResourcesManager";
     private static final boolean DEBUG = false;
+    private static final boolean DEBUG_UIMODE = false;
 
     private static ResourcesManager sResourcesManager;
 
@@ -511,12 +527,149 @@ public class ResourcesManager {
 
         final DisplayMetrics dm = getDisplayMetrics(key.mDisplayId, daj);
         final Configuration config = generateConfig(key, dm);
+        if (android.os.SystemProperties.get("ro.target.product", "unknown").equals("box")) {
+            config.uiMode = fitUiMode(config);
+        }
         final ResourcesImpl impl = new ResourcesImpl(assets, dm, config, daj);
 
         if (DEBUG) {
             Slog.d(TAG, "- creating impl=" + impl + " with key: " + key);
         }
         return impl;
+    }
+
+    private Map<String, Integer> mConfigMap = new HashMap<String, Integer>();
+    private static String VENDOR_CONFIG = "vendor/etc/uimode_app.xml";
+    private static String DATA_CONFIG = "/data/cache/recovery/uimode_app.xml";
+
+    private String getPackageName() {
+        try {
+            if (AppGlobals.getPackageManager() != null) {
+                String packageName = AppGlobals.getPackageManager().getNameForUid(Binder.getCallingUid());
+                if (DEBUG_UIMODE) {
+                    Slog.i(TAG, "getPackageName : " + packageName);
+                }
+                return packageName;
+            }
+        } catch (RemoteException e) {
+            Slog.i(TAG, "remoteException " + e.getMessage());
+        }
+        return null;
+    }
+
+    private void initConfigMap() {
+        File configFilter = new File(DATA_CONFIG);
+        if (!configFilter.exists()) {
+            try {
+                int byteSum = 0;
+                int byteRead = 0;
+                File vendorDir = Environment.getRootDirectory();
+                File vendorFilter = new File(vendorDir, VENDOR_CONFIG);
+                configFilter.createNewFile();
+                if (vendorFilter.exists()) {
+                    InputStream inStream = new FileInputStream(vendorFilter);
+                    FileOutputStream fs = new FileOutputStream(configFilter);
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((byteRead = inStream.read(buffer)) != -1) {
+                        byteSum += byteRead;
+                        fs.write(buffer, 0, byteRead);
+                    }
+                    inStream.close();
+                    fs.close();
+                }
+                int result = android.os.FileUtils.setPermissions(configFilter, android.os.FileUtils.S_IRWXU | android.os.FileUtils.S_IRWXG | android.os.FileUtils.S_IRWXO, -1, -1);
+                if (DEBUG_UIMODE) {
+                    Slog.w(TAG, "chmod file result = " + result);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+        configFilter = new File(DATA_CONFIG);
+        if (configFilter.exists()) {
+            FileInputStream stream = null;
+            try {
+                stream = new FileInputStream(configFilter);
+                XmlPullParser xmlPullParser = Xml.newPullParser();
+                xmlPullParser.setInput(stream, null);
+                int type;
+                do {
+                    type = xmlPullParser.next();
+                    if (type == XmlPullParser.START_TAG) {
+                        String tag = xmlPullParser.getName();
+                        if (DEBUG_UIMODE) {
+                            Slog.i(TAG, "getConfigMap: tag = " + tag);
+                        }
+                        if ("app".equals(tag)) {
+                            String pkgName = xmlPullParser.getAttributeValue(null, "package");
+                            String uiMode = xmlPullParser.getAttributeValue(null, "uiMode");
+                            if (DEBUG_UIMODE) {
+                                Slog.i(TAG, "getConfigMap: pkgName = " + pkgName + ", uiMode = " + uiMode);
+                            }
+                            if (!TextUtils.isEmpty(pkgName) && !TextUtils.isEmpty(uiMode)) {
+                                int parseUiMode = Integer.parseInt(uiMode);
+                                mConfigMap.put(pkgName, parseUiMode >= 0 ? parseUiMode : -1);
+                            }
+                        } else {
+                            if (DEBUG_UIMODE) {
+                                Slog.i(TAG, "getConfigMap: , tag != app");
+                            }
+                        }
+                    }
+                } while (type != XmlPullParser.END_DOCUMENT);
+            } catch (NullPointerException e) {
+                Slog.w(TAG, "failed parsing " + configFilter, e);
+            } catch (NumberFormatException e) {
+                Slog.w(TAG, "failed parsing " + configFilter, e);
+            } catch (XmlPullParserException e) {
+                Slog.w(TAG, "failed parsing " + configFilter, e);
+            } catch (IndexOutOfBoundsException e) {
+                Slog.w(TAG, "failed parsing " + configFilter, e);
+            } catch (IOException e) {
+                Slog.w(TAG, "failed parsing " + configFilter, e);
+            } finally {
+                try {
+                    if (stream != null) {
+                        stream.close();
+                    }
+                } catch (IOException e) {
+                    Slog.w(TAG, "stream.close failed");
+                }
+            }
+        } else {
+            if (DEBUG_UIMODE) {
+                Slog.w(TAG, "uimode_app.xml is not exists");
+            }
+        }
+    }
+
+    private int fitUiMode(Configuration configuration) {
+        initConfigMap();
+        if (mConfigMap != null && mConfigMap.size() > 0) {
+            String packageName = getPackageName();
+            if (!TextUtils.isEmpty(packageName)) {
+                for (String pkgName : mConfigMap.keySet()) {
+                    if (!TextUtils.isEmpty(pkgName) && packageName.equals(pkgName)) {
+                        Integer uiMode = mConfigMap.get(packageName);
+                        if (uiMode != null && uiMode >= 0) {
+                            if (DEBUG_UIMODE) {
+                                Slog.i(TAG, "fix uiMode for app package = " + packageName + " , uiMode = " + uiMode.toString());
+                            }
+                            return uiMode;
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        } else {
+            return configuration.uiMode;
+        }
+        return configuration.uiMode;
     }
 
     /**
