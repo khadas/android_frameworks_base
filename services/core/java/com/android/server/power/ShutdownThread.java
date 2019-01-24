@@ -525,9 +525,11 @@ public final class ShutdownThread extends Thread {
             public void run() {
                 try {
                     Thread.sleep(5000);
-                    Message message = new Message();
-                    message.what = 100;
-                    handler11.sendMessage(message);
+                    if (!mReason.contains("recovery")) {
+                        Message message = new Message();
+                        message.what = 100;
+                        handler11.sendMessage(message);
+                    }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
