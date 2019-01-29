@@ -4823,8 +4823,25 @@ public class ConnectivityService extends IConnectivityManager.Stub
                 }
             }
         }
+
         for (RouteInfo route : routeDiff.added) {
             if (route.hasGateway() == false) continue;
+
+	    boolean config = mSystemProperties.getBoolean("ro.radio.noril", false);
+	    if (!config) {
+		if (route.getInterface().equals("ppp0")) {
+			//make host route for nexthop
+			RouteInfo xroute = RouteInfo.makeHostRoute(route.getGateway(), route.getInterface());
+			if (DBG) log("Adding Route [" + xroute + "] to network " + netId);
+				try {
+					//add nexthop(getGateway()) for table ppp0
+					mNetd.addRoute(netId, xroute);
+				} catch (Exception e) {
+					loge("Exception in addRoute for nexthop(gateway): " + e);
+			}
+		}
+	    }
+
             if (VDBG) log("Adding Route [" + route + "] to network " + netId);
             try {
                 mNetd.addRoute(netId, route);
