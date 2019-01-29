@@ -415,23 +415,8 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                 } else {
                     mInfo.type = Display.TYPE_HDMI;
                     mInfo.flags |= DisplayDeviceInfo.FLAG_PRESENTATION;
-                    if( SystemProperties.getBoolean("ro.orientation.vhshow",false)) {
-                        boolean noRotate = "0".equals(SystemProperties.get("ro.sf.hwrotation"));
-                        if(noRotate && mBuiltInDisplayId == SurfaceControl.BUILT_IN_DISPLAY_ID_HDMI){
-                            if (SystemProperties.getBoolean("ro.rotation.external", false)) {
-                                mInfo.flags |= DisplayDeviceInfo.FLAG_ROTATES_WITH_CONTENT;
-                            }
-                            String value = SystemProperties.get("ro.orientation.einit");
-                            /*if ("0".equals(value)) {
-                                mInfo.rotation = Surface.ROTATION_0;
-                            } else if ("90".equals(value)) {
-                                mInfo.rotation = Surface.ROTATION_90;
-                            } else if ("180".equals(value)) {
-                                mInfo.rotation = Surface.ROTATION_180;
-                            } else if ("270".equals(value)) {
-                                mInfo.rotation = Surface.ROTATION_270;
-                            }*/
-                        }
+                    if (SystemProperties.getBoolean("ro.sys.rotation.sensor", false)) {
+                        mInfo.flags |= DisplayDeviceInfo.FLAG_ROTATES_WITH_CONTENT;
                     }
                     mInfo.name = getContext().getResources().getString(
                             com.android.internal.R.string.display_manager_hdmi_display_name);

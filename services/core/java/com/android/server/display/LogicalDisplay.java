@@ -67,7 +67,7 @@ final class LogicalDisplay {
     private static final int BLANK_LAYER_STACK = -1;
 
     private static final String TAG_DUALSCREEN = "DualScreen";
-    private final boolean DEBUG_DUALSCREEN = false;
+    private final boolean DEBUG_DUALSCREEN = true;
     private final int mDisplayId;
     private final int mLayerStack;
     private DisplayInfo mOverrideDisplayInfo; // set by the window manager
@@ -79,6 +79,7 @@ final class LogicalDisplay {
     // The display device that this logical display is based on and which
     // determines the base metrics that it uses.
     private DisplayDevice mPrimaryDisplayDevice;
+
     private DisplayDeviceInfo mPrimaryDisplayDeviceInfo;
 
     // True if the logical display has unique content.
@@ -148,7 +149,26 @@ final class LogicalDisplay {
                 mInfo.physicalXDpi = mOverrideDisplayInfo.physicalXDpi;
                 mInfo.physicalYDpi = mOverrideDisplayInfo.physicalYDpi;
             }
+            if(mDisplayId!=Display.DEFAULT_DISPLAY){
+                String rotation = SystemProperties.get("persist.sys.rotation.einit","0");
+                if(Integer.valueOf(rotation)%2!=0) {
+
+
+                    mInfo.appWidth = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.appHeight = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.logicalWidth = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.logicalHeight=mPrimaryDisplayDeviceInfo.width;
+
+                }else{
+                    mInfo.appWidth = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.appHeight = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.logicalWidth = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.logicalHeight=mPrimaryDisplayDeviceInfo.height;
+                }
+            }
         }
+
+
         return mInfo;
     }
 
@@ -267,6 +287,7 @@ final class LogicalDisplay {
 
             mPrimaryDisplayDeviceInfo = deviceInfo;
             mInfo = null;
+
         }
     }
 
@@ -303,6 +324,7 @@ final class LogicalDisplay {
 
         // Only grab the display info now as it may have been changed based on the requests above.
         DisplayInfo displayInfo = getDisplayInfoLocked();
+        Slog.d("dzy","---------displayInfo="+displayInfo+device.getDisplayDeviceInfoLocked()+"    "+device.getUniqueId());
         final DisplayDeviceInfo displayDeviceInfo = device.getDisplayDeviceInfoLocked();
         IWindowManager wm = IWindowManager.Stub.asInterface(ServiceManager.getService(Context.WINDOW_SERVICE));
         try{
@@ -310,7 +332,7 @@ final class LogicalDisplay {
                 isDualScreen = wm.getSecondDisplayTaskId() != -1;
                 if(wm.isDualConfig()){
                     displayInfo = info != null?info:getDisplayInfoLocked();
-                    if(DEBUG_DUALSCREEN) Slog.v(TAG_DUALSCREEN,"LogicalDisplay configurDisplay  displayInfo = "+displayInfo);
+                    /*if(DEBUG_DUALSCREEN)*/ Slog.v("dzy","LogicalDisplay configurDisplay  displayInfo = "+displayInfo);
                 }
             }
         }catch(Exception e){
@@ -374,55 +396,20 @@ final class LogicalDisplay {
         mTempDisplayRect.top += mDisplayOffsetY;
         mTempDisplayRect.bottom += mDisplayOffsetY;
         
-        if(SystemProperties.getBoolean("persist.orientation.vhshow",false)) {
-            Rect displayRect = new Rect(mTempLayerStackRect);
-            if (isDefaultDisplay == false) {
-                if (isDualScreen == true) {
-                    displayVhShow = true;
-                    if(diffStackRect != null) {
-                        displayRect = new Rect(diffStackRect);
-                    }
-                }
-                diffStackRect = new Rect(displayRect);     
-                int width=displayDeviceInfo.width;
-                int height=displayDeviceInfo.height;
-                device.setProjectionInTransactionLocked(orientation, displayRect, new Rect(0,0,width,height));
-                return ;
-                //Keep mTempLayerStackRect、mTempDisplayRect、crop unchanged, will not stretch after rotation
+
+        Slog.d(TAG_DUALSCREEN,"info=  "+device.getDisplayDeviceInfoLocked());
+        Slog.d(TAG_DUALSCREEN,"mTempDisplayRect="+mTempDisplayRect);
+        if(device.getDisplayDeviceInfoLocked().type==Display.TYPE_HDMI){
+            if(SystemProperties.getBoolean("persist.sys.rotation.efull",false)){
+               mTempDisplayRect.top=0;
+               mTempDisplayRect.left=0;
+               mTempDisplayRect.right=physWidth;
+               mTempDisplayRect.bottom=physHeight;
+
             }
-        } else {
-            try{
-                if(wm.getDualScreenFlag()) {
-                    Rect stackRect = new Rect(mTempLayerStackRect);
-                    Rect displayRect = new Rect(mTempDisplayRect);
-                    if(DEBUG_DUALSCREEN) Slog.v(TAG_DUALSCREEN,"mTempDisplayRect ="+mTempDisplayRect);
-                    if(displayVhShow == true) {
-                        displayVhShow = false;
-                      //  displayRect = new Rect(diffDisplayRect);                    
-                        if(DEBUG_DUALSCREEN) Slog.v(TAG_DUALSCREEN,"diffDisplayRect  ------------------ ="+diffDisplayRect);
-                        diffStackRect = null;
-                        diffDisplayRect = null;
-                    }
-                    if (isDefaultDisplay == false) {
-                        if (isDualScreen == true) {
-                            if(diffDisplayRect != null) {
-                                 displayRect = new Rect(diffDisplayRect);
-                            }
-                            if(diffStackRect != null) {
-                                stackRect = new Rect(diffStackRect);
-                            }
-                        }
-                        diffStackRect = new Rect(stackRect);
-                        diffDisplayRect = new Rect(displayRect);
-                        if(DEBUG_DUALSCREEN) Slog.v(TAG_DUALSCREEN,"diffDisplayRect ="+diffDisplayRect);
-                        device.setProjectionInTransactionLocked(orientation, stackRect, displayRect);
-                        return ;
-                    } 
-                }
-            }catch(Exception e){
-            //no handle
-            }
+            Slog.d(TAG_DUALSCREEN,"+++++++++mTempDisplayRect="+mTempDisplayRect);
         }
+        Slog.d(TAG_DUALSCREEN,"-----------mTempDisplayRect="+mTempDisplayRect+"  orientation="+orientation);
         device.setProjectionInTransactionLocked(orientation, mTempLayerStackRect, mTempDisplayRect);
     }
     /**
@@ -507,5 +494,6 @@ final class LogicalDisplay {
                 mPrimaryDisplayDevice.getNameLocked() : "null"));
         pw.println("mBaseDisplayInfo=" + mBaseDisplayInfo);
         pw.println("mOverrideDisplayInfo=" + mOverrideDisplayInfo);
+        pw.println("mInfo=" + mInfo);
     }
 }

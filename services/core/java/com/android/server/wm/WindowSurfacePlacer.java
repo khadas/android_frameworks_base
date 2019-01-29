@@ -991,9 +991,15 @@ class WindowSurfacePlacer {
                     }
                     win.mLayoutNeeded = false;
                     win.prelayout();
-                    //mService.mPolicy.layoutWindowLw(win, null);
-                    DisplayInfo defaultDisplayInfo = mService.getDefaultDisplayInfoLocked();
-                    mService.mPolicy.layoutWindowLw(win ,null ,defaultDisplayInfo.logicalWidth,defaultDisplayInfo.logicalHeight);
+
+                    if (!mService.isUseSecondDisplayInfo()) {
+                        DisplayInfo defaultDisplayInfo = mService.getDefaultDisplayInfoLocked();
+                        mService.mPolicy.layoutWindowLw(win, null, defaultDisplayInfo);
+                    } else {
+                        mService.mPolicy.layoutWindowLw(win, null, null);
+                    }
+
+
   
                     win.mLayoutSeq = seq;
                     // Window frames may have changed. Update dim layer with the new bounds.
@@ -1046,9 +1052,14 @@ class WindowSurfacePlacer {
                     }
                     win.mLayoutNeeded = false;
                     win.prelayout();
-                    //mService.mPolicy.layoutWindowLw(win, win.mAttachedWindow);
-                    DisplayInfo defaultDisplayInfo = mService.getDefaultDisplayInfoLocked();
-                    mService.mPolicy.layoutWindowLw(win, win.mAttachedWindow, defaultDisplayInfo.logicalWidth,defaultDisplayInfo.logicalHeight);
+                    if(!mService.isUseSecondDisplayInfo()){
+                        DisplayInfo defaultDisplayInfo = mService.getDefaultDisplayInfoLocked();
+                        mService.mPolicy.layoutWindowLw(win, win.mAttachedWindow,defaultDisplayInfo);
+                    }else{
+                        mService.mPolicy.layoutWindowLw(win, win.mAttachedWindow,null);
+                    }
+
+
  
                     win.mLayoutSeq = seq;
                     if (DEBUG_LAYOUT) Slog.v(TAG,

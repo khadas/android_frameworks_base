@@ -1235,7 +1235,7 @@ class WindowStateAnimator {
         if (!w.isDefaultDisplay()) {
             // On a different display there is no system decor.  Crop the window
             // by the screen boundaries
-            if(mService.getDualScreenFlag()) {
+            if(!mService.isUseSecondDisplayInfo()) {
                     if (tempInfo == null) {
                         tempInfo = new DisplayInfo(mService.getDefaultDisplayInfoLocked()); 
                     }

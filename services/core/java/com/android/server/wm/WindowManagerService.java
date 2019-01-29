@@ -1542,6 +1542,9 @@ public class WindowManagerService extends IWindowManager.Stub
 	public List<Integer> getSecondTaskIds(){
 		return mSecondTaskIds;
 	}
+	public boolean isUseSecondDisplayInfo(){
+	    return SystemProperties.get("persist.sys.draw.einfo","1").equals("1");
+    }
 	
 	
 	//get All stacks

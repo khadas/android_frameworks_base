@@ -52,6 +52,7 @@ import android.util.Slog;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.DisplayInfo;
+import android.view.IWindowManager;
 import android.view.Surface;
 import android.view.WindowManagerInternal;
 
@@ -881,13 +882,8 @@ public final class DisplayManagerService extends SystemService {
                 isDefaultDisplay = true;
             } else {
                 isDefaultDisplay = false;
-                String rotation = SystemProperties.get("persist.orientation.vhinit");
-                int default_value = (device.getDisplayDeviceInfoLocked().width < device.getDisplayDeviceInfoLocked().height)?1:0;
-                if(default_value == 1) {//竖屏
-                   device.getDisplayDeviceInfoLocked().rotation = ("0".equals(rotation))?1:0;
-                } else if(default_value == 0) {//横屏
-                   device.getDisplayDeviceInfoLocked().rotation = ("1".equals(rotation))?1:0;
-                }
+                String rotation = SystemProperties.get("persist.sys.rotation.einit","0");
+                device.getDisplayDeviceInfoLocked().rotation=Integer.valueOf(rotation);
             }
             configureDisplayInTransactionLocked(device);
             device.performTraversalInTransactionLocked();
@@ -980,7 +976,17 @@ public final class DisplayManagerService extends SystemService {
             return;
         }
         display.isDefaultDisplay  = isDefaultDisplay;
-        display.configureDisplayInTransactionLocked(device, info.state == Display.STATE_OFF, mLogicalDisplays.get(Display.DEFAULT_DISPLAY).mInfo);
+        try {
+            IWindowManager wm = IWindowManager.Stub.asInterface(ServiceManager.getService(Context.WINDOW_SERVICE));
+            if (!wm.isUseSecondDisplayInfo()) {
+                display.configureDisplayInTransactionLocked(device, info.state == Display.STATE_OFF, mLogicalDisplays.get(Display.DEFAULT_DISPLAY).mInfo);
+            } else {
+                display.configureDisplayInTransactionLocked(device, info.state == Display.STATE_OFF, null);
+            }
+        }catch(RemoteException e){
+            e.printStackTrace();
+        }
+
 
         // Update the viewports if needed.
         if (!mDefaultViewport.valid
@@ -1599,6 +1605,7 @@ public final class DisplayManagerService extends SystemService {
                     android.Manifest.permission.CAPTURE_SECURE_VIDEO_OUTPUT)
                     == PackageManager.PERMISSION_GRANTED;
         }
+
     }
 
     private final class LocalService extends DisplayManagerInternal {

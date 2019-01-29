@@ -116,6 +116,7 @@ import android.util.Slog;
 import android.util.SparseArray;
 import android.util.LongSparseArray;
 import android.view.Display;
+import android.view.DisplayInfo;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.IApplicationToken;
@@ -4629,7 +4630,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public void layoutWindowLw(WindowState win, WindowState attached) {
     }
     
-    public void layoutWindowLw(WindowState win, WindowState attached, int width, int height) {
+    public void layoutWindowLw(WindowState win, WindowState attached, DisplayInfo info) {
         // We've already done the navigation bar and status bar. If the status bar can receive
         // input, we need to layout it again to accomodate for the IME window.
         if ((win == mStatusBar && !canReceiveInput(win)) || win == mNavigationBar) {
@@ -4683,11 +4684,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         = mOverscanScreenLeft + mOverscanScreenWidth;
                 pf.bottom = df.bottom = of.bottom = cf.bottom
                         = mOverscanScreenTop + mOverscanScreenHeight;
-                
-                pf.left = df.left = of.left = cf.left = vf.left = 0;
-                pf.top = df.top = of.top = cf.top = vf.top = 0;
-                pf.right = df.right = of.right = cf.right = vf.right = width;
-                pf.bottom = df.bottom = of.bottom = cf.bottom = vf.bottom = height;
+                if(info!=null) {
+                    pf.left = df.left = of.left = cf.left = vf.left = 0;
+                    pf.top = df.top = of.top = cf.top = vf.top = 0;
+                    pf.right = df.right = of.right = cf.right = vf.right = info.logicalWidth;
+                    pf.bottom = df.bottom = of.bottom = cf.bottom = vf.bottom = info.logicalHeight;
+                }
             }
         } else if (attrs.type == TYPE_INPUT_METHOD) {
             pf.left = df.left = of.left = cf.left = vf.left = mDockLeft;

@@ -444,4 +444,5 @@ interface IWindowManager
     boolean isDualConfig();
     boolean getDualScreenFlag();
     int getSecondDisplayTaskId();
+    boolean isUseSecondDisplayInfo();
 }
