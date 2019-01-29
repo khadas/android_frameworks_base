@@ -679,4 +679,8 @@ interface IPackageManager {
     
     int getPackagePerformanceMode(String pkgName);
     void setPackagePerformanceMode(String pkgName, int mode);
+
+    //For UiMode
+    void setPackageUiMode(String packageName, int oldUiMode, int newUiMode);
+    int getPackageUiMode(String packageName);
 }

@@ -6201,4 +6201,14 @@ public abstract class PackageManager {
      * @hide
      */
     public abstract void setPackagePerformanceMode(String pkgName, int mode);
+
+    /**
+     * @hide
+     */
+    public abstract void setPackageUiMode(String packageName, int oldUiMode, int newUiMode);
+
+    /**
+     * @hide
+     */
+    public abstract int getPackageUiMode(String packageName);
 }

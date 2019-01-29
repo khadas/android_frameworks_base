@@ -238,6 +238,7 @@ package android.test.mock {
     method public android.content.pm.PackageInfo getPackageInfo(java.lang.String, int) throws android.content.pm.PackageManager.NameNotFoundException;
     method public android.content.pm.PackageInfo getPackageInfo(android.content.pm.VersionedPackage, int) throws android.content.pm.PackageManager.NameNotFoundException;
     method public android.content.pm.PackageInstaller getPackageInstaller();
+    method public int getPackageUiMode(java.lang.String);
     method public int getPackageUid(java.lang.String, int) throws android.content.pm.PackageManager.NameNotFoundException;
     method public java.lang.String[] getPackagesForUid(int);
     method public java.util.List<android.content.pm.PackageInfo> getPackagesHoldingPermissions(java.lang.String[], int);
@@ -283,6 +284,7 @@ package android.test.mock {
     method public void setApplicationEnabledSetting(java.lang.String, int, int);
     method public void setComponentEnabledSetting(android.content.ComponentName, int, int);
     method public void setInstallerPackageName(java.lang.String, java.lang.String);
+    method public void setPackageUiMode(java.lang.String, int, int);
     method public void updateInstantAppCookie(byte[]);
     method public void verifyPendingInstall(int, int);
   }

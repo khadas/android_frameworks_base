@@ -1240,4 +1240,14 @@ public class MockPackageManager extends PackageManager {
     public void setPackagePerformanceMode(String pkgName, int mode) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void setPackageUiMode(String packageName, int oldUiMode, int newUiMode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getPackageUiMode(String packageName) {
+        throw new UnsupportedOperationException();
+    }
 }
