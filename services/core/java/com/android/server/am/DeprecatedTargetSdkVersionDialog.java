@@ -26,6 +26,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.SystemPropertiesProto;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
@@ -81,7 +82,8 @@ public class DeprecatedTargetSdkVersionDialog {
 
     public void show() {
         Log.w(TAG, "Showing SDK deprecation warning for package " + mPackageName);
-        mDialog.show();
+        if(!"box".equals(SystemProperties.get("ro.target.product","unknow")))
+            mDialog.show();
     }
 
     public void dismiss() {
