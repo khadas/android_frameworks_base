@@ -73,7 +73,7 @@ import java.util.function.Predicate;
 public class ResourcesManager {
     static final String TAG = "ResourcesManager";
     private static final boolean DEBUG = false;
-    private static final boolean DEBUG_UIMODE = false;
+    private static final boolean DEBUG_UIMODE = Log.isLoggable(TAG, Log.DEBUG);
 
     private static ResourcesManager sResourcesManager;
 
@@ -554,14 +554,21 @@ public class ResourcesManager {
     }
 
     private int fitUiMode(Configuration configuration) {
+        int uiMode = configuration.uiMode;
         try {
             if (AppGlobals.getPackageManager() != null) {
-               return AppGlobals.getPackageManager().getPackageUiMode(getPackageName());
+               uiMode = AppGlobals.getPackageManager().getPackageUiMode(getPackageName());
             }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
-        return configuration.uiMode;
+        if (uiMode == -1) {
+            uiMode = configuration.uiMode;
+        }
+        if (DEBUG_UIMODE) {
+            Slog.i(TAG, "uiMode = " + uiMode);
+        }
+        return uiMode;
     }
 
     /**

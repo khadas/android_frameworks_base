@@ -442,7 +442,7 @@ public class PackageManagerService extends IPackageManager.Stub
     private static final boolean DEBUG_APP_DATA = false;
 
     //for UiMode Debug
-    private static final boolean DEBUG_UIMODE = false;
+    private static final boolean DEBUG_UIMODE = Log.isLoggable(TAG, Log.DEBUG);
 
     /** REMOVE. According to Svet, this was only used to reset permissions during development. */
     static final boolean CLEAR_RUNTIME_PERMISSIONS_ON_UPGRADE = false;
@@ -25039,7 +25039,7 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
             }
         } else {
             if (DEBUG_UIMODE) {
-                Slog.w(TAG, "uimode_app.xml is not exists");
+                Slog.w(TAG, "package_uimode_config.xml is not exists");
             }
         }
     }
@@ -25076,7 +25076,7 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
             }
         }
         configFilter = new File(DATA_CONFIG);
-        if ( mPackageUiModeConfigMap != null && mPackageUiModeConfigMap.size() <= 0 && configFilter.exists()) {
+        if (mPackageUiModeConfigMap != null && mPackageUiModeConfigMap.size() <= 0 && configFilter.exists()) {
             FileInputStream stream = null;
             try {
                 stream = new FileInputStream(configFilter);
@@ -25128,7 +25128,7 @@ Slog.v(TAG, ":: stepped forward, applying functor at tag " + parser.getName());
             }
         } else {
             if (DEBUG_UIMODE) {
-                Slog.w(TAG, "uimode_app.xml is not exists or mPackageUiModeConfigMap > 0");
+                Slog.w(TAG, "package_uimode_config.xml is not exists or mPackageUiModeConfigMap > 0");
             }
         }
 
