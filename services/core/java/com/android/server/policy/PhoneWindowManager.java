@@ -296,6 +296,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import android.widget.Toast;
 
 /**
  * WindowManagerPolicy implementation for the Android phone UI.  This
@@ -3968,7 +3969,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         } else if (keyCode == KeyEvent.KEYCODE_TAB && event.isMetaPressed()) {
             // Pass through keyboard navigation keys.
             return 0;
-        } else if (mHasFeatureLeanback && interceptBugreportGestureTv(keyCode, down)) {
+        } else if (mHasFeatureLeanback && interceptBugreportGestureTv(keyCode, down, event)) {
             return -1;
         } else if (mHasFeatureLeanback && interceptAccessibilityGestureTv(keyCode, down)) {
             return -1;
@@ -4181,16 +4182,31 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         return 0;
     }
 
+    private static long TvKey_start = 0;
+    private static long TvKey_end = 0;
     /**
      * TV only: recognizes a remote control gesture for capturing a bug report.
      */
-    private boolean interceptBugreportGestureTv(int keyCode, boolean down) {
+    private boolean interceptBugreportGestureTv(int keyCode, boolean down, KeyEvent event) {
         // The bugreport capture chord is a long press on DPAD CENTER and BACK simultaneously.
+        Log.d(TAG,"interceptBugreportGestureTv keyCode:"+keyCode);
         if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
             mBugreportTvKey1Pressed = down;
+            if(!down){
+                  TvKey_end = event.getEventTime();
+                  if((TvKey_end - TvKey_start) > 0 && (TvKey_end - TvKey_start) < 700){
+                    Log.d(TAG,"interceptBugreportGestureTv pressed!");
+                    mBugreportTvKey2Pressed = true;
+                    mBugreportTvKey1Pressed = true;
+                  }
+             }
         } else if (keyCode == KeyEvent.KEYCODE_BACK) {
             mBugreportTvKey2Pressed = down;
+            if(!down){
+                  TvKey_start = event.getEventTime();
+             }
         }
+
 
         if (mBugreportTvKey1Pressed && mBugreportTvKey2Pressed) {
             if (!mBugreportTvScheduled) {
@@ -4198,7 +4214,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 Message msg = Message.obtain(mHandler, MSG_BUGREPORT_TV);
                 msg.setAsynchronous(true);
                 mHandler.sendMessageDelayed(msg, BUGREPORT_TV_GESTURE_TIMEOUT_MILLIS);
+                mHandler.post(new Runnable() {
+                   @Override
+                   public void run() {
+                         Log.i(TAG, "press BugreportGestureTv key");
+                         Toast.makeText(mContext,"Bugreport capture start...", Toast.LENGTH_LONG).show();
+                   }
+                });
             }
+            mBugreportTvKey2Pressed = false;
+            mBugreportTvKey1Pressed = false;
         } else if (mBugreportTvScheduled) {
             mHandler.removeMessages(MSG_BUGREPORT_TV);
             mBugreportTvScheduled = false;
