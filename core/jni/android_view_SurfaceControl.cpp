@@ -174,7 +174,7 @@ static jobject nativeScreenshotToBuffer(JNIEnv* env, jclass clazz,
     bool capturedSecureLayers = false;
     status_t res = ScreenshotClient::capture(displayToken,
             sourceCrop, width, height, minLayer, maxLayer, useIdentityTransform,
-            rotation, captureSecureLayers, &buffer, capturedSecureLayers);
+            rotation, captureSecureLayers, &buffer);
     if (res != NO_ERROR) {
         return NULL;
     }
