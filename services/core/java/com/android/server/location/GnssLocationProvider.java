@@ -812,8 +812,8 @@ public class GnssLocationProvider implements LocationProviderInterface, InjectNt
         mProperties = new Properties();
         // Create a GPS net-initiated handler (also needed by handleInitialize)
         mNIHandler = new GpsNetInitiatedHandler(context,
-                mNetInitiatedListener,
-                mSuplEsEnabled);
+                                                mNetInitiatedListener,
+                                                mSuplEsEnabled);
         sendMessage(INITIALIZE_HANDLER, 0, null);
 
         mListenerHelper = new GnssStatusListenerHelper(mHandler) {

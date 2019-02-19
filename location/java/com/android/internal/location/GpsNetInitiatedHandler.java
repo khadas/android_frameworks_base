@@ -248,7 +248,8 @@ public class GpsNetInitiatedHandler {
                 (mCallEndElapsedRealtimeMillis > 0)
                 && ((SystemClock.elapsedRealtime() - mCallEndElapsedRealtimeMillis)
                         < mEmergencyExtensionMillis);
-        boolean isInEmergencyCallback = mTelephonyManager.getEmergencyCallbackMode();
+        boolean isInEmergencyCallback = Boolean.parseBoolean(
+                SystemProperties.get(TelephonyProperties.PROPERTY_INECM_MODE));
         return mIsInEmergencyCall || isInEmergencyCallback || isInEmergencyExtension;
     }
 
