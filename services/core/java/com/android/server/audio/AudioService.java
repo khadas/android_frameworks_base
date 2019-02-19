@@ -1758,8 +1758,7 @@ public class AudioService extends IAudioService.Stub
             if (mHdmiManager != null) {
                 synchronized (mHdmiManager) {
                     // mHdmiCecSink true => mHdmiPlaybackClient != null
-                    if (mHdmiCecSink &&
-                            streamTypeAlias == AudioSystem.STREAM_MUSIC &&
+                    if (streamTypeAlias == AudioSystem.STREAM_MUSIC &&
                             oldIndex != newIndex) {
                         synchronized (mHdmiPlaybackClient) {
                             int keyCode = (direction == -1) ? KeyEvent.KEYCODE_VOLUME_DOWN :
@@ -7422,7 +7421,7 @@ public class AudioService extends IAudioService.Stub
                 return false;
             }
             boolean suppress = false;
-            if (resolvedStream == DEFAULT_VOL_STREAM_NO_PLAYBACK && mController != null) {
+            if (resolvedStream == AudioSystem.STREAM_RING && mController != null) {
                 final long now = SystemClock.uptimeMillis();
                 if ((flags & AudioManager.FLAG_SHOW_UI) != 0 && !mVisible) {
                     // ui will become visible
