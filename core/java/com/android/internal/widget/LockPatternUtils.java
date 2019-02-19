@@ -709,11 +709,10 @@ public class LockPatternUtils {
 
         final String stringPattern = patternToString(pattern);
         final int currentQuality = getKeyguardStoredPasswordQuality(userId);
-        //setKeyguardStoredPasswordQuality(PASSWORD_QUALITY_SOMETHING, userId);
+        setKeyguardStoredPasswordQuality(PASSWORD_QUALITY_SOMETHING, userId);
         try {
             getLockSettings().setLockCredential(stringPattern, CREDENTIAL_TYPE_PATTERN,
                     savedPattern, PASSWORD_QUALITY_SOMETHING, userId);
-            setKeyguardStoredPasswordQuality(PASSWORD_QUALITY_SOMETHING, userId);
         } catch (Exception e) {
             Log.e(TAG, "Couldn't save lock pattern", e);
             setKeyguardStoredPasswordQuality(currentQuality, userId);
@@ -838,15 +837,12 @@ public class LockPatternUtils {
         }
 
         final int currentQuality = getKeyguardStoredPasswordQuality(userHandle);
-        //setKeyguardStoredPasswordQuality(
-        //        computePasswordQuality(CREDENTIAL_TYPE_PASSWORD, password, requestedQuality),
-        //        userHandle);
+        setKeyguardStoredPasswordQuality(
+                computePasswordQuality(CREDENTIAL_TYPE_PASSWORD, password, requestedQuality),
+                userHandle);
         try {
             getLockSettings().setLockCredential(password, CREDENTIAL_TYPE_PASSWORD,
                     savedPassword, requestedQuality, userHandle);
-            setKeyguardStoredPasswordQuality(
-                computePasswordQuality(CREDENTIAL_TYPE_PASSWORD, password, requestedQuality),
-                userHandle);
         } catch (Exception e) {
             Log.e(TAG, "Unable to save lock password", e);
             setKeyguardStoredPasswordQuality(currentQuality, userHandle);
