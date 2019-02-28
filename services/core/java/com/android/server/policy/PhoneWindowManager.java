@@ -786,7 +786,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Ringer toggle should reuse timing and triggering from screenshot power and a11y vol up
     private int mRingerToggleChord = VOLUME_HUSH_OFF;
 
-    private static final long BUGREPORT_TV_GESTURE_TIMEOUT_MILLIS = 1000;
+    private static final long BUGREPORT_TV_GESTURE_TIMEOUT_MILLIS = 0;
 
     private boolean mBugreportTvKey1Pressed;
     private boolean mBugreportTvKey2Pressed;
@@ -4194,7 +4194,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mBugreportTvKey1Pressed = down;
             if(!down){
                   TvKey_end = event.getEventTime();
-                  if((TvKey_end - TvKey_start) > 0 && (TvKey_end - TvKey_start) < 700){
+                  if((TvKey_end - TvKey_start) > 0 && (TvKey_end - TvKey_start) < 300){
                     Log.d(TAG,"interceptBugreportGestureTv pressed!");
                     mBugreportTvKey2Pressed = true;
                     mBugreportTvKey1Pressed = true;
@@ -4214,13 +4214,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 Message msg = Message.obtain(mHandler, MSG_BUGREPORT_TV);
                 msg.setAsynchronous(true);
                 mHandler.sendMessageDelayed(msg, BUGREPORT_TV_GESTURE_TIMEOUT_MILLIS);
-                mHandler.post(new Runnable() {
-                   @Override
-                   public void run() {
-                         Log.i(TAG, "press BugreportGestureTv key");
-                         Toast.makeText(mContext,"Bugreport capture start...", Toast.LENGTH_LONG).show();
-                   }
-                });
             }
             mBugreportTvKey2Pressed = false;
             mBugreportTvKey1Pressed = false;
@@ -4259,9 +4252,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private void requestFullBugreport() {
+         Slog.d(TAG, "requestFullBugreport");
         if ("1".equals(SystemProperties.get("ro.debuggable"))
                 || Settings.Global.getInt(mContext.getContentResolver(),
                         Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1) {
+            Slog.d(TAG, "taking bugreport");
+            mHandler.post(new Runnable() {
+                   @Override
+                   public void run() {
+                         Toast.makeText(mContext,"Capturing bug report", Toast.LENGTH_LONG).show();
+                   }
+                });
             try {
                 ActivityManager.getService()
                         .requestBugReport(ActivityManager.BUGREPORT_OPTION_FULL);
