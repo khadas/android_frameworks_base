@@ -1342,6 +1342,7 @@ public final class ViewRootImpl implements ViewParent,
                 renderer.setStopped(mStopped);
             }
             if (!mStopped) {
+                mNewSurfaceNeeded = true;
                 scheduleTraversals();
             } else {
                 if (renderer != null) {
@@ -1354,11 +1355,11 @@ public final class ViewRootImpl implements ViewParent,
             }
 
             if (mStopped) {
-                boolean isTV = mContext.getPackageManager().hasSystemFeature(
+                /*boolean isTV = mContext.getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_LEANBACK) 
                             || mContext.getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_TELEVISION);
-                if(!isTV)
+                if(!isTV)*/
                     mSurface.release();
             }
         }
