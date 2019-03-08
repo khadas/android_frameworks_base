@@ -11465,12 +11465,11 @@ public final class Settings {
 
         // add by hh@rock-chips.com
         /*** @hide */
-        public static final String BITSTREAM_OUTPUT_DEVICE = "bitstream_out_device";
+        public static final String RK_AUDIO_SETTINGS = "rk_audio_settings";
         /*** @hide */
-        public static final String BITSTREAM_SPDIF_OUTPUT_MODE = "bitstream_spdif_out_mode";
+        public static final String RK_BITSTREAM_HDMI_SUP_FORMATS = "rk_bitstream_hdmi_sup_formats";
         /*** @hide */
-        public static final String BITSTREAM_SPDIF_OUTPUT_ENABLED_FORMATS =
-                "bitstream_spdif_enabled_formats";
+        public static final String RK_BITSTREAM_SPDIF_SUP_FORMATS = "rk_bitstream_spdif_sup_formats";
 
         /**
          * Persisted safe headphone volume management state by AudioService
@@ -12176,8 +12175,6 @@ public final class Settings {
             VALIDATORS.put(APP_AUTO_RESTRICTION_ENABLED, APP_AUTO_RESTRICTION_ENABLED_VALIDATOR);
             VALIDATORS.put(ZEN_DURATION, ZEN_DURATION_VALIDATOR);
             VALIDATORS.put(CHARGING_VIBRATION_ENABLED, CHARGING_VIBRATION_ENABLED_VALIDATOR);
-            VALIDATORS.put(BITSTREAM_SPDIF_OUTPUT_ENABLED_FORMATS,
-                    ENCODED_SURROUND_OUTPUT_ENABLED_FORMATS_VALIDATOR);
         }
 
         /**

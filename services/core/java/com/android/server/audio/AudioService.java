@@ -157,6 +157,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import android.media.AudioSetting;
+
+
 /**
  * The implementation of the volume manager service.
  * <p>
@@ -643,13 +646,7 @@ public class AudioService extends IAudioService.Stub
     private boolean mSurroundModeChanged;
 
     /*** @hide */
-    private int mBitstreamDevice;
-    /*** @hide */
-    private String mSpdifBitstreamEnabledFormats;
-    /*** @hide */
-    private int mSpdifBitstreamMode;
-    /*** @hide */
-    private boolean mSpdifModeChanged;
+    private AudioSetting mBitstreamSetting;
 
     // Intent "extra" data keys.
     public static final String CONNECT_INTENT_KEY_PORT_NAME = "portName";
@@ -748,6 +745,7 @@ public class AudioService extends IAudioService.Stub
             MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] = maxMusicVolume;
         }
         if(isAtv()){
+            mBitstreamSetting = new AudioSetting(mContext);
             mFixedVolumeDevices = 0;
         }
         int defaultMusicVolume = SystemProperties.getInt("ro.config.media_vol_default", -1);
@@ -958,7 +956,7 @@ public class AudioService extends IAudioService.Stub
 
         // only atv or box read bitstream device and set device connectted
         if(isAtv()) {
-            readSurroundSetting();
+            readBitstreamSetting();
         }
     }
 
@@ -1302,17 +1300,6 @@ public class AudioService extends IAudioService.Stub
         sendEncodedSurroundMode(encodedSurroundMode, eventSource);
     }
 
-    /**
-     * @hide
-     */
-    private void sendSpdifBistreamMode(ContentResolver cr, String eventSource)
-    {
-        int encodedSurroundMode = Settings.Global.getInt(
-                cr, Settings.Global.BITSTREAM_SPDIF_OUTPUT_MODE,
-                Settings.Global.ENCODED_SURROUND_OUTPUT_MANUAL);
-        sendEncodedSurroundMode(encodedSurroundMode, eventSource);
-    }
-
     private void sendEncodedSurroundMode(int encodedSurroundMode, String eventSource)
     {
         // initialize to guaranteed bad value
@@ -1392,57 +1379,6 @@ public class AudioService extends IAudioService.Stub
         sendMsg(mAudioHandler, MSG_ENABLE_SURROUND_FORMATS, SENDMSG_QUEUE, 0, 0, formats, 0);
     }
 
-    /**
-     * @hide
-     */
-    private void sendSpdifEnabledSurroundFormats(ContentResolver cr, boolean forceUpdate) {
-        Log.d(TAG,"sendSpdifEnabledSurroundFormats,mSpdifBitstreamMode = "+mSpdifBitstreamMode);
-        if (mSpdifBitstreamMode != Settings.Global.ENCODED_SURROUND_OUTPUT_MANUAL) {
-            // Manually enable surround formats only when the setting is in manual mode.
-            return;
-        }
-        String enabledSurroundFormats = Settings.Global.getString(
-                cr, Settings.Global.BITSTREAM_SPDIF_OUTPUT_ENABLED_FORMATS);
-        if (enabledSurroundFormats == null) {
-            // Never allow enabledSurroundFormats as a null, which could happen when
-            // ENCODED_SURROUND_OUTPUT_ENABLED_FORMATS is not appear in settings DB.
-            enabledSurroundFormats = "";
-        }
-        Log.d(TAG,"sendSpdifEnabledSurroundFormats: fomat = "+enabledSurroundFormats);
-        if (!forceUpdate && TextUtils.equals(enabledSurroundFormats, mEnabledSurroundFormats)) {
-            // Update enabled surround formats to AudioPolicyManager only when forceUpdate
-            // is true or enabled surround formats changed.
-            return;
-        }
-
-        mSpdifBitstreamEnabledFormats = enabledSurroundFormats;
-        String[] surroundFormats = TextUtils.split(enabledSurroundFormats, ",");
-        ArrayList<Integer> formats = new ArrayList<>();
-        for (String format : surroundFormats) {
-            try {
-                int audioFormat = Integer.valueOf(format);
-                boolean isSurroundFormat = false;
-                for (int sf : AudioFormat.SURROUND_SOUND_ENCODING) {
-                    if (sf == audioFormat) {
-                        isSurroundFormat = true;
-                        break;
-                    }
-                }
-                if (isSurroundFormat && !formats.contains(audioFormat)) {
-                    formats.add(audioFormat);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Invalid enabled surround format:" + format);
-            }
-        }
-        // Set filtered surround formats to settings DB in case
-        // there are invalid surround formats in original settings.
-        Settings.Global.putString(mContext.getContentResolver(),
-                Settings.Global.BITSTREAM_SPDIF_OUTPUT_ENABLED_FORMATS,
-                TextUtils.join(",", formats));
-        sendMsg(mAudioHandler, MSG_ENABLE_SURROUND_FORMATS, SENDMSG_QUEUE, 0, 0, formats, 0);
-    }
-
     private void onEnableSurroundFormats(ArrayList<Integer> enabledSurroundFormats) {
         // Set surround format enabled accordingly.
         for (int surroundFormat : AudioFormat.SURROUND_SOUND_ENCODING) {
@@ -1493,22 +1429,8 @@ public class AudioService extends IAudioService.Stub
 
             updateRingerAndZenModeAffectedStreams();
             readDockAudioSettings(cr);
-            if(!isAtv()) {
-                // set bistream/pass throught for default
-                mBitstreamDevice = AudioSystem.DEVICE_OUT_HDMI;
-                sendEncodedSurroundMode(cr, "readPersistedSettings");
-                sendEnabledSurroundFormats(cr, true);
-            } else {
-                mBitstreamDevice = Settings.Global.getInt(
-                        mContentResolver, Settings.Global.BITSTREAM_OUTPUT_DEVICE,AudioSystem.DEVICE_OUT_HDMI);
-                if(mBitstreamDevice == AudioSystem.DEVICE_OUT_SPDIF){
-                    sendSpdifBistreamMode(cr, "readPersistedSettings");
-                    sendSpdifEnabledSurroundFormats(cr,true);
-                }else if(mBitstreamDevice == AudioSystem.DEVICE_OUT_HDMI){
-                    sendEncodedSurroundMode(cr, "readPersistedSettings");
-                    sendEnabledSurroundFormats(cr, true);
-                }
-            }
+            sendEncodedSurroundMode(cr, "readPersistedSettings");
+            sendEnabledSurroundFormats(cr, true);
         }
 
         mMuteAffectedStreams = System.getIntForUser(cr,
@@ -1534,23 +1456,30 @@ public class AudioService extends IAudioService.Stub
     /**
      * @hide
      */
-    private void readSurroundSetting() {
-        Log.d(TAG,"readSurroundSetting");
+    private void readBitstreamSetting() {
+        Log.d(TAG,"readBitstreamSetting");
+        if(mBitstreamSetting == null)
+            return ;
+
         synchronized(mSettingsLock) {
-            final ContentResolver cr = mContentResolver;
-            mBitstreamDevice = Settings.Global.getInt(
-                    mContentResolver, Settings.Global.BITSTREAM_OUTPUT_DEVICE,AudioSystem.DEVICE_OUT_HDMI);
-            Log.d(TAG,"readSurroundSetting: mBitstreamDevice = "+mBitstreamDevice);
-            if(mBitstreamDevice == AudioSystem.DEVICE_OUT_SPDIF){
-                Log.d(TAG,"readSurroundSetting: setWiredDeviceConnectionState SPDIF");
+            mBitstreamSetting.readSetting();
+            int device = mBitstreamSetting.getDevice();
+            Log.d(TAG,"readBitstreamSetting: device = "+device);
+
+            // special address and device for bitstream setting
+            String deviceAddress = "RK_BITSTREAM_DEVICE_ADDRESS";
+            String deviceName = "RK_SET_BITSTREAM_DEVICE";
+
+            if(device == AudioSystem.DEVICE_OUT_SPDIF){
+                Log.d(TAG,"readBitstreamSetting: setWiredDeviceConnectionState SPDIF");
                 setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_SPDIF,
                                 AudioSystem.DEVICE_STATE_AVAILABLE,
-                                "", "RK_SET_BITSTREAM_DEVICE","android");
-            }else{
-                Log.d(TAG,"readSurroundSetting: setWiredDeviceConnectionState HDMI");
+                                deviceAddress, deviceName,"android");
+            }else if(device == AudioSystem.DEVICE_OUT_HDMI){
+                Log.d(TAG,"readBitstreamSetting: setWiredDeviceConnectionState HDMI");
                 setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_HDMI,
                                 AudioSystem.DEVICE_STATE_AVAILABLE,
-                                "", "RK_SET_BITSTREAM_DEVICE","android");
+                                deviceAddress, deviceName,"android");
 
             }
         }
@@ -5910,22 +5839,14 @@ public class AudioService extends IAudioService.Stub
                     mContentResolver, Settings.Global.ENCODED_SURROUND_OUTPUT_ENABLED_FORMATS);
             mContentResolver.registerContentObserver(Settings.Global.getUriFor(
                     Settings.Global.ENCODED_SURROUND_OUTPUT_ENABLED_FORMATS), false, this);
+
             if(isAtv()) {
-                mBitstreamDevice = Settings.Global.getInt(
-                        mContentResolver, Settings.Global.BITSTREAM_OUTPUT_DEVICE,AudioSystem.DEVICE_OUT_HDMI);
                 mContentResolver.registerContentObserver(Settings.Global.getUriFor(
-                        Settings.Global.BITSTREAM_OUTPUT_DEVICE), false, this);
-
-                mSpdifBitstreamEnabledFormats = Settings.Global.getString(
-                        mContentResolver, Settings.Global.BITSTREAM_SPDIF_OUTPUT_ENABLED_FORMATS);
+                        Settings.Global.RK_AUDIO_SETTINGS), false, this);
                 mContentResolver.registerContentObserver(Settings.Global.getUriFor(
-                        Settings.Global.BITSTREAM_SPDIF_OUTPUT_ENABLED_FORMATS), false, this);
-
-                mSpdifBitstreamMode = Settings.Global.getInt(
-                        mContentResolver, Settings.Global.BITSTREAM_SPDIF_OUTPUT_MODE,
-                        Settings.Global.ENCODED_SURROUND_OUTPUT_MANUAL);
+                        Settings.Global.RK_BITSTREAM_HDMI_SUP_FORMATS), false, this);
                 mContentResolver.registerContentObserver(Settings.Global.getUriFor(
-                        Settings.Global.BITSTREAM_SPDIF_OUTPUT_MODE), false, this);
+                        Settings.Global.RK_BITSTREAM_SPDIF_SUP_FORMATS), false, this);
             }
         }
 
@@ -5946,20 +5867,12 @@ public class AudioService extends IAudioService.Stub
                 }
                 readDockAudioSettings(mContentResolver);
                 updateMasterMono(mContentResolver);
-                if(!isAtv()){
-                    updateEncodedSurroundOutput();
-                    sendEnabledSurroundFormats(mContentResolver, mSurroundModeChanged);
-                } else {
-                    int device = Settings.Global.getInt(
-                        mContentResolver, Settings.Global.BITSTREAM_OUTPUT_DEVICE,AudioManager.DEVICE_OUT_HDMI);
-                    Log.d(TAG,"onChange: mBitstreamDevice = "+mBitstreamDevice+",new device = "+device);
-                    if(device == AudioManager.DEVICE_OUT_HDMI) {
-                        updateEncodedSurroundOutput();
-                        sendEnabledSurroundFormats(mContentResolver, mSurroundModeChanged);
-                    }else{
-                        updateSpdifOutputMode();
-                        sendSpdifEnabledSurroundFormats(mContentResolver, mSpdifModeChanged);
-                    }
+                updateEncodedSurroundOutput();
+                sendEnabledSurroundFormats(mContentResolver, mSurroundModeChanged);
+                Log.d(TAG,"onChange*****");
+                if(isAtv()) {
+                    // update bitsteam setting
+                    updateBitstreamSetting();
                 }
             }
         }
@@ -5967,45 +5880,42 @@ public class AudioService extends IAudioService.Stub
        /**
         * @hide
         */
-        private void updateSpdifOutputMode() {
-            int newMode = Settings.Global.getInt(
-                mContentResolver, Settings.Global.BITSTREAM_SPDIF_OUTPUT_MODE,
-                Settings.Global.ENCODED_SURROUND_OUTPUT_MANUAL);
-            int device = Settings.Global.getInt(
-                    mContentResolver, Settings.Global.BITSTREAM_OUTPUT_DEVICE,AudioManager.DEVICE_OUT_HDMI);
-            Log.d(TAG,"updateSpdifOutputMode: newMode = "+newMode+",mSpdifBitstreamMode = "+mSpdifBitstreamMode);
+        private void updateBitstreamSetting() {
+            if(mBitstreamSetting == null)
+                return ;
+
+            // old device
+            int oldDevice = mBitstreamSetting.getDevice();
+            // update setting
+            mBitstreamSetting.readSetting();
+            // new device
+            int newDevice = mBitstreamSetting.getDevice();
             // Did it change?
-            if ((device == AudioManager.DEVICE_OUT_SPDIF) &&
-                    ((mSpdifBitstreamMode != newMode) || mBitstreamDevice != device)) {
-                mBitstreamDevice = device;
-                // Send to AudioPolicyManager
-                sendEncodedSurroundMode(newMode, "SettingsObserver");
+            if(oldDevice != newDevice) {
                 synchronized(mConnectedDevices) {
-                    setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_SPDIF,
-                            AudioSystem.DEVICE_STATE_UNAVAILABLE, "", "RK_SET_BITSTREAM_DEVICE",
+                    // special address and device for bitstream setting
+                    String deviceAddress = "RK_BITSTREAM_DEVICE_ADDRESS";
+                    String deviceName = "RK_SET_BITSTREAM_DEVICE";
+                    setWiredDeviceConnectionState(oldDevice,
+                            AudioSystem.DEVICE_STATE_UNAVAILABLE, deviceAddress, deviceName,
                             "android"); // disconnect
-                    setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_SPDIF,
-                            AudioSystem.DEVICE_STATE_AVAILABLE, "", "RK_SET_BITSTREAM_DEVICE",
-                            "android"); // connect
+                    if(newDevice != AudioSystem.DEVICE_NONE) {
+                        setWiredDeviceConnectionState(newDevice,
+                                AudioSystem.DEVICE_STATE_AVAILABLE, deviceAddress, deviceName,
+                                "android"); // connect
+                    }
                 }
-                mSpdifBitstreamMode = newMode;
-                mSpdifModeChanged = true;
-            } else {
-                mSpdifModeChanged = false;
             }
+
+            mBitstreamSetting.update();
         }
 
         private void updateEncodedSurroundOutput() {
             int newSurroundMode = Settings.Global.getInt(
                 mContentResolver, Settings.Global.ENCODED_SURROUND_OUTPUT,
                 Settings.Global.ENCODED_SURROUND_OUTPUT_AUTO);
-            int device = Settings.Global.getInt(
-                    mContentResolver, Settings.Global.BITSTREAM_OUTPUT_DEVICE,AudioManager.DEVICE_OUT_HDMI);
-            String name = isAtv()?"RK_SET_BITSTREAM_DEVICE":"";
             // Did it change?
-            if (((mEncodedSurroundMode != newSurroundMode) || (mBitstreamDevice != device))
-                    && (device == AudioManager.DEVICE_OUT_HDMI)) {
-                mBitstreamDevice = device;
+            if (mEncodedSurroundMode != newSurroundMode) {
                 // Send to AudioPolicyManager
                 sendEncodedSurroundMode(newSurroundMode, "SettingsObserver");
                 synchronized(mConnectedDevices) {
@@ -6015,10 +5925,10 @@ public class AudioService extends IAudioService.Stub
                     if (deviceSpec != null) {
                         // Toggle HDMI to retrigger broadcast with proper formats.
                         setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_HDMI,
-                                AudioSystem.DEVICE_STATE_UNAVAILABLE, "", name,
+                                AudioSystem.DEVICE_STATE_UNAVAILABLE, "", "",
                                 "android"); // disconnect
                         setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_HDMI,
-                                AudioSystem.DEVICE_STATE_AVAILABLE, "", name,
+                                AudioSystem.DEVICE_STATE_AVAILABLE, "", "",
                                 "android"); // reconnect
                     }
                 }
@@ -6593,23 +6503,14 @@ public class AudioService extends IAudioService.Stub
                         }
                     }
                 }
-                if(!isAtv()) {
-                    if ((device & AudioSystem.DEVICE_OUT_HDMI) != 0) {
-                        sendEnabledSurroundFormats(mContentResolver, true);
-                    }
-                } else {
-                    /* atv/box have 2 audio output devices for bistream/pass throught
-                     * set SurroundFormats accord setting device
-                     */
-                    int settingDevice = Settings.Global.getInt(
-                        mContentResolver, Settings.Global.BITSTREAM_OUTPUT_DEVICE,AudioManager.DEVICE_OUT_HDMI);
 
-                    if (((device & AudioSystem.DEVICE_OUT_HDMI) != 0) &&
-                        ((settingDevice & AudioSystem.DEVICE_OUT_HDMI) != 0)) {
-                        sendEnabledSurroundFormats(mContentResolver, true);
-                    }else if(((device & AudioSystem.DEVICE_OUT_SPDIF) != 0) &&
-                        ((settingDevice & AudioSystem.DEVICE_OUT_SPDIF) != 0)){
-                        sendSpdifEnabledSurroundFormats(mContentResolver, true);
+                if ((device & AudioSystem.DEVICE_OUT_HDMI) != 0) {
+                    sendEnabledSurroundFormats(mContentResolver, true);
+                }
+
+                if(isAtv() && ((device & AudioSystem.DEVICE_OUT_HDMI) != 0)) {
+                    if(mBitstreamSetting != null) {
+                        mBitstreamSetting.hdmiAutoUpdate();
                     }
                 }
             } else {
