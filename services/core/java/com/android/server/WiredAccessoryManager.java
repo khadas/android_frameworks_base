@@ -63,9 +63,10 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
     private static final int BIT_USB_HEADSET_DGTL = (1 << 3);
     private static final int BIT_HDMI_AUDIO = (1 << 4);
     private static final int BIT_LINEOUT = (1 << 5);
+    private static final int BIT_SPDIF_AUDIO = (1 << 6);
     private static final int SUPPORTED_HEADSETS = (BIT_HEADSET|BIT_HEADSET_NO_MIC|
                                                    BIT_USB_HEADSET_ANLG|BIT_USB_HEADSET_DGTL|
-                                                   BIT_HDMI_AUDIO|BIT_LINEOUT);
+                                                   BIT_HDMI_AUDIO|BIT_LINEOUT|BIT_SPDIF_AUDIO);
 
     private static final String NAME_H2W = "h2w";
     private static final String NAME_USB_AUDIO = "usb_audio";
@@ -288,6 +289,8 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 outDevice = AudioManager.DEVICE_OUT_DGTL_DOCK_HEADSET;
             } else if (headset == BIT_HDMI_AUDIO) {
                 outDevice = AudioManager.DEVICE_OUT_HDMI;
+            } else if (headset == BIT_SPDIF_AUDIO) {
+                outDevice = AudioManager.DEVICE_OUT_SPDIF;
             } else {
                 Slog.e(TAG, "setDeviceState() invalid headset type: "+headset);
                 return;
@@ -425,7 +428,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             }
 
 	    // Monitor DP
-	    uei = new UEventInfo(NAME_DP, BIT_HDMI_AUDIO, 0, 0);
+	    uei = new UEventInfo(NAME_DP, BIT_SPDIF_AUDIO, 0, 0);
 	    if (uei.checkSwitchExists()) {
 		retVal.add(uei);
 	    } else {
