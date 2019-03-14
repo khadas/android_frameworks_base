@@ -1565,7 +1565,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 case SHORT_PRESS_POWER_GO_TO_SLEEP:
                     String product = SystemProperties.get("ro.target.product","");
                     if (!TextUtils.isEmpty(product) && (product.equals("box") || product.equals("atv"))) {
-                        int powerKey = SystemProperties.getInt("persist.vendor.power_key",0);
+                        int powerKey = SystemProperties.getInt("persist.sys.power_key",0);
                         Slog.i("ROCKCHIP", "powerKey = " + powerKey);
                         if (powerKey == 1) {
                             shutDown();
