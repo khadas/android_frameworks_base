@@ -165,6 +165,10 @@ public class KeyStore {
     }
 
     public State state(int userId) {
+        if(mBinder == null ){
+            Log.w(TAG, "mBinder is null,cannot connect to keystore");
+            return State.UNINITIALIZED;
+        }
         final int ret;
         try {
             ret = mBinder.getState(userId);
@@ -237,6 +241,10 @@ public class KeyStore {
     }
 
     public boolean contains(String key, int uid) {
+        if(mBinder == null ){
+            Log.w(TAG, "mBinder is null,cannot connect to keystore");
+            return false;
+        }
         try {
             return mBinder.exist(key, uid) == NO_ERROR;
         } catch (RemoteException e) {
@@ -253,6 +261,10 @@ public class KeyStore {
      * List all entries in the keystore for {@code uid} starting with {@code prefix}.
      */
     public String[] list(String prefix, int uid) {
+        if(mBinder == null ){
+            Log.w(TAG, "mBinder is null,cannot connect to keystore");
+            return null;
+        }
         try {
             return mBinder.list(prefix, uid);
         } catch (RemoteException e) {
