@@ -434,17 +434,28 @@ Frame EglManager::beginFrame(EGLSurface surface) {
     return frame;
 }
 
-void EglManager::damageFrame(const Frame& frame, const SkRect& dirty) {
+/**
+ * Return false, if error.
+ * Otherwise, return true.
+ */
+bool EglManager::damageFrame(const Frame& frame, const SkRect& dirty) {
 #ifdef EGL_KHR_partial_update
     if (EglExtensions.setDamage && mSwapBehavior == SwapBehavior::BufferAge) {
         EGLint rects[4];
         frame.map(dirty, rects);
         if (!eglSetDamageRegionKHR(mEglDisplay, frame.mSurface, rects, 1)) {
+#if 0
             LOG_ALWAYS_FATAL("Failed to set damage region on surface %p, error=%s",
                              (void*)frame.mSurface, eglErrorString());
+#else
+            ALOGW("Failed to set damage region on surface %p, error=%s",
+                    (void*)frame.mSurface, eglErrorString());
+            return false;
+#endif
         }
     }
 #endif
+    return true;
 }
 
 bool EglManager::damageRequiresSwap() {

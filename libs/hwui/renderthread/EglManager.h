@@ -58,7 +58,7 @@ public:
     // Returns true if the current surface changed, false if it was already current
     bool makeCurrent(EGLSurface surface, EGLint* errOut = nullptr, bool force = false);
     Frame beginFrame(EGLSurface surface);
-    void damageFrame(const Frame& frame, const SkRect& dirty);
+    bool damageFrame(const Frame& frame, const SkRect& dirty);
     // If this returns true it is mandatory that swapBuffers is called
     // if damageFrame is called without subsequent calls to damageFrame().
     // See EGL_KHR_partial_update for more information

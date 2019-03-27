@@ -74,7 +74,11 @@ bool SkiaOpenGLPipeline::draw(const Frame& frame, const SkRect& screenDirty, con
                               bool opaque, const LightInfo& lightInfo,
                               const std::vector<sp<RenderNode>>& renderNodes,
                               FrameInfoVisualizer* profiler) {
-    mEglManager.damageFrame(frame, dirty);
+    if ( !(mEglManager.damageFrame(frame, dirty) ) )
+    {
+        ALOGW("failed in damageFrame().");
+        return false;
+    }
 
     SkColorType colorType = getSurfaceColorType();
     // setup surface for fbo0
