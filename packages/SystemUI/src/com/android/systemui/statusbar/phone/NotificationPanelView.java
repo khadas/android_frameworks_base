@@ -2497,8 +2497,22 @@ public class NotificationPanelView extends PanelView implements
             x = getWidth() / 2;
         }
         x = Math.min(rightMost, Math.max(leftMost, x));
-        setVerticalPanelTranslation((int)(x -
-                (mNotificationStackScroller.getLeft() + mNotificationStackScroller.getWidth() / 2)));
+        int translation = (int)(x -
+                (mNotificationStackScroller.getLeft() + mNotificationStackScroller.getWidth() / 2));
+        int translationMost = getWidth() / 2 - mPositionMinSideMargin - mNotificationStackScroller.getWidth() / 2;
+        if (DEBUG) {
+            Log.d("NotificationPanelView","translation " + translation);
+            Log.d("NotificationPanelView","translationMost " + translationMost);
+            Log.d("NotificationPanelView","getWidth() " + getWidth());
+            Log.d("NotificationPanelView","mPositionMinSideMargin " + mPositionMinSideMargin);
+            Log.d("NotificationPanelView","mNotificationStackScroller.getWidth() " + mNotificationStackScroller.getWidth());
+        }
+        if(translation > translationMost){
+            translation = translationMost;
+        }else if(translation < -translationMost){
+            translation = -translationMost;
+        }
+        setVerticalPanelTranslation(translation);
      }
 
     private void resetVerticalPanelPosition() {
