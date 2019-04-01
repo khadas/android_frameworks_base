@@ -29,6 +29,7 @@
 #include <SkColor.h>
 #include <SkPaint.h>
 #include <SkBlendMode.h>
+#include <cutils/properties.h>
 
 namespace android {
 
@@ -642,7 +643,16 @@ void PointerController::updatePointerLocked() {
                         mLocked.lastFrameUpdatedTime = systemTime(SYSTEM_TIME_MONOTONIC);
                         startAnimationLocked();
                     }
-                    mLocked.pointerSprite->setIcon(iter->second);
+                    //rockchip:maybe requestedPointer icon is invalid,we check it first!
+                    char mKeyMouseState[PROPERTY_VALUE_MAX] = {0};
+                    property_get("sys.KeyMouse.mKeyMouseState", mKeyMouseState, "off");
+                    if(iter->second.isValid() && strcmp(mKeyMouseState, "off")==0){
+                            mLocked.pointerSprite->setIcon(iter->second);
+                    } else {
+                            ALOGW("the resource for icon id %d is invalid!", mLocked.requestedPointerType);
+                            mLocked.pointerSprite->setIcon(mLocked.pointerIcon);
+                    }
+                    //mLocked.pointerSprite->setIcon(iter->second);
                 } else {
                     ALOGW("Can't find the resource for icon id %d", mLocked.requestedPointerType);
                     mLocked.pointerSprite->setIcon(mLocked.pointerIcon);
