@@ -7782,6 +7782,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     @Override
     public boolean canDismissBootAnimation() {
+        if("box".equals(SystemProperties.get("ro.target.product","unknown"))) {
+            return mKeyguardDrawComplete;
+        }
         synchronized (mLock) {
             return mKeyguardDrawComplete;
         }
