@@ -80,6 +80,11 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
                 mAddress, mService.getPhysicalAddress(), mDeviceType));
         mService.sendCecCommand(HdmiCecMessageBuilder.buildDeviceVendorIdCommand(
                 mAddress, mService.getVendorId()));
+        /* add one touch play after hdmi plug in and cec initialization */
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildActiveSource(
+                mAddress, mService.getPhysicalAddress()));
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildTextViewOn(
+                mAddress, Constants.ADDR_TV));
         startQueuedActions();
     }
 
@@ -152,10 +157,6 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
     void onHotplug(int portId, boolean connected) {
         assertRunOnServiceThread();
         mCecMessageCache.flushAll();
-        Slog.w(TAG,"onHotplug portId:"+portId +",connected:"+connected);
-        if(connected){
-         mService.touchTv();
-        }
         // We'll not clear mIsActiveSource on the hotplug event to pass CETC 11.2.2-2 ~ 3.
         if (WAKE_ON_HOTPLUG && connected && mService.isPowerStandbyOrTransient()) {
             mService.wakeUp();

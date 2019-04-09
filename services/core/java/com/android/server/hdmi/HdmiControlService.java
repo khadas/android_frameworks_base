@@ -162,17 +162,16 @@ public final class HdmiControlService extends SystemService {
                 case Intent.ACTION_SCREEN_OFF:
                     Log.i(TAG, "HdmiControlBroadcastReceiver SCREEN_OFF");
                     if (isPowerOnOrTransient()) {
-                        //standbyTv();
+                        standbyTv();
                         onStandby(STANDBY_SCREEN_OFF);
                     }
                     break;
                 case Intent.ACTION_SCREEN_ON:
-               //     Log.i(TAG, "HdmiControlBroadcastReceiver 2");
+                    Log.i(TAG, "HdmiControlBroadcastReceiver 2");
                     if (isPowerStandbyOrTransient()) {
                         Log.i(TAG, "HdmiControlBroadcastReceiver SCREEN_ON");
-                        touchTv();
                         onWakeUp();
-                        //touchTv();
+                      // touchTv();
                     }
                     break;
                 case Intent.ACTION_CONFIGURATION_CHANGED:

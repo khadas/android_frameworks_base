@@ -1289,9 +1289,9 @@ public final class PowerManagerService extends SystemService
 
         Trace.traceBegin(Trace.TRACE_TAG_POWER, "goToSleep");
         //FOR CEC standbyTv
-       if("box".equals(SystemProperties.get("ro.target.product",  "unknown"))){
-            String isStandby = SystemProperties.get("persist.sys.cecstanbyen", "1");
-             if(isStandby.equals("1")){
+       //if("box".equals(SystemProperties.get("ro.target.product",  "unknown"))){
+            //String isStandby = SystemProperties.get("persist.sys.cecstanbyen", "1");
+             //if(isStandby.equals("1")){
         	IBinder playBinder = ServiceManager.getService(Context.HDMI_CONTROL_SERVICE);
         	if(playBinder!=null){
         		IHdmiControlService mControlService = IHdmiControlService.Stub.asInterface(playBinder);
@@ -1304,8 +1304,8 @@ public final class PowerManagerService extends SystemService
         		}
                 	}
         	}
-              }
-        }
+           //   }
+        //}
 
         try {
             switch (reason) {
