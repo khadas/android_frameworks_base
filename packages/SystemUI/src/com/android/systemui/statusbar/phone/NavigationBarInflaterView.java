@@ -65,7 +65,6 @@ public class NavigationBarInflaterView extends FrameLayout
     public static final String RECENT = "recent";
     public static final String NAVSPACE = "space";
     public static final String CLIPBOARD = "clipboard";
-    public static final String ROTATE = "rotate";
     public static final String KEY = "key";
     public static final String LEFT = "left";
     public static final String RIGHT = "right";
@@ -415,8 +414,6 @@ public class NavigationBarInflaterView extends FrameLayout
             v = inflater.inflate(R.layout.volume_add, parent, false);
         } else if (VOLUME_SUB.equals(button)) {
             v = inflater.inflate(R.layout.volume_sub, parent, false);
-        } else if (ROTATE.equals(button)) {
-            v = inflater.inflate(R.layout.rotate_suggestion, parent, false);
         } else if (button.startsWith(KEY)) {
             String uri = extractImage(button);
             int code = extractKeycode(button);

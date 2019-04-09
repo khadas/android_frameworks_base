@@ -960,7 +960,6 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         updateButtonLocationOnScreen(getHomeButton(), mHomeButtonBounds);
         updateButtonLocationOnScreen(getRecentsButton(), mRecentsButtonBounds);
         updateButtonLocationOnScreen(getRotateSuggestionButton(), mRotationButtonBounds);
-        getRotateSuggestionButton().setVisibility(View.INVISIBLE);
         mGestureHelper.onLayout(changed, left, top, right, bottom);
         mRecentsOnboarding.setNavBarHeight(getMeasuredHeight());
     }
