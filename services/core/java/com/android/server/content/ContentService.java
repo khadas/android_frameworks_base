@@ -75,6 +75,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import android.os.SystemProperties;
 
 /**
  * {@hide}
@@ -336,7 +337,8 @@ public final class ContentService extends IContentService.Stub {
         final String msg = LocalServices.getService(ActivityManagerInternal.class)
                 .checkContentProviderAccess(uri.getAuthority(), userHandle);
         if (msg != null) {
-            if (targetSdkVersion >= Build.VERSION_CODES.O) {
+            if (targetSdkVersion >= Build.VERSION_CODES.O
+                && !("box".equals(SystemProperties.get("ro.target.product","unkonw")))) {
                 throw new SecurityException(msg);
             } else {
                 if (msg.startsWith("Failed to find provider")) {
