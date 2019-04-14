@@ -69,6 +69,7 @@ import android.util.ArrayMap;
 import android.util.DebugUtils;
 import android.util.DisplayMetrics;
 import android.util.proto.ProtoOutputStream;
+import android.util.Log;
 import android.view.Display;
 
 import com.android.internal.util.HexDump;
@@ -140,6 +141,8 @@ final class ActivityManagerShellCommand extends ShellCommand {
     private boolean mIsLockTask;
 
     final boolean mDumping;
+    private static String sPackage;
+    private static long sTotalTime;
 
     ActivityManagerShellCommand(ActivityManagerService service, boolean dumping) {
         mInterface = service;
@@ -560,9 +563,25 @@ final class ActivityManagerShellCommand extends ShellCommand {
                 }
                 if (result.totalTime >= 0) {
                     pw.println("TotalTime: " + result.totalTime);
+                    if(result.who.flattenToShortString()!= null && result.who.flattenToShortString().equals(sPackage)){
+                        sTotalTime = result.totalTime;
+                    }else{
+                        sTotalTime = 0;
+                    }
+                }
+                if (result.totalTime < 0) {
+                    Log.e("ActivityManagerShellCommand", "qiujian,invalid totalTime:" + result.totalTime + " replace TotalTime:" + sTotalTime);
+                    pw.println("TotalTime: " + sTotalTime);
                 }
                 pw.println("WaitTime: " + (endTime-startTime));
-                pw.println("Complete");
+                if (result.totalTime < 0) {
+                    pw.println("Complete" + " replace totaltime:" + sTotalTime);
+                }else{
+                    pw.println("Complete");
+                    if (result.who != null) {
+                        sPackage = result.who.flattenToShortString();
+                    }
+                }
                 pw.flush();
             }
             mRepeat--;
