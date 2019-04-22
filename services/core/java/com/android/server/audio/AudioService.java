@@ -2759,7 +2759,7 @@ public class AudioService extends IAudioService.Stub
      */
     private boolean isAtv() {
         String product = SystemProperties.get("ro.target.product","");
-        if(product.equals("box") || product.equals("atv")){
+        if(product.equals("box") || product.equals("atv") || product.equals("tablet")){
             return true;
         }
         return false;
