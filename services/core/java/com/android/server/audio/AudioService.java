@@ -748,6 +748,9 @@ public class AudioService extends IAudioService.Stub
             mBitstreamSetting = new AudioSetting(mContext);
             mFixedVolumeDevices = 0;
         }
+        if(isTablet()){
+            mFixedVolumeDevices = 0;
+        }
         int defaultMusicVolume = SystemProperties.getInt("ro.config.media_vol_default", -1);
         if (defaultMusicVolume != -1 &&
                 defaultMusicVolume <= MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC]) {
@@ -2759,7 +2762,18 @@ public class AudioService extends IAudioService.Stub
      */
     private boolean isAtv() {
         String product = SystemProperties.get("ro.target.product","");
-        if(product.equals("box") || product.equals("atv") || product.equals("tablet")){
+        if(product.equals("box") || product.equals("atv")){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @hide
+     */
+    private boolean isTablet() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("tablet")){
             return true;
         }
         return false;
@@ -5042,7 +5056,7 @@ public class AudioService extends IAudioService.Stub
                         index = mIndexMax;
                     }
                     mIndexMap.put(device, index);
-                    if(isAtv()){
+                    if(isAtv() || isTablet()){
                        if(mStreamType == AudioSystem.STREAM_MUSIC){
                           for (int i = 0;i<mIndexMap.size();i++){
                              mIndexMap.put(mIndexMap.keyAt(i), index);
@@ -5373,7 +5387,7 @@ public class AudioService extends IAudioService.Stub
                         streamState.getSettingNameForDevice(device),
                         (streamState.getIndex(device) + 5)/ 10,
                         UserHandle.USER_CURRENT);
-               if(isAtv())
+               if(isAtv() || isTablet())
                   streamState.restoreAllDeviceIndex();
             }
         }
@@ -6488,7 +6502,7 @@ public class AudioService extends IAudioService.Stub
                 }
                 // Television devices without CEC service apply software volume on HDMI output
                 if (isPlatformTelevision() && ((device & AudioSystem.DEVICE_OUT_HDMI) != 0)) {
-                    if(isAtv()){
+                    if(isAtv() || isTablet()){
                         mFixedVolumeDevices = 0;
                     } else {
                         mFixedVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
