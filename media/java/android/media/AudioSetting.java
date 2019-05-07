@@ -47,7 +47,7 @@ public class AudioSetting {
     private static String SPERATOR = ";";
     private final String NONE = "NONE";
 
-    private final String PROPERTY_NAME = "persist.system.audio.setting";
+    private final String PROPERTY_NAME = "persist.sys.audio.setting";
 
     public static final int AUDIO_SETTING_MODE_DECODE = 0;
     public static final int AUDIO_SETTING_MODE_BITSTREAM_AUTO = 1;
