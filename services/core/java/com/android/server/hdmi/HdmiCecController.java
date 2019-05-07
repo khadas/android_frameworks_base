@@ -412,6 +412,7 @@ final class HdmiCecController {
     private List<Integer> pickPollCandidates(int pickStrategy) {
         int strategy = pickStrategy & Constants.POLL_STRATEGY_MASK;
         Predicate<Integer> pickPredicate = null;
+        int CommonUsedCandidates[] = {0x0, 0x3, 0x4, 0x5, 0x8, 0xb, 0xe};
         switch (strategy) {
             case Constants.POLL_STRATEGY_SYSTEM_AUDIO:
                 pickPredicate = mSystemAudioAddressPredicate;
@@ -426,17 +427,17 @@ final class HdmiCecController {
         LinkedList<Integer> pollingCandidates = new LinkedList<>();
         switch (iterationStrategy) {
             case Constants.POLL_ITERATION_IN_ORDER:
-                for (int i = Constants.ADDR_TV; i <= Constants.ADDR_SPECIFIC_USE; ++i) {
-                    if (pickPredicate.test(i)) {
-                        pollingCandidates.add(i);
+                for (int i = Constants.ADDR_TV; i <= CommonUsedCandidates.length - 1; ++i) {
+                    if (pickPredicate.test(CommonUsedCandidates[i])) {
+                        pollingCandidates.add(CommonUsedCandidates[i]);
                     }
                 }
                 break;
             case Constants.POLL_ITERATION_REVERSE_ORDER:
             default:  // The default is reverse order.
-                for (int i = Constants.ADDR_SPECIFIC_USE; i >= Constants.ADDR_TV; --i) {
-                    if (pickPredicate.test(i)) {
-                        pollingCandidates.add(i);
+                for (int i = CommonUsedCandidates.length - 1; i >= Constants.ADDR_TV; --i) {
+                    if (pickPredicate.test(CommonUsedCandidates[i])) {
+                        pollingCandidates.add(CommonUsedCandidates[i]);
                     }
                 }
                 break;
