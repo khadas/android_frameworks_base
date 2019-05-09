@@ -1785,7 +1785,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (!mService.isControlEnabled()) {
             return;
         }
-        if (!initiatedByCec && mAutoDeviceOff) {
+        if (!initiatedByCec
+            && mAutoDeviceOff
+            && (standbyAction == HdmiControlService.STANDBY_SHUTDOWN
+            || standbyAction != HdmiControlService.STANDBY_SCREEN_OFF)) {
+            /*send <Standby> when shutdown, not suspend*/
             mService.sendCecCommand(HdmiCecMessageBuilder.buildStandby(
                     mAddress, Constants.ADDR_BROADCAST));
         }
