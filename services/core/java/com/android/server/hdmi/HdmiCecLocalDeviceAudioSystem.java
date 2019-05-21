@@ -18,7 +18,11 @@ package com.android.server.hdmi;
 
 import android.hardware.hdmi.HdmiDeviceInfo;
 import android.os.SystemProperties;
-
+import android.hardware.hdmi.IHdmiControlCallback;
+import java.util.List;
+import android.hardware.hdmi.HdmiControlManager;
+import com.android.server.hdmi.HdmiAnnotations.ServiceThreadOnly;
+import com.android.internal.annotations.GuardedBy;
 /**
  * Represent a logical device of type {@link HdmiDeviceInfo#DEVICE_AUDIO_SYSTEM} residing in
  * Android system.
@@ -54,5 +58,26 @@ public class HdmiCecLocalDeviceAudioSystem extends HdmiCecLocalDevice {
         assertRunOnServiceThread();
         SystemProperties.set(Constants.PROPERTY_PREFERRED_ADDRESS_AUDIO_SYSTEM,
                 String.valueOf(addr));
+    }
+
+    @ServiceThreadOnly
+    void doManualPortSwitching(int portId, IHdmiControlCallback callback) {
+        return;
+        //ToDo
+    }
+    @GuardedBy("mLock")
+    List<HdmiDeviceInfo> getSafeCecDevicesLocked() {
+        /*
+        ArrayList<HdmiDeviceInfo> infoList = new ArrayList<>();
+        for (HdmiDeviceInfo info : mSafeAllDeviceInfos) {
+            infoList.add(info);
+        }
+        return infoList;
+        */
+        return null;
+    }
+
+    int getPortId(int physicalAddress) {
+        return mService.pathToPortId(physicalAddress);
     }
 }
