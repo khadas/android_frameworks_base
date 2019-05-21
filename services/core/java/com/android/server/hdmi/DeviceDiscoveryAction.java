@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * Feature action that handles device discovery sequences.
- * Device discovery is launched when TV device is woken from "Standby" state
+ * Device discovery is launched when device is woken from "Standby" state
  * or enabled "Control for Hdmi" from disabled state.
  *
  * <p>Device discovery goes through the following steps.
@@ -89,6 +89,8 @@ final class DeviceDiscoveryAction extends HdmiCecFeatureAction {
     private final DeviceDiscoveryCallback mCallback;
     private int mProcessedDeviceCount = 0;
     private int mTimeoutRetry = 0;
+    private boolean mIsTvDevice = localDevice().mService.isTvDevice();
+    private boolean mIsAudioSystemDevice = localDevice().mService.isAudioSystemDevice();
 
     /**
      * Constructor.
@@ -265,16 +267,21 @@ final class DeviceDiscoveryAction extends HdmiCecFeatureAction {
         current.mPhysicalAddress = HdmiUtils.twoBytesToInt(params);
         current.mPortId = getPortId(current.mPhysicalAddress);
         current.mDeviceType = params[2] & 0xFF;
+        current.mDisplayName = HdmiUtils.getDefaultDeviceName(current.mDeviceType);
 
-        tv().updateCecSwitchInfo(current.mLogicalAddress, current.mDeviceType,
-                    current.mPhysicalAddress);
-
+        // This is to manager CEC device separately in case they don't have address.
+        if (mIsTvDevice) {
+            tv().updateCecSwitchInfo(current.mLogicalAddress, current.mDeviceType,
+                current.mPhysicalAddress);
+        }
         increaseProcessedDeviceCount();
         checkAndProceedStage();
     }
 
     private int getPortId(int physicalAddress) {
-        return tv().getPortId(physicalAddress);
+        return mIsTvDevice ? tv().getPortId(physicalAddress)
+            : (mIsAudioSystemDevice ? audioSystem().getPortId(physicalAddress)
+            : Constants.INVALID_PORT_ID);
     }
 
     private void handleSetOsdName(HdmiCecMessage cmd) {
@@ -345,7 +352,9 @@ final class DeviceDiscoveryAction extends HdmiCecFeatureAction {
         mCallback.onDeviceDiscoveryDone(result);
         finish();
         // Process any commands buffered while device discovery action was in progress.
-        tv().processAllDelayedMessages();
+        if (mIsTvDevice) {
+            tv().processAllDelayedMessages();
+        }
     }
 
     private void checkAndProceedStage() {
