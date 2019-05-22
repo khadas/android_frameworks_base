@@ -1722,7 +1722,8 @@ class ActivityStack<T extends StackWindowController> extends ConfigurationContai
     }
 
     boolean isTopStackOnDisplay() {
-        return getDisplay().isTopStack(this);
+        final ActivityDisplay display = getDisplay();
+        return display!=null && display.isTopStack(this);
     }
 
     boolean isTopActivityVisible() {
