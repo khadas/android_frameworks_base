@@ -24,6 +24,7 @@ import static com.android.server.hdmi.Constants.OPTION_MHL_ENABLE;
 import static com.android.server.hdmi.Constants.OPTION_MHL_INPUT_SWITCHING;
 import static com.android.server.hdmi.Constants.OPTION_MHL_POWER_CHARGE;
 import static com.android.server.hdmi.Constants.OPTION_MHL_SERVICE_CONTROL;
+import static com.android.server.power.ShutdownThread.SHUTDOWN_ACTION_PROPERTY;
 
 import android.annotation.Nullable;
 import android.content.BroadcastReceiver;
@@ -145,6 +146,7 @@ public final class HdmiControlService extends SystemService {
         @Override
         public void onReceive(Context context, Intent intent) {
             assertRunOnServiceThread();
+            boolean isReboot = SystemProperties.get(SHUTDOWN_ACTION_PROPERTY).contains("1");
             switch (intent.getAction()) {
                 case Intent.ACTION_SCREEN_OFF:
                     if (isPowerOnOrTransient()) {
@@ -171,7 +173,7 @@ public final class HdmiControlService extends SystemService {
                     }
                     break;
                 case Intent.ACTION_SHUTDOWN:
-                    if (isPowerOnOrTransient()) {
+                    if (isPowerOnOrTransient() && !isReboot) {
                         onStandby(STANDBY_SHUTDOWN);
                     }
                     break;
