@@ -204,7 +204,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         assertRunOnServiceThread();
         List<HdmiPortInfo> ports = mService.getPortInfo();
         for (HdmiPortInfo port : ports) {
-            mArcFeatureEnabled.put(port.getId(), port.isArcSupported());
+            mArcFeatureEnabled.put(port.getId(), isSystemAudioControlFeatureEnabled() ?
+                    port.isArcSupported() : false);
         }
         mService.registerTvInputCallback(mTvInputCallback);
         mService.sendCecCommand(HdmiCecMessageBuilder.buildReportPhysicalAddressCommand(
@@ -803,6 +804,19 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         addAndStartAction(action);
     }
 
+    void turnOnAvrDevice(HdmiDeviceInfo avr) {
+        HdmiCecMessage msg = HdmiCecMessageBuilder.buildSystemAudioModeRequest(
+                mAddress, avr.getLogicalAddress(), avr.getPhysicalAddress(), true);
+        mService.sendCecCommand(msg, new SendMessageCallback() {
+            @Override
+            public void onSendCompleted(int error) {
+                if (error != SendMessageResult.SUCCESS) {
+                    Slog.d(TAG, "send buildSystemAudioModeRequest failed:\n" + error);
+                }
+            }
+        });
+    }
+
     @ServiceThreadOnly
     void onNewAvrAdded(HdmiDeviceInfo avr) {
         assertRunOnServiceThread();
@@ -810,6 +824,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (isConnected(avr.getPortId()) && isArcFeatureEnabled(avr.getPortId())
                 && !hasAction(SetArcTransmissionStateAction.class)) {
             startArcAction(true);
+        }
+        if ((!isSystemAudioControlFeatureEnabled())
+                && isConnectedToArcPort(avr.getPhysicalAddress())
+                && HdmiControlManager.POWER_STATUS_ON != avr.getDevicePowerStatus()) {
+            turnOnAvrDevice(avr);
         }
     }
 
@@ -955,8 +974,14 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         synchronized (mLock) {
             mSystemAudioControlFeatureEnabled = enabled;
         }
-        if (hasSystemAudioDevice()) {
+        /* if (hasSystemAudioDevice()) {
             changeSystemAudioMode(enabled, null);
+        } */
+        List<HdmiPortInfo> ports = mService.getPortInfo();
+        for (HdmiPortInfo port : ports) {
+            if (port.isArcSupported()) {
+                changeArcFeatureEnabled(port.getId(), enabled);
+            }
         }
     }
 
