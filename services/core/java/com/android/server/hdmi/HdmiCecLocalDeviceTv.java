@@ -927,12 +927,17 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     }
 
     private void sendSystemAudioModeRequest(boolean enableSystemAudio) {
+        if (!isSystemAudioControlFeatureEnabled()) {
+            HdmiLogger.debug("Ignoring <System Audio Mode Request> message "
+                    + "because the System Audio Control feature is disabled.");
+            return;
+        }
         if (getAvrDeviceInfo() == null) {
             enableSystemAudio = false;
         }
         HdmiCecMessage command = HdmiCecMessageBuilder.buildSystemAudioModeRequest(
                 mAddress, Constants.ADDR_AUDIO_SYSTEM,
-                enableSystemAudio ? getAvrDeviceInfo().getPhysicalAddress() : mAddress, enableSystemAudio);
+                enableSystemAudio ? getAvrDeviceInfo().getPhysicalAddress() : mAddress, true);
         mService.sendCecCommand(command, new HdmiControlService.SendMessageCallback() {
             @Override
             public void onSendCompleted(int error) {
@@ -1048,12 +1053,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         mService.getAudioManager().setWiredDeviceConnectionState(
                 AudioSystem.DEVICE_OUT_HDMI_ARC,
                 enabled ? 1 : 0, "", "");
-        if (!enabled) {
-            updateAudioManagerForSystemAudio(enabled);
-            mSystemAudioActivated = enabled;
-            mService.writeBooleanSetting(Global.HDMI_SYSTEM_AUDIO_STATUS_ENABLED, enabled);
-            updateAudioDevicesStatus(enabled);
-        }
+        updateAudioManagerForSystemAudio(enabled);
+        mSystemAudioActivated = enabled;
+        mService.writeBooleanSetting(Global.HDMI_SYSTEM_AUDIO_STATUS_ENABLED, enabled);
+        updateAudioDevicesStatus(enabled);
     }
 
     /**
