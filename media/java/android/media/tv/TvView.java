@@ -324,7 +324,9 @@ public class TvView extends ViewGroup {
                 if (DEBUG) {
                     Log.d(TAG, "send tune finished event");
                 }
-                mCallback.onEvent(inputId, EVENT_TUNE_FINISHED, null);
+                if (mCallback != null) {
+                    mCallback.onEvent(inputId, EVENT_TUNE_FINISHED, null);
+                }
             } else {
                 // createSession() was called but the actual session for the given inputId has not
                 // yet been created. Just replace the existing tuning params in the callback with
@@ -1123,9 +1125,11 @@ public class TvView extends ViewGroup {
                 }
                 ensurePositionTracking();
                 if (DEBUG) {
-                    Log.d(TAG, "send tune finished event");
+                    Log.d(TAG, "send tune after creat session event");
                 }
-                mCallback.onEvent(mInputId, EVENT_TUNE_FINISHED, null);
+                if (mCallback != null) {
+                    mCallback.onEvent(mInputId, EVENT_TUNE_FINISHED, null);
+                }
             } else {
                 mSessionCallback = null;
                 if (mCallback != null) {
