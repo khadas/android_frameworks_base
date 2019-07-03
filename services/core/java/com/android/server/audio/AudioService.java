@@ -5056,7 +5056,7 @@ public class AudioService extends IAudioService.Stub
                         index = mIndexMax;
                     }
                     mIndexMap.put(device, index);
-                    if(isAtv() || isTablet()){
+                    if(isAtv() /*|| isTablet()*/){
                        if(mStreamType == AudioSystem.STREAM_MUSIC){
                           for (int i = 0;i<mIndexMap.size();i++){
                              mIndexMap.put(mIndexMap.keyAt(i), index);
