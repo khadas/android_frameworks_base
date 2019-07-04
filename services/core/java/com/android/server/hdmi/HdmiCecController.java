@@ -557,6 +557,9 @@ final class HdmiCecController {
         if (isAcceptableAddress(message.getDestination()) && mService.handleCecCommand(message)) {
             return;
         }
+        if (message.getOpcode() == Constants.MESSAGE_REPORT_SHORT_AUDIO_DESCRIPTOR) {
+            return;
+        }
         // Not handled message, so we will reply it with <Feature Abort>.
         maySendFeatureAbortCommand(message, Constants.ABORT_UNRECOGNIZED_OPCODE);
     }

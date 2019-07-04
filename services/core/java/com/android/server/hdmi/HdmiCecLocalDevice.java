@@ -129,7 +129,7 @@ abstract class HdmiCecLocalDevice {
     // Note that access to this collection should happen in service thread.
     private final ArrayList<HdmiCecFeatureAction> mActions = new ArrayList<>();
 
-    private final Handler mHandler = new Handler () {
+    protected final Handler mHandler = new Handler () {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
