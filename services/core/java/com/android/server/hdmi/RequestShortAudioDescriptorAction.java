@@ -249,6 +249,7 @@ final class RequestShortAudioDescriptorAction extends HdmiCecFeatureAction {
     private void setParameters(String parameters) {
         if (mService != null) {
             mService.getAudioManager().setParameters(parameters);
+            HdmiLogger.debug("Set Audio Format [%s]", parameters);
         }
     }
 
