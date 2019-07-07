@@ -320,8 +320,6 @@ public final class HdmiControlManager {
                 return mHasTvDevice ? new HdmiTvClient(mService) : null;
             case HdmiDeviceInfo.DEVICE_PLAYBACK:
                 return mHasPlaybackDevice ? new HdmiPlaybackClient(mService) : null;
-            case HdmiDeviceInfo.DEVICE_PURE_CEC_SWITCH:
-                return mHasSwitchDevice ? new HdmiSwitchClient(mService) : null;
             default:
                 return null;
         }
@@ -355,23 +353,6 @@ public final class HdmiControlManager {
     @SuppressLint("Doclava125")
     public HdmiTvClient getTvClient() {
         return (HdmiTvClient) getClient(HdmiDeviceInfo.DEVICE_TV);
-    }
-
-    /**
-     * Gets an object that represents an HDMI-CEC logical device of type switch on the system.
-     *
-     * <p>Used to send HDMI control messages to other devices like TV through HDMI bus. It is also
-     * possible to communicate with other logical devices hosted in the same system if the system is
-     * configured to host more than one type of HDMI-CEC logical devices.
-     *
-     * @return {@link HdmiSwitchClient} instance. {@code null} on failure.
-     *
-     * TODO(b/110094868): unhide for Q
-     */
-    @Nullable
-    @SuppressLint("Doclava125")
-    public HdmiSwitchClient getSwitchClient() {
-        return (HdmiSwitchClient) getClient(HdmiDeviceInfo.DEVICE_PURE_CEC_SWITCH);
     }
 
     /**
