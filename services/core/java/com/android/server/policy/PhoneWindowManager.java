@@ -7423,7 +7423,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         );
         }
 
-        if (mForceDefaultOrientation) {
+        /*
+        * property: persist.sys.app.rotation has three cases:
+        * 1.force_land: always show with landscape, if a portrait apk, system will scale up it
+        * 2.middle_port: if a portrait apk, will show in the middle of the screen, left and right will show black
+        * 3.original: original orientation, if a portrait apk, will rotate 270 degree
+        */
+        String rot = SystemProperties.get("persist.sys.app.rotation", "middle_port");
+        if (rot.equals("force_land"))
+            return mLandscapeRotation;
+
+        if (mForceDefaultOrientation && rot.equals("middle_port")) {
             return Surface.ROTATION_0;
         }
 
@@ -7589,6 +7599,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     @Override
     public boolean rotationHasCompatibleMetricsLw(int orientation, int rotation) {
+        if (SystemProperties.get("persist.sys.app.rotation", "middle_port").equals("force_land"))
+            return true;
         switch (orientation) {
             case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
             case ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT:
