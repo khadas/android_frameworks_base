@@ -87,8 +87,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     private boolean mSkipSendRequestSystemAudioMode = false;
 
-    private boolean mSkipHandleSetSystemAudioMode = false;
-
     private Runnable mUnMuteSpeakerRunnable = new Runnable() {
 
         @Override
@@ -958,26 +956,15 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     }
 
     private void sendSystemAudioModeRequest(boolean enableSystemAudio) {
-        if (!isSystemAudioControlFeatureEnabled()) {
-            HdmiLogger.debug("Ignoring <System Audio Mode Request> message "
-                    + "because the System Audio Control feature is disabled.");
-            return;
-        }
         HdmiDeviceInfo avr = getAvrDeviceInfo();
         if (avr == null || mSkipSendRequestSystemAudioMode) {
             enableSystemAudio = false;
             return;
         }
 
-        if (enableSystemAudio) {
-            mSkipHandleSetSystemAudioMode = false;
-        } else {
-            mSkipHandleSetSystemAudioMode = true;
-        }
-
         HdmiCecMessage command = HdmiCecMessageBuilder.buildSystemAudioModeRequest(
                 mAddress, Constants.ADDR_AUDIO_SYSTEM,
-                enableSystemAudio ? avr.getPhysicalAddress() : mAddress, true);
+                enableSystemAudio ? avr.getPhysicalAddress() : mAddress, enableSystemAudio);
         mService.sendCecCommand(command, new HdmiControlService.SendMessageCallback() {
             @Override
             public void onSendCompleted(int error) {
@@ -1342,16 +1329,14 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             HdmiLogger.debug("Ignoring <Set System Audio Mode> message "
                     + "because the System Audio Control feature is disabled: %s", message);
             mService.maySendFeatureAbortCommand(message, Constants.ABORT_REFUSED);
+            mSkipSendRequestSystemAudioMode = false;
+            sendSystemAudioModeRequest(!systemAudioStatus);
             return true;
         }
         if (systemAudioStatus) {
             mSkipSendRequestSystemAudioMode = false;
         } else {
             mSkipSendRequestSystemAudioMode = true;
-        }
-        if (systemAudioStatus && mSkipHandleSetSystemAudioMode) {
-            mSkipHandleSetSystemAudioMode = false;
-            return true;
         }
         removeAction(SystemAudioAutoInitiationAction.class);
         SystemAudioActionFromAvr action = new SystemAudioActionFromAvr(this,
