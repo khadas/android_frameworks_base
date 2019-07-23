@@ -18,4 +18,6 @@
     <!-- The default WebView implementation -->
     <webviewprovider description="Android WebView" packageName="com.android.webview" availableByDefault="true">
     </webviewprovider>
+    <webviewprovider description="Android WebView" packageName="com.google.android.webview" availableByDefault="true">
+    </webviewprovider>
 </webviewproviders>
