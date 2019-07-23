@@ -363,7 +363,7 @@
     </string-array>
 
     <!-- Nav bar button default ordering/layout -->
-    <string name="config_navBarLayout" translatable="false">left;volume_sub,back,home,recent,volume_add,screenshot;right</string>
+    <string name="config_navBarLayout" translatable="false">left;volume_sub,back,home,recent,volume_add,screenshot;space</string>
     <string name="config_navBarLayoutQuickstep" translatable="false">back[1.7WC];home;contextual[1WC]</string>
 
     <bool name="quick_settings_show_full_alarm">false</bool>

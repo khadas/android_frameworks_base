@@ -19,6 +19,6 @@
 <resources>
 
     <!-- Nav bar button default ordering/layout -->
-    <string name="config_navBarLayout" translatable="false">left;volume_sub,back,home,recent,volume_add,screenshot;right[.1W]</string>
+    <string name="config_navBarLayout" translatable="false">left;volume_sub,back,home,recent,volume_add,screenshot;space</string>
 
 </resources>
