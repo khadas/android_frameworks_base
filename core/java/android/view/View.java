@@ -17543,23 +17543,23 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         bounds.right = mScrollX + width - (mUserPaddingRight & inside) - verticalScrollBarGap;
         bounds.bottom = bounds.top + size;
 
-        if (touchBounds == null) {
-            return;
-        }
-        if (touchBounds != bounds) {
-            touchBounds.set(bounds);
-        }
-        final int minTouchTarget = mScrollCache.scrollBarMinTouchTarget;
-        if (touchBounds.height() < minTouchTarget) {
-            final int adjust = (minTouchTarget - touchBounds.height()) / 2;
-            touchBounds.bottom = Math.min(touchBounds.bottom + adjust, mScrollY + height);
-            touchBounds.top = touchBounds.bottom - minTouchTarget;
-        }
-        if (touchBounds.width() < minTouchTarget) {
-            final int adjust = (minTouchTarget - touchBounds.width()) / 2;
-            touchBounds.left -= adjust;
-            touchBounds.right = touchBounds.left + minTouchTarget;
-        }
+        //if (touchBounds == null) {
+        //    return;
+        //}
+        //if (touchBounds != bounds) {
+        //    touchBounds.set(bounds);
+        //}
+        //final int minTouchTarget = mScrollCache.scrollBarMinTouchTarget;
+        //if (touchBounds.height() < minTouchTarget) {
+        //    final int adjust = (minTouchTarget - touchBounds.height()) / 2;
+        //    touchBounds.bottom = Math.min(touchBounds.bottom + adjust, mScrollY + height);
+        //    touchBounds.top = touchBounds.bottom - minTouchTarget;
+        //}
+        //if (touchBounds.width() < minTouchTarget) {
+        //    final int adjust = (minTouchTarget - touchBounds.width()) / 2;
+        //    touchBounds.left -= adjust;
+        //    touchBounds.right = touchBounds.left + minTouchTarget;
+        //}
     }
 
     private void getVerticalScrollBarBounds(@Nullable Rect bounds, @Nullable Rect touchBounds) {
@@ -17609,28 +17609,28 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
         bounds.right = bounds.left + size;
         bounds.bottom = mScrollY + height - (mUserPaddingBottom & inside);
 
-        if (touchBounds == null) {
-            return;
-        }
-        if (touchBounds != bounds) {
-            touchBounds.set(bounds);
-        }
-        final int minTouchTarget = mScrollCache.scrollBarMinTouchTarget;
-        if (touchBounds.width() < minTouchTarget) {
-            final int adjust = (minTouchTarget - touchBounds.width()) / 2;
-            if (verticalScrollbarPosition == SCROLLBAR_POSITION_RIGHT) {
-                touchBounds.right = Math.min(touchBounds.right + adjust, mScrollX + width);
-                touchBounds.left = touchBounds.right - minTouchTarget;
-            } else {
-                touchBounds.left = Math.max(touchBounds.left + adjust, mScrollX);
-                touchBounds.right = touchBounds.left + minTouchTarget;
-            }
-        }
-        if (touchBounds.height() < minTouchTarget) {
-            final int adjust = (minTouchTarget - touchBounds.height()) / 2;
-            touchBounds.top -= adjust;
-            touchBounds.bottom = touchBounds.top + minTouchTarget;
-        }
+       // if (touchBounds == null) {
+       //     return;
+       // }
+       // if (touchBounds != bounds) {
+       //     touchBounds.set(bounds);
+       // }
+       // final int minTouchTarget = mScrollCache.scrollBarMinTouchTarget;
+       // if (touchBounds.width() < minTouchTarget) {
+       //     final int adjust = (minTouchTarget - touchBounds.width()) / 2;
+       //     if (verticalScrollbarPosition == SCROLLBAR_POSITION_RIGHT) {
+       //         touchBounds.right = Math.min(touchBounds.right + adjust, mScrollX + width);
+       //         touchBounds.left = touchBounds.right - minTouchTarget;
+       //     } else {
+       //         touchBounds.left = Math.max(touchBounds.left + adjust, mScrollX);
+       //         touchBounds.right = touchBounds.left + minTouchTarget;
+       //     }
+       // }
+       // if (touchBounds.height() < minTouchTarget) {
+       //     final int adjust = (minTouchTarget - touchBounds.height()) / 2;
+       //     touchBounds.top -= adjust;
+       //     touchBounds.bottom = touchBounds.top + minTouchTarget;
+       // }
     }
 
     /**
