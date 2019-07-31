@@ -1101,7 +1101,7 @@ final class SystemServiceRegistry {
 
                     } catch (ServiceNotFoundException e) {
                         onServiceNotFound(e);
-
+                        newState = ContextImpl.STATE_READY; // makesure, this process can check later
                     } finally {
                         synchronized (cache) {
                             cache[mCacheIndex] = service;
