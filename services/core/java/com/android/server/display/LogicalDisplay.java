@@ -156,6 +156,24 @@ final class LogicalDisplay {
                 mInfo.physicalYDpi = mOverrideDisplayInfo.physicalYDpi;
             }
         }
+        if(mDisplayId!=Display.DEFAULT_DISPLAY){
+                String rotation = SystemProperties.get("persist.sys.rotation.einit","0");
+                if(Integer.valueOf(rotation)%2!=0) {
+
+
+                    mInfo.appWidth = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.appHeight = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.logicalWidth = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.logicalHeight=mPrimaryDisplayDeviceInfo.width;
+
+                }else{
+                    mInfo.appWidth = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.appHeight = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.logicalWidth = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.logicalHeight=mPrimaryDisplayDeviceInfo.height;
+                }
+            }
+
         return mInfo;
     }
 
@@ -296,6 +314,24 @@ final class LogicalDisplay {
 
             mPrimaryDisplayDeviceInfo = deviceInfo;
             mInfo = null;
+            if(mDisplayId!=Display.DEFAULT_DISPLAY){
+                String rotation = SystemProperties.get("persist.sys.rotation.einit","0");
+                if(Integer.valueOf(rotation)%2!=0) {
+
+
+                    mBaseDisplayInfo.appWidth = mPrimaryDisplayDeviceInfo.height;
+                    mBaseDisplayInfo.appHeight = mPrimaryDisplayDeviceInfo.width;
+                    mBaseDisplayInfo.logicalWidth = mPrimaryDisplayDeviceInfo.height;
+                    mBaseDisplayInfo.logicalHeight=mPrimaryDisplayDeviceInfo.width;
+
+                }else{
+                    mBaseDisplayInfo.appWidth = mPrimaryDisplayDeviceInfo.width;
+                    mBaseDisplayInfo.appHeight = mPrimaryDisplayDeviceInfo.height;
+                    mBaseDisplayInfo.logicalWidth = mPrimaryDisplayDeviceInfo.width;
+                    mBaseDisplayInfo.logicalHeight=mPrimaryDisplayDeviceInfo.height;
+                }
+            }
+
         }
     }
 
