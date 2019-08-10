@@ -263,6 +263,7 @@ import android.view.animation.AnimationSet;
 import android.view.animation.AnimationUtils;
 import android.view.autofill.AutofillManagerInternal;
 import android.view.inputmethod.InputMethodManagerInternal;
+import android.provider.Settings.SettingNotFoundException;
 
 import com.android.internal.R;
 import com.android.internal.accessibility.AccessibilityShortcutController;
@@ -7422,20 +7423,34 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             ? "USER_ROTATION_LOCKED" : "")
                         );
         }
+		
+		try{  
+			int screenchange = Settings.System.getInt(mContext.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION); 
+			if(screenchange == 1){
+				if (mForceDefaultOrientation) {
+					return Surface.ROTATION_0;
+				}
+			}
+			else{
+				/*
+				* property: persist.sys.app.rotation has three cases:
+				* 1.force_land: always show with landscape, if a portrait apk, system will scale up it
+				* 2.middle_port: if a portrait apk, will show in the middle of the screen, left and right will show black
+				* 3.original: original orientation, if a portrait apk, will rotate 270 degree
+				*/
+				String rot = SystemProperties.get("persist.sys.app.rotation", "middle_port");
+				if (rot.equals("force_land"))
+					return mLandscapeRotation;
 
-        /*
-        * property: persist.sys.app.rotation has three cases:
-        * 1.force_land: always show with landscape, if a portrait apk, system will scale up it
-        * 2.middle_port: if a portrait apk, will show in the middle of the screen, left and right will show black
-        * 3.original: original orientation, if a portrait apk, will rotate 270 degree
-        */
-        String rot = SystemProperties.get("persist.sys.app.rotation", "middle_port");
-        if (rot.equals("force_land"))
-            return mLandscapeRotation;
-
-        if (mForceDefaultOrientation && rot.equals("middle_port")) {
-            return Surface.ROTATION_0;
-        }
+				if (mForceDefaultOrientation && rot.equals("middle_port")) {
+					return Surface.ROTATION_0;
+				}
+			}			
+		}  
+		catch (SettingNotFoundException e){  
+			// TODO Auto-generated catch block  
+			e.printStackTrace();  
+		} 
 
         synchronized (mLock) {
             int sensorRotation = mOrientationListener.getProposedRotation(); // may be -1
@@ -7599,8 +7614,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     @Override
     public boolean rotationHasCompatibleMetricsLw(int orientation, int rotation) {
-        if (SystemProperties.get("persist.sys.app.rotation", "middle_port").equals("force_land"))
-            return true;
+		try{  
+			int screenchange = Settings.System.getInt(mContext.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION); 
+			if(screenchange == 0){
+				if (SystemProperties.get("persist.sys.app.rotation", "middle_port").equals("force_land"))
+					return true;
+			}
+		}  
+		catch (SettingNotFoundException e){  
+			// TODO Auto-generated catch block
+			e.printStackTrace();  
+		}
         switch (orientation) {
             case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
             case ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT:
