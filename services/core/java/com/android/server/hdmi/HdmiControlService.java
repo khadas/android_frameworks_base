@@ -212,7 +212,7 @@ public final class HdmiControlService extends SystemService {
             new ArrayList<>();
 
     @GuardedBy("mLock")
-    private InputChangeListenerRecord mInputChangeListenerRecord;
+    private InputChangeListenerRecord mInputChangeListenerRecord = null;
 
     @GuardedBy("mLock")
     private HdmiRecordListenerRecord mRecordListenerRecord;
@@ -1499,6 +1499,15 @@ public final class HdmiControlService extends SystemService {
         public void setInputChangeListener(final IHdmiInputChangeListener listener) {
             enforceAccessPermission();
             HdmiControlService.this.setInputChangeListener(listener);
+            runOnServiceThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (tv() != null) {
+                        tv().processAllDelayedMessages();
+                        HdmiLogger.debug("process All Delayed Message when set InputChangeListener");
+                    }
+                }
+            });
         }
 
         @Override
@@ -1933,6 +1942,12 @@ public final class HdmiControlService extends SystemService {
                 Slog.w(TAG, "Listener already died");
                 return;
             }
+        }
+    }
+
+    public boolean isInputChangeListenerReady() {
+        synchronized (mLock) {
+            return (mInputChangeListenerRecord != null);
         }
     }
 
