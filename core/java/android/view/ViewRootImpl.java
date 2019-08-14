@@ -7101,7 +7101,7 @@ public final class ViewRootImpl implements ViewParent,
         }
 
         if (stage != null) {
-            handleWindowFocusChanged();
+            //handleWindowFocusChanged();
             stage.deliver(q);
         } else {
             finishInputEvent(q);
