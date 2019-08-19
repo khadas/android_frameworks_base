@@ -325,15 +325,9 @@ class AppErrors {
     }
 
     private void killAppImmediateLocked(ProcessRecord app, String reason, String killReason) {
-<<<<<<< HEAD
         app.setCrashing(false);
         app.crashingReport = null;
         app.setNotResponding(false);
-=======
-        app.crashing = false;
-        app.crashingReport = null;
-        app.notResponding = false;
->>>>>>> 874c974... DO NOT MERGE - Kill apps outright for API contract violations
         app.notRespondingReport = null;
         if (app.pid > 0 && app.pid != MY_PID) {
             handleAppCrashLocked(app, reason,

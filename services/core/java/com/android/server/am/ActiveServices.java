@@ -3949,13 +3949,8 @@ public final class ActiveServices {
 
     void serviceForegroundCrash(ProcessRecord app, CharSequence serviceRecord) {
         mAm.crashApplication(app.uid, app.pid, app.info.packageName, app.userId,
-<<<<<<< HEAD
                 "Context.startForegroundService() did not then call Service.startForeground(): "
                     + serviceRecord, false /*force*/);
-=======
-                "Context.startForegroundService() did not then call Service.startForeground()",
-                false /*force*/);
->>>>>>> 874c974... DO NOT MERGE - Kill apps outright for API contract violations
     }
 
     void scheduleServiceTimeoutLocked(ProcessRecord proc) {

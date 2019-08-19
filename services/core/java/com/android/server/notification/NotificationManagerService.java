@@ -904,22 +904,12 @@ public class NotificationManagerService extends SystemService {
         }
 
         @Override
-<<<<<<< HEAD
         public void onNotificationError(int callingUid, int callingPid, String pkg, String tag,
                 int id, int uid, int initialPid, String message, int userId) {
             final boolean fgService;
             synchronized (mNotificationLock) {
                 NotificationRecord r = findNotificationLocked(pkg, tag, id, userId);
                 fgService = r != null && (r.getNotification().flags & FLAG_FOREGROUND_SERVICE) != 0;
-=======
-        public void onNotificationError(int callingUid, int callingPid, String pkg, String tag, int id,
-                int uid, int initialPid, String message, int userId) {
-            final boolean fgService;
-            synchronized (mNotificationLock) {
-                NotificationRecord r = findNotificationLocked(pkg, tag, id, userId);
-                fgService = r != null
-                        && (r.getNotification().flags&Notification.FLAG_FOREGROUND_SERVICE) != 0;
->>>>>>> 874c974... DO NOT MERGE - Kill apps outright for API contract violations
             }
             cancelNotification(callingUid, callingPid, pkg, tag, id, 0, 0, false, userId,
                     REASON_ERROR, null);
