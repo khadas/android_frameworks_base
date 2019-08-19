@@ -377,8 +377,9 @@ bool EglManager::makeCurrent(EGLSurface surface, EGLint* errOut) {
             ALOGW("Failed to make current on surface %p, error=%s", (void*)surface,
                   egl_error_str(*errOut));
         } else {
-            LOG_ALWAYS_FATAL("Failed to make current on surface %p, error=%s", (void*)surface,
-                             eglErrorString());
+            //LOG_ALWAYS_FATAL("Failed to make current on surface %p, error=%s", (void*)surface,
+            //                 eglErrorString());
+            ALOGE("Failed to make current on surface %p, error=%s", (void*)surface, eglErrorString());
         }
     }
     mCurrentSurface = surface;
