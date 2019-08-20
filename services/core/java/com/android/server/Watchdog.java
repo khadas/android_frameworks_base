@@ -93,6 +93,7 @@ public class Watchdog extends Thread {
         "com.droidlogic.tvinput",
         "com.android.tv",
         "/vendor/bin/hw/android.hardware.tv.input@1.0-service",
+        "/vendor/bin/hdmicecd",
     };
 
     public static final List<String> HAL_INTERFACES_OF_INTEREST = Arrays.asList(
