@@ -108,6 +108,7 @@ class TvInputHardwareManager implements TvInputHal.Callback {
             handleVolumeChange(context, intent);
         }
     };
+    private Runnable mHandleAudioSinkUpdatedRunnable;
     private IAudioService mAudioService;
     private AudioRoutesInfo mCurAudioRoutesInfo;
     final IAudioRoutesObserver.Stub mAudioRoutesObserver = new IAudioRoutesObserver.Stub() {
@@ -116,13 +117,24 @@ class TvInputHardwareManager implements TvInputHal.Callback {
             if ((newRoutes.mainType != mCurAudioRoutesInfo.mainType) ||
                         (!newRoutes.toString().equals(mCurAudioRoutesInfo.toString()))) {
                 mCurAudioRoutesInfo = newRoutes;
-                synchronized (mLock) {
-                    for (int i = 0; i < mConnections.size(); ++i) {
-                        TvInputHardwareImpl impl = mConnections.valueAt(i).getHardwareImplLocked();
-                        if (impl != null) {
-                            impl.handleAudioSinkUpdated();
+                mHandler.removeCallbacks(mHandleAudioSinkUpdatedRunnable);
+                mHandleAudioSinkUpdatedRunnable = new Runnable() {
+                    public void run() {
+                        synchronized (mLock) {
+                            for (int i = 0; i < mConnections.size(); ++i) {
+                                TvInputHardwareImpl impl = mConnections.valueAt(i).getHardwareImplLocked();
+                                if (impl != null) {
+                                    impl.handleAudioSinkUpdated();
+                                }
+                            }
                         }
                     }
+                };
+                try {
+                    mHandler.postDelayed(mHandleAudioSinkUpdatedRunnable,
+                            mAudioService.isBluetoothA2dpOn() ? 2000 : 0);
+                } catch (RemoteException e) {
+                    e.printStackTrace();
                 }
             }
         }
