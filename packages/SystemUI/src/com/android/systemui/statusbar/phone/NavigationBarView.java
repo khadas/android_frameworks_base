@@ -132,6 +132,7 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
     private KeyButtonDrawable mAccessibilityIcon;
     private KeyButtonDrawable mVolumeAddIcon;
     private KeyButtonDrawable mVolumeSubIcon;
+	private KeyButtonDrawable mPowerIcon;
     private KeyButtonDrawable mScreenshotIcon;
     private TintedKeyButtonDrawable mRotateSuggestionIcon;
 
@@ -310,6 +311,7 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         mButtonDispatchers.put(R.id.screenshot, new ButtonDispatcher(R.id.screenshot));
         mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
         mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
+		mButtonDispatchers.put(R.id.soft_shutdown, new ButtonDispatcher(R.id.soft_shutdown));
         mButtonDispatchers.put(R.id.rotate_suggestion,
                 new ButtonDispatcher(R.id.rotate_suggestion));
         mButtonDispatchers.put(R.id.menu_container,
@@ -425,6 +427,9 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         return mButtonDispatchers.get(R.id.volume_sub);
     }
 
+    public ButtonDispatcher getPowerButton() {
+        return mButtonDispatchers.get(R.id.soft_shutdown);
+    }
     public ButtonDispatcher getRecentsButton() {
         return mButtonDispatchers.get(R.id.recent_apps);
     }
@@ -520,6 +525,7 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
 
             mVolumeAddIcon = getDrawable(lightContext, darkContext, R.drawable.ic_sysbar_volume_add_button);
             mVolumeSubIcon = getDrawable(lightContext, darkContext, R.drawable.ic_sysbar_volume_sub_button);
+			mPowerIcon = getDrawable(lightContext, darkContext, R.drawable.ic_sysbar_soft_shutdown_button);
             mScreenshotIcon = getDrawable(lightContext, darkContext, R.drawable.ic_sysbar_capture_button);
 
             updateRotateSuggestionButtonStyle(mRotateBtnStyle, false);
@@ -657,6 +663,7 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
         getBackButton().setImageDrawable(backIcon);
         getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
         getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
+		getPowerButton().setImageDrawable(mPowerIcon);
         getScreenshotButton().setImageDrawable(mScreenshotIcon);
 
         updateRecentsIcon();

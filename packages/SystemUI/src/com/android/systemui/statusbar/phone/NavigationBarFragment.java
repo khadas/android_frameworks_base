@@ -794,6 +794,9 @@ public class NavigationBarFragment extends Fragment implements Callbacks {
             screenshotButton.setVisibility(View.GONE);
         }
 
+        ButtonDispatcher powerButton = mNavigationBarView.getPowerButton();
+        powerButton.setOnClickListener(this:: powerClick);
+        powerButton.setOnTouchListener(this:: powerTouch);
         ButtonDispatcher volumeAddButton=mNavigationBarView.getVolumeAddButton();
         ButtonDispatcher volumeSubButton=mNavigationBarView.getVolumeSubButton();
         boolean isShowVolumeButton="true".equals(SystemProperties.get("ro.rk.systembar.voiceicon","true"));
@@ -994,11 +997,22 @@ public class NavigationBarFragment extends Fragment implements Callbacks {
         return false;
     }
 
+    private boolean powerTouch(View v, MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+            Intent intent=new Intent("com.google.systemui.poweroff");
+            getContext().sendBroadcast(intent);
+        }
+        return false;
+    }
     private void screenshotClick(View v) {
         Intent intent=new Intent("android.intent.action.SCREENSHOT");
         getContext().sendBroadcast(intent);
     }
 
+    private void powerClick(View v) {
+        Intent intent=new Intent("com.google.systemui.poweroff");
+        getContext().sendBroadcast(intent);		
+    }
     private void onAccessibilityClick(View v) {
         mAccessibilityManager.notifyAccessibilityButtonClicked();
     }
