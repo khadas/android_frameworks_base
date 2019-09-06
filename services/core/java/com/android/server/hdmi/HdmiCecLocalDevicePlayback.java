@@ -86,8 +86,15 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
         boolean isOneTouchPlayEnabled =
             mService.readBooleanSetting("hdmi_control_one_touch_play_enabled", true);
         if (isOneTouchPlayEnabled) {
-            oneTouchPlay(null);
-            HdmiLogger.debug("trigger One Touch Play when Address Allocated.");
+            Slog.d(TAG, "onAddressAllocated trigger One Touch Play.");
+            oneTouchPlay(new IHdmiControlCallback.Stub() {
+                    @Override
+                    public void onComplete(int result) {
+                        if (result != HdmiControlManager.RESULT_SUCCESS) {
+                            Slog.w(TAG, "Failed to complete 'one touch play' after retrying for 20s. result=" + result);
+                        }
+                    }
+                });
         }
     }
 
@@ -113,9 +120,8 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
         List<OneTouchPlayAction> actions = getActions(OneTouchPlayAction.class);
         if (!actions.isEmpty()) {
             Slog.i(TAG, "oneTouchPlay already in progress");
-            //actions.get(0).addCallback(callback);
-            //return;
-            removeAction(OneTouchPlayAction.class);
+            actions.get(0).addCallback(callback);
+            return;
         }
         OneTouchPlayAction action = OneTouchPlayAction.create(this, Constants.ADDR_TV,
                 callback);
