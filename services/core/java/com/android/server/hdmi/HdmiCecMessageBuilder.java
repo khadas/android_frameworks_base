@@ -120,6 +120,18 @@ public class HdmiCecMessageBuilder {
     }
 
     /**
+     * Build &lt;Get Menu Language &gt; command.
+     *
+     * <p>This is a  message sent to the tv device on the bus.
+     *
+     * @param src source address of command
+     * @return newly created {@link HdmiCecMessage}
+     */
+    static HdmiCecMessage buildGetMenuLanguageCommand(int src) {
+        return buildCommand(src, Constants.ADDR_TV, Constants.MESSAGE_GET_MENU_LANGUAGE);
+    }
+
+    /**
      * Build &lt;Set Osd Name &gt; command.
      *
      * @param src source address of command

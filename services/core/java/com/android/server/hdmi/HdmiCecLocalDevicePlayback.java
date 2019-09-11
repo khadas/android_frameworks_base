@@ -80,6 +80,8 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
                 mAddress, mService.getPhysicalAddress(), mDeviceType));
         mService.sendCecCommand(HdmiCecMessageBuilder.buildDeviceVendorIdCommand(
                 mAddress, mService.getVendorId()));
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildGetMenuLanguageCommand(
+                mAddress));
         startQueuedActions();
         boolean isOneTouchPlayEnabled =
             mService.readBooleanSetting("hdmi_control_one_touch_play_enabled", true);
