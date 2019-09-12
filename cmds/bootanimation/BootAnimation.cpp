@@ -68,14 +68,14 @@
 
 namespace android {
 
-static const char OEM_BOOTANIMATION_FILE[] = "/oem/media/bootanimation.zip";
+static const char OEM_BOOTANIMATION_FILE[] = "/odm/media/bootanimation.zip";
 static const char PRODUCT_BOOTANIMATION_DARK_FILE[] = "/product/media/bootanimation-dark.zip";
 static const char PRODUCT_BOOTANIMATION_FILE[] = "/product/media/bootanimation.zip";
 static const char SYSTEM_BOOTANIMATION_FILE[] = "/system/media/bootanimation.zip";
 static const char APEX_BOOTANIMATION_FILE[] = "/apex/com.android.bootanimation/etc/bootanimation.zip";
 static const char PRODUCT_ENCRYPTED_BOOTANIMATION_FILE[] = "/product/media/bootanimation-encrypted.zip";
 static const char SYSTEM_ENCRYPTED_BOOTANIMATION_FILE[] = "/system/media/bootanimation-encrypted.zip";
-static const char OEM_SHUTDOWNANIMATION_FILE[] = "/oem/media/shutdownanimation.zip";
+static const char OEM_SHUTDOWNANIMATION_FILE[] = "/odm/media/shutdownanimation.zip";
 static const char PRODUCT_SHUTDOWNANIMATION_FILE[] = "/product/media/shutdownanimation.zip";
 static const char SYSTEM_SHUTDOWNANIMATION_FILE[] = "/system/media/shutdownanimation.zip";
 
@@ -105,10 +105,10 @@ static const int TEXT_MISSING_VALUE = INT_MIN;
 static const char EXIT_PROP_NAME[] = "service.bootanim.exit";
 static const int ANIM_ENTRY_NAME_MAX = 256;
 static constexpr size_t TEXT_POS_LEN_MAX = 16;
-
+static const char LOOP_COMPLETED_PROP_NAME[] = "sys.anim_loop.completed";
 // ---------------------------------------------------------------------------
 
-BootAnimation::BootAnimation(sp<Callbacks> callbacks)
+BootAnimation::BootAnimation(sp<Callbacks> callbacks,bool shutdown)
         : Thread(false), mClockEnabled(true), mTimeIsAccurate(false),
         mTimeFormat12Hour(false), mTimeCheckThread(nullptr), mCallbacks(callbacks) {
     mSession = new SurfaceComposerClient();
@@ -121,6 +121,20 @@ BootAnimation::BootAnimation(sp<Callbacks> callbacks)
     }
     ALOGD("%sAnimationStartTiming start time: %" PRId64 "ms", mShuttingDown ? "Shutdown" : "Boot",
             elapsedRealtime());
+    mShutdown = shutdown;
+    mReverseAxis = false;
+    if(mShutdown){
+        mDisplayToken = SurfaceComposerClient::getInternalDisplayToken();
+        DisplayInfo dinfo;
+        status_t status = SurfaceComposerClient::getDisplayInfo(mDisplayToken, &dinfo);
+        if (status == OK) {
+            ALOGD("DISPLAY,W-H: %d-%d, ori: %d", dinfo.w, dinfo.h, dinfo.orientation);
+            if(dinfo.orientation==1 || dinfo.orientation==3 )
+                mReverseAxis=true;
+            else
+                mReverseAxis=false;
+        }
+    }
 }
 
 BootAnimation::~BootAnimation() {
@@ -287,8 +301,14 @@ status_t BootAnimation::readyToRun() {
         return -1;
 
     // create the native surface
+    int curWidth = dinfo.w;
+    int curHeight = dinfo.h;
+    if(mShutdown && mReverseAxis){
+        curWidth = dinfo.h;
+        curHeight = dinfo.w;
+    }
     sp<SurfaceControl> control = session()->createSurface(String8("BootAnimation"),
-            dinfo.w, dinfo.h, PIXEL_FORMAT_RGB_565);
+            /*dinfo.w*/curWidth, /*dinfo.h*/curHeight, PIXEL_FORMAT_RGB_565);
 
     SurfaceComposerClient::Transaction t;
     t.setLayer(control, 0x40000000)
@@ -389,7 +409,7 @@ void BootAnimation::findBootAnimationFile() {
     static const char* shutdownFiles[] =
         {PRODUCT_SHUTDOWNANIMATION_FILE, OEM_SHUTDOWNANIMATION_FILE, SYSTEM_SHUTDOWNANIMATION_FILE, ""};
 
-    for (const char* f : (!mShuttingDown ? bootFiles : shutdownFiles)) {
+    for (const char* f : (/*!mShuttingDown*/!mShutdown ? bootFiles : shutdownFiles)) {
         if (access(f, R_OK) == 0) {
             mZipFileName = f;
             return;
@@ -1068,6 +1088,11 @@ bool BootAnimation::playAnimation(const Animation& animation)
                 break;
         }
 
+    }
+
+    if(mShutdown){
+        property_set(LOOP_COMPLETED_PROP_NAME, "true");
+        while(1);
     }
 
     // Free textures created for looping parts now that the animation is done.
