@@ -35,7 +35,7 @@ import java.util.List;
  * @hide
  */
 @SystemApi
-public final class HdmiTvClient extends HdmiClient {
+public class HdmiTvClient extends HdmiClient {
     private static final String TAG = "HdmiTvClient";
 
     IHdmiInputChangeListener mInputChangeListener;
