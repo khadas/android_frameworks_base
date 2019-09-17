@@ -1369,6 +1369,7 @@ public final class HdmiControlService extends SystemService {
             runOnServiceThreadAtFrontOfQueue(new Runnable() {
                 @Override
                 public void run() {
+                    HdmiLogger.debug("sendKeyEvent deviceType " + deviceType + " keyCode " + keyCode);
                     HdmiMhlLocalDeviceStub device = mMhlController.getLocalDevice(mActivePortId);
                     if (device != null) {
                         device.sendKeyEvent(keyCode, isPressed);
@@ -1536,18 +1537,20 @@ public final class HdmiControlService extends SystemService {
         public List<HdmiDeviceInfo> getDeviceList() {
             enforceAccessPermission();
             HdmiCecLocalDeviceTv tv = tv();
-            if (tv != null) {
-                synchronized (mLock) {
+            synchronized (mLock) {
+                if (tv != null) {
+                    Slog.d(TAG, "getDeviceList tv " + tv);
                     return tv.getSafeCecDevicesLocked();
-                }
-            } else {
-                HdmiCecLocalDeviceAudioSystem audioSystem = audioSystem();
-                synchronized (mLock) {
-                    return (audioSystem == null)
-                        ? Collections.<HdmiDeviceInfo>emptyList()
-                        : audioSystem.getSafeCecDevicesLocked();
+                } else {
+                    HdmiCecLocalDeviceAudioSystem audioSystem = audioSystem();
+                    if (audioSystem != null) {
+                        Slog.d(TAG, "getDeviceList audioSystem " + audioSystem);
+                        return audioSystem.getSafeCecDevicesLocked();
+                    }
                 }
             }
+            Slog.e(TAG, "getDeviceList empty!");
+            return Collections.<HdmiDeviceInfo>emptyList();
         }
 
         @Override
@@ -1924,6 +1927,7 @@ public final class HdmiControlService extends SystemService {
         @Override
         public void binderDied() {
             synchronized (mLock) {
+                Slog.d(TAG, "InputChangeListenerRecord binderDied");
                 if (mInputChangeListenerRecord == this) {
                     mInputChangeListenerRecord = null;
                 }
