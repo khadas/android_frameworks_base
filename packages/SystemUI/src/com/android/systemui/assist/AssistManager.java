@@ -97,7 +97,7 @@ public class AssistManager implements ConfigurationChangedReceiver {
                 | ActivityInfo.CONFIG_LOCALE | ActivityInfo.CONFIG_UI_MODE
                 | ActivityInfo.CONFIG_SCREEN_LAYOUT | ActivityInfo.CONFIG_ASSETS_PATHS);
         onConfigurationChanged(context.getResources().getConfiguration());
-        mShouldEnableOrb = !ActivityManager.isLowRamDeviceStatic();
+        mShouldEnableOrb = false;
     }
 
     protected void registerVoiceInteractionSessionListener() {
@@ -240,6 +240,11 @@ public class AssistManager implements ConfigurationChangedReceiver {
     }
 
     private void startVoiceInteractor(Bundle args) {
+        boolean structureEnabled = Settings.Secure.getIntForUser(mContext.getContentResolver(),
+                Settings.Secure.ASSIST_STRUCTURE_ENABLED, 1, UserHandle.USER_CURRENT) != 0;
+        if (structureEnabled && AssistUtils.isDisclosureEnabled(mContext)) {
+            showDisclosure();
+        }
         mAssistUtils.showSessionForActiveService(args,
                 VoiceInteractionSession.SHOW_SOURCE_ASSIST_GESTURE, mShowCallback, null);
     }
