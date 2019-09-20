@@ -173,7 +173,11 @@ static jobject nativeScreenshotToBuffer(JNIEnv* env, jclass clazz,
     sp<GraphicBuffer> buffer;
     status_t res = ScreenshotClient::capture(displayToken,
             sourceCrop, width, height, minLayer, maxLayer, useIdentityTransform,
+<<<<<<< afaa83224d592ff9c716381adcd416bd84a52d2f
             rotation, &buffer);
+=======
+            rotation, captureSecureLayers, &buffer);
+>>>>>>> Revert "[RESTRICT AUTOMERGE] Careful with screenshots containing secure layers!"
     if (res != NO_ERROR) {
         return NULL;
     }
