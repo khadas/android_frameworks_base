@@ -172,6 +172,7 @@ import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageInfo;
 import android.content.pm.ResolveInfo;
 import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
@@ -6398,6 +6399,72 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 break;
             }
+            case KeyEvent.KEYCODE_YOUTUBE: {
+                boolean isWakeup = !mAwake;
+                result &= ~ACTION_PASS_TO_USER;
+                isWakeKey = false;
+                if (down) {
+                    wakeUp(event.getEventTime(), mAllowTheaterModeWakeFromPowerKey, "android.policy:KEY");
+                    if (isAvilible(mContext,"com.google.android.youtube.tv")) {
+                        boolean isYoutubeRunning = false;
+                        try {
+                            List<RunningTaskInfo> tasks = ActivityManager.getService().getTasks(1);
+                            ComponentName componentInfo = tasks.get(0).topActivity;
+                            if (componentInfo.getPackageName().equals("com.google.android.youtube.tv")) {
+                                isYoutubeRunning = true;
+                            }
+                        } catch (Exception e) {}
+
+                        Log.i(TAG, "Youtube running: " + isYoutubeRunning + ", isWakeup: " + isWakeup);
+                        if (isYoutubeRunning) {
+                            Log.i(TAG, "Youtube running:");
+                            break;
+                        } else {
+                            String package_name = "com.google.android.youtube.tv";
+                            String activity_path = "com.google.android.apps.youtube.tv.activity.MainActivity";
+                            Intent intent = new Intent();
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            ComponentName comp = new ComponentName(package_name,activity_path);
+                            intent.setComponent(comp);
+                            mContext.startActivity(intent);
+                        }
+                    }
+                }
+                break;
+            }
+            case KeyEvent.KEYCODE_SETTINGS: {
+                boolean isWakeup = !mAwake;
+                result &= ~ACTION_PASS_TO_USER;
+                isWakeKey = false;
+                if (down) {
+                    wakeUp(event.getEventTime(), mAllowTheaterModeWakeFromPowerKey, "android.policy:KEY");
+                    if (isAvilible(mContext,"com.android.tv.settings")) {
+                        boolean isSettingsRunning = false;
+                        try {
+                            List<RunningTaskInfo> tasks = ActivityManager.getService().getTasks(1);
+                            ComponentName componentInfo = tasks.get(0).topActivity;
+                            if (componentInfo.getPackageName().equals("com.android.tv.settings")) {
+                                isSettingsRunning = true;
+                            }
+                        } catch (Exception e) {}
+
+                        Log.i(TAG, "SETTINGS running: " + isSettingsRunning + ", isWakeup: " + isWakeup);
+                        if (isSettingsRunning) {
+                            Log.i(TAG, "SETTINGS running:");
+                            break;
+                        } else {
+                            String package_name = "com.android.tv.settings";
+                            String activity_path = "com.android.tv.settings.MainSettings";
+                            Intent intent = new Intent();
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            ComponentName comp = new ComponentName(package_name,activity_path);
+                            intent.setComponent(comp);
+                            mContext.startActivity(intent);
+                        }
+                    }
+                }
+                break;
+            }
         }
 
         if (useHapticFeedback) {
@@ -6410,7 +6477,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         return result;
     }
-
+    private boolean isAvilible( Context context, String packageName ){
+        final PackageManager packageManager = context.getPackageManager();
+        List<PackageInfo> pinfo = packageManager.getInstalledPackages(0);
+        for ( int i = 0; i < pinfo.size(); i++ )
+        {
+                if (pinfo.get(i).packageName.equalsIgnoreCase(packageName)) {
+                    return true;
+                }
+        }
+        return false;
+    }
     /**
      * Handle statusbar expansion events.
      * @param event
