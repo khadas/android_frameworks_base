@@ -92,6 +92,7 @@ public class SeekBarVolumizer implements OnSeekBarChangeListener, Handler.Callba
     private boolean mAllowAlarms;
     private boolean mAllowMedia;
     private boolean mAllowRinger;
+    private boolean mAllowSeekbarAnimate;
 
     public SeekBarVolumizer(Context context, int streamType, Uri defaultUri, Callback callback) {
         mContext = context;
@@ -167,13 +168,13 @@ public class SeekBarVolumizer implements OnSeekBarChangeListener, Handler.Callba
         final boolean zenMuted = isZenMuted();
         mSeekBar.setEnabled(!zenMuted);
         if (zenMuted) {
-            mSeekBar.setProgress(mLastAudibleStreamVolume, true);
+            mSeekBar.setProgress(mLastAudibleStreamVolume, mAllowSeekbarAnimate);
         } else if (mNotificationOrRing && mRingerMode == AudioManager.RINGER_MODE_VIBRATE) {
-            mSeekBar.setProgress(0, true);
+            mSeekBar.setProgress(0, mAllowSeekbarAnimate);
         } else if (mMuted) {
-            mSeekBar.setProgress(0, true);
+            mSeekBar.setProgress(0, mAllowSeekbarAnimate);
         } else {
-            mSeekBar.setProgress(mLastProgress > -1 ? mLastProgress : mOriginalStreamVolume, true);
+            mSeekBar.setProgress(mLastProgress > -1 ? mLastProgress : mOriginalStreamVolume, mAllowSeekbarAnimate);
         }
     }
 
