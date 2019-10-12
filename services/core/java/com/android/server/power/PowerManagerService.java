@@ -186,6 +186,7 @@ public final class PowerManagerService extends SystemService
     // How long a partial wake lock must be held until we consider it a long wake lock.
     static final long MIN_LONG_WAKE_CHECK_INTERVAL = 60*1000;
 
+    private static final int POWER_HINT_PERFORMANCE = 10;
     // Power features defined in hardware/libhardware/include/hardware/power.h.
     private static final int POWER_FEATURE_DOUBLE_TAP_TO_WAKE = 1;
 
@@ -728,6 +729,8 @@ public final class PowerManagerService extends SystemService
     }
 
     final Constants mConstants;
+
+    private int mPerformanceMode = PowerManager.PERFORMANCE_MODE_NORMAL;
 
     private native void nativeInit();
     private static native void nativeAcquireSuspendBlocker(String name);
@@ -4591,6 +4594,13 @@ public final class PowerManagerService extends SystemService
                 return getLastShutdownReasonInternal(REBOOT_PROPERTY);
             } finally {
                 Binder.restoreCallingIdentity(ident);
+            }
+        }
+
+       public void setPerformanceMode(int mode) {
+            if (mPerformanceMode != mode) {
+                mPerformanceMode = mode;
+                powerHint(POWER_HINT_PERFORMANCE,mode);
             }
         }
 

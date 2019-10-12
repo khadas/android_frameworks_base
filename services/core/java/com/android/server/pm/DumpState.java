@@ -44,6 +44,7 @@ public final class DumpState {
     public static final int DUMP_APEX = 1 << 25;
 
     public static final int OPTION_SHOW_FILTERS = 1 << 0;
+    public static final int DUMP_PERF_MODE = 1 << 26;
     public static final int OPTION_DUMP_ALL_COMPONENTS = 1 << 1;
     public static final int OPTION_SKIP_PERMISSIONS = 1 << 2;
 

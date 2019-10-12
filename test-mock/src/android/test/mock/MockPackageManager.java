@@ -1257,4 +1257,20 @@ public class MockPackageManager extends PackageManager {
     public String getSystemTextClassifierPackageName() {
         throw new UnsupportedOperationException();
     }
+
+    /**
+     * @hide
+     */
+    @Override
+    public int getPackagePerformanceMode(String pkgName) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * @hide
+     */
+    @Override
+    public void setPackagePerformanceMode(String pkgName, int mode) {
+        throw new UnsupportedOperationException();
+    }
 }

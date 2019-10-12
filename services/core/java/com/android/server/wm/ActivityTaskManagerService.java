@@ -267,6 +267,7 @@ import com.android.server.pm.UserManagerService;
 import com.android.server.policy.PermissionPolicyInternal;
 import com.android.server.uri.UriGrantsManagerInternal;
 import com.android.server.vr.VrManagerInternal;
+import com.android.server.power.DevicePerformanceTunner;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -345,6 +346,10 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
      */
     final Context mUiContext;
     final ActivityThread mSystemThread;
+
+    boolean mUsePerformanceTunner = false;
+    DevicePerformanceTunner mDevicePerformanceTunner;
+
     H mH;
     UiHandler mUiHandler;
     ActivityManagerInternal mAmInternal;
@@ -701,6 +706,12 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
             mVrController.onSystemReady();
             mRecentTasks.onSystemReadyLocked();
             mStackSupervisor.onSystemReady();
+            String value = SystemProperties.get("ro.hardware", "rk30board");
+            if (value.equals("rk30board") || value.equals("rk2928board") || value.equals("rk29board") || value.equals("sofiaboard")) {
+                Slog.d(TAG, "OK, system ready!");
+                mUsePerformanceTunner = true;
+                mDevicePerformanceTunner = DevicePerformanceTunner.getInstance(mContext);
+            }
         }
     }
 
@@ -3098,6 +3109,26 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
         } finally {
             Binder.restoreCallingIdentity(ident);
         }
+    }
+
+    public int getFrontActivityPerformanceModeLocked(boolean systemAppLimited) {
+        int mode = PowerManager.PERFORMANCE_MODE_NORMAL;
+        final ActivityStack mainStack = mRootActivityContainer.getTopDisplayFocusedStack();
+        ActivityRecord r = mainStack.topRunningActivityLocked();
+        if (r != null) {
+            try {
+                Log.e(TAG,"getPackageFerformanceMode--"+r.mActivityComponent.toString()+"----"+r.packageName);
+                mode = AppGlobals.getPackageManager().getPackagePerformanceMode(
+                        r.mActivityComponent.toString());
+            } catch (RemoteException e) {
+            }
+        }
+        return mode;
+    }
+
+    public void forcePerformanceMode(int mode) {
+        final ActivityStack mainStack = mRootActivityContainer.getTopDisplayFocusedStack();
+        mainStack.forcePerformanceMode(mode);
     }
 
     /**

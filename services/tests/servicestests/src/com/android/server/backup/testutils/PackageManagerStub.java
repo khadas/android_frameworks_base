@@ -52,6 +52,16 @@ public class PackageManagerStub extends PackageManager {
     }
 
     @Override
+    public int getPackagePerformanceMode(String pkgName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setPackagePerformanceMode(String pkgName, int mode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public PackageInfo getPackageInfo(VersionedPackage versionedPackage, int flags)
             throws NameNotFoundException {
         return null;

@@ -7375,6 +7375,16 @@ public abstract class PackageManager {
     }
 
     /**
+     * @hide
+     */
+    public abstract int getPackagePerformanceMode(String pkgName);
+
+    /**
+     * @hide
+     */
+    public abstract void setPackagePerformanceMode(String pkgName, int mode);
+
+    /**
      * Notify to the rest of the system that a new device configuration has
      * been prepared and that it is time to refresh caches.
      *

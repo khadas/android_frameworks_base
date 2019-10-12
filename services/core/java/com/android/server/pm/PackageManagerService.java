@@ -238,6 +238,7 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageManagerInternal;
 import android.os.storage.VolumeInfo;
 import android.os.storage.VolumeRecord;
+import android.os.PowerManager;
 import android.provider.DeviceConfig;
 import android.provider.MediaStore;
 import android.provider.Settings.Global;
@@ -21947,6 +21948,8 @@ public class PackageManagerService extends IPackageManager.Stub
                     pw.println("Settings written.");
                     return;
                 }
+            } else if ("perf".equals(cmd)) {
+                dumpState.setDump(DumpState.DUMP_PERF_MODE);
             }
         }
 
@@ -22230,6 +22233,11 @@ public class PackageManagerService extends IPackageManager.Stub
                         }
                     }
                 }
+            }
+
+
+            if (dumpState.isDumping(DumpState.DUMP_PERF_MODE) && packageName == null) {
+                mSettings.dumpPackagePerformanceMode(pw, dumpState);
             }
 
             if (!checkin && dumpState.isDumping(DumpState.DUMP_FROZEN) && packageName == null) {
@@ -25455,6 +25463,37 @@ public class PackageManagerService extends IPackageManager.Stub
         }
 
         return mProtectedPackages.isPackageStateProtected(userId, packageName);
+    }
+
+    /**
+     * @hide
+     */
+    public int getPackagePerformanceMode(String pkgName) {
+        for (int i = 0; i < mSettings.mPerformancePackages.size(); i++) {
+            if (pkgName.toLowerCase().contains(mSettings.mPerformancePackages.get(i).name.toLowerCase())) {
+                return mSettings.mPerformancePackages.get(i).mode;
+            }
+        }
+        return PowerManager.PERFORMANCE_MODE_NORMAL;
+    }
+
+    /**
+     * @hide
+     */
+    public void setPackagePerformanceMode(String pkgName, int mode) {
+        PackagePerformanceSetting setting = null;
+        for (int i = 0; i < mSettings.mPerformancePackages.size(); i++) {
+            if (mSettings.mPerformancePackages.get(i).name.equals(pkgName)) {
+                setting = mSettings.mPerformancePackages.get(i);
+            }
+        }
+        if (setting != null) {
+            setting.setMode(mode);
+        } else {
+            setting = new PackagePerformanceSetting(pkgName, mode);
+            mSettings.mPerformancePackages.add(0, setting);
+        }
+        mSettings.writeLPr();
     }
 
     @Override

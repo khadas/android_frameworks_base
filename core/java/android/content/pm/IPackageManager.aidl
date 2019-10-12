@@ -761,6 +761,10 @@ interface IPackageManager {
 
     boolean isPackageStateProtected(String packageName, int userId);
 
+    int getPackagePerformanceMode(String pkgName);
+
+    void setPackagePerformanceMode(String pkgName, int mode);
+
     void sendDeviceCustomizationReadyBroadcast();
 
     List<ModuleInfo> getInstalledModules(int flags);
