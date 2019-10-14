@@ -238,4 +238,7 @@
 
     <!-- Default for Settings.Secure.AWARE_LOCK_ENABLED -->
     <bool name="def_aware_lock_enabled">false</bool>
+
+    <!-- should show the screenshot button default -->
+    <integer name="def_screenshot_button_show">0</integer>
 </resources>

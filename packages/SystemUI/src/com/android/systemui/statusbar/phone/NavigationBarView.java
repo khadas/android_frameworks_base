@@ -45,6 +45,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Display;
+import android.view.Display.Mode;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -112,6 +113,9 @@ public class NavigationBarView extends FrameLayout implements
     private KeyButtonDrawable mHomeDefaultIcon;
     private KeyButtonDrawable mRecentIcon;
     private KeyButtonDrawable mDockedIcon;
+    private KeyButtonDrawable mVolumeAddIcon;
+    private KeyButtonDrawable mVolumeSubIcon;
+    private KeyButtonDrawable mScreenshotIcon;
 
     private final EdgeBackGestureHandler mEdgeBackGestureHandler;
     private final DeadZone mDeadZone;
@@ -149,6 +153,8 @@ public class NavigationBarView extends FrameLayout implements
      * fully locked mode we only show that unlocking is blocked.
      */
     private ScreenPinningNotify mScreenPinningNotify;
+
+    private boolean mIsRot0Landscape = true;
 
     private class NavTransitionListener implements TransitionListener {
         private boolean mBackTransitioning;
@@ -290,6 +296,11 @@ public class NavigationBarView extends FrameLayout implements
         mTmpLastConfiguration = new Configuration();
         mConfiguration.updateFrom(context.getResources().getConfiguration());
 
+        Display display = ((WindowManager)context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        Mode displayMode = display.getMode();
+        mIsRot0Landscape = displayMode.getPhysicalWidth() > displayMode.getPhysicalHeight();
+        Log.v(TAG, "PW=" + displayMode.getPhysicalWidth() + ", PH=" + displayMode.getPhysicalHeight());
+
         mScreenPinningNotify = new ScreenPinningNotify(mContext);
         mBarTransitions = new NavigationBarTransitions(this);
 
@@ -301,6 +312,9 @@ public class NavigationBarView extends FrameLayout implements
         mButtonDispatchers.put(R.id.accessibility_button, accessibilityButton);
         mButtonDispatchers.put(R.id.rotate_suggestion, rotateSuggestionButton);
         mButtonDispatchers.put(R.id.menu_container, mContextualButtonGroup);
+        mButtonDispatchers.put(R.id.screenshot, new ButtonDispatcher(R.id.screenshot));
+        mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
+        mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
         mDeadZone = new DeadZone(this);
 
         mEdgeBackGestureHandler = new EdgeBackGestureHandler(context, mOverviewProxyService);
@@ -417,6 +431,18 @@ public class NavigationBarView extends FrameLayout implements
         return mButtonDispatchers.get(R.id.accessibility_button);
     }
 
+    public ButtonDispatcher getScreenshotButton() {
+        return mButtonDispatchers.get(R.id.screenshot);
+    }
+
+    public ButtonDispatcher getVolumeAddButton() {
+        return mButtonDispatchers.get(R.id.volume_add);
+    }
+
+    public ButtonDispatcher getVolumeSubButton() {
+        return mButtonDispatchers.get(R.id.volume_sub);
+    }
+
     public RotationContextButton getRotateSuggestionButton() {
         return (RotationContextButton) mButtonDispatchers.get(R.id.rotate_suggestion);
     }
@@ -461,6 +487,10 @@ public class NavigationBarView extends FrameLayout implements
         if (orientationChange || densityChange || dirChange) {
             mBackIcon = getBackDrawable();
         }
+
+        mVolumeAddIcon = getDrawable(R.drawable.ic_sysbar_volume_add_button);
+        mVolumeSubIcon = getDrawable(R.drawable.ic_sysbar_volume_sub_button);
+        mScreenshotIcon = getDrawable(R.drawable.ic_sysbar_capture_button);
     }
 
     public KeyButtonDrawable getBackDrawable() {
@@ -602,6 +632,9 @@ public class NavigationBarView extends FrameLayout implements
         }
         getHomeButton().setImageDrawable(homeIcon);
         getBackButton().setImageDrawable(backIcon);
+        getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
+        getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
+        getScreenshotButton().setImageDrawable(mScreenshotIcon);
 
         updateRecentsIcon();
 

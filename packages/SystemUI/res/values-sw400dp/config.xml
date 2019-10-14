@@ -20,22 +20,8 @@
 <!-- These resources are around just to allow their values to be customized
      for different hardware and product builds. -->
 <resources>
-    <!-- The maximum number of rows in the QuickSettings -->
-    <integer name="quick_settings_max_rows">4</integer>
-
-    <!-- The number of columns that the top level tiles span in the QuickSettings -->
-    <integer name="quick_settings_user_time_settings_tile_span">1</integer>
-
-    <!-- Set to true to enable the user switcher on the keyguard. -->
-    <bool name="config_keyguardUserSwitcher">true</bool>
 
     <!-- Nav bar button default ordering/layout -->
     <string name="config_navBarLayout" translatable="false">left;volume_sub,back,home,recent,volume_add,screenshot;right</string>
-
-    <!-- Animation duration when using long press on recents to dock -->
-    <integer name="long_press_dock_anim_duration">290</integer>
-
-    <!-- orientation of the dead zone when touches have recently occurred elsewhere on screen -->
-    <integer name="navigation_bar_deadzone_orientation">0</integer>
 
 </resources>
