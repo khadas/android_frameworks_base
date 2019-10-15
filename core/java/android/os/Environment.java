@@ -55,6 +55,8 @@ public class Environment {
     private static final String ENV_VENDOR_ROOT = "VENDOR_ROOT";
     private static final String ENV_PRODUCT_ROOT = "PRODUCT_ROOT";
     private static final String ENV_PRODUCT_SERVICES_ROOT = "PRODUCT_SERVICES_ROOT";
+    private static final String ENV_PREBUNDLED_UNINSTALL_BACK_ROOT = "PREBUNDLED_UNINSTALL_BACK_ROOT";
+    private static final String ENV_PREBUNDLED_UNINSTALL_GONE_ROOT = "PREBUNDLED_UNINSTALL_GONE_ROOT";
 
     /** {@hide} */
     public static final String DIR_ANDROID = "Android";
@@ -79,6 +81,10 @@ public class Environment {
     private static final File DIR_PRODUCT_ROOT = getDirectory(ENV_PRODUCT_ROOT, "/product");
     private static final File DIR_PRODUCT_SERVICES_ROOT = getDirectory(ENV_PRODUCT_SERVICES_ROOT,
                                                            "/product_services");
+    private static final File DIR_PREBUNDLED_UNINSTALL_BACK_ROOT = getDirectory(
+            ENV_PREBUNDLED_UNINSTALL_BACK_ROOT, "/odm/bundled_uninstall_back-app");
+    private static final File DIR_PREBUNDLED_UNINSTALL_GONE_ROOT = getDirectory(
+            ENV_PREBUNDLED_UNINSTALL_GONE_ROOT, "/odm/bundled_uninstall_gone-app");
 
     @UnsupportedAppUsage
     private static UserEnvironment sCurrentUser;
@@ -1241,6 +1247,23 @@ public class Environment {
         }
         return cur;
     }
+
+    /**
+     * Return the root directory for "prebundled" apps.  These apps will be installed directly
+     * from this partition but will not be marked as system apps and will hence be uninstallable.
+     * @hide
+     */
+    public static File getPrebundledUninstallBackDirectory() {
+        return DIR_PREBUNDLED_UNINSTALL_BACK_ROOT;
+    }
+
+    /**
+     * @hide
+     */
+    public static File getPrebundledUninstallGoneDirectory() {
+        return DIR_PREBUNDLED_UNINSTALL_GONE_ROOT;
+    }
+
 
     /**
      * If the given path exists on emulated external storage, return the

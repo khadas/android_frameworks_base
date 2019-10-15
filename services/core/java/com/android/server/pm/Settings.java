@@ -103,11 +103,14 @@ import org.xmlpull.v1.XmlSerializer;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -120,6 +123,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -258,6 +262,7 @@ public final class Settings {
     private final File mBackupStoppedPackagesFilename;
     /** The top level directory in configfs for sdcardfs to push the package->uid,userId mappings */
     private final File mKernelMappingFilename;
+    private final File mPrebundledPackagesFilename;
 
     /** Map from package name to settings */
     final ArrayMap<String, PackageSetting> mPackages = new ArrayMap<>();
@@ -271,6 +276,8 @@ public final class Settings {
     // List of replaced system applications
     private final ArrayMap<String, PackageSetting> mDisabledSysPackages =
         new ArrayMap<String, PackageSetting>();
+
+    private final HashSet<String> mPrebundledPackages = new HashSet<String>();
 
     /** List of packages that are blocked for uninstall for specific users */
     private final SparseArray<ArraySet<String>> mBlockUninstallPackages = new SparseArray<>();
@@ -401,6 +408,7 @@ public final class Settings {
         mBackupSettingsFilename = new File(mSystemDir, "packages-backup.xml");
         mPackageListFilename = new File(mSystemDir, "packages.list");
         FileUtils.setPermissions(mPackageListFilename, 0640, SYSTEM_UID, PACKAGE_INFO_GID);
+        mPrebundledPackagesFilename = new File(mSystemDir, "prebundled-packages.list");
 
         final File kernelDir = new File("/config/sdcardfs");
         mKernelMappingFilename = kernelDir.exists() ? kernelDir : null;
@@ -2597,6 +2605,56 @@ public final class Settings {
         if (DEBUG_KERNEL) Slog.d(TAG, "Writing " + userId + " to " + removeUserIdFile
                 .getAbsolutePath());
         writeIntToFile(removeUserIdFile, userId);
+    }
+
+    void writePrebundledPackagesLPr() {
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(
+                    new BufferedWriter(new FileWriter(mPrebundledPackagesFilename, false)));
+            for (String packageName : mPrebundledPackages) {
+                writer.println(packageName);
+            }
+        } catch (IOException e) {
+            Slog.e(PackageManagerService.TAG, "Unable to write prebundled package list", e);
+        } finally {
+            if (writer != null) {
+                writer.close();
+            }
+        }
+    }
+
+   void readPrebundledPackagesLPr() {
+        if (!mPrebundledPackagesFilename.exists()) {
+            return;
+        }
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(mPrebundledPackagesFilename));
+            String packageName = reader.readLine();
+            while (packageName != null) {
+                if (!TextUtils.isEmpty(packageName)) {
+                    mPrebundledPackages.add(packageName);
+                }
+                packageName = reader.readLine();
+            }
+        } catch (IOException e) {
+            Slog.e(PackageManagerService.TAG, "Unable to read prebundled package list", e);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {}
+            }
+        }
+    }
+
+    void markPrebundledPackageInstalledLPr(String packageName) {
+        mPrebundledPackages.add(packageName);
+    }
+
+    boolean wasPrebundledPackageInstalledLPr(String packageName) {
+        return mPrebundledPackages.contains(packageName);
     }
 
     void writeKernelMappingLPr() {
