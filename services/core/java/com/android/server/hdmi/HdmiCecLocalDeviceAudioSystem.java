@@ -328,6 +328,9 @@ public class HdmiCecLocalDeviceAudioSystem extends HdmiCecLocalDevice {
                         addDeviceInfo(info);
                     }
                 }
+                @Override
+                public void onDeviceDiscovered(HdmiDeviceInfo deviceInfo) {
+                }
             });
         addAndStartAction(action);
     }

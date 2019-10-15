@@ -1365,6 +1365,7 @@ public final class HdmiControlService extends SystemService {
                     }
 
                     if (!mAddressAllocated) {
+                        Slog.d(TAG, "portSelect set port select " + portId);
                         mSelectRequestBuffer.set(SelectRequestBuffer.newPortSelect(
                                 HdmiControlService.this, portId, callback));
                         return;
