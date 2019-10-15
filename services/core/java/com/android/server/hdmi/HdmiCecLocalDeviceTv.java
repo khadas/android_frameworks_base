@@ -593,7 +593,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (updateCecSwitchInfo(address, type, path)) return true;
 
         // Ignore if [Device Discovery Action] is going on.
-        if (hasAction(DeviceDiscoveryAction.class)) {
+        if (hasAction(ApartDeviceDiscoveryAction.class)) {
             Slog.i(TAG, "Ignored while Device Discovery Action is in progress: " + message);
             return true;
         }
@@ -798,14 +798,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     private void launchDeviceDiscovery() {
         assertRunOnServiceThread();
         clearDeviceInfoList();
-        DeviceDiscoveryAction action = new DeviceDiscoveryAction(this,
+        DeviceDiscoveryAction action = new ApartDeviceDiscoveryAction(this,
                 new DeviceDiscoveryCallback() {
                     @Override
                     public void onDeviceDiscoveryDone(List<HdmiDeviceInfo> deviceInfos) {
-                        for (HdmiDeviceInfo info : deviceInfos) {
-                            addCecDevice(info);
-                        }
-
                         // Since we removed all devices when it's start and
                         // device discovery action does not poll local devices,
                         // we should put device info of local device manually here
@@ -816,18 +812,41 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                         mSelectRequestBuffer.process();
                         resetSelectRequestBuffer();
 
-                        addAndStartAction(new HotplugDetectionAction(HdmiCecLocalDeviceTv.this));
-                        addAndStartAction(new PowerStatusMonitorAction(HdmiCecLocalDeviceTv.this));
-
                         HdmiDeviceInfo avr = getAvrDeviceInfo();
-                        if (avr != null) {
-                            onNewAvrAdded(avr);
-                        } else {
+                        if (avr == null) {
                             setSystemAudioMode(false);
+                        }
+                    }
+
+                    @Override
+                    public void onDeviceDiscovered(HdmiDeviceInfo deviceInfo) {
+                        Slog.d(TAG, "onDeviceDiscovered " + deviceInfo);
+                        addCecDevice(deviceInfo);
+                        doSelectOfDevice(deviceInfo);
+                        if (!hasAction(HotplugDetectionAction.class)) {
+                            addAndStartAction(new HotplugDetectionAction(HdmiCecLocalDeviceTv.this));
+                        }
+                        if (!hasAction(PowerStatusMonitorAction.class)) {
+                            addAndStartAction(new PowerStatusMonitorAction(HdmiCecLocalDeviceTv.this));
+                        }
+
+                        if (Constants.ADDR_AUDIO_SYSTEM == deviceInfo.getId()) {
+                            onNewAvrAdded(deviceInfo);
                         }
                     }
                 });
         addAndStartAction(action);
+    }
+
+    private void doSelectOfDevice(HdmiDeviceInfo deviceInfo) {
+        if (null == mSelectRequestBuffer) {
+            Slog.d(TAG, "doSelectOfDevice buffer null");
+            return;
+        }
+        if (mSelectRequestBuffer.hasId(deviceInfo)) {
+            mSelectRequestBuffer.process();
+            resetSelectRequestBuffer();
+        }
     }
 
     void turnOnAvrDevice(HdmiDeviceInfo avr) {
@@ -873,7 +892,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     // Seq #32
     void changeSystemAudioMode(boolean enabled, IHdmiControlCallback callback) {
         assertRunOnServiceThread();
-        if (!mService.isControlEnabled() || hasAction(DeviceDiscoveryAction.class)) {
+        if (!mService.isControlEnabled() || hasAction(ApartDeviceDiscoveryAction.class)) {
             setSystemAudioMode(false);
             invokeCallback(callback, HdmiControlManager.RESULT_INCORRECT_MODE);
             return;
@@ -1631,6 +1650,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     final void addCecDevice(HdmiDeviceInfo info) {
         assertRunOnServiceThread();
+        Slog.d(TAG, "addCecDevice " + info);
         HdmiDeviceInfo old = addDeviceInfo(info);
         if (info.getLogicalAddress() == mAddress) {
             // The addition of TV device itself should not be notified.
@@ -1815,7 +1835,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         // HotplugDetectionAction will be reinstated during the wake up process.
         // HdmiControlService.onWakeUp() -> initializeLocalDevices() ->
         //     LocalDeviceTv.onAddressAllocated() -> launchDeviceDiscovery().
-        removeAction(DeviceDiscoveryAction.class);
+        removeAction(ApartDeviceDiscoveryAction.class);
         removeAction(HotplugDetectionAction.class);
         removeAction(PowerStatusMonitorAction.class);
         // Remove recording actions.

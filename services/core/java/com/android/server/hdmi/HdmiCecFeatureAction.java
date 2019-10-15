@@ -46,6 +46,7 @@ abstract class HdmiCecFeatureAction {
 
     // Timer handler message used for timeout event
     protected static final int MSG_TIMEOUT = 100;
+    protected static final int MSG_TIMEOUT_DEVICE = 101;
 
     // Default state used in common by all the feature actions.
     protected static final int STATE_NONE = 0;
@@ -100,6 +101,9 @@ abstract class HdmiCecFeatureAction {
      */
     abstract void handleTimerEvent(int state);
 
+    void handleTimerEvent(int state, int logicalAddress) {
+    }
+
     /**
      * Timer handler interface used for FeatureAction classes.
      */
@@ -116,10 +120,14 @@ abstract class HdmiCecFeatureAction {
          */
         void sendTimerMessage(int state, long delayMillis);
 
+        void sendTimerMessage(int state, int logicAddress, long delayMillis);
+
         /**
          * Removes any pending timer message.
          */
         void clearTimerMessage();
+
+        void clearTimerMessageDevice(int logicalAddress);
     }
 
     private class ActionTimerHandler extends Handler implements ActionTimer {
@@ -134,9 +142,20 @@ abstract class HdmiCecFeatureAction {
             sendMessageDelayed(obtainMessage(MSG_TIMEOUT, state, 0), delayMillis);
         }
 
+                @Override
+        public void sendTimerMessage(int state, int logicalAddress, long delayMillis) {
+            // The third argument(0) is not used.
+            sendMessageDelayed(obtainMessage(MSG_TIMEOUT_DEVICE, state, 0, logicalAddress), delayMillis);
+        }
+
         @Override
         public void clearTimerMessage() {
             removeMessages(MSG_TIMEOUT);
+        }
+
+        @Override
+        public void clearTimerMessageDevice(int logicalAddress) {
+            removeMessages(MSG_TIMEOUT_DEVICE, logicalAddress);
         }
 
         @Override
@@ -144,6 +163,9 @@ abstract class HdmiCecFeatureAction {
             switch (msg.what) {
             case MSG_TIMEOUT:
                 handleTimerEvent(msg.arg1);
+                break;
+            case MSG_TIMEOUT_DEVICE:
+                handleTimerEvent(msg.arg1, (int)msg.obj);
                 break;
             default:
                 Slog.w(TAG, "Unsupported message:" + msg.what);
@@ -160,6 +182,10 @@ abstract class HdmiCecFeatureAction {
     // delayMillis.
     protected void addTimer(int state, int delayMillis) {
         mActionTimer.sendTimerMessage(state, delayMillis);
+    }
+
+    protected void addTimer(int state, int obj, int delayMillis) {
+        mActionTimer.sendTimerMessage(state, obj, delayMillis);
     }
 
     boolean started() {
