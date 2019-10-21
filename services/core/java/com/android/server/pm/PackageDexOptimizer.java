@@ -41,6 +41,7 @@ import static dalvik.system.DexFile.isProfileGuidedCompilerFilter;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageParser;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.dex.ArtManager;
@@ -279,6 +280,29 @@ public class PackageDexOptimizer {
                 + " dexoptFlags=" + printDexoptFlags(dexoptFlags)
                 + " targetFilter=" + compilerFilter + " oatDir=" + oatDir
                 + " classLoaderContext=" + classLoaderContext);
+
+        if (pkg.applicationInfo.packageName.contains("com.android.compatibility.common.deviceinfo") ||
+                (pkg.applicationInfo.packageName.contains("com.google.android") &&
+                 pkg.applicationInfo.packageName.contains("gts"))
+                ||pkg.applicationInfo.packageName.contains("android.media.cts")
+                ||pkg.applicationInfo.packageName.contains("android.mediastress.cts")
+                ||pkg.applicationInfo.packageName.contains("android.security.cts")) {
+            // maybe  endsWith(".cts") ?
+            SystemProperties.set("vendor.cts_gts.status","true");
+        }
+
+        if (pkg.applicationInfo.packageName.equals("android.security.cts") &&
+                "atv".equals(SystemProperties.get("ro.target.product","unknown")) &&
+                "true".equals(SystemProperties.get("vendor.cts_gts.status", "false"))){
+            // disable com.google.android.apps.mediashell
+            try{
+                Log.d("xzj", "----start android.security.cts,disable com.google.android.apps.mediashell---");
+                mInstaller.getContext().getPackageManager().setApplicationEnabledSetting(
+                        "com.google.android.apps.mediashell",
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        0);
+            } catch(Exception e){}
+        }
 
         try {
             long startTime = System.currentTimeMillis();
