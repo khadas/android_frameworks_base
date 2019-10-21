@@ -1009,6 +1009,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             //mSystemAudioActivated = on;
             return;
         }
+        HdmiDeviceInfo avr = getSafeAvrDeviceInfo();
+        if (avr == null || !isConnectedToArcPort(avr.getPhysicalAddress())) {
+            return;
+        }
+
         updateAudioManagerForSystemAudio(on);
         synchronized (mLock) {
             if (!hasAction(RequestShortAudioDescriptorAction.class) && on) {
