@@ -2207,7 +2207,10 @@ public class AudioService extends IAudioService.Stub
             synchronized (mHdmiTvClient) {
                 if (mHdmiSystemAudioSupported &&
                         ((flags & AudioManager.FLAG_HDMI_SYSTEM_AUDIO_VOLUME) == 0)) {
-                    flags &= ~AudioManager.FLAG_SHOW_UI;
+                    //flags &= ~AudioManager.FLAG_SHOW_UI;
+                    if (DEBUG_VOL) {
+                        Slog.d(TAG, "updateFlagsForSystemAudio show ui when arc device is connected.");
+                    }
                 }
             }
         }
