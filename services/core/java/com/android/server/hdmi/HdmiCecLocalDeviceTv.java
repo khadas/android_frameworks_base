@@ -958,9 +958,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (isBluetoothOrUsbOutDevices() && on) return;
         int device = mService.getAudioManager().setHdmiSystemAudioSupported(on);
         HdmiLogger.debug("[A]UpdateSystemAudio mode[on=%b] output=[%X]", on, device);
+        mSkipSendRequestSystemAudioMode = !on;
     }
 
     private void updateAudioDevicesStatus(boolean on) {
+        HdmiLogger.debug("updateAudioDevicesStatus " + on);
         mService.writeBooleanSetting(
             "sound_output_device"/* OutputModeManager.SOUND_OUTPUT_DEVICE */, on);
         if (!on && getActivePath() != HdmiDeviceInfo.PATH_INTERNAL &&
@@ -987,8 +989,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     }
 
     private void sendSystemAudioModeRequest(boolean enableSystemAudio) {
+        HdmiLogger.debug("sendSystemAudioModeRequest skip " + mSkipSendRequestSystemAudioMode);
         HdmiDeviceInfo avr = getAvrDeviceInfo();
         if (avr == null || mSkipSendRequestSystemAudioMode) {
+            Slog.e(TAG, "sendSystemAudioModeRequest arc not enabled no send system audio request");
             enableSystemAudio = false;
             return;
         }
@@ -1025,6 +1029,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                 startRequestShortAudioDescriptorAction(getAvrDeviceInfo());
             }
             mSystemAudioActivated = on;
+            // ? is it need to update again?
             mService.writeBooleanSetting(Global.HDMI_SYSTEM_AUDIO_STATUS_ENABLED, on);
             updateAudioDevicesStatus(on);
         }
