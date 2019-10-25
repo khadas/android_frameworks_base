@@ -947,5 +947,8 @@ abstract class HdmiCecLocalDevice {
         pw.println("mDeviceInfo: " + mDeviceInfo);
         pw.println("mActiveSource: " + mActiveSource);
         pw.println(String.format("mActiveRoutingPath: 0x%04x", mActiveRoutingPath));
+        for (HdmiCecFeatureAction action : mActions) {
+            pw.println("action: " + action.getClass().getSimpleName());
+        }
     }
 }

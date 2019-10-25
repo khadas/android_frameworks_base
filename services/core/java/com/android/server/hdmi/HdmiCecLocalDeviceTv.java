@@ -816,6 +816,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                         if (avr == null) {
                             setSystemAudioMode(false);
                         }
+                        // Start the operation if there is no device discovered.
+                        startPowerAndHotplugDetect();
                     }
 
                     @Override
@@ -823,19 +825,22 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                         Slog.d(TAG, "onDeviceDiscovered " + deviceInfo);
                         addCecDevice(deviceInfo);
                         doSelectOfDevice(deviceInfo);
-                        if (!hasAction(HotplugDetectionAction.class)) {
-                            addAndStartAction(new HotplugDetectionAction(HdmiCecLocalDeviceTv.this));
-                        }
-                        if (!hasAction(PowerStatusMonitorAction.class)) {
-                            addAndStartAction(new PowerStatusMonitorAction(HdmiCecLocalDeviceTv.this));
-                        }
-
+                        startPowerAndHotplugDetect();
                         if (Constants.ADDR_AUDIO_SYSTEM == deviceInfo.getId()) {
                             onNewAvrAdded(deviceInfo);
                         }
                     }
                 });
         addAndStartAction(action);
+    }
+
+    private void startPowerAndHotplugDetect() {
+        if (!hasAction(HotplugDetectionAction.class)) {
+            addAndStartAction(new HotplugDetectionAction(HdmiCecLocalDeviceTv.this));
+        }
+        if (!hasAction(PowerStatusMonitorAction.class)) {
+            addAndStartAction(new PowerStatusMonitorAction(HdmiCecLocalDeviceTv.this));
+        }
     }
 
     private void doSelectOfDevice(HdmiDeviceInfo deviceInfo) {
@@ -1799,6 +1804,9 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             // "pollAllDevicesNow" cleans up timer and start poll action immediately.
             // It covers seq #40, #43.
             hotplugActions.get(0).pollAllDevicesNow();
+        } else {
+            HdmiLogger.debug("start poll devices for hotplug");
+            addAndStartAction(new HotplugDetectionAction(HdmiCecLocalDeviceTv.this));
         }
     }
 
