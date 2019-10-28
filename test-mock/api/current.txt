@@ -239,6 +239,7 @@ package android.test.mock {
     method @Deprecated public android.content.pm.PackageInfo getPackageInfo(String, int) throws android.content.pm.PackageManager.NameNotFoundException;
     method @Deprecated public android.content.pm.PackageInfo getPackageInfo(android.content.pm.VersionedPackage, int) throws android.content.pm.PackageManager.NameNotFoundException;
     method public android.content.pm.PackageInstaller getPackageInstaller();
+    method @Deprecated public int getPackageUiMode(String);
     method @Deprecated public int getPackageUid(String, int) throws android.content.pm.PackageManager.NameNotFoundException;
     method @Deprecated public String[] getPackagesForUid(int);
     method @Deprecated public java.util.List<android.content.pm.PackageInfo> getPackagesHoldingPermissions(String[], int);
@@ -284,6 +285,7 @@ package android.test.mock {
     method @Deprecated public void setApplicationEnabledSetting(String, int, int);
     method @Deprecated public void setComponentEnabledSetting(android.content.ComponentName, int, int);
     method @Deprecated public void setInstallerPackageName(String, String);
+    method @Deprecated public void setPackageUiMode(String, int, int);
     method public void updateInstantAppCookie(@NonNull byte[]);
     method @Deprecated public void verifyPendingInstall(int, int);
   }

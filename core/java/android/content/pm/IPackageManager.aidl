@@ -776,4 +776,9 @@ interface IPackageManager {
     void setRuntimePermissionsVersion(int version, int userId);
 
     void notifyPackagesReplacedReceived(in String[] packages);
+
+    //For UiMode
+    void setPackageUiMode(String packageName, int oldUiMode, int newUiMode);
+
+    int getPackageUiMode(String packageName);
 }

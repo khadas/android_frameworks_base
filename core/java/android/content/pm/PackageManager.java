@@ -7406,4 +7406,13 @@ public abstract class PackageManager {
             "sendDeviceCustomizationReadyBroadcast not implemented in subclass");
     }
 
+    /**
+     * @hide
+     */
+    public abstract void setPackageUiMode(String packageName, int oldUiMode, int newUiMode);
+
+    /**
+     * @hide
+     */
+    public abstract int getPackageUiMode(String packageName);
 }
