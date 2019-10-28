@@ -288,12 +288,12 @@ public class PackageDexOptimizer {
                 ||pkg.applicationInfo.packageName.contains("android.mediastress.cts")
                 ||pkg.applicationInfo.packageName.contains("android.security.cts")) {
             // maybe  endsWith(".cts") ?
-            SystemProperties.set("vendor.cts_gts.status","true");
+            SystemProperties.set("cts_gts.status","true");
         }
 
         if (pkg.applicationInfo.packageName.equals("android.security.cts") &&
                 "atv".equals(SystemProperties.get("ro.target.product","unknown")) &&
-                "true".equals(SystemProperties.get("vendor.cts_gts.status", "false"))){
+                "true".equals(SystemProperties.get("cts_gts.status", "false"))){
             // disable com.google.android.apps.mediashell
             try{
                 Log.d("xzj", "----start android.security.cts,disable com.google.android.apps.mediashell---");
