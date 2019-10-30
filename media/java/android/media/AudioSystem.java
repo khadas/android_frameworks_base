@@ -28,6 +28,8 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Map;
+import android.os.SystemProperties;
+
 
 /* IF YOU CHANGE ANY OF THE CONSTANTS IN THIS FILE, DO NOT FORGET
  * TO UPDATE THE CORRESPONDING NATIVE GLUE AND AudioManager.java.
@@ -1152,7 +1154,8 @@ public class AudioSystem
     public static int getPlatformType(Context context) {
         if (context.getResources().getBoolean(com.android.internal.R.bool.config_voice_capable)) {
             return PLATFORM_VOICE;
-        } else if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+        } else if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+              || "box".equals(SystemProperties.get("ro.target.product",  "unknown"))) {
             return PLATFORM_TELEVISION;
         } else {
             return PLATFORM_DEFAULT;
