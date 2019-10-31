@@ -1013,6 +1013,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     void changeSystemAudioStatus(boolean on) {
         assertRunOnServiceThread();
+        HdmiLogger.debug("changeSystemAudioStatus " + on);
         if (isBluetoothOrUsbOutDevices() && on) return;
         if (!hasSystemAudioDevice() || mSystemAudioActivated == on) {
             //mSystemAudioActivated = on;
@@ -1848,6 +1849,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     protected void disableDevice(boolean initiatedByCec, PendingActionClearedCallback callback) {
         assertRunOnServiceThread();
+        HdmiLogger.debug("disableDevice " + initiatedByCec);
         mService.unregisterTvInputCallback(mTvInputCallback);
         // Remove any repeated working actions.
         // HotplugDetectionAction will be reinstated during the wake up process.
@@ -1862,6 +1864,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
         disableSystemAudioIfExist();
         disableArcIfExist();
+        // Make sure the tv broadcast standby message instantly after the system
+        // Audio mode is close. This could make sure of the connected amplifer
+        // Go to standby. This could be only done on the main thread, only in
+        // This way can the standby message be sent before the system powers off.
+        onStandby(false, 0);
 
         super.disableDevice(initiatedByCec, callback);
         clearDeviceInfoList();
@@ -1876,6 +1883,9 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (getAvrDeviceInfo() == null) {
             return;
         }
+
+        // Make sure tv could close system audio mode before broadcast standby.
+        changeSystemAudioStatus(false);
 
         // Seq #31.
         removeAction(SystemAudioActionFromAvr.class);
@@ -1912,13 +1922,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (!mService.isControlEnabled()) {
             return;
         }
-        if (!initiatedByCec
-            && mAutoDeviceOff
-            && (standbyAction == HdmiControlService.STANDBY_SHUTDOWN
-            || standbyAction != HdmiControlService.STANDBY_SCREEN_OFF)) {
-            /*send <Standby> when shutdown, not suspend*/
+        Slog.i(TAG, "tv standby " + initiatedByCec);
+        if (!initiatedByCec && mAutoDeviceOff) {
+            // when standby, it's not bad to send the broadcast more than once
             mService.sendCecCommand(HdmiCecMessageBuilder.buildStandby(
-                    mAddress, Constants.ADDR_BROADCAST));
+                    Constants.ADDR_TV, Constants.ADDR_BROADCAST));
         }
     }
 

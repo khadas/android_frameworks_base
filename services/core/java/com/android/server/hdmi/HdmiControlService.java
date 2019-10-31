@@ -2211,7 +2211,7 @@ public final class HdmiControlService extends SystemService {
 
         final List<HdmiCecLocalDevice> devices = getAllLocalDevices();
 
-        if ((STANDBY_SHUTDOWN == standbyAction) ||(!isStandbyMessageReceived() && !canGoToStandby())) {
+        if (!isStandbyMessageReceived() && !canGoToStandby()) {
             mPowerStatus = HdmiControlManager.POWER_STATUS_STANDBY;
             for (HdmiCecLocalDevice device : devices) {
                 device.onStandby(mStandbyMessageReceived, standbyAction);
@@ -2301,9 +2301,6 @@ public final class HdmiControlService extends SystemService {
                 if (mWakeLock != null) {
                     mWakeLock.release();
                     mWakeLock = null;
-                }
-                if (isTvDeviceEnabled()) {
-                    tv().changeSystemAudioStatus(false);
                 }
                 mCecController.setOption(OptionKey.SYSTEM_CEC_CONTROL, false);
                 mMhlController.setOption(OPTION_MHL_SERVICE_CONTROL, DISABLED);
