@@ -80,7 +80,26 @@ class DisplayAdjustmentUtils {
         }
         dtm.setColorMatrix(DisplayTransformManager.LEVEL_COLOR_MATRIX_GRAYSCALE, grayscaleMatrix);
         dtm.setDaltonizerMode(daltonizerMode);
+
+        String matrix = Secure.getStringForUser(cr,
+                        Secure.ACCESSIBILITY_DISPLAY_COLOR_MATRIX, userId);
+        if (matrix != null) {
+              final float[] userMatrix = get4x4Matrix(matrix);
+              if (userMatrix != null) {
+                   dtm.setColorMatrix(DisplayTransformManager.LEVEL_COLOR_MATRIX_GRAYSCALE, userMatrix);
+              }
+
+         }
     }
+
+     private static float[] get4x4Matrix(String matrix) {
+         String[] strValues = matrix.split(",");
+         float[] values = new float[strValues.length];
+         for (int i = 0; i < values.length; i++) {
+            values[i] = Float.parseFloat(strValues[i]);
+         }
+         return values;
+     }
 
     /**
      * Applies the specified user's display color adjustments.

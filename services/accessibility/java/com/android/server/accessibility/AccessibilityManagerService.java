@@ -3787,6 +3787,9 @@ public class AccessibilityManagerService extends IAccessibilityManager.Stub
         private final Uri mDisplayInversionEnabledUri = Settings.Secure.getUriFor(
                 Settings.Secure.ACCESSIBILITY_DISPLAY_INVERSION_ENABLED);
 
+        private final Uri mDisplayColorMatrixUri = Settings.Secure.getUriFor(
+                Settings.Secure.ACCESSIBILITY_DISPLAY_COLOR_MATRIX);
+
         private final Uri mDisplayDaltonizerEnabledUri = Settings.Secure.getUriFor(
                 Settings.Secure.ACCESSIBILITY_DISPLAY_DALTONIZER_ENABLED);
 
@@ -3831,6 +3834,8 @@ public class AccessibilityManagerService extends IAccessibilityManager.Stub
                     mDisplayDaltonizerUri, false, this, UserHandle.USER_ALL);
             contentResolver.registerContentObserver(
                     mHighTextContrastUri, false, this, UserHandle.USER_ALL);
+            contentResolver.registerContentObserver(
+                    mDisplayColorMatrixUri, false, this, UserHandle.USER_ALL);
             contentResolver.registerContentObserver(
                     mAccessibilitySoftKeyboardModeUri, false, this, UserHandle.USER_ALL);
             contentResolver.registerContentObserver(
@@ -3889,6 +3894,9 @@ public class AccessibilityManagerService extends IAccessibilityManager.Stub
                     if (readAccessibilityButtonSettingsLocked(userState)) {
                         onUserStateChangedLocked(userState);
                     }
+                } else if (mDisplayColorMatrixUri.equals(uri)) {
+                    Slog.i(LOG_TAG, "mDisplayColorMatrixUri change");
+                    updateDisplayDaltonizerLocked(userState);
                 }
             }
         }
