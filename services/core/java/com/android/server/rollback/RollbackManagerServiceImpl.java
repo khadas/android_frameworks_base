@@ -1481,6 +1481,7 @@ class RollbackManagerServiceImpl extends IRollbackManager.Stub {
     @Override
     protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         if (!DumpUtils.checkDumpPermission(mContext, TAG, pw)) return;
+
         IndentingPrintWriter ipw = new IndentingPrintWriter(pw, "  ");
         synchronized (mLock) {
             for (RollbackData data : mRollbacks) {
