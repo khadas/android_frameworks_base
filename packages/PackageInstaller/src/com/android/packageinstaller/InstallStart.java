@@ -95,6 +95,10 @@ public class InstallStart extends Activity {
             return;
         }
 
+        if(callingPackage == null){
+            callingPackage = intent.getStringExtra(PackageInstallerActivity.EXTRA_CALLING_PACKAGE);
+        }
+
         Intent nextActivity = new Intent(intent);
         nextActivity.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
 
