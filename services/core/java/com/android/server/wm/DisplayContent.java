@@ -219,6 +219,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import android.os.SystemProperties;
 
 /**
  * Utility class for keeping track of the WindowStates and other pertinent contents of a
@@ -1790,6 +1791,11 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
         // Let the policy update hidden states.
         config.keyboardHidden = Configuration.KEYBOARDHIDDEN_NO;
         config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_NO;
+        boolean isTV = mWmService.mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
+            mWmService.mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEVISION) ||
+            "box".equals(SystemProperties.get("ro.target.product",  "unknown"));
+        if(isTV)
+            config.hardKeyboardHidden = Configuration.HARDKEYBOARDHIDDEN_YES;
         config.navigationHidden = Configuration.NAVIGATIONHIDDEN_NO;
         mWmService.mPolicy.adjustConfigurationLw(config, keyboardPresence, navigationPresence);
     }
