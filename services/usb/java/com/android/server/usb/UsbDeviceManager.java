@@ -816,13 +816,7 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
                                     && mScreenUnlockedFunctions != UsbManager.FUNCTION_NONE) {
                                 setScreenUnlockedFunctions();
                             } else {
-                                boolean forcerestart = false;
-                                if (UsbManager.USB_FUNCTION_NONE.equals(getSystemProperty(
-                                    "sys.usb.config", UsbManager.USB_FUNCTION_NONE)))
-                                    forcerestart = false;
-                                else
-                                    forcerestart = true;
-                                setEnabledFunctions(UsbManager.FUNCTION_NONE, forcerestart);
+                                setEnabledFunctions(UsbManager.FUNCTION_NONE, false);
                             }
                         }
                         updateUsbFunctions();
