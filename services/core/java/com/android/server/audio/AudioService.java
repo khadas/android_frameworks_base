@@ -156,6 +156,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import android.provider.Settings;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.view.WindowManager;
 
 /**
  * The implementation of the volume manager service.
@@ -1684,6 +1688,41 @@ public class AudioService extends IAudioService.Stub
 
         if (adjustVolume && (direction != AudioManager.ADJUST_SAME)) {
             mAudioHandler.removeMessages(MSG_UNMUTE_STREAM);
+            boolean routePassthroughVolume = SystemProperties.getBoolean("audio.passthrough.volume.route2cec", false)
+                    && SystemProperties.getBoolean("audio.passthrough.enable", false);
+            boolean hdmiControlEnabled = (Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.HDMI_CONTROL_ENABLED, 1) == 1);
+            Log.d(TAG, "adjustStreamVolume() routePassthroughVolume=" + routePassthroughVolume + ", hdmiControlEnabled=" + hdmiControlEnabled);
+            if (routePassthroughVolume && !isMuteAdjust && ((device & AudioSystem.DEVICE_OUT_ALL_A2DP) == 0)) {
+                if (hdmiControlEnabled) {
+                    if (mHdmiManager != null) {
+                        synchronized (mHdmiManager) {
+                            // mHdmiCecSink true => mHdmiPlaybackClient != null
+                            if (streamTypeAlias == AudioSystem.STREAM_MUSIC) {
+                                synchronized (mHdmiPlaybackClient) {
+                                    int keyCode = isMuteAdjust ? KeyEvent.KEYCODE_VOLUME_MUTE : ((direction == -1) ? KeyEvent.KEYCODE_VOLUME_DOWN : KeyEvent.KEYCODE_VOLUME_UP);
+                                    final long ident = Binder.clearCallingIdentity();
+                                    try {
+                                        mHdmiPlaybackClient.sendKeyEvent(keyCode, true);
+                                        mHdmiPlaybackClient.sendKeyEvent(keyCode, false);
+                                    } finally {
+                                        Binder.restoreCallingIdentity(ident);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return;
+                } else {
+                    Builder builder = new AlertDialog.Builder(mContext.getApplicationContext()).setTitle("not support!");
+                    final AlertDialog dialog = builder.create();
+                    dialog.getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_ALERT));
+                    mAudioHandler.post(new Runnable() {
+                        public void run() {
+                            dialog.show();
+                        }
+                    });
+                }
+            }
 
             if (isMuteAdjust) {
                 boolean state;
