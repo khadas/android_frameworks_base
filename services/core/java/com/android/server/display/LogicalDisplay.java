@@ -30,7 +30,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
+import android.util.Slog;
 /**
  * Describes how a logical display is configured.
  * <p>
@@ -458,6 +458,13 @@ final class LogicalDisplay {
         mTempDisplayRect.right += mDisplayOffsetX;
         mTempDisplayRect.top += mDisplayOffsetY;
         mTempDisplayRect.bottom += mDisplayOffsetY;
+        if(device.getDisplayDeviceInfoLocked().type==Display.TYPE_HDMI){
+          mTempDisplayRect.top=0;
+          mTempDisplayRect.left=0;
+          mTempDisplayRect.right=physWidth;
+          mTempDisplayRect.bottom=physHeight;
+          Slog.d("dzy","physWidth="+physWidth+" physHeight="+physHeight);
+        }
         device.setProjectionLocked(t, orientation, mTempLayerStackRect, mTempDisplayRect);
     }
 
