@@ -247,7 +247,7 @@ import java.util.List;
 public class PhoneWindowManager implements WindowManagerPolicy {
     static final String TAG = "WindowManager";
     static final boolean localLOGV = false;
-    static final boolean DEBUG_INPUT = false;
+    static final boolean DEBUG_INPUT = true;
     static final boolean DEBUG_KEYGUARD = false;
     static final boolean DEBUG_SPLASH_SCREEN = false;
     static final boolean DEBUG_WAKEUP = false;
@@ -647,6 +647,51 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int MSG_NOTIFY_USER_ACTIVITY = 26;
     private static final int MSG_RINGER_TOGGLE_CHORD = 27;
     private static final int MSG_MOVE_DISPLAY_TO_TOP = 28;
+
+    private int screenWidth;
+    private int screenHeight;
+    private String mstate = null;
+    private float mdeltax, mdeltay;
+    boolean keydown;
+
+    public Handler mKeyMouseHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch(msg.what){
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_LEFT:
+                mdeltax = -1.0f;
+                mdeltay = 0;
+                break;
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_RIGHT:
+                mdeltax = 1.0f;
+                mdeltay = 0;
+                break;
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_UP:
+                mdeltax = 0;
+                mdeltay = -1.0f;
+                break;
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_DOWN:
+                mdeltax = 0;
+                mdeltay = 1.0f;
+                break;
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_MODE_SWITCH:
+                mdeltax = 0;
+                mdeltay = 0;
+                break;
+            default:
+                break;
+            }
+
+            try {
+                mWindowManager.dispatchMouse(mdeltax,mdeltay,screenWidth,screenHeight);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+
+            if (keydown) {
+                mKeyMouseHandler.sendEmptyMessageDelayed(msg.what,30);
+            }
+        }
+    };
 
     private class PolicyHandler extends Handler {
         @Override
@@ -2690,6 +2735,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     + repeatCount + " keyguardOn=" + keyguardOn + " canceled=" + canceled);
         }
 
+        mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
+        if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_LEFT)
+                || (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_RIGHT)
+                || (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_UP)
+                || (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_DOWN)
+                || (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_MODE_SWITCH))) {
+            keydown = down;
+            mKeyMouseHandler.sendEmptyMessage(keyCode);
+            //return -1;
+        }
+
+        if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_ENTER)
+                ||(keyCode == KeyEvent.KEYCODE_DPAD_CENTER))) {
+            return -1;
+        }
+
         // If we think we might have a volume down & power key chord on the way
         // but we're not sure, then tell the dispatcher to wait a little while and
         // try again later before dispatching.
@@ -3739,8 +3800,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Basic policy based on interactive state.
         int result;
+         boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
         boolean isWakeKey = (policyFlags & WindowManagerPolicy.FLAG_WAKE) != 0
                 || event.isWakeKey();
+        if(isBox){
+            isWakeKey = false;
+        }
         if (interactive || (isInjected && !isWakeKey)) {
             // When the device is interactive or the key is injected pass the
             // key to the application.
@@ -4232,7 +4297,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     @Override
     public int interceptMotionBeforeQueueingNonInteractive(int displayId, long whenNanos,
             int policyFlags) {
-        if ((policyFlags & FLAG_WAKE) != 0) {
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+        if (!isBox && (policyFlags & FLAG_WAKE) != 0) {
             if (wakeUp(whenNanos / 1000000, mAllowTheaterModeWakeFromMotion,
                     PowerManager.WAKE_REASON_WAKE_MOTION, "android.policy:MOTION")) {
                 return 0;
@@ -4246,7 +4312,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // If we have not passed the action up and we are in theater mode without dreaming,
         // there will be no dream to intercept the touch and wake into ambient.  The device should
         // wake up in this case.
-        if (isTheaterModeEnabled() && (policyFlags & FLAG_WAKE) != 0) {
+        if (!isBox && isTheaterModeEnabled() && (policyFlags & FLAG_WAKE) != 0) {
             wakeUp(whenNanos / 1000000, mAllowTheaterModeWakeFromMotionWhenNotDreaming,
                     PowerManager.WAKE_REASON_WAKE_MOTION, "android.policy:MOTION");
         }

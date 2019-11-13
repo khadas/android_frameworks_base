@@ -239,6 +239,8 @@ public class InputManagerService extends IInputManager.Stub
     private static native void nativeSetCustomPointerIcon(long ptr, PointerIcon icon);
     private static native void nativeSetPointerCapture(long ptr, boolean detached);
     private static native boolean nativeCanDispatchToDisplay(long ptr, int deviceId, int displayId);
+    private static native void nativedispatchMouse(float x, float y, int w, int h, long ptr);
+    private static native void nativedispatchMouseByCd(float x, float y, long ptr);
 
     // Input event injection constants defined in InputDispatcher.h.
     private static final int INPUT_EVENT_INJECTION_SUCCEEDED = 0;
@@ -412,6 +414,14 @@ public class InputManagerService extends IInputManager.Stub
 
     private void setDisplayViewportsInternal(List<DisplayViewport> viewports) {
         nativeSetDisplayViewports(mPtr, viewports.toArray(new DisplayViewport[0]));
+    }
+
+    public void dispatchMouse(float x, float y, int w, int h) {
+        nativedispatchMouse(x, y, w, h, mPtr);
+    }
+
+    public void dispatchMousebyCd(float x, float y) {
+        nativedispatchMouseByCd(x, y, mPtr);
     }
 
     /**
