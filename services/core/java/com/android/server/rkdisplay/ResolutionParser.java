@@ -38,7 +38,7 @@ public class ResolutionParser {
         }
 
         public boolean hasMatchingMode(RkDisplayModes.RkPhysicalDisplayInfo info){
-            int checkFlags = SYNC_FLAG | FLAG_INTERLACE | FLAG_RADIO;
+            int checkFlags = SYNC_FLAG | FLAG_INTERLACE;
 
             return hdisplay == info.width
                 && vdisplay == info.height
