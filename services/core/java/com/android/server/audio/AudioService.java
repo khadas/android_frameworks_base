@@ -693,7 +693,9 @@ public class AudioService extends IAudioService.Stub
         if (maxMusicVolume != -1) {
             MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] = maxMusicVolume;
         }
-
+        if(isBox()){
+            mFixedVolumeDevices = 0;
+        }
         int defaultMusicVolume = SystemProperties.getInt("ro.config.media_vol_default", -1);
         if (defaultMusicVolume != -1 &&
                 defaultMusicVolume <= MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] &&
@@ -781,7 +783,9 @@ public class AudioService extends IAudioService.Stub
         // mSafeUsbMediaVolumeIndex must be initialized after createStreamStates() because it
         // relies on audio policy having correct ranges for volume indexes.
         mSafeUsbMediaVolumeIndex = getSafeUsbMediaVolumeIndex();
-
+        if(isBox()){
+            mSafeUsbMediaVolumeIndex = mSafeMediaVolumeIndex;
+        }
         mPlaybackMonitor =
                 new PlaybackActivityMonitor(context, MAX_STREAM_VOLUME[AudioSystem.STREAM_ALARM]);
 
@@ -882,9 +886,13 @@ public class AudioService extends IAudioService.Stub
                 }
                 mHdmiPlaybackClient = mHdmiManager.getPlaybackClient();
                 if (mHdmiPlaybackClient != null) {
-                    // not a television: HDMI output will be always at max
-                    mFixedVolumeDevices &= ~AudioSystem.DEVICE_OUT_HDMI;
-                    mFullVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
+                    if(isBox()){
+                       mFullVolumeDevices = 0;
+                    } else {
+                       // not a television: HDMI output will be always at max
+                       mFixedVolumeDevices &= ~AudioSystem.DEVICE_OUT_HDMI;
+                       mFullVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
+                    }
                 }
                 mHdmiCecSink = false;
                 mHdmiAudioSystemClient = mHdmiManager.getAudioSystemClient();
@@ -2634,6 +2642,17 @@ public class AudioService extends IAudioService.Stub
         }
     }
 
+    /**
+     * @hide
+     */
+    private boolean isBox() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("box") /*|| product.equals("atv")*/){
+            return true;
+        }
+        return false;
+    }
+
     private class RmtSbmxFullVolDeathHandler implements IBinder.DeathRecipient {
         private IBinder mICallback; // To be notified of client's death
 
@@ -4321,6 +4340,8 @@ public class AudioService extends IAudioService.Stub
                 device = AudioSystem.DEVICE_OUT_SPDIF;
             } else if ((device & AudioSystem.DEVICE_OUT_AUX_LINE) != 0) {
                 device = AudioSystem.DEVICE_OUT_AUX_LINE;
+             } else if ((device & AudioSystem.DEVICE_OUT_AUX_DIGITAL) != 0) {
+                device = AudioSystem.DEVICE_OUT_AUX_DIGITAL;
             } else {
                 device &= AudioSystem.DEVICE_OUT_ALL_A2DP;
             }
@@ -4722,6 +4743,18 @@ public class AudioService extends IAudioService.Stub
             return setIndex(getIndex(device) + deltaIndex, device, caller);
         }
 
+        public void restoreAllDeviceIndex(){
+            if(mStreamType == AudioSystem.STREAM_MUSIC){
+                for (int i = 0; i < mIndexMap.size(); i++) {
+                    int device = mIndexMap.keyAt(i);
+                    System.putIntForUser(mContentResolver,
+                          getSettingNameForDevice(device),
+                         (getIndex(device) + 5)/ 10,
+                          UserHandle.USER_CURRENT);
+                }
+            }
+        }
+
         public boolean setIndex(int index, int device, String caller) {
             boolean changed;
             int oldIndex;
@@ -4733,7 +4766,13 @@ public class AudioService extends IAudioService.Stub
                         index = mIndexMax;
                     }
                     mIndexMap.put(device, index);
-
+                    if(isBox()){
+                       if(mStreamType == AudioSystem.STREAM_MUSIC){
+                          for (int i = 0;i<mIndexMap.size();i++){
+                             mIndexMap.put(mIndexMap.keyAt(i), index);
+                          }
+                       }
+                    }
                     changed = oldIndex != index;
                     // Apply change to all streams using this one as alias if:
                     // - the index actually changed OR
@@ -5114,6 +5153,8 @@ public class AudioService extends IAudioService.Stub
                         streamState.getSettingNameForDevice(device),
                         (streamState.getIndex(device) + 5)/ 10,
                         UserHandle.USER_CURRENT);
+                if(isBox())
+                    streamState.restoreAllDeviceIndex();
             }
         }
 
@@ -6110,7 +6151,11 @@ public class AudioService extends IAudioService.Stub
         VolumeStreamState streamState = mStreamStates[AudioSystem.STREAM_MUSIC];
         int devices = mSafeMediaVolumeDevices;
         int i = 0;
-
+        if(isBox() &&
+           ("false".equals(SystemProperties.get("persist.sys.audio.enforce_safevolume","true")))){
+             Log.d(TAG,"no need enforce safe media volume now!");
+               return ;
+        }
         while (devices != 0) {
             int device = 1 << i++;
             if ((device & devices) == 0) {
@@ -6180,7 +6225,11 @@ public class AudioService extends IAudioService.Stub
                         if (DEBUG_VOL) {
                             Log.d(TAG, "CEC sink: setting HDMI as full vol device");
                         }
-                        mFullVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
+                        if(isBox()){
+                          mFullVolumeDevices =0;//for box,setting HDMI as regular vol device
+                        } else {
+                          mFullVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
+                        }
                     } else {
                         if (DEBUG_VOL) {
                             Log.d(TAG, "TV, no CEC: setting HDMI as regular vol device");
