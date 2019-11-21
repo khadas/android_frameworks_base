@@ -285,6 +285,7 @@ public class PackageDexOptimizer {
                 (pkg.applicationInfo.packageName.contains("com.google.android") &&
                  pkg.applicationInfo.packageName.contains("gts"))
                 ||pkg.applicationInfo.packageName.contains("android.media.cts")
+                ||pkg.applicationInfo.packageName.contains("android.cts.verifier")
                 ||pkg.applicationInfo.packageName.contains("android.mediastress.cts")
                 ||pkg.applicationInfo.packageName.contains("android.security.cts")) {
             // maybe  endsWith(".cts") ?
