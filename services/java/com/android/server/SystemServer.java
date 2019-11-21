@@ -111,6 +111,7 @@ import com.android.server.art.ArtManagerLocal;
 import com.android.server.attention.AttentionManagerService;
 import com.android.server.audio.AudioService;
 import com.android.server.biometrics.AuthService;
+import com.android.server.audio.RkAudioSettingService;
 import com.android.server.biometrics.BiometricService;
 import com.android.server.biometrics.sensors.face.FaceService;
 import com.android.server.biometrics.sensors.fingerprint.FingerprintService;
@@ -2052,6 +2053,14 @@ public final class SystemServer implements Dumpable {
                     Slog.e(TAG, "Failure starting kDisplayDeviceManagement Service", e);
                 }
             }
+            if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_ROCKCHIP_AUDIO)) {
+                Slog.i(TAG, "addService rockchip_audio_setting");
+                try {
+                    ServiceManager.addService("rockchip_audio_setting", new RkAudioSettingService(context));
+                } catch (Throwable e) {
+                    Slog.e(TAG, "Failure starting RkAudioSettingManager Service", e);
+                }
+            }
 
             t.traceBegin("StartNotificationManager");
             mSystemServiceManager.startService(NotificationManagerService.class);
@@ -2231,7 +2240,7 @@ public final class SystemServer implements Dumpable {
                 Slog.e(TAG, "Failure starting HardwarePropertiesManagerService", e);
             }
             t.traceEnd();
-          
+
             if (!isWatch) {
                 t.traceBegin("StartTwilightService");
                 mSystemServiceManager.startService(TwilightService.class);

@@ -69,6 +69,7 @@ cc_library_static {
         "com_android_server_sensor_SensorService.cpp",
         "com_android_server_wm_TaskFpsCallbackController.cpp",
         "com_android_server_rkdisplay_RkDisplayModes.cpp",
+        "com_android_server_audio_RkAudioSetting.cpp",
         "onload.cpp",
         ":lib_cachedAppOptimizer_native",
         ":lib_gameManagerService_native",
@@ -82,6 +83,7 @@ cc_library_static {
         "system/gatekeeper/include",
         "system/memory/libmeminfo/include",
         "hardware/rockchip/libhardware_rockchip/include/",
+        "vendor/rockchip/hardware/interfaces",
     ],
 
     header_libs: [
@@ -191,6 +193,7 @@ cc_defaults {
         "rockchip.hardware.outputmanager@1.0",
         "service.incremental",
         "rockchip.hardware.tv.input@1.0",
+        "librksoundsetting",
     ],
 
     static_libs: [
