@@ -18024,6 +18024,19 @@ public class PackageManagerService extends IPackageManager.Stub
 
                 if (DEBUG_INSTALL) Slog.d(TAG, "installNewPackageLI: " + pkg);
 
+                // for gts exoplayer & not odex app workaround
+                if (pkgName1.contains("com.google.android.exoplayer.gts")) {
+                    SystemProperties.set("cts_gts.exo.gts", "true");
+                } else if ("true".equals(SystemProperties.get("cts_gts.exo.gts"))) {
+                    SystemProperties.set("cts_gts.exo.gts", "");
+                }
+
+                if (pkgName1.contains("com.google.android.media.gts")) {
+                    SystemProperties.set("cts_gts.media.gts", "true");
+                } else if ("true".equals(SystemProperties.get("cts_gts.media.gts"))) {
+                    SystemProperties.set("cts_gts.media.gts", "");
+                }
+
                 // TODO(patb): MOVE TO RECONCILE
                 synchronized (mPackages) {
                     renamedPackage = mSettings.getRenamedPackageLPr(pkgName1);
