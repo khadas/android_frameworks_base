@@ -580,7 +580,7 @@ public class AudioService extends IAudioService.Stub
     private ForceControlStreamClient mForceControlStreamClient = null;
     // Used to play ringtones outside system_server
     private volatile IRingtonePlayer mRingtonePlayer;
-
+    private RkAudioSetting mRkAudioSetting = new RkAudioSetting();
     // Devices for which the volume is fixed (volume is either max or muted)
     Set<Integer> mFixedVolumeDevices = new HashSet<>(Arrays.asList(
             AudioSystem.DEVICE_OUT_DGTL_DOCK_HEADSET,
@@ -3875,6 +3875,28 @@ public class AudioService extends IAudioService.Stub
         }
     }
 
+    /**
+     * @hide
+     */
+    private boolean isBox() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("box") /*|| product.equals("atv")*/){
+            return true;
+        }
+        return false;
+    }
+
+     /**
+      * @hide
+      */
+     private boolean isTablet() {
+         String product = SystemProperties.get("ro.target.product","");
+         if(product.equals("tablet")){
+             return true;
+         }
+         return false;
+     }
+
     private class RmtSbmxFullVolDeathHandler implements IBinder.DeathRecipient {
         private IBinder mICallback; // To be notified of client's death
 
@@ -6221,7 +6243,23 @@ public class AudioService extends IAudioService.Stub
                 .set(MediaMetrics.Property.STATE,
                         state == CONNECTION_STATE_CONNECTED ? "connected" : "disconnected")
                 .record();
+
+        if (isBox() && (type == AudioSystem.DEVICE_OUT_AUX_DIGITAL) && (state == CONNECTION_STATE_CONNECTED)) {
+            updataFormatForEdid();
+        }
+
         mDeviceBroker.setWiredDeviceConnectionState(type, state, address, name, caller);
+    }
+
+    public void updataFormatForEdid() {
+        try {
+            if(mRkAudioSetting == null){
+                return;
+            }
+            mRkAudioSetting.updataFormatForEdid();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

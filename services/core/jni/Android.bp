@@ -72,6 +72,7 @@ cc_library_static {
         "com_android_server_pm_PackageManagerShellCommandDataLoader.cpp",
         "com_android_server_sensor_SensorService.cpp",
         "com_android_server_rkdisplay_RkDisplayModes.cpp",
+        "com_android_server_audio_RkAudioSetting.cpp",
         "onload.cpp",
         ":lib_cachedAppOptimizer_native",
         ":lib_networkStatsFactory_native",
@@ -82,6 +83,7 @@ cc_library_static {
         "frameworks/native/services",
         "system/gatekeeper/include",
         "system/memory/libmeminfo/include",
+        "vendor/rockchip/hardware/interfaces",
     ],
 
     header_libs: [
@@ -185,6 +187,7 @@ cc_defaults {
         "rockchip.hardware.outputmanager@1.0",
         "android.system.suspend@1.0",
         "service.incremental",
+        "librksoundsetting",
     ],
 
     static_libs: [
