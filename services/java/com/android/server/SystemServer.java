@@ -114,6 +114,9 @@ import com.android.server.art.DexUseManagerLocal;
 import com.android.server.attention.AttentionManagerService;
 import com.android.server.audio.AudioService;
 import com.android.server.biometrics.AuthService;
+//-----rk-code-----
+import com.android.server.audio.RkAudioSettingService;
+//-----------------
 import com.android.server.biometrics.BiometricService;
 import com.android.server.biometrics.sensors.face.FaceService;
 import com.android.server.biometrics.sensors.fingerprint.FingerprintService;

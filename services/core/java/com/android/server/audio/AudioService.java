@@ -696,6 +696,9 @@ public class AudioService extends IAudioService.Stub
     private ForceControlStreamClient mForceControlStreamClient = null;
     // Used to play ringtones outside system_server
     private volatile IRingtonePlayer mRingtonePlayer;
+    //-----rk-code-----//
+    private RkAudioSetting mRkAudioSetting = null;
+    //----------------//
 
     // Devices for which the volume is fixed (volume is either max or muted)
     Set<Integer> mFixedVolumeDevices = new HashSet<>(Arrays.asList(
@@ -1033,6 +1036,13 @@ public class AudioService extends IAudioService.Stub
         mSystemServer = systemServer;
         mSettings = settings;
         mAudioPolicy = audioPolicy;
+
+        //-----rk-code-----//
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_ROCKCHIP_AUDIO)) {
+            mRkAudioSetting = new RkAudioSetting(context);
+        }
+        //----------------//
+
         mPlatformType = AudioSystem.getPlatformType(context);
 
         mDeviceBroker = new AudioDeviceBroker(mContext, this, mAudioSystem);
@@ -4882,6 +4892,30 @@ public class AudioService extends IAudioService.Stub
         }
     }
 
+    //-----rk-code-----//
+    /**
+     * @hide
+     */
+    private boolean isTablet() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("tablet")){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @hide
+     */
+    private boolean isBox() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("box") /*|| product.equals("atv")*/){
+            return true;
+        }
+        return false;
+    }
+    //----------------//
+
     private class RmtSbmxFullVolDeathHandler implements IBinder.DeathRecipient {
         private IBinder mICallback; // To be notified of client's death
 
@@ -7588,6 +7622,13 @@ public class AudioService extends IAudioService.Stub
                 .set(MediaMetrics.Property.STATE,
                         state == CONNECTION_STATE_CONNECTED ? "connected" : "disconnected")
                 .record();
+
+        //-----rk-code-----//
+        if (isBox() && (attributes.getInternalType() == AudioSystem.DEVICE_OUT_AUX_DIGITAL) && (state == CONNECTION_STATE_CONNECTED)) {
+            updataFormatForEdid();
+        }
+        //----------------//
+
         mDeviceBroker.setWiredDeviceConnectionState(attributes, state, caller);
         // The Dynamic Soundbar mode feature introduces dynamic presence for an HDMI Audio System
         // Client. For example, the device can start with the Audio System Client unavailable.
@@ -7625,6 +7666,19 @@ public class AudioService extends IAudioService.Stub
                 SENDMSG_REPLACE, 0, 0, null,
                 /*delay*/ 0);
     }
+
+    //-----rk-code-----//
+    public void updataFormatForEdid() {
+        try {
+            if(mRkAudioSetting == null){
+                return;
+            }
+            mRkAudioSetting.updataFormatForEdid();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+    //----------------//
 
     /**
      * @hide
