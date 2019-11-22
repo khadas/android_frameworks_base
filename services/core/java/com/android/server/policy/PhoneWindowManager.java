@@ -1781,6 +1781,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         private void handleLongPressOnHome(int deviceId) {
+            if (mHasFeatureLeanback && mShortPressOnWindowBehavior == SHORT_PRESS_WINDOW_PICTURE_IN_PICTURE) {
+                if (mPictureInPictureVisible) {
+                    mHandler.removeMessages(MSG_SHOW_PICTURE_IN_PICTURE_MENU);
+                    Message msg = mHandler.obtainMessage(MSG_SHOW_PICTURE_IN_PICTURE_MENU);
+                    msg.setAsynchronous(true);
+                    msg.sendToTarget();
+                }
+            }
+
             if (mLongPressOnHomeBehavior == LONG_PRESS_HOME_NOTHING) {
                 return;
             }
@@ -1838,7 +1847,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mAppOpsManager = mContext.getSystemService(AppOpsManager.class);
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
         mHasFeatureWatch = mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH);
-        mHasFeatureLeanback = mContext.getPackageManager().hasSystemFeature(FEATURE_LEANBACK);
+        mHasFeatureLeanback = (mContext.getPackageManager().hasSystemFeature(FEATURE_LEANBACK) ||
+                "box".equals(SystemProperties.get("ro.target.product")));
         mHasFeatureHdmiCec = mContext.getPackageManager().hasSystemFeature(FEATURE_HDMI_CEC);
         mAccessibilityShortcutController =
                 new AccessibilityShortcutController(mContext, new Handler(), mCurrentUserId);

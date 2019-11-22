@@ -30,6 +30,8 @@ import com.android.systemui.statusbar.CommandQueue;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 
+import android.os.SystemProperties;
+
 /**
  * Controls the picture-in-picture window.
  */
@@ -53,7 +55,8 @@ public class PipUI extends SystemUI implements CommandQueue.Callbacks {
             throw new IllegalStateException("Non-primary Pip component not currently supported.");
         }
 
-        mPipManager = pm.hasSystemFeature(FEATURE_LEANBACK_ONLY)
+        mPipManager = (pm.hasSystemFeature(FEATURE_LEANBACK_ONLY)) ||
+                      (android.os.SystemProperties.get("ro.target.product","").equals("box"))
                 ? com.android.systemui.pip.tv.PipManager.getInstance()
                 : com.android.systemui.pip.phone.PipManager.getInstance();
         mPipManager.initialize(mContext);
