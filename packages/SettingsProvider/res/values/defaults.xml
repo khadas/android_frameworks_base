@@ -145,6 +145,9 @@
     <!-- Default for Settings.Secure.USER_SETUP_COMPLETE -->
     <bool name="def_user_setup_complete">false</bool>
 
+    <!-- Default for Settings.Secure.TV_USER_SETUP_COMPLETE -->
+    <bool name="def_tv_user_setup_complete">true</bool>
+
     <!-- Default for Settings.Global.LOW_BATTERY_SOUND_TIMEOUT.
          0 means no timeout; battery sounds will always play
          >0 is milliseconds of screen-off time after which battery sounds will not play -->

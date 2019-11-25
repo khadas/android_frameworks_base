@@ -2360,6 +2360,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
                         R.bool.def_lockscreen_disabled);
             }
 
+            if (SystemProperties.get("ro.target.product","").equals("box")) {
+                loadBooleanSetting(stmt, Settings.Secure.TV_USER_SETUP_COMPLETE,
+                    R.bool.def_tv_user_setup_complete);
+            }
+
             loadBooleanSetting(stmt, Settings.Secure.SCREENSAVER_ENABLED,
                     com.android.internal.R.bool.config_dreamsEnabledByDefault);
             loadBooleanSetting(stmt, Settings.Secure.SCREENSAVER_ACTIVATE_ON_DOCK,
