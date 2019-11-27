@@ -236,7 +236,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.List;
-import android.os.FileUtils;
 
 /**
  * WindowManagerPolicy implementation for the Android phone UI.  This
@@ -3702,16 +3701,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     }
                 }
             }
-        } else if (ExtconUEventObserver.extconExists()) {
-/* && ExtconUEventObserver.namedExtconDirExists(HdmiVideoExtconUEventObserver.NAME)*/
+        } else if (ExtconUEventObserver.extconExists()
+                && ExtconUEventObserver.namedExtconDirExists(HdmiVideoExtconUEventObserver.NAME)) {
             HdmiVideoExtconUEventObserver observer = new HdmiVideoExtconUEventObserver();
-            if (null != observer.getHdmiExtPath()) {
-                Slog.d(TAG, "find hdmi node add observer");
-                plugged = observer.init();
-                mHDMIObserver = observer;
-            } else {
-                observer = null;
-            }
+            plugged = observer.init();
+            mHDMIObserver = observer;
         } else if (localLOGV) {
             Slog.v(TAG, "Not observing HDMI plug state because HDMI was not found.");
         }
@@ -5804,37 +5798,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private class HdmiVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
         private static final String HDMI_EXIST = "HDMI=1";
-
         private static final String NAME = "hdmi";
-        private final ExtconInfo mHdmi = new ExtconInfo(getHdmiExtPath());
-
-        private String getHdmiExtPath() {
-            String mHdmiPath;
-            final File[] files = new File("/sys/class/extcon/").listFiles();
-            if (ArrayUtils.isEmpty(files)) {
-                return null;
-            }
-            for (File f : files) {
-                if (f.isDirectory()){
-                    for (File child : f.listFiles()) {
-                        if (child.getName().equals("state")) {
-                            String mExtState = null;
-                            try {
-                                mExtState= FileUtils.readTextFile(child, 0, null).trim();
-                            } catch (IOException e) {
-                                Slog.e(TAG, "Failed to read to " + f.getName());
-                            }
-                            Slog.d(TAG, "asx get hdmi node"+ f.getName());
-                            if (mExtState.contains("HDMI=")) {
-                                mHdmiPath = f.getName();
-                                return f.getName();
-                            }
-                        }
-                    }
-                }
-            }
-            return null;
-        }
+        private final ExtconInfo mHdmi = new ExtconInfo(NAME);
 
         private boolean init() {
             boolean plugged = false;
