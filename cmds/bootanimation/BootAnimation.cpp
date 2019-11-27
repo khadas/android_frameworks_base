@@ -377,7 +377,8 @@ void BootAnimation::findBootAnimationFile() {
        mVideoAnimation = false;
        if (access(SYSTEM_BOOTVIDEO_FILE, R_OK) == 0){
           mVideoFile = (char*)SYSTEM_BOOTVIDEO_FILE;
-       } else if (access(DATA_BOOTVIDEO_FILE, R_OK) == 0){
+       }
+       if (access(DATA_BOOTVIDEO_FILE, R_OK) == 0){
           mVideoFile = (char*)DATA_BOOTVIDEO_FILE;
        }
        property_get("persist.sys.bootvideo.enable",decrypt, "false");
@@ -1334,10 +1335,16 @@ bool BootAnimation::video()
     sp<IMediaHTTPService> httpService;
 
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.bootvideo.showtime", value, "-1");
+    property_get("persist.sys.bootvideo.showtime", value, "-2");
     int bootvideo_time = atoi(value);//s
     if(bootvideo_time > 120)
           bootvideo_time = 120;
+
+//add delaytime set ,default 0.
+    property_get("persist.sys.bootvideo.delaytime", value, "0");
+    int delay_new = atoi(value);//s
+    usleep(CHECK_DELAY*2*delay_new);
+
 //    ALOGD("bootvideo:start MediaPlayer init");
     sp<MediaPlayer> mp = new MediaPlayer();
 //    ALOGD("bootvideo:end MediaPlayer init");
@@ -1351,6 +1358,13 @@ bool BootAnimation::video()
     mp->setLooping(LOOP);
     mp->setVideoSurfaceTexture(surface->getIGraphicBufferProducer());
     mp->prepare();
+//set vol
+    property_get("persist.sys.bootvideo.vol", value, "-1");
+    if(strcmp(value, "-1")){
+       float vol = 1.00f *atoi(value) / 100;//max 100
+       ALOGD("bootVideo vol=%f", vol);
+       mp->setVolume(vol,vol);
+    }
 
     mp->getDuration(&duration);//persist.sys.pic_time
     if(bootvideo_time > 0){
@@ -1362,7 +1376,7 @@ bool BootAnimation::video()
     }
     //property_set("persist.sys.pic_time", delay);
     mBootVideoTime = atoi(delay);
-    ALOGD("bootvideo:bootvideo.showtime=%d, duration=%d, delay=%s\n",bootvideo_time,duration, delay);
+    ALOGD("bootvideo:vol=%s,showtime=%d, duration=%d, delay=%s\n",value,bootvideo_time,duration, delay);
 
     mp->start();
     mStartbootanimaTime = systemTime();
@@ -1381,6 +1395,7 @@ bool BootAnimation::video()
     }
     property_set("sys.bootvideo.closed", "1");
     mp->stop();
+    mp->reset();
     surface.clear();
     control.clear();
     mp = NULL;
