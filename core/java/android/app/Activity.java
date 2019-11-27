@@ -35,6 +35,20 @@ import android.annotation.SystemApi;
 import android.annotation.TestApi;
 import android.annotation.UnsupportedAppUsage;
 import android.app.VoiceInteractor.Request;
+import android.os.PersistableBundle;
+import android.transition.Scene;
+import android.transition.TransitionManager;
+import android.util.ArrayMap;
+import android.util.SuperNotCalledException;
+import android.widget.Toolbar;
+import android.widget.Toast;
+
+import com.android.internal.app.IVoiceInteractor;
+import com.android.internal.app.WindowDecorActionBar;
+import com.android.internal.app.ToolbarActionBar;
+
+import android.annotation.SystemApi;
+import android.os.SystemProperties;
 import android.app.admin.DevicePolicyManager;
 import android.app.assist.AssistContent;
 import android.content.ComponentCallbacks2;
@@ -3541,6 +3555,20 @@ public class Activity extends ContextThemeWrapper
      * @see android.view.KeyEvent
      */
     public boolean onKeyDown(int keyCode, KeyEvent event)  {
+        if("box".equals(SystemProperties.get("ro.target.product","unkonw"))){
+            String mstate=null;
+            mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
+
+            if ((keyCode == KeyEvent.KEYCODE_PROFILE_SWITCH)) {
+                if ("on".equals(mstate)) {
+                    Toast.makeText(Activity.this, "Enter into mouse mode, click again to quit", Toast.LENGTH_LONG).show();
+                } else if ("off".equals(mstate)) {
+                    Toast.makeText(Activity.this, "Restore to default button mode", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
+
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (getApplicationInfo().targetSdkVersion
                     >= Build.VERSION_CODES.ECLAIR) {
