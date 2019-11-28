@@ -92,7 +92,7 @@ public final class MemInfoReader {
     public long getKernelUsedSizeKb() {
         return mInfos[Debug.MEMINFO_SHMEM] + mInfos[Debug.MEMINFO_SLAB_UNRECLAIMABLE]
                 + mInfos[Debug.MEMINFO_VM_ALLOC_USED] + mInfos[Debug.MEMINFO_PAGE_TABLES]
-                + mInfos[Debug.MEMINFO_KERNEL_STACK];
+                + mInfos[Debug.MEMINFO_KERNEL_STACK] + mInfos[Debug.MEMINFO_DRIVER_CMA];
     }
 
     public long getSwapTotalSizeKb() {

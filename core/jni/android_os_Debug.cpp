@@ -703,7 +703,7 @@ static long get_allocated_vmalloc_memory() {
             "vm_map_ram",
             NULL
     };
-    long size, vmalloc_allocated_size = 0;
+    long nr_pages, vmalloc_allocated_size = 0;
 
     UniqueFile fp = MakeUniqueFile("/proc/vmallocinfo", "re");
     if (fp == nullptr) {
@@ -723,10 +723,20 @@ static long get_allocated_vmalloc_memory() {
             }
             i++;
         }
-        if (valid_line && (sscanf(line, "%*x-%*x %ld", &size) == 1)) {
-            vmalloc_allocated_size += size;
+        // check to see if there are pages mapped in vmalloc area
+        if (!strstr(line, "pages=")) {
+            continue;
+        }
+
+        if (sscanf(line, "%*x-%*x %*ld %*s pages=%ld", &nr_pages) == 1) {
+            /* driver allocated */
+            vmalloc_allocated_size += (nr_pages * getpagesize());
+        } else if(sscanf(line, "%*x-%*x %*ld %*s %*s pages=%ld", &nr_pages) == 1) {
+            /* module allocated, one more %*s */
+            vmalloc_allocated_size += (nr_pages * getpagesize());
         }
     }
+    ALOGW("real vmalloc_allocated_size:%ld\n", vmalloc_allocated_size);
     return vmalloc_allocated_size;
 }
 
@@ -746,6 +756,7 @@ enum {
     MEMINFO_VMALLOC_USED,
     MEMINFO_PAGE_TABLES,
     MEMINFO_KERNEL_STACK,
+    MEMINFO_DRIVER_CMA,
     MEMINFO_COUNT
 };
 
@@ -819,6 +830,7 @@ static void android_os_Debug_getMemInfo(JNIEnv *env, jobject clazz, jlongArray o
             "VmallocUsed:",
             "PageTables:",
             "KernelStack:",
+            "DriverCma:",
             NULL
     };
     static const int tagsLen[] = {
@@ -837,9 +849,10 @@ static void android_os_Debug_getMemInfo(JNIEnv *env, jobject clazz, jlongArray o
             12,
             11,
             12,
+            10,
             0
     };
-    long mem[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    long mem[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
     char* p = buffer;
     while (*p && numFound < (sizeof(tagsLen) / sizeof(tagsLen[0]))) {
