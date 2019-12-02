@@ -299,6 +299,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+import android.app.ActivityManager.RunningTaskInfo;
+import android.content.ComponentName;
 
 /**
  * WindowManagerPolicy implementation for the Android phone UI.  This
