@@ -541,6 +541,9 @@
     <string name="enable_adb">USB debugging</string>
     <!-- Setting checkbox summary for Whether to enable USB debugging support on the phone -->
     <string name="enable_adb_summary">Debug mode when USB is connected</string>
+    <!-- Setting checkbox summary for Whether to enable Android bug collector support on the phone -->
+    <string name="enable_abc" >"Android bug collector"</string>
+    <string name="enable_abc_summary" >"Log will be saved in /data/.../logs/"</string>
     <!-- Setting title to revoke secure USB debugging authorizations -->
     <string name="clear_adb_keys">Revoke USB debugging authorizations</string>
     <!-- [CHAR LIMIT=NONE] Setting checkbox title for Whether to include bug report item in power menu. -->
