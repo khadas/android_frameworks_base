@@ -203,6 +203,8 @@
     <string name="apn_settings_not_available" msgid="7873729032165324000">"此用户无权修改接入点名称设置"</string>
     <string name="enable_abc" >"日志采集器"</string>
     <string name="enable_abc_summary" >"日志将被保存到 /data/..."</string>
+    <string name="enable_netadb" >"打开网络adb"</string>
+    <string name="enable_netadb_summary" >"将会设置网络adb端口为5555"</string>
     <string name="enable_adb" msgid="7982306934419797485">"USB 调试"</string>
     <string name="enable_adb_summary" msgid="4881186971746056635">"连接 USB 后启用调试模式"</string>
     <string name="clear_adb_keys" msgid="4038889221503122743">"撤消 USB 调试授权"</string>
