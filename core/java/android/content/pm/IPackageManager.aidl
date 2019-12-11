@@ -44,6 +44,7 @@ import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.content.pm.permission.SplitPermissionInfoParcelable;
 import android.content.pm.SuspendDialogInfo;
 import android.content.pm.UserInfo;
 import android.content.pm.VerifierDeviceIdentity;
@@ -781,4 +782,6 @@ interface IPackageManager {
     void setPackageUiMode(String packageName, int oldUiMode, int newUiMode);
 
     int getPackageUiMode(String packageName);
+
+    List<SplitPermissionInfoParcelable> getSplitPermissions();
 }
