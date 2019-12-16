@@ -21,11 +21,13 @@ import static android.view.WindowManagerPolicyConstants.NAV_BAR_MODE_3BUTTON;
 import static com.android.systemui.statusbar.phone.NavBarTintController.DEFAULT_COLOR_ADAPT_TRANSITION_TIME;
 import static com.android.systemui.statusbar.phone.NavBarTintController.MIN_COLOR_ADAPT_TRANSITION_TIME;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.IWallpaperVisibilityListener;
@@ -87,11 +89,14 @@ public final class NavigationBarTransitions extends BarTransitions implements
         mDarkIntensityListeners = new ArrayList();
 
         IWindowManager windowManagerService = Dependency.get(IWindowManager.class);
-        try {
-            mWallpaperVisible = windowManagerService.registerWallpaperVisibilityListener(
-                    mWallpaperVisibilityListener, Display.DEFAULT_DISPLAY);
-        } catch (RemoteException e) {
-        }
+        if (!ActivityManager.isLowRamDeviceStatic() ||
+            SystemProperties.get("cts_gts.status","").equals("true")) {
+            try {
+                mWallpaperVisible = windowManagerService.registerWallpaperVisibilityListener(
+                        mWallpaperVisibilityListener, Display.DEFAULT_DISPLAY);
+            } catch (RemoteException e) {
+            }
+        } // For Go device, dont registe wallpaper hook.
         mView.addOnLayoutChangeListener(
                 (v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
                     View currentView = mView.getCurrentView();
@@ -114,10 +119,13 @@ public final class NavigationBarTransitions extends BarTransitions implements
     @Override
     public void destroy() {
         IWindowManager windowManagerService = Dependency.get(IWindowManager.class);
-        try {
-            windowManagerService.unregisterWallpaperVisibilityListener(mWallpaperVisibilityListener,
-                    Display.DEFAULT_DISPLAY);
-        } catch (RemoteException e) {
+        if (!ActivityManager.isLowRamDeviceStatic() ||
+            SystemProperties.get("cts_gts.status","").equals("true")) {
+            try {
+                windowManagerService.unregisterWallpaperVisibilityListener(mWallpaperVisibilityListener,
+                        Display.DEFAULT_DISPLAY);
+            } catch (RemoteException e) {
+            }
         }
     }
 
