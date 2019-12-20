@@ -285,21 +285,10 @@ class ScreenRotationAnimation {
             if (displayHandle != null) {
                 Surface sur = new Surface();
                 sur.copyFrom(mSurfaceControl);
-                GraphicBuffer gb = SurfaceControl.screenshotToBufferWithSecureLayersUnsafe(
-                        new Rect(), 0 /* width */, 0 /* height */, 0 /* minLayer */,
-                        0 /* maxLayer */, false /* useIdentityTransform */, 0 /* rotation */);
-                if (gb != null) {
-                    try {
-                        sur.attachAndQueueBuffer(gb);
-                    } catch (RuntimeException e) {
-                        Slog.w(TAG, "Failed to attach screenshot - " + e.getMessage());
-                    }
-                    t.setLayer(mSurfaceControl, SCREEN_FREEZE_LAYER_SCREENSHOT);
-                    t.setAlpha(mSurfaceControl, 0);
-                    t.show(mSurfaceControl);
-                } else {
-                    Slog.w(TAG, "Unable to take screenshot of display " + displayId);
-                }
+                SurfaceControl.screenshot(displayHandle, sur);
+                t.setLayer(mSurfaceControl, SCREEN_FREEZE_LAYER_SCREENSHOT);
+                t.setAlpha(mSurfaceControl, 0);
+                t.show(mSurfaceControl);
                 sur.destroy();
             } else {
                 Slog.w(TAG, "Built-in display " + displayId + " is null.");
