@@ -81,7 +81,6 @@ import com.android.server.am.ActivityManagerService;
 import com.android.server.appbinding.AppBindingService;
 import com.android.server.attention.AttentionManagerService;
 import com.android.server.audio.AudioService;
-import com.android.server.audio.RkAudioSettingService;
 import com.android.server.biometrics.BiometricService;
 import com.android.server.biometrics.face.FaceService;
 import com.android.server.biometrics.fingerprint.FingerprintService;
@@ -1428,16 +1427,6 @@ public final class SystemServer {
             } catch (Throwable e) {
                 Slog.e(TAG, "Failure starting kDisplayDeviceManagement Service", e);
             }
-
-            if (SystemProperties.get("ro.target.product", "").equals("box") || SystemProperties.get("ro.target.product", "").equals("atv")){
-                Slog.i(TAG, "addService rockchip_audio_setting");
-                try {
-                    ServiceManager.addService("rockchip_audio_setting", new RkAudioSettingService(context));
-                } catch (Throwable e) {
-                    Slog.e(TAG, "Failure starting RkAudioSettingManager Service", e);
-                }
-            }
-
             traceBeginAndSlog("StartNotificationManager");
             mSystemServiceManager.startService(NotificationManagerService.class);
             SystemNotificationChannels.removeDeprecated(context);
