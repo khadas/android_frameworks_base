@@ -662,6 +662,7 @@ java_defaults {
         "packages/services/Proxy/com/android/net/IProxyPortListener.aidl",
         "core/java/android/service/quicksettings/IQSService.aidl",
         "core/java/android/service/quicksettings/IQSTileService.aidl",
+        "core/java/android/os/audio/IRkAudioSettingService.aidl",
 
         ":libupdate_engine_aidl",
 

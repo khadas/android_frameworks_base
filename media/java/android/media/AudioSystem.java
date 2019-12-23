@@ -154,6 +154,8 @@ public class AudioSystem
     public static final int AUDIO_FORMAT_APTX_HD        = 0x21000000;
     public static final int AUDIO_FORMAT_LDAC           = 0x23000000;
 
+    // add AUDIO_FORMAT_IEC61937 define
+    public static final int AUDIO_FORMAT_IEC61937       = 0x0D000000;
     /**
      * Convert audio format enum values to Bluetooth codec values
      */

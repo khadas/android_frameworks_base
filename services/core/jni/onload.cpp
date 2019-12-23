@@ -58,6 +58,7 @@ int register_android_server_security_VerityUtils(JNIEnv* env);
 int register_android_server_am_AppCompactor(JNIEnv* env);
 int register_android_server_am_LowMemDetector(JNIEnv* env);
 int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env);
+int register_com_android_server_audio_RkAudioSetting(JNIEnv* env);
 };
 
 using namespace android;
@@ -108,6 +109,8 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void* /* reserved */)
     register_android_server_security_VerityUtils(env);
     register_android_server_am_AppCompactor(env);
     register_android_server_am_LowMemDetector(env);
-	register_com_android_server_rkdisplay_RkDisplayModes(env);
+    register_com_android_server_rkdisplay_RkDisplayModes(env);
+    register_com_android_server_audio_RkAudioSetting(env);
+
     return JNI_VERSION_1_4;
 }
