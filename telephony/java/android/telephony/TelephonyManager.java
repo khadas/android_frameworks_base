@@ -5337,7 +5337,7 @@ public class TelephonyManager {
             @NonNull @CallbackExecutor Executor executor, @NonNull CellInfoCallback callback) {
         try {
             ITelephony telephony = getITelephony();
-            if (telephony == null) return;
+            if (telephony == null || getSubId() == -1) return;
             telephony.requestCellInfoUpdate(
                     getSubId(),
                     new ICellInfoCallback.Stub() {
@@ -5377,7 +5377,7 @@ public class TelephonyManager {
             @NonNull @CallbackExecutor Executor executor, @NonNull CellInfoCallback callback) {
         try {
             ITelephony telephony = getITelephony();
-            if (telephony == null) return;
+            if (telephony == null || getSubId() == -1) return;
             telephony.requestCellInfoUpdateWithWorkSource(
                     getSubId(),
                     new ICellInfoCallback.Stub() {
