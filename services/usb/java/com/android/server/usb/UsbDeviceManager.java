@@ -111,7 +111,7 @@ import java.util.Set;
 public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObserver {
 
     private static final String TAG = UsbDeviceManager.class.getSimpleName();
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     /**
      * The name of the xml file in which screen unlocked functions are stored.
@@ -721,13 +721,14 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
             }
 
             // send broadcast intent only if the USB state has changed
+            /*
             if (!isUsbStateChanged(intent)) {
                 if (DEBUG) {
                     Slog.d(TAG, "skip broadcasting " + intent + " extras: " + intent.getExtras());
                 }
                 return;
             }
-
+            */
             if (DEBUG) Slog.d(TAG, "broadcasting " + intent + " extras: " + intent.getExtras());
             sendStickyBroadcast(intent);
             mBroadcastedIntent = intent;
@@ -821,7 +822,8 @@ public class UsbDeviceManager implements ActivityTaskManagerInternal.ScreenObser
                                     && mScreenUnlockedFunctions != UsbManager.FUNCTION_NONE) {
                                 setScreenUnlockedFunctions();
                             } else {
-                                setEnabledFunctions(UsbManager.FUNCTION_NONE, false);
+                                //setEnabledFunctions(UsbManager.FUNCTION_NONE, false);
+                                setEnabledFunctions(mCurrentFunctions, false);
                             }
                         }
                         updateUsbFunctions();
