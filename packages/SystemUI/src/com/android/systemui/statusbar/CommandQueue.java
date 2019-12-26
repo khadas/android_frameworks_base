@@ -93,6 +93,10 @@ public class CommandQueue extends IStatusBar.Stub {
     private static final int MSG_SHOW_CHARGING_ANIMATION       = 44 << MSG_SHIFT;
     private static final int MSG_SHOW_PINNING_TOAST_ENTER_EXIT = 45 << MSG_SHIFT;
     private static final int MSG_SHOW_PINNING_TOAST_ESCAPE     = 46 << MSG_SHIFT;
+    private static final int MSG_ADD_BAR_BOTTOM                = 47 << MSG_SHIFT;
+    private static final int MSG_REMOVE_BAR_BOTTOM             = 48 << MSG_SHIFT;
+    private static final int MSG_ADD_BAR_UPPER                 = 49 << MSG_SHIFT;
+    private static final int MSG_REMOVE_BAR_UPPER              = 50 << MSG_SHIFT;
 
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
@@ -165,6 +169,10 @@ public class CommandQueue extends IStatusBar.Stub {
         default void onFingerprintHelp(String message) { }
         default void onFingerprintError(String error) { }
         default void hideFingerprintDialog() { }
+        default void addBottomBar() { }
+        default void removeBottomBar() { }
+        default void addUpperBar() { }
+        default void removeUpperBar() { }
     }
 
     @VisibleForTesting
@@ -524,6 +532,38 @@ public class CommandQueue extends IStatusBar.Stub {
     }
 
     @Override
+    public void addBottomBar() {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_ADD_BAR_BOTTOM);
+            mHandler.obtainMessage(MSG_ADD_BAR_BOTTOM, 0, 0, null).sendToTarget();
+       }
+    }
+
+    @Override
+    public void removeBottomBar() {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_REMOVE_BAR_BOTTOM);
+            mHandler.obtainMessage(MSG_REMOVE_BAR_BOTTOM, 0, 0, null).sendToTarget();
+      }
+    }
+
+    @Override
+    public void addUpperBar() {
+       synchronized (mLock) {
+           mHandler.removeMessages(MSG_ADD_BAR_UPPER);
+           mHandler.obtainMessage(MSG_ADD_BAR_UPPER, 0, 0, null).sendToTarget();
+       }
+    }
+
+    @Override
+    public void removeUpperBar() {
+       synchronized (mLock) {
+           mHandler.removeMessages(MSG_REMOVE_BAR_UPPER);
+           mHandler.obtainMessage(MSG_REMOVE_BAR_UPPER, 0, 0, null).sendToTarget();
+       }
+    }
+
+    @Override
     public void onFingerprintAuthenticated() {
         synchronized (mLock) {
             mHandler.obtainMessage(MSG_FINGERPRINT_AUTHENTICATED).sendToTarget();
@@ -717,14 +757,24 @@ public class CommandQueue extends IStatusBar.Stub {
                         mCallbacks.get(i).remQsTile((ComponentName) msg.obj);
                     }
                     break;
-                case MSG_CLICK_QS_TILE:
+                case MSG_ADD_BAR_BOTTOM:
                     for (int i = 0; i < mCallbacks.size(); i++) {
-                        mCallbacks.get(i).clickTile((ComponentName) msg.obj);
+                        mCallbacks.get(i).addBottomBar();
                     }
                     break;
-                case MSG_TOGGLE_APP_SPLIT_SCREEN:
+                case MSG_REMOVE_BAR_BOTTOM:
                     for (int i = 0; i < mCallbacks.size(); i++) {
-                        mCallbacks.get(i).toggleSplitScreen();
+                        mCallbacks.get(i).removeBottomBar();
+                    }
+                    break;
+                case MSG_ADD_BAR_UPPER:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).addUpperBar();
+                    }
+                    break;
+                case MSG_REMOVE_BAR_UPPER:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).removeUpperBar();
                     }
                     break;
                 case MSG_HANDLE_SYSTEM_KEY:

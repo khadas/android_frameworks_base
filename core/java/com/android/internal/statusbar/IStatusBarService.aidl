@@ -72,6 +72,10 @@ interface IStatusBarService
 
     void onGlobalActionsShown();
     void onGlobalActionsHidden();
+    void addBottomBar();
+    void removeBottomBar();
+    void addUpperBar();
+    void removeUpperBar();
 
     /**
      * These methods are needed for global actions control which the UI is shown in sysui.

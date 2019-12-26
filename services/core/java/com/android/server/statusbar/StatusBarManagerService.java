@@ -826,6 +826,43 @@ public class StatusBarManagerService extends IStatusBarService.Stub {
         }
     }
 
+
+    @Override
+    public void addBottomBar(){
+        if (mBar != null) {
+           try {
+               mBar.addBottomBar();
+           } catch (RemoteException ex) {}
+       }
+    }
+
+    @Override
+    public void removeBottomBar(){
+       if (mBar != null) {
+          try {
+              mBar.removeBottomBar();
+          } catch (RemoteException ex) {}
+       }
+    }
+
+    @Override
+    public void addUpperBar(){
+      if (mBar != null) {
+          try {
+              mBar.addUpperBar();
+          } catch (RemoteException ex) {}
+      }
+    }
+
+    @Override
+    public void removeUpperBar(){
+      if (mBar != null) {
+         try {
+             mBar.removeUpperBar();
+         } catch (RemoteException ex) {}
+      }
+    }
+
     private void enforceStatusBarOrShell() {
         if (Binder.getCallingUid() == Process.SHELL_UID) {
             return;
