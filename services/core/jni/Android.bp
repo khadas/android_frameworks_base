@@ -63,6 +63,7 @@ cc_library_static {
         "frameworks/base/libs",
         "frameworks/native/services",
         "system/gatekeeper/include",
+        "vendor/rockchip/hardware/interfaces/",
     ],
 }
 
@@ -135,7 +136,7 @@ cc_defaults {
         "android.frameworks.schedulerservice@1.0",
         "android.frameworks.sensorservice@1.0",
         "rockchip.hardware.outputmanager@1.0",
-        "rockchip.hardware.rkaudiosetting@1.0",
+        "librksoundsetting",
         "android.system.suspend@1.0",
         "suspend_control_aidl_interface-cpp",
     ],

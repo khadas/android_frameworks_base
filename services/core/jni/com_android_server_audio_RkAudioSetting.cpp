@@ -1,10 +1,22 @@
-#define LOG_TAG "RkNativeAudioSetting"
+/*
+ * Copyright 2018 Rockchip Electronics Co. LTD
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
-#include "android_os_Parcel.h"
-#include "android_util_Binder.h"
+#define LOG_TAG "RkNativeAudioSetting"
 #include "android/graphics/Bitmap.h"
-#include "android/graphics/GraphicsJNI.h"
-#include "core_jni_helpers.h"
 
 #include <nativehelper/JNIHelp.h>
 #include <nativehelper/ScopedUtfChars.h>
@@ -27,54 +39,44 @@
 #include <linux/netlink.h>
 #include <sys/socket.h>
 
-#include <rockchip/hardware/rkaudiosetting/1.0/IRkAudioSetting.h>
+
+#include <rksoundsetting/RkAudioSetting.h>
+
 #include <unordered_map>
 
 namespace android {
 
-using namespace rockchip::hardware::rkaudiosetting::V1_0;
 
-using ::rockchip::hardware::rkaudiosetting::V1_0::IRkAudioSetting;
-using ::rockchip::hardware::rkaudiosetting::V1_0::Status;
-
-using android::hardware::hidl_handle;
-using android::hardware::hidl_string;
-using android::hardware::hidl_vec;
-using android::hardware::Return;
-using android::hardware::Void;
-
-sp<IRkAudioSetting> mAudioSetting = nullptr;
+static RkAudioSetting *mAudioSetting = nullptr;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-static void nativeSetSelect(JNIEnv* env, jobject obj, jint device) {
+
+RkAudioSetting* getAudioSetting() {
     if (mAudioSetting == nullptr) {
-        mAudioSetting = IRkAudioSetting::getService();
+        mAudioSetting = new RkAudioSetting();
         if (mAudioSetting != nullptr) {
-            //ALOGD("get mAudioSetting point");
         } else {
             ALOGD("get mAudioSetting is NULL");
         }
     }
+    return mAudioSetting;
+}
 
-    if (mAudioSetting != nullptr) {
-        mAudioSetting->setSelect(device);
+static void nativeSetSelect(JNIEnv* env, jobject obj, jint device) {
+    RkAudioSetting *setting = getAudioSetting();
+
+    if (setting != nullptr) {
+        setting->setSelect(device);
     } else {
         ALOGD("get mAudioSetting is NULL");
     }
 }
 
 static void nativeupdataFormatForEdid(JNIEnv* env, jobject obj) {
-    if (mAudioSetting == nullptr) {
-        mAudioSetting = IRkAudioSetting::getService();
-        if (mAudioSetting != nullptr) {
-            //ALOGD("get mAudioSetting point");
-        } else {
-            ALOGD("get mAudioSetting is NULL");
-        }
-    }
+    RkAudioSetting *setting = getAudioSetting();
 
-    if (mAudioSetting != nullptr) {
-        mAudioSetting->updataFormatForEdid();
+    if (setting != nullptr) {
+        setting->updataFormatForEdid();
     } else {
         ALOGD("get mAudioSetting is NULL");
     }
@@ -82,17 +84,10 @@ static void nativeupdataFormatForEdid(JNIEnv* env, jobject obj) {
 
 static void nativeSetFormat(JNIEnv* env, jobject obj, jint device, jint close, jstring format) {
     const char* mformat = env->GetStringUTFChars(format, NULL);
-     if (mAudioSetting == nullptr) {
-         mAudioSetting = IRkAudioSetting::getService();
-         if (mAudioSetting != nullptr) {
-            //ALOGD("get mAudioSetting point");
-         } else {
-             ALOGD("get mAudioSetting is NULL");
-         }
-    }
+    RkAudioSetting *setting = getAudioSetting();
 
-    if (mAudioSetting != nullptr) {
-        mAudioSetting->setFormat(device, close, mformat);
+    if (setting != nullptr) {
+        setting->setFormat(device, close, mformat);
     } else {
         ALOGD("get mAudioSetting is NULL");
     }
@@ -100,17 +95,10 @@ static void nativeSetFormat(JNIEnv* env, jobject obj, jint device, jint close, j
 }
 
 static void nativeSetMode(JNIEnv* env, jobject obj, jint device, jint mode) {
-    if (mAudioSetting == nullptr) {
-        mAudioSetting = IRkAudioSetting::getService();
-        if (mAudioSetting != nullptr) {
-            //ALOGD("get mAudioSetting point");
-        } else {
-            ALOGD("get mAudioSetting is NULL");
-        }
-    }
+    RkAudioSetting *setting = getAudioSetting();
 
-    if (mAudioSetting != nullptr){
-        mAudioSetting->setMode(device, mode);
+    if (setting != nullptr){
+        setting->setMode(device, mode);
     } else {
         ALOGD("get mAudioSetting is NULL");
     }
@@ -118,23 +106,12 @@ static void nativeSetMode(JNIEnv* env, jobject obj, jint device, jint mode) {
 
 static jint nativeGetSelect(JNIEnv* env, jobject obj, jint device) {
     int value = 0;
-    if (mAudioSetting == nullptr) {
-        mAudioSetting = IRkAudioSetting::getService();
-        if (mAudioSetting != nullptr) {
-            //ALOGD("get mAudioSetting point");
-        } else {
-            ALOGD("get mAudioSetting is NULL");
-        }
-    }
-    if (mAudioSetting != nullptr) {
-        mAudioSetting->getSelect(device,
-                [&](const auto& tmpResult, const auto& tmpState) {
-                    if (tmpResult == Status::OK) {
-                        value = tmpState;
-                    }
-                });
-    } else{
-        ALOGD("get mAudioSetting is NULL");
+    RkAudioSetting *setting = getAudioSetting();
+
+    if (setting != nullptr) {
+        value = setting->getSelect(device);
+    } else {
+         ALOGD("get mAudioSetting is NULL");
     }
 
     return static_cast<jint>(value);
@@ -143,22 +120,10 @@ static jint nativeGetSelect(JNIEnv* env, jobject obj, jint device) {
 static jint nativeGetFormat(JNIEnv* env, jobject obj, jint device, jstring format) {
     int value = 0;
     const char* mformat = env->GetStringUTFChars(format, NULL);
-    if (mAudioSetting == nullptr) {
-        mAudioSetting = IRkAudioSetting::getService();
-        if (mAudioSetting != nullptr) {
-            //ALOGD("get mAudioSetting point");
-        } else {
-            ALOGD("get mAudioSetting is NULL");
-        }
-    }
+    RkAudioSetting *setting = getAudioSetting();
 
-    if (mAudioSetting != nullptr) {
-        mAudioSetting->getFormat(device, mformat,
-                [&](const auto& tmpResult, const auto& tmpState) {
-                    if (tmpResult == Status::OK) {
-                        value = tmpState;
-                    }
-                });
+    if (setting != nullptr) {
+        value = setting->getFormat(device, mformat);
     } else {
         ALOGD("get mAudioSetting is NULL");
     }
@@ -169,22 +134,10 @@ static jint nativeGetFormat(JNIEnv* env, jobject obj, jint device, jstring forma
 
 static jint nativeGetMode(JNIEnv* env, jobject obj, jint device) {
     int value = 0;
-    if (mAudioSetting == nullptr) {
-        mAudioSetting = IRkAudioSetting::getService();
-        if (mAudioSetting != nullptr) {
-            //ALOGD("get mAudioSetting point");
-        } else {
-            ALOGD("get mAudioSetting is NULL");
-        }
-    }
+    RkAudioSetting *setting = getAudioSetting();
 
-    if (mAudioSetting != nullptr) {
-        mAudioSetting->getMode(device,
-                [&](const auto& tmpResult, const auto& tmpState) {
-                    if (tmpResult == Status::OK) {
-                        value = tmpState;
-                    }
-                });
+    if (setting != nullptr) {
+        value = setting->getMode(device);
     } else {
         ALOGD("get mAudioSetting is NULL");
     }
@@ -236,4 +189,4 @@ int register_com_android_server_audio_RkAudioSetting(JNIEnv* env)
 
     return 0;
 }
-};
+}
