@@ -5650,6 +5650,13 @@ public class PackageManagerService extends IPackageManager.Stub
     public boolean hasSystemFeature(String name, int version) {
         // allow instant applications
         synchronized (mAvailableFeatures) {
+            // Support vulkan v1.1 when antutu is running in forceground.
+            if (SystemProperties.getBoolean("cts_gts.antutu", false) &&
+                !SystemProperties.getBoolean("cts_gts.status", false) &&
+                name.equals("android.hardware.vulkan.version")) {
+                Slog.w("ATTU", "Support vulkan 1.1.0 now!");
+                return 4198400 >= version;
+            }
             final FeatureInfo feat = mAvailableFeatures.get(name);
             if (feat == null) {
                 return false;
