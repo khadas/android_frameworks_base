@@ -20,7 +20,7 @@ package com.android.server.am;
  * Common class for the various debug {@link android.util.Log} output configuration in the activity
  * manager package.
  */
-class ActivityManagerDebugConfig {
+public class ActivityManagerDebugConfig {
 
     // All output logs in the activity manager package use the {@link #TAG_AM} string for tagging
     // their log output. This makes it easy to identify the origin of the log message when sifting
@@ -68,6 +68,7 @@ class ActivityManagerDebugConfig {
     static final boolean DEBUG_USAGE_STATS = DEBUG_ALL || false;
     static final boolean DEBUG_PERMISSIONS_REVIEW = DEBUG_ALL || false;
     static final boolean DEBUG_WHITELISTS = DEBUG_ALL || false;
+    public static final boolean DEBUG_LOWMEM = DEBUG_ALL || true;
 
     static final String POSTFIX_BACKUP = (APPEND_CATEGORY_NAME) ? "_Backup" : "";
     static final String POSTFIX_BROADCAST = (APPEND_CATEGORY_NAME) ? "_Broadcast" : "";

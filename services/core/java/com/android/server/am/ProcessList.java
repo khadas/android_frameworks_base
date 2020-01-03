@@ -27,6 +27,7 @@ import static android.os.Process.getTotalMemory;
 import static android.os.Process.killProcessQuiet;
 import static android.os.Process.startWebView;
 
+import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_LOWMEM;
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_LRU;
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_PROCESSES;
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_PSS;
@@ -97,6 +98,7 @@ import com.android.server.LocalServices;
 import com.android.server.ServiceThread;
 import com.android.server.Watchdog;
 import com.android.server.pm.dex.DexManager;
+import com.android.server.wm.ActivityRecord;
 import com.android.server.wm.ActivityServiceConnectionsHolder;
 import com.android.server.wm.WindowManagerService;
 
@@ -1885,6 +1887,57 @@ public final class ProcessList {
         } else {
             // If this is an isolated process, it can't re-use an existing process.
             app = null;
+        }
+
+        if (DEBUG_LOWMEM) {
+            Slog.v("xzj", "startProcess: name=" + processName
+                    + " app=" + app + " knownToBeDead=" + knownToBeDead + " hostingRecord=" + hostingRecord.getType() + " intentFlags=" + intentFlags
+                    + " thread=" + (app != null ? app.thread : null) + " pid=" + (app != null ? app.pid : -1));
+        }
+
+        if(("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))) 
+            && (!"true".equals(SystemProperties.get("vendor.cts_gts.status", "false")))) {
+            ActivityManager.StackInfo next = null;
+            try {
+                next = mService.getFocusedStackInfo();
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            if (next != null && next.topActivity != null && (!next.topActivity.getPackageName().equals(processName) && !processName.contains("antutu")) && next.topActivity.getPackageName().contains("antutu")) {
+                if (DEBUG_LOWMEM)
+                    Slog.v("xzj", "process dont start because for antutu: " + next.topActivity.getPackageName() + "/" + info.processName);
+                return null;
+            }
+            if ((mService.mProcessMap.get(processName) != null) && (("broadcast".equals(hostingRecord.getType())) || ("content provider".equals(hostingRecord.getType())))) {
+                if (DEBUG_LOWMEM)
+                    Slog.v("xzj", "process dont start because for filter: " + info.uid + "/" + info.processName);
+                return null;
+            }
+            if ((mService.mServiceMap.get(processName) != null) && ("service".equals(hostingRecord.getType())) && ((info.flags & ApplicationInfo.FLAG_IS_GAME) != 0))
+            //for service start by system
+            {
+                if (DEBUG_LOWMEM)
+                    Slog.v("xzj", "service dont start auto because for filter: " + info.uid + "/" + info.processName);
+                return null;
+            }
+
+            if (((info.flags & ApplicationInfo.FLAG_SYSTEM) == 0) && ("broadcast".equals(hostingRecord.getType()))) {
+                if (DEBUG_LOWMEM)
+                    Slog.v("xzj", "third part process dont start for broadcast: " + info.uid + "/" + info.processName);
+                return null;
+            }
+            if (mService.mGameMap.get(processName) != null) {
+                mService.killAllBackgroundProcesses();
+                if (DEBUG_LOWMEM) Slog.v("xzj", "----clean memory for start " + info.processName);
+            }
+        }
+
+        if (("com.android.cts.verifier".equals(processName)/*||"com.google.android.tungsten.setupwraith".equals(processName)*/)
+            && "true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))) {
+            if (!"true".equals(SystemProperties.get("vendor.cts_gts.status", "false"))) {
+                Slog.d("xzj", "--start proc "+processName);
+                SystemProperties.set("vendor.cts_gts.status", "true");
+            }
         }
 
         // We don't have to do anything more if:

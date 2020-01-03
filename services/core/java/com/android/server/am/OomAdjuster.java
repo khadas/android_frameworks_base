@@ -41,6 +41,7 @@ import static android.os.Process.setThreadScheduler;
 
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_ALL;
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_BACKUP;
+import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_LOWMEM;
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_LRU;
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_OOM_ADJ;
 import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_OOM_ADJ_REASON;
@@ -69,6 +70,7 @@ import android.os.PowerManagerInternal;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.util.ArrayMap;
@@ -269,9 +271,14 @@ public final class OomAdjuster {
         mNewNumServiceProcs = 0;
         mNewNumAServiceProcs = 0;
 
-        final int emptyProcessLimit = mConstants.CUR_MAX_EMPTY_PROCESSES;
-        final int cachedProcessLimit = mConstants.CUR_MAX_CACHED_PROCESSES
+        int emptyProcessLimit = mConstants.CUR_MAX_EMPTY_PROCESSES;
+        int cachedProcessLimit = mConstants.CUR_MAX_CACHED_PROCESSES
                 - emptyProcessLimit;
+
+        if(("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))) 
+            && (!"true".equals(SystemProperties.get("vendor.cts_gts.status", "false")))) {
+            emptyProcessLimit = cachedProcessLimit = 3;
+        }
 
         // Let's determine how many processes we have running vs.
         // how many slots we have for background processes; we may want
@@ -468,7 +475,19 @@ public final class OomAdjuster {
                             lastCachedGroupUid = lastCachedGroup = 0;
                         }
                         if ((numCached - numCachedExtraGroup) > cachedProcessLimit) {
-                            app.kill("cached #" + numCached, true);
+                            int count = mService.mExcludeEmptyApp.size();
+                            boolean mExclude = false;
+                            if("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))){
+                                for (int k=0; k<count; k++) {
+                                        if(app.processName != null && app.processName.contains(mService.mExcludeEmptyApp.get(k))){
+                                                if(DEBUG_LOWMEM)Slog.d("xzj","------shouldExcludeCachedApp App= "+app.processName);
+                                                mExclude = true;
+                                                break;
+                                        }
+                                }
+                            }
+                            if(!mExclude)//do not kill cached
+                                app.kill("cached #" + numCached, true);
                         }
                         break;
                     case PROCESS_STATE_CACHED_EMPTY:
@@ -480,7 +499,19 @@ public final class OomAdjuster {
                         } else {
                             numEmpty++;
                             if (numEmpty > emptyProcessLimit) {
-                                app.kill("empty #" + numEmpty, true);
+                                int count = mService.mExcludeEmptyApp.size();
+                                boolean mExclude = false;
+                                if("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))){
+                                    for (int k=0; k<count; k++) {
+                                        if(app.processName != null && app.processName.contains(mService.mExcludeEmptyApp.get(k))){
+                                                if(DEBUG_LOWMEM)Slog.d("xzj","------shouldExcludeCachedApp App= "+app.processName);
+                                                mExclude = true;
+                                                break;
+                                        }
+                                    }
+                                }
+                                if(!mExclude)//do not kill empty
+                                    app.kill("empty #" + numEmpty, true);
                             }
                         }
                         break;

@@ -19,6 +19,7 @@ package com.android.server.am;
 import static android.app.ActivityTaskManager.INVALID_TASK_ID;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 
+import static com.android.server.am.ActivityManagerDebugConfig.DEBUG_LOWMEM;
 import static com.android.server.am.ActivityManagerDebugConfig.TAG_AM;
 import static com.android.server.am.ActivityManagerDebugConfig.TAG_WITH_CLASS_NAME;
 import static com.android.server.am.ActivityManagerService.MY_PID;
@@ -487,6 +488,13 @@ class AppErrors {
 
         int res = result.get();
 
+        if(("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))) && (!"true".equals(SystemProperties.get("vendor.cts_gts.status", "false")))) {
+            if((mService.mProcessMap.get(r.processName) != null)||(mService.mServiceMap.get(r.processName) != null)){
+                if(DEBUG_LOWMEM)Slog.d("xzj","-----hide error msg for filter process "+r);
+                return;
+            }
+        }
+
         Intent appErrorIntent = null;
         MetricsLogger.action(mContext, MetricsProto.MetricsEvent.ACTION_APP_CRASH, res);
         if (res == AppErrorDialog.TIMEOUT || res == AppErrorDialog.CANCEL) {
@@ -818,6 +826,15 @@ class AppErrors {
                     Settings.Secure.SHOW_FIRST_CRASH_DIALOG_DEV_OPTION,
                     0,
                     mService.mUserController.getCurrentUserId()) != 0;
+            if(("true".equals(SystemProperties.get("ro.mem_optimise.enable", "false"))) && (!"true".equals(SystemProperties.get("vendor.cts_gts.status", "false")))) {
+                if((mService.mProcessMap.get(proc.processName) != null)||(mService.mServiceMap.get(proc.processName) != null)) {
+                    if(DEBUG_LOWMEM) Slog.w("xzj", "Skipping crash dialog of " + proc + ": filter");
+                    if (res != null) {
+                        res.set(0);
+                    }
+                return;
+                }
+            }
             final boolean crashSilenced = mAppsNotReportingCrashes != null &&
                     mAppsNotReportingCrashes.contains(proc.info.packageName);
             if ((mService.mAtmInternal.canShowErrorDialogs() || showBackground)
