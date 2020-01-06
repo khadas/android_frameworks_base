@@ -113,6 +113,10 @@ class DeviceDiscoveryAction extends HdmiCecFeatureAction {
         pollDevices(new DevicePollingCallback() {
             @Override
             public void onPollingFinished(List<Integer> ackedAddress) {
+                if (STATE_NONE == mState) {
+                    Slog.e(TAG, "action has been removed.");
+                    return;
+                }
                 if (ackedAddress.isEmpty()) {
                     Slog.v(TAG, "No device is detected.");
                     wrapUpAndFinish();

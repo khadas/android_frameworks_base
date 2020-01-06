@@ -73,10 +73,17 @@ class ApartDeviceDiscoveryAction extends DeviceDiscoveryAction {
     @Override
     boolean start() {
         mDevices.clear();
+        mState = STATE_WAITING_FOR_DEVICE_POLLING;
+        Slog.v(TAG, "start and pollDevices");
 
         pollDevices(new DevicePollingCallback() {
             @Override
             public void onPollingFinished(List<Integer> ackedAddress) {
+                //We should make sure the action is removed
+                if (STATE_NONE == mState) {
+                    Slog.e(TAG, "action has been removed.");
+                    return;
+                }
                 if (ackedAddress.isEmpty()) {
                     Slog.v(TAG, "No device is detected.");
                     wrapUpAndFinish(null);
@@ -329,6 +336,10 @@ class ApartDeviceDiscoveryAction extends DeviceDiscoveryAction {
 
     @Override
     void handleTimerEvent(int state, int logicAddress) {
+        if (STATE_NONE == mState) {
+            Slog.e(TAG, "handleTimerEvent action has been removed");
+            return;
+        }
         DiscoveryDeviceInfo device = getDevice(logicAddress);
         if (null == device) {
             Slog.e(TAG, "handleTimerEvent no device of " + logicAddress);
