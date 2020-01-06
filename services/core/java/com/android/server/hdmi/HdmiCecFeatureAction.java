@@ -47,6 +47,7 @@ abstract class HdmiCecFeatureAction {
     // Timer handler message used for timeout event
     protected static final int MSG_TIMEOUT = 100;
     protected static final int MSG_TIMEOUT_DEVICE = 101;
+    protected static final int MSG_POLL = 102;
 
     // Default state used in common by all the feature actions.
     protected static final int STATE_NONE = 0;
@@ -167,6 +168,9 @@ abstract class HdmiCecFeatureAction {
             case MSG_TIMEOUT_DEVICE:
                 handleTimerEvent(msg.arg1, (int)msg.obj);
                 break;
+            case MSG_POLL:
+                mService.pollDevices((DevicePollingCallback)msg.obj, getSourceAddress(), msg.arg1, msg.arg2);
+                break;
             default:
                 Slog.w(TAG, "Unsupported message:" + msg.what);
                 break;
@@ -234,7 +238,12 @@ abstract class HdmiCecFeatureAction {
 
     protected final void pollDevices(DevicePollingCallback callback, int pickStrategy,
             int retryCount) {
-        mService.pollDevices(callback, getSourceAddress(), pickStrategy, retryCount);
+        getActionHandler().sendMessage(Message.obtain(getActionHandler(), MSG_POLL,
+                pickStrategy, retryCount, callback));
+    }
+
+    protected Handler getActionHandler() {
+        return (Handler)mActionTimer;
     }
 
     /**
@@ -246,6 +255,10 @@ abstract class HdmiCecFeatureAction {
         mState = STATE_NONE;
         // Clear all timers.
         mActionTimer.clearTimerMessage();
+        // If don't remove this, action like DeviceDiscoveryAction will finally start
+        // actions like HotplugAction when the poll work is done, and the new actions
+        // started will disturb the normal source managerment.
+        getActionHandler().removeMessages(MSG_POLL);
     }
 
     /**
