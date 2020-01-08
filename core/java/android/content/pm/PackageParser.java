@@ -172,8 +172,8 @@ public class PackageParser {
     private static final boolean MULTI_PACKAGE_APK_ENABLED = Build.IS_DEBUGGABLE &&
             SystemProperties.getBoolean(PROPERTY_CHILD_PACKAGES_ENABLED, false);
 
-    private static final float DEFAULT_PRE_O_MAX_ASPECT_RATIO = 1.86f;
-    private static final float DEFAULT_PRE_Q_MIN_ASPECT_RATIO = 1.333f;
+    private static final float DEFAULT_PRE_O_MAX_ASPECT_RATIO = 5f;
+    private static final float DEFAULT_PRE_Q_MIN_ASPECT_RATIO = 1f;
     private static final float DEFAULT_PRE_Q_MIN_ASPECT_RATIO_WATCH = 1f;
 
     private static final int DEFAULT_MIN_SDK_VERSION = 1;
