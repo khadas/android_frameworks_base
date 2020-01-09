@@ -429,11 +429,14 @@ public final class HdmiControlService extends SystemService {
 
     @Override
     public void onStart() {
+        Slog.i(TAG, "hdmi service on start.");
         mIoThread.start();
         mPowerStatus = HdmiControlManager.POWER_STATUS_TRANSIENT_TO_ON;
         mProhibitMode = false;
         mHdmiControlEnabled = readBooleanSetting(Global.HDMI_CONTROL_ENABLED, true);
         mMhlInputChangeEnabled = readBooleanSetting(Global.MHL_INPUT_SWITCHING_ENABLED, true);
+
+        HdmiCecActiveness.enableState(getContext(), mHdmiControlEnabled);
 
         mCecController = HdmiCecController.create(this);
         if (mCecController != null) {
@@ -945,6 +948,11 @@ public final class HdmiControlService extends SystemService {
     void sendCecCommand(HdmiCecMessage command) {
         assertRunOnServiceThread();
         sendCecCommand(command, null);
+    }
+
+    @ServiceThreadOnly
+    boolean isConenctedToCecTv(final int sourceAddress) {
+        return mCecController.isConenctedToCecTv(sourceAddress);
     }
 
     /**
@@ -2492,6 +2500,8 @@ public final class HdmiControlService extends SystemService {
         mMhlController.setOption(OPTION_MHL_ENABLE, ENABLED);
 
         initializeCec(INITIATED_BY_ENABLE_CEC);
+
+        HdmiCecActiveness.enableState(getContext(), true);
     }
 
     @ServiceThreadOnly
@@ -2508,7 +2518,9 @@ public final class HdmiControlService extends SystemService {
                         mCecController.setOption(OptionKey.ENABLE_CEC, false);
                         mMhlController.setOption(OPTION_MHL_ENABLE, DISABLED);
                         clearLocalDevices();
-                                // Call the vendor handler before the service is disabled.
+                        HdmiCecActiveness.enableState(getContext(), false);
+
+                        // Call the vendor handler before the service is disabled.
                         invokeVendorCommandListenersOnControlStateChanged(false,
                             HdmiControlManager.CONTROL_STATE_CHANGED_REASON_SETTING);
                         if (mDisableLatch != null) {

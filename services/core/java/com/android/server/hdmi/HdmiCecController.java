@@ -35,6 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import libcore.util.EmptyArray;
 import sun.util.locale.LanguageTag;
 
@@ -487,6 +488,35 @@ final class HdmiCecController {
                 });
             }
         });
+    }
+
+    @ServiceThreadOnly
+    boolean isConenctedToCecTv(final int sourceAddress) {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final PollResult pollResult = new PollResult();
+        runOnIoThread(new Runnable() {
+            @Override
+            public void run() {
+                boolean connected = sendPollMessage(sourceAddress, Constants.ADDR_TV, 1);
+                Slog.d(TAG, "isConenctedToCecTv " + connected);
+                pollResult.result = connected;
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            Slog.e(TAG, "latch await fail " + e);
+        }
+
+        Slog.d(TAG, "isConenctedToCecTv pollResult.result " + pollResult.result);
+
+        return pollResult.result;
+    }
+
+    private class PollResult {
+        boolean result;
     }
 
     @IoThreadOnly

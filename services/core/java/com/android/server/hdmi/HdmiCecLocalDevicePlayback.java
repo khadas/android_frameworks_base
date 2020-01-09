@@ -177,6 +177,8 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
             mService.wakeUp();
         }
         if (!connected) {
+            Slog.d(TAG, "onHotplug activeness reset to unkown");
+            HdmiCecActiveness.enableState(mService.getContext(), true);
             getWakeLock().release();
         }
     }
@@ -211,6 +213,26 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     void setActiveSource(boolean on) {
         assertRunOnServiceThread();
+
+        boolean isConnected = mService.isConenctedToCecTv(mAddress);
+        // When the device is not connected to tv, the state should be "unkown" although the active
+        // State in here is true. Then when the devices is actually connected and active, we should
+        // Change the state of activeness.
+        boolean connectedActive = isConnected && on && !HdmiCecActiveness.mActive;
+        // When changes from active to inactive state or inverse, We should notify to
+        // Change the activeness state. Other situations should not be concerning.
+        boolean changesToActive = isConnected && on && !mIsActiveSource;
+        boolean changesToInActive = mIsActiveSource && !on;
+        Slog.d(TAG, "setIsActiveSource isConnected " + isConnected
+                + " connectedActive " + connectedActive
+                + " changesToActive " + changesToActive
+                + " changesToInActive " + changesToInActive);
+
+        if (connectedActive || changesToActive || changesToInActive) {
+            Slog.d(TAG, "activeness change to " + on);
+            HdmiCecActiveness.notifyState(mService.getContext(), on);
+        }
+
         mIsActiveSource = on;
         if (on) {
             getWakeLock().acquire();
@@ -252,14 +274,8 @@ final class HdmiCecLocalDevicePlayback extends HdmiCecLocalDevice {
     protected boolean handleActiveSource(HdmiCecMessage message) {
         assertRunOnServiceThread();
         int physicalAddress = HdmiUtils.twoBytesToInt(message.getParams());
-        mayResetActiveSource(physicalAddress);
+        setActiveSource(physicalAddress == mService.getPhysicalAddress());
         return true;  // Broadcast message.
-    }
-
-    private void mayResetActiveSource(int physicalAddress) {
-        if (physicalAddress != mService.getPhysicalAddress()) {
-            setActiveSource(false);
-        }
     }
 
     @ServiceThreadOnly
