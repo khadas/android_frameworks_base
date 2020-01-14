@@ -1429,13 +1429,10 @@ public final class SystemServer {
                 Slog.e(TAG, "Failure starting kDisplayDeviceManagement Service", e);
             }
 
-            if (SystemProperties.get("ro.target.product", "").equals("box") || SystemProperties.get("ro.target.product", "").equals("atv")){
-                Slog.i(TAG, "addService rockchip_audio_setting");
-                try {
-                    ServiceManager.addService("rockchip_audio_setting", new RkAudioSettingService(context));
-                } catch (Throwable e) {
-                    Slog.e(TAG, "Failure starting RkAudioSettingManager Service", e);
-                }
+            try {
+                ServiceManager.addService("rockchip_audio_setting", new RkAudioSettingService(context));
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting RkAudioSettingManager Service", e);
             }
 
             traceBeginAndSlog("StartNotificationManager");
