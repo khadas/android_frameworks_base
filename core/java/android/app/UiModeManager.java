@@ -231,11 +231,14 @@ public class UiModeManager {
     private String getPackageName() {
         try {
             if (AppGlobals.getPackageManager() != null) {
-                String packageName = AppGlobals.getPackageManager().getNameForUid(Binder.getCallingUid());
-                if (DEBUG_UIMODE) {
-                    Log.i(TAG, "getPackageName : " + packageName);
+                String[] packageNames = AppGlobals.getPackageManager().getPackagesForUid(Binder.getCallingUid());
+                if(packageNames == null && packageNames[0] == null && packageNames[0].equals("")){
+                    return null;
                 }
-                return packageName;
+                if (DEBUG_UIMODE) {
+                    Log.i(TAG, "getPackageName : " + packageNames[0]);
+                }
+                return packageNames[0];
             }
         } catch (RemoteException e) {
             Log.i(TAG, "remoteException " + e.getMessage());
