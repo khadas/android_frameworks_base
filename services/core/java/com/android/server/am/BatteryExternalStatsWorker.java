@@ -21,6 +21,7 @@ import android.annotation.Nullable;
 import android.bluetooth.BluetoothActivityEnergyInfo;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.wifi.IWifiManager;
 import android.net.wifi.WifiActivityEnergyInfo;
 import android.os.BatteryStats;
@@ -448,7 +449,8 @@ class BatteryExternalStatsWorker implements BatteryStatsImpl.ExternalStatsSync {
                 mTelephony = TelephonyManager.from(mContext);
             }
 
-            if (mTelephony != null) {
+            if (mTelephony != null &&
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
                 modemReceiver = new SynchronousResultReceiver("telephony");
                 mTelephony.requestModemActivityInfo(modemReceiver);
             }
