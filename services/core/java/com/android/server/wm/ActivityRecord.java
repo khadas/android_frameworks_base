@@ -223,6 +223,11 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
 
+import android.os.SystemProperties;
+import android.os.Parcel;
+import android.os.SystemService;
+import android.os.ServiceManager;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -2392,6 +2397,34 @@ final class ActivityRecord extends ConfigurationContainer {
         }
     }
 
+    private void stopBootanim() {
+            boolean wallpaperEnabled = mAtmService.mContext.getResources().getBoolean(
+                                com.android.internal.R.bool.config_enableWallpaperService);
+            if(wallpaperEnabled){
+                    Log.d(TAG,"----Launcher drawn done,not keyguradk,has wallpaper,ummmmmm----");
+                    try {
+                            Thread.sleep(1000);
+                    } catch (Exception e) {
+                    }
+            }
+            Log.d(TAG,"----launcher drawn done,exit bootanim----");
+            SystemProperties.set("service.bootanim.exit", "1");
+            //SystemService.stop("bootanim");
+            try {
+                IBinder surfaceFlinger = ServiceManager.getService("SurfaceFlinger");
+                if (surfaceFlinger != null) {
+                    Slog.i(TAG_WM, "******* TELLING SURFACE FLINGER WE ARE BOOTED!");
+                    Parcel data = Parcel.obtain();
+                    data.writeInterfaceToken("android.ui.ISurfaceComposer");
+                    surfaceFlinger.transact(IBinder.FIRST_CALL_TRANSACTION, // BOOT_FINISHED
+                            data, null, 0);
+                    data.recycle();
+                }
+            } catch (RemoteException ex) {
+                Slog.e(TAG_WM, "Boot completed: SurfaceFlinger is dead!");
+            }
+    }
+
     /** Called when the windows associated app window container are drawn. */
     public void onWindowsDrawn(boolean drawn, long timestamp) {
         synchronized (mAtmService.mGlobalLock) {
@@ -2399,6 +2432,14 @@ final class ActivityRecord extends ConfigurationContainer {
             if (!drawn) {
                 return;
             }
+            //Launcher is drawn completed,box can exit bootanim
+            if ("box".equals(SystemProperties.get("ro.target.product"))){
+                if(shortComponentName!=null && !shortComponentName.contains(".FallbackHome")
+                    && !"1".equals(SystemProperties.get("service.bootanim.exit"))){
+                        stopBootanim();
+                 }
+            }
+
             final WindowingModeTransitionInfoSnapshot info = mStackSupervisor
                     .getActivityMetricsLogger().notifyWindowsDrawn(getWindowingMode(), timestamp);
             final int windowsDrawnDelayMs = info != null ? info.windowsDrawnDelayMs : INVALID_DELAY;
