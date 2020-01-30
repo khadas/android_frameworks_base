@@ -118,6 +118,8 @@ public class NotificationStackScrollLayoutTest extends SysuiTestCase {
     @Mock private NotificationIconAreaController mNotificationIconAreaController;
     @Mock private MetricsLogger mMetricsLogger;
     @Mock private NotificationRoundnessManager mNotificationRoundnessManager;
+    @Mock private NotificationLockscreenUserManager mLockscreenUserManager;
+    private UserChangedListener mUserChangedListener;
     @Mock private KeyguardBypassController mKeyguardBypassController;
     private TestableNotificationEntryManager mEntryManager;
     private int mOriginalInterruptionModelSetting;
@@ -137,6 +139,8 @@ public class NotificationStackScrollLayoutTest extends SysuiTestCase {
         mDependency.injectTestDependency(
                 NotificationBlockingHelperManager.class,
                 mBlockingHelperManager);
+        mDependency.injectTestDependency(NotificationLockscreenUserManager.class,
+                mLockscreenUserManager);
         mDependency.injectTestDependency(SysuiStatusBarStateController.class, mBarState);
         mDependency.injectTestDependency(MetricsLogger.class, mMetricsLogger);
         mDependency.injectTestDependency(NotificationRemoteInputManager.class,
@@ -152,6 +156,8 @@ public class NotificationStackScrollLayoutTest extends SysuiTestCase {
 
 
         NotificationShelf notificationShelf = mock(NotificationShelf.class);
+        ArgumentCaptor<UserChangedListener> userChangedCaptor = ArgumentCaptor
+                .forClass(UserChangedListener.class);
 
         // The actual class under test.  You may need to work with this class directly when
         // testing anonymous class members of mStackScroller, like mMenuEventListener,
@@ -174,6 +180,8 @@ public class NotificationStackScrollLayoutTest extends SysuiTestCase {
         mStackScroller.setGroupManager(mGroupManager);
         mStackScroller.setEmptyShadeView(mEmptyShadeView);
         mStackScroller.setIconAreaController(mNotificationIconAreaController);
+        verify(mLockscreenUserManager).addUserChangedListener(userChangedCaptor.capture());
+        mUserChangedListener = userChangedCaptor.getValue();
 
         // Stub out functionality that isn't necessary to test.
         doNothing().when(mBar)
@@ -244,6 +252,12 @@ public class NotificationStackScrollLayoutTest extends SysuiTestCase {
 
         mStackScroller.setExpandedHeight(100f);
         verify(mBlockingHelperManager).setNotificationShadeExpanded(100f);
+    }
+
+    @Test
+    public void testOnStatePostChange_verifyIfProfileIsPublic() {
+        mUserChangedListener.onUserChanged(0);
+        verify(mLockscreenUserManager).isAnyProfilePublicMode();
     }
 
     @Test
