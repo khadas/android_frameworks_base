@@ -4027,12 +4027,33 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         Slog.i(TAG, "Dumping to " + tracesFile);
 
+<<<<<<< HEAD
         // We don't need any sort of inotify based monitoring when we're dumping traces via
         // tombstoned. Data is piped to an "intercept" FD installed in tombstoned so we're in full
         // control of all writes to the file in question.
 
         // We must complete all stack dumps within 20 seconds.
         long remainingTime = 20 * 1000;
+=======
+    @Override
+    public void crashApplication(int uid, int initialPid, String packageName, int userId,
+            String message, boolean force) {
+        if (checkCallingPermission(android.Manifest.permission.FORCE_STOP_PACKAGES)
+                != PackageManager.PERMISSION_GRANTED) {
+            String msg = "Permission Denial: crashApplication() from pid="
+                    + Binder.getCallingPid()
+                    + ", uid=" + Binder.getCallingUid()
+                    + " requires " + android.Manifest.permission.FORCE_STOP_PACKAGES;
+            Slog.w(TAG, msg);
+            throw new SecurityException(msg);
+        }
+
+        synchronized(this) {
+            mAppErrors.scheduleAppCrashLocked(uid, initialPid, packageName, userId,
+                    message, force);
+        }
+    }
+>>>>>>> 874c974... DO NOT MERGE - Kill apps outright for API contract violations
 
         // First collect all of the stacks of the most important pids.
         if (firstPids != null) {
