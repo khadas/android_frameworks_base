@@ -6183,8 +6183,10 @@ public class AudioService extends IAudioService.Stub
                     return false;
                 }
                 mConnectedDevices.put(deviceKey, new DeviceListSpec(device, deviceName, address));
-                sendMsg(mAudioHandler, MSG_ACCESSORY_PLUG_MEDIA_UNMUTE, SENDMSG_QUEUE,
-                        device, 0, null, 0);
+                if (device != AudioSystem.DEVICE_OUT_HDMI) {
+                    sendMsg(mAudioHandler, MSG_ACCESSORY_PLUG_MEDIA_UNMUTE, SENDMSG_QUEUE,
+                            device, 0, null, 0);
+                }
                 return true;
             } else if (!connect && isConnected) {
                 AudioSystem.setDeviceConnectionState(device,
