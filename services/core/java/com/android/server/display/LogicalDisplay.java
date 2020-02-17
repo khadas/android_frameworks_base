@@ -29,7 +29,8 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
+import android.util.Slog;
+import android.os.SystemProperties;
 /**
  * Describes how a logical display is configured.
  * <p>
@@ -161,6 +162,24 @@ final class LogicalDisplay {
                 mInfo.physicalYDpi = mOverrideDisplayInfo.physicalYDpi;
             }
         }
+        if(mPrimaryDisplayDeviceInfo.type==Display.TYPE_HDMI){
+                String rotation = SystemProperties.get("persist.sys.rotation.einit","0");
+                if(Integer.valueOf(rotation)%2!=0) {
+
+
+                    mInfo.appWidth = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.appHeight = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.logicalWidth = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.logicalHeight=mPrimaryDisplayDeviceInfo.width;
+
+                }else{
+                    mInfo.appWidth = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.appHeight = mPrimaryDisplayDeviceInfo.height;
+                    mInfo.logicalWidth = mPrimaryDisplayDeviceInfo.width;
+                    mInfo.logicalHeight=mPrimaryDisplayDeviceInfo.height;
+                }
+            }
+
         return mInfo;
     }
 
@@ -305,6 +324,24 @@ final class LogicalDisplay {
 
             mPrimaryDisplayDeviceInfo = deviceInfo;
             mInfo = null;
+            if(mPrimaryDisplayDeviceInfo.type==Display.TYPE_HDMI){
+                String rotation = SystemProperties.get("persist.sys.rotation.einit","0");
+                if(Integer.valueOf(rotation)%2!=0) {
+
+
+                    mBaseDisplayInfo.appWidth = mPrimaryDisplayDeviceInfo.height;
+                    mBaseDisplayInfo.appHeight = mPrimaryDisplayDeviceInfo.width;
+                    mBaseDisplayInfo.logicalWidth = mPrimaryDisplayDeviceInfo.height;
+                    mBaseDisplayInfo.logicalHeight=mPrimaryDisplayDeviceInfo.width;
+
+                }else{
+                    mBaseDisplayInfo.appWidth = mPrimaryDisplayDeviceInfo.width;
+                    mBaseDisplayInfo.appHeight = mPrimaryDisplayDeviceInfo.height;
+                    mBaseDisplayInfo.logicalWidth = mPrimaryDisplayDeviceInfo.width;
+                    mBaseDisplayInfo.logicalHeight=mPrimaryDisplayDeviceInfo.height;
+                }
+            }
+
         }
     }
 
@@ -437,6 +474,14 @@ final class LogicalDisplay {
             mTempDisplayRect.offset(-mDisplayOffsetX, -mDisplayOffsetY);
         } else {  // Surface.ROTATION_270
             mTempDisplayRect.offset(-mDisplayOffsetY, mDisplayOffsetX);
+        }
+        if(device.getDisplayDeviceInfoLocked().type==Display.TYPE_HDMI){
+          if(SystemProperties.getBoolean("persist.sys.rotation.efull",false)){
+            mTempDisplayRect.top=0;
+            mTempDisplayRect.left=0;
+            mTempDisplayRect.right=physWidth;
+            mTempDisplayRect.bottom=physHeight;
+          }
         }
         device.setProjectionLocked(t, orientation, mTempLayerStackRect, mTempDisplayRect);
     }
