@@ -129,6 +129,38 @@ public class EthernetManager {
         }
     }
 
+    public String getIpAddress(String iface) {
+        try {
+            return mService.getIpAddress(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String getNetmask(String iface) {
+        try {
+            return mService.getNetmask(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String getGateway(String iface) {
+        try {
+            return mService.getGateway(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    public String getDns(String iface) {
+        try {
+            return mService.getDns(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
     /**
      * Adds a listener.
      * @param listener A {@link Listener} to add.
