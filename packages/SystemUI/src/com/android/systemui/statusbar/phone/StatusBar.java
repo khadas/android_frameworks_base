@@ -1083,7 +1083,7 @@ public class StatusBar extends SystemUI implements DemoMode,
     }
 
     private boolean mBottomBarIsAdd = false;
-    private boolean mUpperBarIsAdd = true;
+    private boolean mUpperBarIsAdd = false;
     private boolean isNavigationBarEnd = true;
     private Handler mNavigationBarHandler = new Handler();
     private Runnable NavigationBarRunnable = new Runnable() {
@@ -1160,12 +1160,10 @@ public class StatusBar extends SystemUI implements DemoMode,
 
 	if (!mUpperBarIsAdd) {
            if(!isNavigationBarEnd) return;
-           if (mStatusBarWindow != null) {
                mUpperBarIsAdd = true;
                mHandler.postDelayed(NavigationBarRunnable, 500);
                mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
                Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 1);
-           }
         }
     }
 
@@ -1175,12 +1173,10 @@ public class StatusBar extends SystemUI implements DemoMode,
 	Log.d(TAG, "removeUpperBar = "+mUpperBarIsAdd);
 	if (mUpperBarIsAdd) {
             if(!isNavigationBarEnd) return;
-            if (mStatusBarWindow != null) {
                mUpperBarIsAdd = false;
                mHandler.postDelayed(NavigationBarRunnable, 500);
                mWindowManager.removeViewImmediate(mStatusBarWindow);
                Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0);
-            }
         }
     }
 
@@ -1497,6 +1493,8 @@ public class StatusBar extends SystemUI implements DemoMode,
 
     @Override
     public void updateNotificationViews() {
+        boolean hasUpperBar = Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0) == 1;
+        if (!hasUpperBar) return;
         // The function updateRowStates depends on both of these being non-null, so check them here.
         // We may be called before they are set from DeviceProvisionedController's callback.
         if (mStackScroller == null || mScrimController == null) return;
@@ -2994,7 +2992,11 @@ public class StatusBar extends SystemUI implements DemoMode,
                     }
                 });
         mRemoteInputManager.getController().addCallback(mStatusBarWindowManager);
+        mUpperBarIsAdd = Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0) == 1;
+        Log.d(TAG, "mUpperBarIsAdd = "+mUpperBarIsAdd);
         mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
+        if (!mUpperBarIsAdd)
+           mWindowManager.removeViewImmediate(mStatusBarWindow);
     }
 
     // called by makeStatusbar and also by PhoneStatusBarView
