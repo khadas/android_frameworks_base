@@ -232,13 +232,14 @@ public class UiModeManager {
         try {
             if (AppGlobals.getPackageManager() != null) {
                 String[] packageNames = AppGlobals.getPackageManager().getPackagesForUid(Binder.getCallingUid());
-                if(packageNames == null && packageNames[0] == null && packageNames[0].equals("")){
+                if(packageNames != null && packageNames.length > 0 && !packageNames[0].equals("")) {
+                    if (DEBUG_UIMODE) {
+                        Log.i(TAG, "getPackageName : " + packageNames[0]);
+                    }
+                    return packageNames[0];
+                } else {
                     return null;
                 }
-                if (DEBUG_UIMODE) {
-                    Log.i(TAG, "getPackageName : " + packageNames[0]);
-                }
-                return packageNames[0];
             }
         } catch (RemoteException e) {
             Log.i(TAG, "remoteException " + e.getMessage());
