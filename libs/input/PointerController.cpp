@@ -275,6 +275,19 @@ void PointerController::setPresentation(Presentation presentation) {
     }
 }
 
+void PointerController::setDisplayId(int32_t id) {
+    AutoMutex _l(mLock);
+    mLocked.pointerSprite->setLayerStack(id);
+    
+}
+
+
+int32_t PointerController::getDisplayId() {
+    AutoMutex _l(mLock);
+    return mLocked.pointerSprite->getLayerStack();
+
+}
+
 void PointerController::setSpots(const PointerCoords* spotCoords,
         const uint32_t* spotIdToIndex, BitSet32 spotIdBits, int32_t displayId) {
 #if DEBUG_POINTER_UPDATES

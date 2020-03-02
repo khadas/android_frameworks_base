@@ -128,6 +128,9 @@ public:
 
     /* Sets the id of the display where the sprite should be shown. */
     virtual void setDisplayId(int32_t displayId) = 0;
+    
+    virtual void setLayerStack(int32_t stack) = 0;
+    virtual int32_t getLayerStack() = 0;
 };
 
 /*
@@ -174,6 +177,7 @@ private:
         DIRTY_VISIBILITY = 1 << 5,
         DIRTY_HOTSPOT = 1 << 6,
         DIRTY_DISPLAY_ID = 1 << 7,
+        DIRTY_STACK = 1 << 8,
     };
 
     /* Describes the state of a sprite.
@@ -195,6 +199,7 @@ private:
         float positionX;
         float positionY;
         int32_t layer;
+        int32_t stack;
         float alpha;
         SpriteTransformationMatrix transformationMatrix;
         int32_t displayId;
@@ -231,6 +236,8 @@ private:
         virtual void setAlpha(float alpha);
         virtual void setTransformationMatrix(const SpriteTransformationMatrix& matrix);
         virtual void setDisplayId(int32_t displayId);
+        virtual void setLayerStack(int32_t stack);  
+        virtual int32_t getLayerStack();
 
         inline const SpriteState& getStateLocked() const {
             return mLocked.state;

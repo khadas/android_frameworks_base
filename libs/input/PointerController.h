@@ -111,6 +111,8 @@ public:
     void setDisplayViewport(const DisplayViewport& viewport);
     void setInactivityTimeout(InactivityTimeout inactivityTimeout);
     void reloadPointerResources();
+    void setDisplayId(int32_t id);
+    int32_t getDisplayId();
 
 private:
     static const size_t MAX_RECYCLED_SPRITES = 12;

@@ -248,6 +248,7 @@ public:
             jfloatArray matrixArr);
     virtual TouchAffineTransformation getTouchAffineTransformation(
             const std::string& inputDeviceDescriptor, int32_t surfaceRotation);
+    virtual int32_t notifyLayerstackChanged();
 
     /* --- InputDispatcherPolicyInterface implementation --- */
 
@@ -1021,6 +1022,20 @@ TouchAffineTransformation NativeInputManager::getTouchAffineTransformation(
     env->DeleteLocalRef(cal);
 
     return transform;
+}
+
+int32_t NativeInputManager::notifyLayerstackChanged() REQUIRES(mLock) {
+    sp<PointerController> controller = mLocked.pointerController.promote();
+    int32_t mDisplayId=0;
+    for (const DisplayViewport& v : mLocked.viewports) {
+        if (v.displayId != controller->getDisplayId()) {
+            controller->setDisplayId(v.displayId);
+            controller->setDisplayViewport(v);
+            mDisplayId=v.displayId;
+            break ;
+        }
+    }
+    return mDisplayId; 
 }
 
 bool NativeInputManager::filterInputEvent(const InputEvent* inputEvent, uint32_t policyFlags) {

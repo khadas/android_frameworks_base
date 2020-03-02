@@ -29,6 +29,7 @@
 #include <SkPaint.h>
 
 #include <android/native_window.h>
+#include "cutils/properties.h"
 
 namespace android {
 
@@ -130,7 +131,6 @@ void SpriteController::doUpdateSprites() {
     bool surfaceChanged = false;
     for (size_t i = 0; i < numSprites; i++) {
         SpriteUpdate& update = updates.editItemAt(i);
-
         if (update.state.surfaceControl == NULL && update.state.wantSurfaceVisible()) {
             update.state.surfaceWidth = update.state.icon.bitmap.width();
             update.state.surfaceHeight = update.state.icon.bitmap.height();
@@ -245,7 +245,7 @@ void SpriteController::doUpdateSprites() {
         if (update.state.surfaceControl != NULL && (becomingVisible || becomingHidden
                 || (wantSurfaceVisibleAndDrawn && (update.state.dirty & (DIRTY_ALPHA
                         | DIRTY_POSITION | DIRTY_TRANSFORMATION_MATRIX | DIRTY_LAYER
-                        | DIRTY_VISIBILITY | DIRTY_HOTSPOT | DIRTY_DISPLAY_ID))))) {
+                        | DIRTY_VISIBILITY | DIRTY_HOTSPOT | DIRTY_DISPLAY_ID | DIRTY_STACK))))) {
             needApplyTransaction = true;
 
             if (wantSurfaceVisibleAndDrawn
@@ -273,7 +273,14 @@ void SpriteController::doUpdateSprites() {
                         update.state.transformationMatrix.dsdy,
                         update.state.transformationMatrix.dtdy);
             }
-
+            if(wantSurfaceVisibleAndDrawn
+                    && (becomingVisible
+                            || (update.state.dirty & DIRTY_STACK))){
+              
+                 if(update.state.surfaceControl != NULL) {
+                        t.setLayerStack(update.state.surfaceControl,update.state.stack);//update layer stack
+                  }
+            }
             int32_t surfaceLayer = mOverlayLayer + update.state.layer;
             if (wantSurfaceVisibleAndDrawn
                     && (becomingVisible || (update.state.dirty & DIRTY_LAYER))) {
@@ -434,6 +441,21 @@ void SpriteController::SpriteImpl::setLayer(int32_t layer) {
         invalidateLocked(DIRTY_LAYER);
     }
 }
+
+
+void SpriteController::SpriteImpl::setLayerStack(int32_t stack) {
+    AutoMutex _l(mController->mLock);
+    if (mLocked.state.stack != stack) {
+        mLocked.state.stack = stack;
+        invalidateLocked(DIRTY_STACK);
+    }
+}
+
+int32_t SpriteController::SpriteImpl::getLayerStack() {
+    AutoMutex _l(mController->mLock);
+    return mLocked.state.stack;
+}
+
 
 void SpriteController::SpriteImpl::setAlpha(float alpha) {
     AutoMutex _l(mController->mLock);
