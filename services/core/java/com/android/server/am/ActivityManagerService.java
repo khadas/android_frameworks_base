@@ -355,7 +355,6 @@ import com.android.server.contentcapture.ContentCaptureManagerInternal;
 import com.android.server.firewall.IntentFirewall;
 import com.android.server.job.JobSchedulerInternal;
 import com.android.server.pm.Installer;
-import com.android.server.pm.Installer.InstallerException;
 import com.android.server.uri.GrantUri;
 import com.android.server.uri.UriGrantsManagerInternal;
 import com.android.server.utils.PriorityDump;
@@ -366,8 +365,6 @@ import com.android.server.wm.ActivityTaskManagerInternal;
 import com.android.server.wm.ActivityTaskManagerService;
 import com.android.server.wm.WindowManagerService;
 import com.android.server.wm.WindowProcessController;
-
-import dalvik.system.VMRuntime;
 
 import libcore.util.EmptyArray;
 
@@ -4027,33 +4024,12 @@ public class ActivityManagerService extends IActivityManager.Stub
 
         Slog.i(TAG, "Dumping to " + tracesFile);
 
-<<<<<<< HEAD
         // We don't need any sort of inotify based monitoring when we're dumping traces via
         // tombstoned. Data is piped to an "intercept" FD installed in tombstoned so we're in full
         // control of all writes to the file in question.
 
         // We must complete all stack dumps within 20 seconds.
         long remainingTime = 20 * 1000;
-=======
-    @Override
-    public void crashApplication(int uid, int initialPid, String packageName, int userId,
-            String message, boolean force) {
-        if (checkCallingPermission(android.Manifest.permission.FORCE_STOP_PACKAGES)
-                != PackageManager.PERMISSION_GRANTED) {
-            String msg = "Permission Denial: crashApplication() from pid="
-                    + Binder.getCallingPid()
-                    + ", uid=" + Binder.getCallingUid()
-                    + " requires " + android.Manifest.permission.FORCE_STOP_PACKAGES;
-            Slog.w(TAG, msg);
-            throw new SecurityException(msg);
-        }
-
-        synchronized(this) {
-            mAppErrors.scheduleAppCrashLocked(uid, initialPid, packageName, userId,
-                    message, force);
-        }
-    }
->>>>>>> 874c974... DO NOT MERGE - Kill apps outright for API contract violations
 
         // First collect all of the stacks of the most important pids.
         if (firstPids != null) {
@@ -5333,26 +5309,6 @@ public class ActivityManagerService extends IActivityManager.Stub
                 return;
             }
             mCallFinishBooting = false;
-        }
-
-        ArraySet<String> completedIsas = new ArraySet<String>();
-        for (String abi : Build.SUPPORTED_ABIS) {
-            ZYGOTE_PROCESS.establishZygoteConnectionForAbi(abi);
-            final String instructionSet = VMRuntime.getInstructionSet(abi);
-            if (!completedIsas.contains(instructionSet)) {
-                try {
-                    mInstaller.markBootComplete(VMRuntime.getInstructionSet(abi));
-                } catch (InstallerException e) {
-                    if (!VMRuntime.didPruneDalvikCache()) {
-                        // This is technically not the right filter, as different zygotes may
-                        // have made different pruning decisions. But the log is best effort,
-                        // anyways.
-                        Slog.w(TAG, "Unable to mark boot complete for abi: " + abi + " (" +
-                                e.getMessage() +")");
-                    }
-                }
-                completedIsas.add(instructionSet);
-            }
         }
 
         IntentFilter pkgFilter = new IntentFilter();
