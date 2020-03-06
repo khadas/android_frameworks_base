@@ -17,10 +17,7 @@
 package com.android.systemui;
 
 import android.app.ActivityManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.os.HandlerThread;
 import android.service.wallpaper.WallpaperService;
@@ -89,16 +86,6 @@ public class ImageWallpaper extends WallpaperService {
         private boolean mNeedRedraw;
         // This variable can only be accessed in synchronized block.
         private boolean mWaitingForRendering;
-        Context mContext;
-        private BroadcastReceiver mConfChangeListener = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
-                    GLEngine.this.mNeedRedraw = true;
-                    GLEngine.this.onSurfaceRedrawNeeded(null);
-                }
-            }
-        };
 
         GLEngine(Context context) {
             mNeedTransition = ActivityManager.isHighEndGfx()
@@ -112,12 +99,6 @@ public class ImageWallpaper extends WallpaperService {
             }
             mEglHelper = new EglHelper();
             mRenderer = new ImageWallpaperRenderer(context, this /* SurfaceProxy */);
-            mContext = context;
-            // Register a listener for configuration change events.
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
-            mContext.registerReceiver(mConfChangeListener, filter);
-
         }
 
         @Override
@@ -183,7 +164,6 @@ public class ImageWallpaper extends WallpaperService {
                 mEglHelper = null;
                 getSurfaceHolder().getSurface().hwuiDestroy();
             });
-            mContext.unregisterReceiver(mConfChangeListener);
         }
 
         @Override
