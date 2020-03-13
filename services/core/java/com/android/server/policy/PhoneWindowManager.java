@@ -1516,7 +1516,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 + " count=" + count + " beganFromNonInteractive=" + mBeganFromNonInteractive +
                 " mShortPressOnPowerBehavior=" + mShortPressOnPowerBehavior);
         int definedPowerKey = whichPowerKeyDefinition();
-        if (definedPowerKey == POWER_KEY_SHUTDOWN) {
+        final boolean ddrWindow = SystemProperties.getBoolean("ro.first.boot.ddr.window", false);
+        Slog.d(TAG, "definedPowerKey=" + definedPowerKey + ",ddrWindow=" + ddrWindow);
+        if (definedPowerKey == POWER_KEY_SHUTDOWN || ddrWindow) {
             mPowerManager.shutdown(false,"userrequested",false);
             return;
         }
