@@ -236,6 +236,7 @@ public:
     void reloadPointerIcons();
     void setCustomPointerIcon(const SpriteIcon& icon);
     void setPointerCapture(bool enabled);
+    void setMotionClassifierEnabled(bool enabled);
 
     /* --- InputReaderPolicyInterface implementation --- */
 
@@ -1336,6 +1337,10 @@ int32_t NativeInputManager::getCustomPointerIconId() {
     return POINTER_ICON_STYLE_CUSTOM;
 }
 
+void NativeInputManager::setMotionClassifierEnabled(bool enabled) {
+    mInputManager->setMotionClassifierEnabled(enabled);
+}
+
 // ----------------------------------------------------------------------------
 
 static jlong nativeInit(JNIEnv* env, jclass /* clazz */,
@@ -1829,6 +1834,13 @@ jclass clazz,jfloat x,jfloat y,jlong ptr) {
    //mPointerController->fade(PointerControllerInterface::TRANSITION_IMMEDIATE);
 }
 
+static void nativeSetMotionClassifierEnabled(JNIEnv* /* env */, jclass /* clazz */, jlong ptr,
+                                             jboolean enabled) {
+    NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);
+
+    im->setMotionClassifierEnabled(enabled);
+}
+
 // ----------------------------------------------------------------------------
 
 static const JNINativeMethod gInputManagerMethods[] = {
@@ -1916,6 +1928,8 @@ static const JNINativeMethod gInputManagerMethods[] = {
             (void*) android_server_InputManager_nativedispatchMouse },
     { "nativedispatchMouseByCd", "(FFJ)V",
             (void*) android_server_InputManager_nativedispatchMouseByCd },
+    { "nativeSetMotionClassifierEnabled", "(JZ)V",
+            (void*) nativeSetMotionClassifierEnabled},
 };
 
 #define FIND_CLASS(var, className) \
