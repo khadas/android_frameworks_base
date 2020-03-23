@@ -1490,6 +1490,8 @@ public final class SystemServer {
                 traceBeginAndSlog("StartWallpaperManagerService");
                 mSystemServiceManager.startService(WALLPAPER_SERVICE_CLASS);
                 traceEnd();
+            } else {
+                Slog.i(TAG, "Wallpaper service disabled by config");
             }
 
             traceBeginAndSlog("StartAudioService");

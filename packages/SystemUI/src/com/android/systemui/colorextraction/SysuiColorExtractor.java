@@ -66,11 +66,11 @@ public class SysuiColorExtractor extends ColorExtractor implements Dumpable,
 
         mBackdropColors = new GradientColors();
         mBackdropColors.setMainColor(Color.BLACK);
-        if (wallpaperManager != null) {
+        if (wallpaperManager != null && wallpaperManager.isWallpaperSupported()) {
            // Listen to all users instead of only the current one.
-           wallpaperManager.removeOnColorsChangedListener(this);
-           wallpaperManager.addOnColorsChangedListener(this, null /* handler */,
-                UserHandle.USER_ALL);
+            wallpaperManager.removeOnColorsChangedListener(this);
+            wallpaperManager.addOnColorsChangedListener(this, null /* handler */,
+                    UserHandle.USER_ALL);
         }
     }
 
