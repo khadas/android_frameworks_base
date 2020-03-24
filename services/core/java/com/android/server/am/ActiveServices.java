@@ -2447,7 +2447,11 @@ public final class ActiveServices {
             r.restartDelay = 0;
             r.nextRestartTime = now;
         }
-
+        
+        if(("com.android.music/.MediaPlaybackService").equals(r.shortInstanceName)){
+            return false;
+        }
+        
         if (!mRestartingServices.contains(r)) {
             r.createdFromFg = false;
             mRestartingServices.add(r);
