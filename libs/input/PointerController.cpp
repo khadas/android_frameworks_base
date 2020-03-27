@@ -107,6 +107,7 @@ PointerController::PointerController(const sp<PointerControllerPolicyInterface>&
     mLocked.lastFrameUpdatedTime = 0;
 
     mLocked.buttonState = 0;
+    property_get("ro.target.product", m_CurrDeviceType, "google");
 }
 
 PointerController::~PointerController() {
@@ -622,7 +623,7 @@ bool PointerController::doBitmapAnimationLocked(nsecs_t timestamp) {
 }
 
 void PointerController::doInactivityTimeout() {
-    fade(TRANSITION_GRADUAL);
+    fade(TRANSITION_IMMEDIATE);
 }
 
 void PointerController::startAnimationLocked() {
@@ -656,6 +657,10 @@ void PointerController::updatePointerLocked() REQUIRES(mLock) {
     mLocked.pointerSprite->setPosition(mLocked.pointerX, mLocked.pointerY);
     mLocked.pointerSprite->setDisplayId(mLocked.viewport.displayId);
 
+    // SpriteController: update.state.stack will changed when pluging quickly
+    if (strcmp(m_CurrDeviceType, "box") == 0 || strcmp(m_CurrDeviceType, "atv") == 0) {
+        mLocked.pointerSprite->setLayerStack(mLocked.viewport.displayId);
+    }
     if (mLocked.pointerAlpha > 0) {
         mLocked.pointerSprite->setAlpha(mLocked.pointerAlpha);
         mLocked.pointerSprite->setVisible(true);

@@ -117,6 +117,7 @@ public:
 private:
     static const size_t MAX_RECYCLED_SPRITES = 12;
     static const size_t MAX_SPOTS = 12;
+    char m_CurrDeviceType[32] = {0};
 
     enum {
         MSG_INACTIVITY_TIMEOUT,
