@@ -26,20 +26,6 @@ namespace android {
 namespace uirenderer {
 namespace skiapipeline {
 
-/*
- * Return true if scalar fractions of a and b are equal, or if scalar fractions of
- * a and b are both near scalar fraction bound 0 or 1 (aka, both a and b are equal
- * to some integer).
- * */
-bool areScalarFractionsNearBoundOrEqual(float a, float b) {
-    a = SkScalarFraction(a);
-    b = SkScalarFraction(b);
-    bool ret = MathUtils::areEqual(a, b);
-    ret = ret || (MathUtils::isOne(a) && MathUtils::isZero(b));
-    ret = ret || (MathUtils::isZero(a) && MathUtils::isOne(b));
-    return ret;
-}
-
 void LayerDrawable::onDraw(SkCanvas* canvas) {
     Layer* layer = mLayerUpdater->backingLayer();
     if (layer) {
@@ -47,6 +33,9 @@ void LayerDrawable::onDraw(SkCanvas* canvas) {
     }
 }
 
+static inline SkScalar isIntegerAligned(SkScalar x) {
+    return fabsf(roundf(x) - x) <= NON_ZERO_EPSILON;
+}
 
 // Disable filtering when there is no scaling in screen coordinates and the corners have the same
 // fraction (for translate) or zero fraction (for any other rect-to-rect transform).
@@ -54,41 +43,28 @@ static bool shouldFilterRect(const SkMatrix& matrix, const SkRect& srcRect, cons
     if (!matrix.rectStaysRect()) return true;
     SkRect dstDevRect = matrix.mapRect(dstRect);
     float dstW, dstH;
-    bool requiresIntegerTranslate = false;
     if (MathUtils::isZero(matrix.getScaleX()) && MathUtils::isZero(matrix.getScaleY())) {
         // Has a 90 or 270 degree rotation, although total matrix may also have scale factors
         // in m10 and m01. Those scalings are automatically handled by mapRect so comparing
         // dimensions is sufficient, but swap width and height comparison.
         dstW = dstDevRect.height();
         dstH = dstDevRect.width();
-        requiresIntegerTranslate = true;
     } else {
         // Handle H/V flips or 180 rotation matrices. Axes may have been mirrored, but
         // dimensions are still safe to compare directly.
         dstW = dstDevRect.width();
         dstH = dstDevRect.height();
-        requiresIntegerTranslate =
-            matrix.getScaleX() < -NON_ZERO_EPSILON || matrix.getScaleY() < -NON_ZERO_EPSILON;
     }
     if (!(MathUtils::areEqual(dstW, srcRect.width()) &&
           MathUtils::areEqual(dstH, srcRect.height()))) {
         return true;
     }
-    if (requiresIntegerTranslate) {
-        // Device rect and source rect should be integer aligned to ensure there's no difference
-        // in how nearest-neighbor sampling is resolved.
-        return !(MathUtils::isZero(SkScalarFraction(srcRect.x())) &&
-                 MathUtils::isZero(SkScalarFraction(srcRect.y())) &&
-                 MathUtils::isZero(SkScalarFraction(dstDevRect.x())) &&
-                 MathUtils::isZero(SkScalarFraction(dstDevRect.y())));
-    } else {
-        // As long as src and device rects are translated by the same fractional amount,
-        // filtering won't be needed
-        return !(areScalarFractionsNearBoundOrEqual(
-                 srcRect.x(), dstDevRect.x()) &&
-                 areScalarFractionsNearBoundOrEqual(
-                 srcRect.y(), dstDevRect.y()));
-    }
+    // Device rect and source rect should be integer aligned to ensure there's no difference
+    // in how nearest-neighbor sampling is resolved.
+    return !(isIntegerAligned(srcRect.x()) &&
+             isIntegerAligned(srcRect.y()) &&
+             isIntegerAligned(dstDevRect.x()) &&
+             isIntegerAligned(dstDevRect.y()));
 }
 
 bool LayerDrawable::DrawLayer(GrContext* context, SkCanvas* canvas, Layer* layer,
@@ -186,3 +162,4 @@ bool LayerDrawable::DrawLayer(GrContext* context, SkCanvas* canvas, Layer* layer
 }  // namespace skiapipeline
 }  // namespace uirenderer
 }  // namespace android
+
