@@ -912,9 +912,9 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 displayHasContent = true;
             } else if (displayContent != null &&
                     (!mObscureApplicationContentOnSecondaryDisplays
-                            || (obscured && type == TYPE_KEYGUARD_DIALOG))) {
+                            /*|| (obscured && type == TYPE_KEYGUARD_DIALOG)*/)) {
                 // Allow full screen keyguard presentation dialogs to be seen.
-                //displayHasContent = true;  
+                displayHasContent = !(obscured && type == TYPE_KEYGUARD_DIALOG);
             }
             if ((privateflags & PRIVATE_FLAG_SUSTAINED_PERFORMANCE_MODE) != 0) {
                 mSustainedPerformanceModeCurrent = true;
