@@ -5839,7 +5839,7 @@ public class AudioService extends IAudioService.Stub
                     // Is HDMI connected?
                     String key = makeDeviceListKey(AudioSystem.DEVICE_OUT_HDMI, "");
                     DeviceListSpec deviceSpec = mConnectedDevices.get(key);
-                    if (deviceSpec != null) {
+                    if (deviceSpec != null && newSurroundMode != -1) {
                         // Toggle HDMI to retrigger broadcast with proper formats.
                         setWiredDeviceConnectionState(AudioSystem.DEVICE_OUT_HDMI,
                                 AudioSystem.DEVICE_STATE_UNAVAILABLE, "", "",
@@ -6378,7 +6378,7 @@ public class AudioService extends IAudioService.Stub
 
             if (!handleDeviceConnection(state == 1, device, address, deviceName)) {
                 // change of connection state failed, bailout
-                return;
+                //return;
             }
             boolean isBluetoothOrUsbOutDevice = isBluetoothOrUsbOutDevices(device);
             if (isBluetoothOrUsbOutDevice) {
