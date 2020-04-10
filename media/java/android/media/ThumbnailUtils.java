@@ -359,16 +359,15 @@ public class ThumbnailUtils {
             // Fall back to middle of video
             final int width = Integer.parseInt(mmr.extractMetadata(METADATA_KEY_VIDEO_WIDTH));
             final int height = Integer.parseInt(mmr.extractMetadata(METADATA_KEY_VIDEO_HEIGHT));
-            final long duration = Long.parseLong(mmr.extractMetadata(METADATA_KEY_DURATION));
-
+            final long thumbnailTimeUs = Long.parseLong(mmr.extractMetadata(METADATA_KEY_DURATION)) * 1000 / 2;
             // If we're okay with something larger than native format, just
             // return a frame without up-scaling it
             if (size.getWidth() > width && size.getHeight() > height) {
                 return Objects.requireNonNull(
-                        mmr.getFrameAtTime(duration / 2, OPTION_CLOSEST_SYNC));
+                        mmr.getFrameAtTime(thumbnailTimeUs, OPTION_CLOSEST_SYNC));
             } else {
                 return Objects.requireNonNull(
-                        mmr.getScaledFrameAtTime(duration / 2, OPTION_CLOSEST_SYNC,
+                        mmr.getScaledFrameAtTime(thumbnailTimeUs, OPTION_CLOSEST_SYNC,
                         size.getWidth(), size.getHeight()));
             }
         } catch (RuntimeException e) {
