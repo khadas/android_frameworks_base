@@ -1797,8 +1797,7 @@ public class AudioService extends IAudioService.Stub
             if (mHdmiManager != null) {
                 synchronized (mHdmiManager) {
                     // mHdmiCecSink true => mHdmiPlaybackClient != null
-                    if (mHdmiCecSink &&
-                            streamTypeAlias == AudioSystem.STREAM_MUSIC &&
+                    if (streamTypeAlias == AudioSystem.STREAM_MUSIC &&
                             oldIndex != newIndex) {
                         synchronized (mHdmiPlaybackClient) {
                             int keyCode = (direction == -1) ? KeyEvent.KEYCODE_VOLUME_DOWN :
