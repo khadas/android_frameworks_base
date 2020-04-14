@@ -177,6 +177,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.ResolveInfo;
 import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
+import android.content.ComponentName;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.database.ContentObserver;
