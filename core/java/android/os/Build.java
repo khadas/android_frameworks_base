@@ -1251,6 +1251,40 @@ public class Build {
     @SystemApi
     public static final boolean PERMISSIONS_REVIEW_REQUIRED = true;
 
+    private static String getBoardInfo(boolean ismodel) {
+            String info = null;
+            String name =  SystemProperties.get("ro.build.display.id");
+            int type = SystemProperties.getInt("sys.board.type", 1);
+            switch (type) {
+                case 2: //KHADAS_EDGEV
+                     if (ismodel)
+                        info = "Edge-V";
+                     else
+                        info = name.replace("Edge", "Edge-V");
+                     break;
+                case 3: //KHADAS_CAPTAIN
+                     if (ismodel)
+                        info = "Captain";
+                     else
+                        info = name.replace("Edge", "Captain");
+                     break;
+                case 0: //UNKNOWN
+                case 1: //KHADAS_EDGE
+                     if (ismodel)
+                        info = "Edge";
+                     else
+                        info = name.replace("Edge", "Edge");
+                     break;
+                default:
+                     if (ismodel)
+                        info = "Edge";
+                     else
+                        info = name;
+                     break;
+            }
+            return info;
+    }
+
     /**
      * Returns the version string for the radio firmware.  May return
      * null (if, for instance, the radio is not currently on).
@@ -1262,6 +1296,12 @@ public class Build {
 
     @UnsupportedAppUsage
     private static String getString(String property) {
+        if (property.equals("ro.build.display.id")) {
+            return getBoardInfo(false);
+        }
+        if (property.equals("ro.product.model")) {
+            return getBoardInfo(true);
+        }
         return SystemProperties.get(property, UNKNOWN);
     }
 
