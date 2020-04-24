@@ -693,7 +693,7 @@ public class AudioService extends IAudioService.Stub
         if (maxMusicVolume != -1) {
             MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] = maxMusicVolume;
         }
-        if(isBox()){
+        if(isBox() ||isTablet()){
             mFixedVolumeDevices = 0;
         }
         int defaultMusicVolume = SystemProperties.getInt("ro.config.media_vol_default", -1);
@@ -886,7 +886,7 @@ public class AudioService extends IAudioService.Stub
                 }
                 mHdmiPlaybackClient = mHdmiManager.getPlaybackClient();
                 if (mHdmiPlaybackClient != null) {
-                    if(isBox()){
+                    if(isBox() || isTablet()){
                        mFullVolumeDevices = 0;
                     } else {
                        // not a television: HDMI output will be always at max
@@ -2648,6 +2648,17 @@ public class AudioService extends IAudioService.Stub
     private boolean isBox() {
         String product = SystemProperties.get("ro.target.product","");
         if(product.equals("box") /*|| product.equals("atv")*/){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @hide
+     */
+    private boolean isTablet() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("tablet")){
             return true;
         }
         return false;
@@ -5176,7 +5187,7 @@ public class AudioService extends IAudioService.Stub
                         streamState.getSettingNameForDevice(device),
                         (streamState.getIndex(device) + 5)/ 10,
                         UserHandle.USER_CURRENT);
-                if(isBox())
+                if(isBox() || isTablet())
                     streamState.restoreAllDeviceIndex();
             }
         }
@@ -6248,7 +6259,7 @@ public class AudioService extends IAudioService.Stub
                         if (DEBUG_VOL) {
                             Log.d(TAG, "CEC sink: setting HDMI as full vol device");
                         }
-                        if(isBox()){
+                        if(isBox() || isTablet()){
                           mFullVolumeDevices =0;//for box,setting HDMI as regular vol device
                         } else {
                           mFullVolumeDevices |= AudioSystem.DEVICE_OUT_HDMI;
