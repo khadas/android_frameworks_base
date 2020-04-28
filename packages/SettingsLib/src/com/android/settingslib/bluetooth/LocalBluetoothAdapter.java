@@ -22,6 +22,7 @@ import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.content.Context;
 import android.os.ParcelUuid;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import java.util.List;
@@ -148,6 +149,7 @@ public class LocalBluetoothAdapter {
     }
 
     public void setName(String name) {
+        SystemProperties.set("persist.sys.blue.name", name);
         mAdapter.setName(name);
     }
 
