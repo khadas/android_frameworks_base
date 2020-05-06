@@ -3143,7 +3143,8 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
                 mode = AppGlobals.getPackageManager().getPackagePerformanceMode(
                         r.mActivityComponent.toString());
                 // Only set cts_gts.antutu to true when starting antutu
-                if ("rk3326".equals(SystemProperties.get("ro.board.platform"))) {
+                if ("rk3326".equals(SystemProperties.get("ro.board.platform")) ||
+                    SystemProperties.get("ro.board.platform").contains("rk3368")) {
                     if (r.packageName.contains("com.antutu.ABenchMark") ||
                         r.packageName.contains("com.antutu.benchmark.full")) {
                         SystemProperties.set("cts_gts.antutu", "true");
