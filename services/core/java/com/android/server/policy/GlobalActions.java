@@ -65,6 +65,7 @@ class GlobalActions implements GlobalActionsProvider.GlobalActionsListener {
         mDeviceProvisioned = deviceProvisioned;
         mShowing = true;
         boolean isTvProduct = SystemProperties.get("ro.target.product","unknown").equals("atv") ||
+							SystemProperties.get("ro.target.product","unknown").equals("tablet") ||
                            SystemProperties.get("ro.target.product","unknown").equals("box");
         if (mGlobalActionsAvailable && !isTvProduct) {
             mHandler.postDelayed(mShowTimeout, 5000);
