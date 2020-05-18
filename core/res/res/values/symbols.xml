@@ -2738,6 +2738,9 @@
   <java-symbol type="string" name="storage_usb_drive" />
   <java-symbol type="string" name="storage_usb_drive_label" />
   <java-symbol type="string" name="storage_usb" />
+  <java-symbol type="string" name="storage_nvme_drive" />
+  <java-symbol type="string" name="storage_nvme_drive_label" />
+  <java-symbol type="string" name="storage_nvme" />
 
   <java-symbol type="drawable" name="ic_eject_24dp" />
   <java-symbol type="drawable" name="ic_folder_24dp" />

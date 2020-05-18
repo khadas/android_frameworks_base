@@ -268,6 +268,12 @@ public class VolumeInfo implements Parcelable {
     public @Nullable String getDescription() {
         if (ID_PRIVATE_INTERNAL.equals(id) || ID_EMULATED_INTERNAL.equals(id)) {
             return Resources.getSystem().getString(com.android.internal.R.string.storage_internal);
+        } else if(disk.isNvme()){
+            String name = Resources.getSystem().getString(com.android.internal.R.string.storage_nvme);
+            if (!TextUtils.isEmpty(fsLabel)) {
+                return name + ": " + fsLabel;
+            }
+            return name;
         } else if (!TextUtils.isEmpty(fsLabel)) {
             return fsLabel;
         } else {
