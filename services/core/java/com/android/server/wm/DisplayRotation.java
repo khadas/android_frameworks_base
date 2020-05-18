@@ -51,6 +51,7 @@ import com.android.server.statusbar.StatusBarManagerInternal;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import android.provider.Settings.SettingNotFoundException;
 
 /**
  * Defines the mapping between orientation and rotation of a display.
@@ -536,10 +537,33 @@ public class DisplayRotation {
                             ? "USER_ROTATION_LOCKED" : "")
                         );
         }
+		try{  
+			int screenchange = Settings.System.getInt(mContext.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION); 
+			if(screenchange == 1){
+				if (isFixedToUserRotation()) {
+					return mUserRotation;
+				}
+			}
+			else{
+				/*
+				* property: persist.sys.app.rotation has three cases:
+				* 1.force_land: always show with landscape, if a portrait apk, system will scale up it
+				* 2.middle_port: if a portrait apk, will show in the middle of the screen, left and right will show black
+				* 3.original: original orientation, if a portrait apk, will rotate 270 degree
+				*/
+				String rot = SystemProperties.get("persist.sys.app.rotation", "middle_port");
+				if (rot.equals("force_land"))
+					return mLandscapeRotation;
 
-        if (isFixedToUserRotation()) {
-            return mUserRotation;
-        }
+				if (isFixedToUserRotation() && rot.equals("middle_port")) {
+					return mUserRotation;
+				}
+			}			
+		}  
+		catch (SettingNotFoundException e){  
+			// TODO Auto-generated catch block  
+			e.printStackTrace();  
+		} 
 
         int sensorRotation = mOrientationListener != null
                 ? mOrientationListener.getProposedRotation() // may be -1
