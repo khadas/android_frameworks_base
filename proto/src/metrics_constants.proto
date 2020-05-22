@@ -6122,6 +6122,7 @@ message MetricsEvent {
     KHADAS_PORTMODE = 1602;
     KHADAS_WOL = 1603;
     KHADAS_STATUS_BAR = 1604;
+    KHADAS_CAMERA_IRCUT = 1605;
     // ---- End P Constants, all P constants go above this line ----
     // Add new aosp constants above this line.
     // END OF AOSP CONSTANTS
