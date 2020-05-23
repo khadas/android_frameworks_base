@@ -104,6 +104,7 @@ import static com.android.server.wm.WindowManagerPolicyProto.WINDOW_MANAGER_DRAW
 
 import android.annotation.Nullable;
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningTaskInfo;
 import android.app.ActivityManagerInternal;
 import android.app.ActivityTaskManager;
 import android.app.AppOpsManager;
@@ -321,6 +322,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
             .build();
+    private static final String LAUNCHER_PACKNAME= "com.android.launcher3";
 
     /**
      * Keyguard stuff
@@ -2705,7 +2707,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
             WindowManager.LayoutParams.TYPE_SYSTEM_ERROR,
         };
-
+    private int isGoLauncherApplicationMenu() {
+       ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+       List<RunningTaskInfo> list = am.getRunningTasks(100);
+       if(list!=null && list.size()>0) {
+           String packName=list.get(0).topActivity.getPackageName();
+           if(packName.equals(LAUNCHER_PACKNAME))
+           {
+               if ("1".equals(SystemProperties.get("sys.launcher.state", "1")))
+                    return 1;
+           } else {
+               return 0;
+           }
+      }
+      return 0;
+    }
     // TODO(b/117479243): handle it in InputPolicy
     /** {@inheritDoc} */
     @Override
@@ -2855,7 +2871,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // can never break it, although if keyguard is on, we do let
         // it handle it, because that gives us the correct 5 second
         // timeout.
-        if (keyCode == KeyEvent.KEYCODE_HOME) {
+        if (keyCode == KeyEvent.KEYCODE_HOME || keyCode == KeyEvent.KEYCODE_MOVE_HOME) {
+            if (!down) {
+                if (isGoLauncherApplicationMenu() == 1) {
+                    final Intent statusIntent = new Intent("action.launcher.application.menu");
+                    statusIntent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                           mContext.sendBroadcastAsUser(statusIntent, UserHandle.ALL);
+                        }
+                   });
+                   return -1;
+                }
+			}
             DisplayHomeButtonHandler handler = mDisplayHomeButtonHandlers.get(displayId);
             if (handler == null) {
                 handler = new DisplayHomeButtonHandler(displayId);
