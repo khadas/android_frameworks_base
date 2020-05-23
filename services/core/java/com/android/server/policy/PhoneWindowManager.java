@@ -2026,6 +2026,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SHUTDOWN);
+		filter.addAction("com.google.systemui.poweroff");
         context.registerReceiver(mShutdownanimationReceiver, filter);
 
 
@@ -4593,6 +4594,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     && intent.getIntExtra("PLAY_SHUTDOWN_ANIMATION",0)==1) {
                 mSettingsObserver.unRegister();
                 //mOrientationListener.disable();
+            }else if ("com.google.systemui.poweroff".equals(intent.getAction())) {
+				showGlobalActionsInternal();
             }
         }
     };

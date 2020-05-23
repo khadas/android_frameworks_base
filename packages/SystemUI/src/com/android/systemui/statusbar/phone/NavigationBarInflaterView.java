@@ -66,6 +66,7 @@ public class NavigationBarInflaterView extends FrameLayout
     public static final String SCREENSHOT = "screenshot";
     public static final String VOLUME_ADD = "volume_add";
     public static final String VOLUME_SUB = "volume_sub";
+    public static final String SOFT_SHUTDOWN = "soft_shutdown";
 
     public static final String GRAVITY_SEPARATOR = ";";
     public static final String BUTTON_SEPARATOR = ",";
@@ -416,6 +417,8 @@ public class NavigationBarInflaterView extends FrameLayout
             v = inflater.inflate(R.layout.volume_add, parent, false);
         } else if (VOLUME_SUB.equals(button)) {
             v = inflater.inflate(R.layout.volume_sub, parent, false);
+        }  else if (SOFT_SHUTDOWN.equals(button)) {
+            v = inflater.inflate(R.layout.soft_shutdown, parent, false);
         } else if (button.startsWith(KEY)) {
             String uri = extractImage(button);
             int code = extractKeycode(button);
