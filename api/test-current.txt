@@ -3233,7 +3233,7 @@ package android.view {
   public class KeyEvent extends android.view.InputEvent implements android.os.Parcelable {
     method public static String actionToString(int);
     method public final void setDisplayId(int);
-    field public static final int LAST_KEYCODE = 288; // 0x120
+    field public static final int LAST_KEYCODE = 293; // 0x125
   }
 
   public final class KeyboardShortcutGroup implements android.os.Parcelable {

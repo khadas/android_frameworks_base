@@ -824,12 +824,22 @@ public class KeyEvent extends InputEvent implements Parcelable {
      */
     public static final int KEYCODE_PROFILE_SWITCH = 288;
 
+    /** Key code constant: Tv controlloer left mouse key */
+    public static final int KEYCODE_TV_KEYMOUSE_LEFT = 289;
+    /** Key code constant: Tv controlloer right mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_RIGHT = 290;
+    /** Key code constant: Tv controlloer up mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_UP = 291;
+    /** Key code constant: Tv controlloer down mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_DOWN = 292;
+    /** Key code constant: Tv controlloer switch mouse key*/
+    public static final int KEYCODE_TV_KEYMOUSE_MODE_SWITCH = 293;
     /**
      * Integer value of the last KEYCODE. Increases as new keycodes are added to KeyEvent.
      * @hide
      */
     @TestApi
-    public static final int LAST_KEYCODE = KEYCODE_PROFILE_SWITCH;
+    public static final int LAST_KEYCODE = KEYCODE_TV_KEYMOUSE_MODE_SWITCH;
 
     // NOTE: If you add a new keycode here you must also add it to:
     //  isSystem()

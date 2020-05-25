@@ -1924,6 +1924,11 @@
         <enum name="KEYCODE_THUMBS_UP" value="286" />
         <enum name="KEYCODE_THUMBS_DOWN" value="287" />
         <enum name="KEYCODE_PROFILE_SWITCH" value="288" />
+        <enum name="KEYCODE_TV_KEYMOUSE_LEFT" value="289" />
+        <enum name="KEYCODE_TV_KEYMOUSE_RIGHT" value="290" />
+        <enum name="KEYCODE_TV_KEYMOUSE_UP" value="291" />
+        <enum name="KEYCODE_TV_KEYMOUSE_DOWN" value="292" />
+        <enum name="KEYCODE_TV_KEYMOUSE_MODE_SWITCH" value="293" />	
     </attr>
 
     <!-- ***************************************************************** -->
