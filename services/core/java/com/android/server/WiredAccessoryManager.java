@@ -301,7 +301,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 outDevice = AudioManager.DEVICE_OUT_DGTL_DOCK_HEADSET;
             } else if (headset == BIT_HDMI_AUDIO) {
                 outDevice = AudioManager.DEVICE_OUT_HDMI;
-            } else if (headset == BIT_SPDIF_AUDIO) {
+            } else if (headset == BIT_DP_AUDIO) {
                 outDevice = AudioManager.DEVICE_OUT_SPDIF;
             } else {
                 Slog.e(TAG, "setDeviceState() invalid headset type: " + headset);
@@ -537,6 +537,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             updateBit(maskAndState, BIT_HEADSET_NO_MIC, status, "HEADPHONE") ;
             updateBit(maskAndState, BIT_HEADSET, status,"MICROPHONE") ;
             updateBit(maskAndState, BIT_HDMI_AUDIO, status,"HDMI") ;
+            updateBit(maskAndState, BIT_DP_AUDIO, status,"DP");
             updateBit(maskAndState, BIT_LINEOUT, status,"LINE-OUT") ;
             if (LOG) Slog.v(TAG, "mask " + maskAndState[0] + " state " + maskAndState[1]);
             return Pair.create(maskAndState[0],maskAndState[1]);
