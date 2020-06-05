@@ -45,6 +45,8 @@ void DrawFrameTask::setContext(RenderThread* thread, CanvasContext* context,
 }
 
 void DrawFrameTask::pushLayerUpdate(DeferredLayerUpdater* layer) {
+    Mutex::Autolock _l(mUpdateLayer);
+    ALOGD("pushLayerUpdate %p",layer);
     LOG_ALWAYS_FATAL_IF(!mContext,
                         "Lifecycle violation, there's no context to pushLayerUpdate with!");
 
@@ -57,6 +59,7 @@ void DrawFrameTask::pushLayerUpdate(DeferredLayerUpdater* layer) {
 }
 
 void DrawFrameTask::removeLayerUpdate(DeferredLayerUpdater* layer) {
+    Mutex::Autolock _l(mUpdateLayer);
     for (size_t i = 0; i < mLayers.size(); i++) {
         if (mLayers[i].get() == layer) {
             mLayers.erase(mLayers.begin() + i);
@@ -132,11 +135,14 @@ bool DrawFrameTask::syncFrameState(TreeInfo& info) {
     mRenderThread->timeLord().vsyncReceived(vsync);
     bool canDraw = mContext->makeCurrent();
     mContext->unpinImages();
-
-    for (size_t i = 0; i < mLayers.size(); i++) {
-        mLayers[i]->apply();
+    {
+        Mutex::Autolock _l(mUpdateLayer);
+        for (size_t i = 0; i < mLayers.size(); i++) {
+            ALOGD("syncFrameState layer %p",mLayers[i].get());
+            mLayers[i]->apply();
+        }
+        mLayers.clear();
     }
-    mLayers.clear();
     mContext->setContentDrawBounds(mContentDrawBounds);
     mContext->prepareTree(info, mFrameInfo, mSyncQueued, mTargetNode);
 

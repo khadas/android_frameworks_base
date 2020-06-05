@@ -89,6 +89,7 @@ private:
     void unblockUiThread();
 
     Mutex mLock;
+    mutable Mutex mUpdateLayer;
     Condition mSignal;
 
     RenderThread* mRenderThread;
