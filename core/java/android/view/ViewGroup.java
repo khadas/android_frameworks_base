@@ -1962,7 +1962,7 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
             }
         } else if (mFocused != null && (mFocused.mPrivateFlags & PFLAG_HAS_BOUNDS)
                 == PFLAG_HAS_BOUNDS) {
-            if (mFocused.dispatchKeyEvent(event)) {
+            if (mFocused.dispatchKeyEvent(event) && KeyEvent.KEYCODE_DPAD_CENTER != event.getKeyCode()) {
                 return true;
             }
         }
