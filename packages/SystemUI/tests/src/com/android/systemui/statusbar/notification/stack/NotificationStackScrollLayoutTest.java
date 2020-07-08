@@ -123,8 +123,6 @@ public class NotificationStackScrollLayoutTest extends SysuiTestCase {
     @Mock private NotificationLockscreenUserManager mLockscreenUserManager;
     private UserChangedListener mUserChangedListener;
     @Mock private KeyguardBypassController mKeyguardBypassController;
-    @Mock private NotificationLockscreenUserManager mLockscreenUserManager;
-    private UserChangedListener mUserChangedListener;
     private TestableNotificationEntryManager mEntryManager;
     private int mOriginalInterruptionModelSetting;
 
