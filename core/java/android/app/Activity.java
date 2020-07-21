@@ -3560,18 +3560,18 @@ public class Activity extends ContextThemeWrapper
      * @see android.view.KeyEvent
      */
     public boolean onKeyDown(int keyCode, KeyEvent event)  {
-        if("box".equals(SystemProperties.get("ro.target.product","unkonw"))){
+        //if("box".equals(SystemProperties.get("ro.target.product","unkonw"))){
             String mstate=null;
             mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
 
-            if ((keyCode == KeyEvent.KEYCODE_PROFILE_SWITCH)) {
+            if ((keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_MODE_SWITCH)) {
                 if ("on".equals(mstate)) {
                     Toast.makeText(Activity.this, "Enter into mouse mode, click again to quit", Toast.LENGTH_LONG).show();
                 } else if ("off".equals(mstate)) {
                     Toast.makeText(Activity.this, "Restore to default button mode", Toast.LENGTH_LONG).show();
                 }
             }
-        }
+        //}
 
 
         if (keyCode == KeyEvent.KEYCODE_BACK) {

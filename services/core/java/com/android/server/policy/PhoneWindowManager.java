@@ -662,23 +662,23 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public Handler mKeyMouseHandler = new Handler() {
         public void handleMessage(Message msg) {
             switch(msg.what){
-            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT:
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_LEFT:
                 mdeltax = -1.0f;
                 mdeltay = 0;
                 break;
-            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT:
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_RIGHT:
                 mdeltax = 1.0f;
                 mdeltay = 0;
                 break;
-            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP:
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_UP:
                 mdeltax = 0;
                 mdeltay = -1.0f;
                 break;
-            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN:
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_DOWN:
                 mdeltax = 0;
                 mdeltay = 1.0f;
                 break;
-            case KeyEvent.KEYCODE_PROFILE_SWITCH:
+            case KeyEvent.KEYCODE_TV_KEYMOUSE_MODE_SWITCH:
                 mdeltax = 0;
                 mdeltay = 0;
                 break;
@@ -1851,8 +1851,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mAppOpsManager = mContext.getSystemService(AppOpsManager.class);
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
         mHasFeatureWatch = mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH);
-        mHasFeatureLeanback = (mContext.getPackageManager().hasSystemFeature(FEATURE_LEANBACK) ||
-                "box".equals(SystemProperties.get("ro.target.product")));
+        mHasFeatureLeanback = mContext.getPackageManager().hasSystemFeature(FEATURE_LEANBACK);
         mHasFeatureAuto = mContext.getPackageManager().hasSystemFeature(FEATURE_AUTOMOTIVE);
         mHasFeatureHdmiCec = mContext.getPackageManager().hasSystemFeature(FEATURE_HDMI_CEC);
         mAccessibilityShortcutController =
@@ -2771,14 +2770,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         //infrare simulate mouse
-        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
-        if(isBox){
+        //boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+        //if(isBox){
            mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
-           if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT)
-                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT)
-                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP)
-                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN)
-                || (keyCode == KeyEvent.KEYCODE_PROFILE_SWITCH))) {
+        if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_LEFT)
+                || (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_RIGHT)
+                || (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_UP)
+                || (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_DOWN)
+                || (keyCode == KeyEvent.KEYCODE_TV_KEYMOUSE_MODE_SWITCH))) {
             keydown = down;
             mKeyMouseHandler.sendEmptyMessage(keyCode);
             //return -1;
@@ -2788,7 +2787,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 ||(keyCode == KeyEvent.KEYCODE_DPAD_CENTER))) {
             return -1;
            }
-         }
+         //}
 
         // If we think we might have a volume down & power key chord on the way
         // but we're not sure, then tell the dispatcher to wait a little while and
@@ -3852,12 +3851,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Basic policy based on interactive state.
         int result;
-         boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+         //boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
         boolean isWakeKey = (policyFlags & WindowManagerPolicy.FLAG_WAKE) != 0
                 || event.isWakeKey();
-        if(isBox){
+        //if(isBox){
             isWakeKey = false;
-        }
+        //}
         if (interactive || (isInjected && !isWakeKey)) {
             // When the device is interactive or the key is injected pass the
             // key to the application.
@@ -4094,10 +4093,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT:
                 // fall through
             case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT: {
-               if(!isBox){
+               //if(!isBox){
                 result &= ~ACTION_PASS_TO_USER;
                 interceptSystemNavigationKey(event);
-               }
+               //}
                 break;
             }
 
