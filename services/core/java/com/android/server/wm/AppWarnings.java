@@ -154,7 +154,7 @@ class AppWarnings {
      */
     public void showDeprecatedTargetDialogIfNeeded(ActivityRecord r) {
         if (r.appInfo.targetSdkVersion < Build.VERSION.MIN_SUPPORTED_TARGET_SDK_INT) {
-            mUiHandler.showDeprecatedTargetDialog(r);
+            //mUiHandler.showDeprecatedTargetDialog(r);
         }
     }
 
