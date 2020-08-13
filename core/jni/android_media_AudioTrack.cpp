@@ -368,29 +368,25 @@ static jint android_media_AudioTrack_setup(JNIEnv *env, jobject thiz, jobject we
             offloadInfo.has_video = false;
             offloadInfo.stream_type = AUDIO_STREAM_MUSIC; //required for offload
         }
-
         // initialize the native AudioTrack object
         status_t status = NO_ERROR;
         switch (memoryMode) {
         case MODE_STREAM:
-            status = lpTrack->set(AUDIO_STREAM_DEFAULT, // stream type, but more info conveyed
-                                                        // in paa (last argument)
-                                  sampleRateInHertz,
-                                  format, // word length, PCM
-                                  nativeChannelMask, offload ? 0 : frameCount,
-                                  offload ? AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD
-                                          : AUDIO_OUTPUT_FLAG_NONE,
-                                  audioCallback,
-                                  &(lpJniStorage->mCallbackData), // callback, callback data (user)
-                                  0,    // notificationFrames == 0 since not using EVENT_MORE_DATA
-                                        // to feed the AudioTrack
-                                  0,    // shared mem
-                                  true, // thread can call Java
-                                  sessionId, // audio session ID
-                                  offload ? AudioTrack::TRANSFER_SYNC_NOTIF_CALLBACK
-                                          : AudioTrack::TRANSFER_SYNC,
-                                  offload ? &offloadInfo : NULL, -1, -1, // default uid, pid values
-                                  paa.get());
+            status = lpTrack->set(
+                    AUDIO_STREAM_DEFAULT,// stream type, but more info conveyed in paa (last argument)
+                    sampleRateInHertz,
+                    format,// word length, PCM
+                    nativeChannelMask,
+                    offload ? 0 : frameCount,
+                    offload ? AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD : AUDIO_OUTPUT_FLAG_NONE,
+                    audioCallback, &(lpJniStorage->mCallbackData),//callback, callback data (user)
+                    0,// notificationFrames == 0 since not using EVENT_MORE_DATA to feed the AudioTrack
+                    0,// shared mem
+                    true,// thread can call Java
+                    sessionId,// audio session ID
+                    offload ? AudioTrack::TRANSFER_SYNC_NOTIF_CALLBACK : AudioTrack::TRANSFER_SYNC,
+                    offload ? &offloadInfo : NULL, -1, -1, // default uid, pid values
+                    paa.get());
             break;
 
         case MODE_STATIC:
@@ -1364,8 +1360,7 @@ static jint android_media_AudioTrack_setAudioDescriptionMixLeveldB(JNIEnv *env, 
         return (jint)AUDIO_JAVA_ERROR;
     }
 
-    // TODO: replace in r-dev or r-tv-dev with code if HW is able to set audio mix level.
-    return (jint)AUDIO_JAVA_ERROR;
+    return nativeToJavaStatus(lpTrack->setAudioDescriptionMixLevel(level));
 }
 
 static jint android_media_AudioTrack_getAudioDescriptionMixLeveldB(JNIEnv *env, jobject thiz,
@@ -1381,12 +1376,10 @@ static jint android_media_AudioTrack_getAudioDescriptionMixLeveldB(JNIEnv *env, 
         return (jint)AUDIO_JAVA_ERROR;
     }
 
-    // TODO: replace in r-dev or r-tv-dev with code if HW is able to set audio mix level.
-    // By contract we can return -infinity if unsupported.
-    *nativeLevel = -std::numeric_limits<float>::infinity();
+    status_t status = lpTrack->getAudioDescriptionMixLevel(reinterpret_cast<float *>(nativeLevel));
     env->ReleasePrimitiveArrayCritical(level, nativeLevel, 0 /* mode */);
-    nativeLevel = nullptr;
-    return (jint)AUDIO_JAVA_SUCCESS;
+
+    return nativeToJavaStatus(status);
 }
 
 static jint android_media_AudioTrack_setDualMonoMode(JNIEnv *env, jobject thiz, jint dualMonoMode) {
@@ -1396,8 +1389,8 @@ static jint android_media_AudioTrack_setDualMonoMode(JNIEnv *env, jobject thiz, 
         return (jint)AUDIO_JAVA_ERROR;
     }
 
-    // TODO: replace in r-dev or r-tv-dev with code if HW is able to set audio mix level.
-    return (jint)AUDIO_JAVA_ERROR;
+    return nativeToJavaStatus(
+            lpTrack->setDualMonoMode(static_cast<audio_dual_mono_mode_t>(dualMonoMode)));
 }
 
 static jint android_media_AudioTrack_getDualMonoMode(JNIEnv *env, jobject thiz,
@@ -1407,18 +1400,17 @@ static jint android_media_AudioTrack_getDualMonoMode(JNIEnv *env, jobject thiz,
         ALOGE("%s: AudioTrack not initialized", __func__);
         return (jint)AUDIO_JAVA_ERROR;
     }
-    jfloat *nativeDualMonoMode = (jfloat *)env->GetPrimitiveArrayCritical(dualMonoMode, NULL);
+    jint *nativeDualMonoMode = (jint *)env->GetPrimitiveArrayCritical(dualMonoMode, NULL);
     if (nativeDualMonoMode == nullptr) {
         ALOGE("%s: Cannot retrieve dualMonoMode pointer", __func__);
         return (jint)AUDIO_JAVA_ERROR;
     }
 
-    // TODO: replace in r-dev or r-tv-dev with code if HW is able to select dual mono mode.
-    // By contract we can return DUAL_MONO_MODE_OFF if unsupported.
-    *nativeDualMonoMode = 0; // DUAL_MONO_MODE_OFF for now.
+    status_t status = lpTrack->getDualMonoMode(
+            reinterpret_cast<audio_dual_mono_mode_t *>(nativeDualMonoMode));
     env->ReleasePrimitiveArrayCritical(dualMonoMode, nativeDualMonoMode, 0 /* mode */);
-    nativeDualMonoMode = nullptr;
-    return (jint)AUDIO_JAVA_SUCCESS;
+
+    return nativeToJavaStatus(status);
 }
 
 // ----------------------------------------------------------------------------

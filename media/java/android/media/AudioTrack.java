@@ -1263,6 +1263,21 @@ public class AudioTrack extends PlayerBase
 
             // TODO: Check mEncapsulationMode compatibility with MODE_STATIC, etc?
 
+            // If the buffer size is not specified in streaming mode,
+            // use a single frame for the buffer size and let the
+            // native code figure out the minimum buffer size.
+            if (mMode == MODE_STREAM && mBufferSizeInBytes == 0) {
+                int bytesPerSample = 1;
+                if (AudioFormat.isEncodingLinearFrames(mFormat.getEncoding())) {
+                    try {
+                        bytesPerSample = mFormat.getBytesPerSample(mFormat.getEncoding());
+                    } catch (IllegalArgumentException e) {
+                        // do nothing
+                    }
+                }
+                mBufferSizeInBytes = mFormat.getChannelCount() * bytesPerSample;
+            }
+
             try {
                 // If the buffer size is not specified in streaming mode,
                 // use a single frame for the buffer size and let the

@@ -307,4 +307,10 @@ interface IAudioService {
     // code via IAudioManager.h need to be added to the top section.
 
     oneway void setMultiAudioFocusEnabled(in boolean enabled);
+
+    boolean setAdditionalOutputDeviceDelay(in AudioDeviceAttributes device, long delayMillis);
+
+    long getAdditionalOutputDeviceDelay(in AudioDeviceAttributes device);
+
+    long getMaxAdditionalOutputDeviceDelay(in AudioDeviceAttributes device);
 }
