@@ -554,8 +554,8 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
      * if {@code name=1}  or false if {}@code name=0} is contained in {@code state}.
      */
     private static void updateBit(int[] maskAndState, int position, String state, String name) {
-	if (state.contains("USB=")) {
-		Slog.d(TAG, "state.contains(USB=) return");
+	if (state.contains("CDP=")) {
+		Slog.d(TAG, "state.contains(CDP=) return");
 		return;
 	}
         if (state.contains(name + "=1")) {
