@@ -38,6 +38,40 @@
 extern "C" {
 int ifc_enable(const char *ifname);
 int ifc_disable(const char *ifname);
+int ifc_reset_connections(const char *ifname, int reset_mask);
+
+int dhcp_start(const char * const ifname);
+int dhcp_start_renew(const char * const ifname);
+int dhcp_get_results(const char * const ifname,
+                     const char *ipaddr,
+                     const char *gateway,
+                     uint32_t *prefixLength,
+                     const char *dns[],
+                     const char *server,
+                     uint32_t *lease,
+                     const char *vendorInfo,
+                     const char *domains,
+                     const char *mtu);
+
+int dhcp_stop(const char *ifname);
+int dhcp_release_lease(const char *ifname);
+char *dhcp_get_errmsg();
+int dhcpv6_do_request(const char *interface, int type);
+int dhcpv6_stop(const char *interface, int type);
+int dhcpv6_release_lease(const char *interface, int type);
+int dhcpv6_check_status(const char *interface);
+const char *dhcpv6_get_ipaddress(const char *interface, char *ipv6address);
+const char *dhcpv6_get_gateway(char *ipv6_gateway);
+const char *dhcpv6_get_prefixlen(const char *interface, char *prefixlen);
+const char *dhcpv6_get_dns(const char *interface, char *dns, int dns_cnt);
+int dhcpv6_get_dns_cnt(const char *interface);
+char *dhcpv6_get_errmsg();
+int ifc_configure6(const char *ifname, const char *address, uint32_t prefixLength, const char *gateway, const char *dns1, const char
+ *dns2);
+int ifc_clear_ipv6_addresses(const char *name);
+void ifc_clear_ipv6_static_dns(const char *name);
+int ipv6_addr_arp(const char* iface, const char* addr);
+
 }
 
 #define NETUTILS_PKG_NAME "android/net/NetworkUtils"
@@ -54,6 +88,168 @@ static const uint32_t kICMPv6TypeOffset = kIPv6PayloadStart + offsetof(icmp6_hdr
 static const uint32_t kUDPSrcPortIndirectOffset = kEtherHeaderLen + offsetof(udphdr, source);
 static const uint32_t kUDPDstPortIndirectOffset = kEtherHeaderLen + offsetof(udphdr, dest);
 static const uint16_t kDhcpClientPort = 68;
+
+/*
+ * The following remembers the jfieldID's of the fields
+ * of the DhcpInfo Java object, so that we don't have
+ * to look them up every time.
+ */
+static struct fieldIds {
+    jmethodID clear;
+    jmethodID setIpAddress;
+    jmethodID setGateway;
+    jmethodID addDns;
+    jmethodID setDomains;
+    jmethodID setServerAddress;
+    jmethodID setLeaseDuration;
+    jmethodID setVendorInfo;
+} dhcpResultsFieldIds;
+
+/*static jint android_net_utils_resetConnections(JNIEnv* env, jobject clazz,
+      jstring ifname, jint mask)
+{
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+
+    ALOGD("android_net_utils_resetConnections in env=%p clazz=%p iface=%s mask=0x%x\n",
+          env, clazz, nameStr, mask);
+
+    result = ::ifc_reset_connections(nameStr, mask);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    return (jint)result;
+}*/
+
+static jboolean android_net_utils_getDhcpResults(JNIEnv* env, jobject clazz, jstring ifname,
+        jobject dhcpResults)
+{
+    int result;
+    char  ipaddr[PROPERTY_VALUE_MAX];
+    uint32_t prefixLength;
+    char gateway[PROPERTY_VALUE_MAX];
+    char    dns1[PROPERTY_VALUE_MAX];
+    char    dns2[PROPERTY_VALUE_MAX];
+    char    dns3[PROPERTY_VALUE_MAX];
+    char    dns4[PROPERTY_VALUE_MAX];
+    const char *dns[5] = {dns1, dns2, dns3, dns4, NULL};
+    char  server[PROPERTY_VALUE_MAX];
+    uint32_t lease;
+    char vendorInfo[PROPERTY_VALUE_MAX];
+    char domains[PROPERTY_VALUE_MAX];
+    char mtu[PROPERTY_VALUE_MAX];
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    if (nameStr == NULL) return (jboolean)false;
+
+    result = ::dhcp_get_results(nameStr, ipaddr, gateway, &prefixLength,
+            dns, server, &lease, vendorInfo, domains, mtu);
+    if (result != 0) {
+        ALOGD("dhcp_get_results failed : %s (%s)", nameStr, ::dhcp_get_errmsg());
+    }
+
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    if (result == 0) {
+        env->CallVoidMethod(dhcpResults, dhcpResultsFieldIds.clear);
+
+        // set the linkAddress
+        // dhcpResults->addLinkAddress(inetAddress, prefixLength)
+        result = env->CallBooleanMethod(dhcpResults, dhcpResultsFieldIds.setIpAddress,
+                env->NewStringUTF(ipaddr), prefixLength);
+    }
+
+    if (result == 0) {
+        // set the gateway
+        result = env->CallBooleanMethod(dhcpResults,
+                dhcpResultsFieldIds.setGateway, env->NewStringUTF(gateway));
+    }
+
+    if (result == 0) {
+        // dhcpResults->addDns(new InetAddress(dns1))
+        result = env->CallBooleanMethod(dhcpResults,
+                dhcpResultsFieldIds.addDns, env->NewStringUTF(dns1));
+    }
+
+    if (result == 0) {
+        env->CallVoidMethod(dhcpResults, dhcpResultsFieldIds.setDomains,
+                env->NewStringUTF(domains));
+
+        result = env->CallBooleanMethod(dhcpResults,
+                dhcpResultsFieldIds.addDns, env->NewStringUTF(dns2));
+
+        if (result == 0) {
+            result = env->CallBooleanMethod(dhcpResults,
+                    dhcpResultsFieldIds.addDns, env->NewStringUTF(dns3));
+            if (result == 0) {
+                result = env->CallBooleanMethod(dhcpResults,
+                        dhcpResultsFieldIds.addDns, env->NewStringUTF(dns4));
+            }
+        }
+    }
+
+    if (result == 0) {
+        // dhcpResults->setServerAddress(new InetAddress(server))
+        result = env->CallBooleanMethod(dhcpResults, dhcpResultsFieldIds.setServerAddress,
+                env->NewStringUTF(server));
+    }
+
+    if (result == 0) {
+        // dhcpResults->setLeaseDuration(lease)
+        env->CallVoidMethod(dhcpResults,
+                dhcpResultsFieldIds.setLeaseDuration, lease);
+
+        // dhcpResults->setVendorInfo(vendorInfo)
+        env->CallVoidMethod(dhcpResults, dhcpResultsFieldIds.setVendorInfo,
+                env->NewStringUTF(vendorInfo));
+    }
+    return (jboolean)(result == 0);
+}
+
+static jboolean android_net_utils_startDhcp(JNIEnv* env, jobject clazz, jstring ifname)
+{
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    if (nameStr == NULL) return (jboolean)false;
+    if (::dhcp_start(nameStr) != 0) {
+        ALOGD("dhcp_start failed : %s", nameStr);
+        return (jboolean)false;
+    }
+    return (jboolean)true;
+}
+
+static jboolean android_net_utils_startDhcpRenew(JNIEnv* env, jobject clazz, jstring ifname)
+{
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    if (nameStr == NULL) return (jboolean)false;
+    if (::dhcp_start_renew(nameStr) != 0) {
+        ALOGD("dhcp_start_renew failed : %s", nameStr);
+        return (jboolean)false;
+    }
+    return (jboolean)true;
+}
+
+static jboolean android_net_utils_stopDhcp(JNIEnv* env, jobject clazz, jstring ifname)
+{
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    result = ::dhcp_stop(nameStr);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    return (jboolean)(result == 0);
+}
+
+static jboolean android_net_utils_releaseDhcpLease(JNIEnv* env, jobject clazz, jstring ifname)
+{
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    result = ::dhcp_release_lease(nameStr);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    return (jboolean)(result == 0);
+}
+
+static jstring android_net_utils_getDhcpError(JNIEnv* env, jobject clazz)
+{
+    return env->NewStringUTF(::dhcp_get_errmsg());
+}
 
 static void android_net_utils_attachDhcpFilter(JNIEnv *env, jobject clazz, jobject javaFd)
 {
@@ -87,6 +283,181 @@ static void android_net_utils_attachDhcpFilter(JNIEnv *env, jobject clazz, jobje
         jniThrowExceptionFmt(env, "java/net/SocketException",
                 "setsockopt(SO_ATTACH_FILTER): %s", strerror(errno));
     }
+}
+
+#define IPV6
+static jboolean android_net_utils_runDhcpv6(JNIEnv* env, jobject clazz, jstring ifname, jint type)
+{
+#ifdef IPV6
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    result = ::dhcpv6_do_request(nameStr, type);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    return (jboolean)(result == 0);
+#else
+    return false;
+#endif
+}
+
+static jboolean android_net_utils_stopDhcpv6(JNIEnv* env, jobject clazz, jstring ifname, jint type)
+{
+#ifdef IPV6
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    result = ::dhcpv6_stop(nameStr, type);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    return (jboolean)(result == 0);
+#else
+    return 0;
+#endif
+}
+static jboolean android_net_utils_releaseDhcpv6Lease(JNIEnv* env, jobject clazz, jstring ifname, jint type)
+{
+#ifdef DHCPV6
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    result = ::dhcpv6_release_lease(nameStr, type);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    return (jboolean)(result == 0);
+#else
+        return 0;
+#endif
+}
+
+static jboolean android_net_utils_checkDhcpv6Status(JNIEnv* env, jobject clazz, jstring ifname)
+{
+#ifdef IPV6
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    result = ::dhcpv6_check_status(nameStr);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    return (jboolean)(result == 0);
+#else
+    return 0;
+#endif
+}
+static jboolean android_net_utils_clearIpv6Addresses(JNIEnv* env,
+        jobject clazz,
+        jstring ifname)
+{
+#ifdef IPV6
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    result = ::ifc_clear_ipv6_addresses(nameStr);
+    ifc_clear_ipv6_static_dns(nameStr);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    return (jboolean)(result == 0);
+#else
+    return false;
+#endif
+}
+
+static jboolean android_net_utils_isIpv6AddrConflict(JNIEnv* env, jobject clazz, jstring ifname, jstring ipaddr){
+#ifdef IPV6
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+        const char *ipaddrStr = env->GetStringUTFChars(ipaddr, NULL);
+    result = ::ipv6_addr_arp(nameStr, ipaddrStr);// @result equals 1 means conflict.
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    env->ReleaseStringUTFChars(ipaddr, ipaddrStr);
+    return (jboolean)(result == 0);
+#else
+    return false;
+#endif
+}
+
+static jboolean android_net_utils_configure6Interface(JNIEnv* env,
+        jobject clazz,
+        jstring ifname,
+        jstring ipaddr,
+        jint prefixLength,
+        jstring gateway,
+        jstring dns1,
+        jstring dns2)
+{
+#ifdef IPV6
+    int result;
+
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    const char *ipaddrStr = env->GetStringUTFChars(ipaddr, NULL);
+    const char *gatewayStr = env->GetStringUTFChars(gateway, NULL);
+    const char *dns1Str = env->GetStringUTFChars(dns1, NULL);
+    const char *dns2Str = env->GetStringUTFChars(dns2, NULL);
+    result = ::ifc_configure6(nameStr, ipaddrStr, prefixLength, gatewayStr, dns1Str, dns2Str);
+    env->ReleaseStringUTFChars(ifname, nameStr);
+    env->ReleaseStringUTFChars(ipaddr, ipaddrStr);
+    env->ReleaseStringUTFChars(gateway, gatewayStr);
+    env->ReleaseStringUTFChars(dns1, dns1Str);
+    env->ReleaseStringUTFChars(dns2, dns2Str);
+    return (jboolean)(result == 0);
+#else
+    return false;
+#endif
+}
+static jstring android_net_utils_getDhcpv6Ipaddress(JNIEnv* env, jobject clazz, jstring ifname)
+{
+#ifdef IPV6
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    char ipv6address[50] = {0x00};
+    return env->NewStringUTF(::dhcpv6_get_ipaddress(nameStr,(char *)ipv6address));
+#else
+    return NULL;
+#endif
+}
+
+static jstring android_net_utils_getDhcpv6Gateway(JNIEnv* env, jobject clazz)
+{
+#ifdef IPV6
+    char gateway[50] = {0x00};
+    return env->NewStringUTF(::dhcpv6_get_gateway((char *)gateway));
+#else
+    return NULL;
+#endif
+}
+static jstring android_net_utils_getDhcpv6Prefixlen(JNIEnv* env, jobject clazz, jstring ifname)
+{
+#ifdef IPV6
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    char prefixlen[10] = {0x00};
+    return env->NewStringUTF(::dhcpv6_get_prefixlen(nameStr,(char *)prefixlen));
+#else
+    return NULL;
+#endif
+}
+
+static jstring android_net_utils_getDhcpv6Dns(JNIEnv* env, jobject clazz, jstring ifname, jint cnt)
+{
+#ifdef IPV6
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    char dns[50] = {0x00};
+    return env->NewStringUTF(::dhcpv6_get_dns(nameStr,(char *)dns, cnt));
+#else
+    return NULL;
+#endif
+}
+
+static jint android_net_utils_getDhcpv6DnsCnt(JNIEnv* env, jobject clazz, jstring ifname)
+{
+#ifdef IPV6
+    const char *nameStr = env->GetStringUTFChars(ifname, NULL);
+    return (jint)(::dhcpv6_get_dns_cnt(nameStr));
+#else
+    return 0;
+#endif
+}
+static jstring android_net_utils_getDhcpv6Error(JNIEnv* env, jobject clazz)
+{
+#ifdef IPV6
+    return env->NewStringUTF(::dhcpv6_get_errmsg());
+#else
+    return NULL;
+#endif
 }
 
 static void android_net_utils_attachRaFilter(JNIEnv *env, jobject clazz, jobject javaFd,
@@ -331,7 +702,13 @@ static jboolean android_net_utils_queryUserAccess(JNIEnv *env, jobject thiz, jin
  */
 static const JNINativeMethod gNetworkUtilMethods[] = {
     /* name, signature, funcPtr */
-    { "bindProcessToNetwork", "(I)Z", (void*) android_net_utils_bindProcessToNetwork },
+	{ "startDhcp", "(Ljava/lang/String;)Z",  (void *)android_net_utils_startDhcp },
+	{ "startDhcpRenew", "(Ljava/lang/String;)Z",  (void *)android_net_utils_startDhcpRenew },
+	{ "getDhcpResults", "(Ljava/lang/String;Landroid/net/DhcpResults;)Z",  (void *)android_net_utils_getDhcpResults },
+	{ "stopDhcp", "(Ljava/lang/String;)Z",	(void *)android_net_utils_stopDhcp },
+	{ "releaseDhcpLease", "(Ljava/lang/String;)Z",	(void *)android_net_utils_releaseDhcpLease },
+	{ "getDhcpError", "()Ljava/lang/String;", (void*) android_net_utils_getDhcpError },
+	{ "bindProcessToNetwork", "(I)Z", (void*) android_net_utils_bindProcessToNetwork },
     { "getBoundNetworkForProcess", "()I", (void*) android_net_utils_getBoundNetworkForProcess },
     { "bindProcessToNetworkForHostResolution", "(I)Z", (void*) android_net_utils_bindProcessToNetworkForHostResolution },
     { "bindSocketToNetwork", "(II)I", (void*) android_net_utils_bindSocketToNetwork },
@@ -341,10 +718,41 @@ static const JNINativeMethod gNetworkUtilMethods[] = {
     { "attachRaFilter", "(Ljava/io/FileDescriptor;I)V", (void*) android_net_utils_attachRaFilter },
     { "attachControlPacketFilter", "(Ljava/io/FileDescriptor;I)V", (void*) android_net_utils_attachControlPacketFilter },
     { "setupRaSocket", "(Ljava/io/FileDescriptor;I)V", (void*) android_net_utils_setupRaSocket },
+	{ "runDhcpv6", "(Ljava/lang/String;I)Z",  (void *)android_net_utils_runDhcpv6 },
+	{ "stopDhcpv6", "(Ljava/lang/String;I)Z",	(void *)android_net_utils_stopDhcpv6 },
+	{ "releaseDhcpv6Lease", "(Ljava/lang/String;I)Z",	(void *)android_net_utils_releaseDhcpv6Lease },
+	{ "checkDhcpv6Status", "(Ljava/lang/String;)Z",  (void *)android_net_utils_checkDhcpv6Status },
+	{ "getDhcpv6Ipaddress", "(Ljava/lang/String;)Ljava/lang/String;",	(void *)android_net_utils_getDhcpv6Ipaddress },
+	{ "getDhcpv6Gateway", "()Ljava/lang/String;",	(void *)android_net_utils_getDhcpv6Gateway},
+	{ "getDhcpv6Prefixlen", "(Ljava/lang/String;)Ljava/lang/String;",	(void *)android_net_utils_getDhcpv6Prefixlen},
+	{ "getDhcpv6Dns", "(Ljava/lang/String;I)Ljava/lang/String;",  (void *)android_net_utils_getDhcpv6Dns},
+	{ "getDhcpv6DnsCnt", "(Ljava/lang/String;)I",	(void *)android_net_utils_getDhcpv6DnsCnt},
+	{ "getDhcpv6Error", "()Ljava/lang/String;", (void*) android_net_utils_getDhcpv6Error },
+	{ "configure6Interface", "(Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z", (void *)android_net_utils_configure6Interface },
+	{ "clearIpv6Addresses", "(Ljava/lang/String;)Z",  (void *)android_net_utils_clearIpv6Addresses},
+	{ "isIpv6AddrConflict", "(Ljava/lang/String;Ljava/lang/String;)Z", (void*)android_net_utils_isIpv6AddrConflict},	 
 };
 
 int register_android_net_NetworkUtils(JNIEnv* env)
 {
+	jclass dhcpResultsClass = FindClassOrDie(env, "android/net/DhcpResults");
+	
+	dhcpResultsFieldIds.clear = GetMethodIDOrDie(env, dhcpResultsClass, "clear", "()V");
+	dhcpResultsFieldIds.setIpAddress =GetMethodIDOrDie(env, dhcpResultsClass, "setIpAddress",
+			 "(Ljava/lang/String;I)Z");
+	dhcpResultsFieldIds.setGateway = GetMethodIDOrDie(env, dhcpResultsClass, "setGateway",
+			 "(Ljava/lang/String;)Z");
+	dhcpResultsFieldIds.addDns = GetMethodIDOrDie(env, dhcpResultsClass, "addDns",
+			 "(Ljava/lang/String;)Z");
+	dhcpResultsFieldIds.setDomains = GetMethodIDOrDie(env, dhcpResultsClass, "setDomains",
+			 "(Ljava/lang/String;)V");
+	dhcpResultsFieldIds.setServerAddress = GetMethodIDOrDie(env, dhcpResultsClass,
+			 "setServerAddress", "(Ljava/lang/String;)Z");
+	dhcpResultsFieldIds.setLeaseDuration = GetMethodIDOrDie(env, dhcpResultsClass,
+			 "setLeaseDuration", "(I)V");
+	dhcpResultsFieldIds.setVendorInfo = GetMethodIDOrDie(env, dhcpResultsClass, "setVendorInfo",
+			 "(Ljava/lang/String;)V");
+	
     return RegisterMethodsOrDie(env, NETUTILS_PKG_NAME, gNetworkUtilMethods,
                                 NELEM(gNetworkUtilMethods));
 }

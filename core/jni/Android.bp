@@ -288,6 +288,7 @@ cc_library_shared {
         "libhwui",
         "libdl",
         "libstatslog",
+		"libnetutils",
     ],
 
     generated_sources: ["android_util_StatsLog.cpp"],

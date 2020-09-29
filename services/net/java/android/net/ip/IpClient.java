@@ -79,6 +79,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import android.net.NetworkUtils;
 
 
 /**
@@ -610,6 +611,8 @@ public class IpClient extends StateMachine {
 
     private static final boolean NO_CALLBACKS = false;
     private static final boolean SEND_CALLBACKS = true;
+	
+	private static final boolean mEnableDhcpv6 = true;
 
     // This must match the interface prefix in clatd.c.
     // TODO: Revert this hack once IpClient and Nat464Xlat work in concert.
@@ -656,6 +659,7 @@ public class IpClient extends StateMachine {
     private ApfFilter mApfFilter;
     private boolean mMulticastFiltering;
     private long mStartTimeMillis;
+	private boolean mDhcpv6Success;
 
     /**
      * Reading the snapshot is an asynchronous operation initiated by invoking
@@ -1328,6 +1332,11 @@ public class IpClient extends StateMachine {
         if (delta == ProvisioningChange.STILL_NOT_PROVISIONED) {
             delta = ProvisioningChange.LOST_PROVISIONING;
         }
+		
+		if (mEnableDhcpv6 && mDhcpv6Success) {
+			 Log.d(mTag, "DHCPv4 failed, but DHCPv6 sucess, set GAINED_PROVISIONING");
+			 delta = ProvisioningChange.GAINED_PROVISIONING;
+		}
 
         dispatchCallback(delta, newLp);
         if (delta == ProvisioningChange.LOST_PROVISIONING) {
@@ -1401,11 +1410,42 @@ public class IpClient extends StateMachine {
         return (mIpReachabilityMonitor != null);
     }
 
+	private boolean startDhcpv6() {
+		 Log.d(mTag, "startDhcpv6 " + mInterfaceName);
+		 mDhcpv6Success = false;
+		 new Thread(new Runnable() {
+			 public void run() {
+				 if (!NetworkUtils.runDhcpv6(mInterfaceName)) {
+					 NetworkUtils.stopDhcpv6(mInterfaceName);
+					 return;
+				 }
+				 mDhcpv6Success = true;
+			 }
+		 }).start();
+	
+		 return true;
+	}
+	
+	private boolean stopDhcpv6() {
+		 Log.d(mTag, "stopDhcpv6 " + mInterfaceName);
+		 mDhcpv6Success = false;
+		 new Thread(new Runnable() {
+			 public void run() {
+				 NetworkUtils.stopDhcpv6(mInterfaceName);
+			 }
+		 }).start();
+	
+		 return true;
+	}
+
     private void stopAllIP() {
         // We don't need to worry about routes, just addresses, because:
         //     - disableIpv6() will clear autoconf IPv6 routes as well, and
         //     - we don't get IPv4 routes from netlink
         // so we neither react to nor need to wait for changes in either.
+		if (mEnableDhcpv6) {
+			 stopDhcpv6();
+		}
 
         mInterfaceCtrl.disableIPv6();
         mInterfaceCtrl.clearAllAddresses();
@@ -1617,6 +1657,10 @@ public class IpClient extends StateMachine {
                         () -> { mLog.log("OBSERVED AvoidBadWifi changed"); });
                 mMultinetworkPolicyTracker.start();
             }
+			
+			if (mEnableDhcpv6) {
+				 startDhcpv6();
+			}
 
             if (mConfiguration.mUsingIpReachabilityMonitor && !startIpReachabilityMonitor()) {
                 doImmediateProvisioningFailure(
