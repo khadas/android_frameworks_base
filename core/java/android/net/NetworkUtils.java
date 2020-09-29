@@ -41,6 +41,203 @@ public class NetworkUtils {
     private static final String TAG = "NetworkUtils";
 
     /**
+     * Start the DHCP client daemon, in order to have it request addresses
+     * for the named interface.  This returns {@code true} if the DHCPv4 daemon
+     * starts, {@code false} otherwise.  This call blocks until such time as a
+     * result is available or the default discovery timeout has been reached.
+     * Callers should check {@link #getDhcpResults} to determine whether DHCP
+     * succeeded or failed, and if it succeeded, to fetch the {@link DhcpResults}.
+     * @param interfaceName the name of the interface to configure
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public native static boolean startDhcp(String interfaceName);
+
+    /**
+     * Initiate renewal on the DHCP client daemon for the named interface.  This
+     * returns {@code true} if the DHCPv4 daemon has been notified, {@code false}
+     * otherwise.  This call blocks until such time as a result is available or
+     * the default renew timeout has been reached.  Callers should check
+     * {@link #getDhcpResults} to determine whether DHCP succeeded or failed,
+     * and if it succeeded, to fetch the {@link DhcpResults}.
+     * @param interfaceName the name of the interface to configure
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public native static boolean startDhcpRenew(String interfaceName);
+
+    /**
+     * Start the DHCP client daemon, in order to have it request addresses
+     * for the named interface, and then configure the interface with those
+     * addresses. This call blocks until it obtains a result (either success
+     * or failure) from the daemon.
+     * @param interfaceName the name of the interface to configure
+     * @param dhcpResults if the request succeeds, this object is filled in with
+     * the IP address information.
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public static boolean runDhcp(String interfaceName, DhcpResults dhcpResults) {
+        return startDhcp(interfaceName) && getDhcpResults(interfaceName, dhcpResults);
+    }
+
+    /**
+     * Initiate renewal on the DHCP client daemon. This call blocks until it obtains
+     * a result (either success or failure) from the daemon.
+     * @param interfaceName the name of the interface to configure
+     * @param dhcpResults if the request succeeds, this object is filled in with
+     * the IP address information.
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public static boolean runDhcpRenew(String interfaceName, DhcpResults dhcpResults) {
+        return startDhcpRenew(interfaceName) && getDhcpResults(interfaceName, dhcpResults);
+    }
+
+    /**
+     * Fetch results from the DHCP client daemon. This call returns {@code true} if
+     * if there are results available to be read, {@code false} otherwise.
+     * @param interfaceName the name of the interface to configure
+     * @param dhcpResults if the request succeeds, this object is filled in with
+     * the IP address information.
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public native static boolean getDhcpResults(String interfaceName, DhcpResults dhcpResults);
+
+    /**
+     * Shut down the DHCP client daemon.
+     * @param interfaceName the name of the interface for which the daemon
+     * should be stopped
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public native static boolean stopDhcp(String interfaceName);
+
+    /**
+     * Release the current DHCP lease.
+     * @param interfaceName the name of the interface for which the lease should
+     * be released
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public native static boolean releaseDhcpLease(String interfaceName);
+
+    /**
+     * Return the last DHCP-related error message that was recorded.
+     * <p/>NOTE: This string is not localized, but currently it is only
+     * used in logging.
+     * @return the most recent error message, if any
+     */
+    public native static String getDhcpError();
+
+    /**
+     * Start the DHCPv6 client daemon, in order to have it request addresses
+     * for the named interface, and then configure the interface with those
+     * addresses. This call blocks until it obtains a result (either success
+     * or failure) from the daemon.
+     * @param interfaceName the name of the interface to configure
+     * @return ipv6 address for success, null for failure
+     */
+
+    //@type 0-dhcpv6, 1-stateless
+    public native static boolean runDhcpv6(String interfaceName, int type);
+    public static boolean runDhcpv6(String interfaceName){
+        return runDhcpv6(interfaceName, 0);
+    }
+
+    /**
+     * Shut down the DHCPv6 client daemon.
+     * @param interfaceName the name of the interface for which the daemon
+     * should be stopped
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public native static boolean stopDhcpv6(String interfaceName, int type);
+    public static boolean stopDhcpv6(String interfaceName){
+        return stopDhcpv6(interfaceName, 0);
+    }
+
+    /**
+     * Release the current DHCPv6 lease.
+     * @param interfaceName the name of the interface for which the lease should
+     * be released
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public native static boolean releaseDhcpv6Lease(String interfaceName, int type);
+    public static boolean releaseDhcpv6Lease(String interfaceName){
+        return releaseDhcpv6Lease(interfaceName, 0);
+    }
+
+    /* check DHCPv6 status
+     * @param interfaceName the name of the interface
+     * be released
+     * @return {@code true} for success, {@code false} for failure
+     */
+    public native static boolean checkDhcpv6Status(String interfaceName);
+
+    /**
+     * get DHCPv6 ipaddress
+     * @param interfaceName the name of the interface
+     * @return ipv6 address for success, null for failure
+     */
+    public native static String getDhcpv6Ipaddress(String interfaceName);
+
+    /**
+     * get DHCPv6 gateway
+     * @param null
+     * @return ipv6 gateway for success, null for failure
+     */
+    public native static String getDhcpv6Gateway();
+
+    /**
+     * get DHCPv6 prefixlen
+     * @param interfaceName the name of the interface
+     * @return ipv6 prefixlen for success, null for failure
+     */
+    public native static String getDhcpv6Prefixlen(String interfaceName);
+
+    /**
+     * get DHCPv6 dns
+     * @param interfaceName the name of the interface
+     * @param cnt the number of dns, 1 for primary dns, 2 for secondary dns
+     * @return ipv6 dns for success, null for failure
+     */
+    public native static String getDhcpv6Dns(String interfaceName, int cnt);
+
+    /**
+     * get DHCPv6 dns count
+     * @param interfaceName the name of the interface
+     * @return ipv6 dns count
+     */
+    public native static int getDhcpv6DnsCnt(String interfaceName);
+    /**
+     * Return the last DHCPv6-related error message that was recorded.
+     * <p/>NOTE: This string is not localized, but currently it is only
+     * used in logging.
+     * @return the most recent error message, if any
+     */
+    public native static String getDhcpv6Error();
+
+    /**
+     * Configure interface by Static IPV6
+     * @param interfaceName
+     * @param ipAddress
+     * @param prefixLength
+     * @param gateway
+     * @param dns1
+     * @param dns2
+     * @return true for success, false for fail
+     */
+    public native static boolean configure6Interface(
+        String interfaceName, String ipAddress, int prefixLength, String gateway, String dns1, String dns2);
+    /**
+     * Clear interface IPV6 address
+     * @param interfaceName
+     * @return true for success, false for fail
+     */
+    public native static boolean clearIpv6Addresses(String interfaceName);
+
+    /**
+    *ipconflict check
+    *@iface: interface used
+    *@ipAddr: target addr to solicitation
+    */
+    public native static boolean isIpv6AddrConflict(String iface, String ipAddr);
+
+    /**
      * Attaches a socket filter that accepts DHCP packets to the given socket.
      */
     public native static void attachDhcpFilter(FileDescriptor fd) throws SocketException;
