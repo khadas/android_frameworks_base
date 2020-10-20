@@ -351,6 +351,11 @@ import android.window.SplashScreenView.SplashScreenViewParcelable;
 import android.window.TaskSnapshot;
 import android.window.TransitionInfo.AnimationOptions;
 import android.window.WindowContainerToken;
+import android.os.SystemProperties;
+import android.os.Parcel;
+import android.os.SystemService;
+import android.os.ServiceManager;
+import android.provider.Settings;
 
 import com.android.internal.R;
 import com.android.internal.annotations.GuardedBy;
@@ -6792,8 +6797,39 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
     }
 
+    //-----------------------rk code----------
+    private void stopBootanim() {
+        boolean wallpaperEnabled = mAtmService.mContext.getResources().getBoolean(
+            com.android.internal.R.bool.config_enableWallpaperService);
+        if(wallpaperEnabled){
+            Log.d(TAG,"Launcher drawn done,not keygurad,has wallpaper.");
+            try {
+                    Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
+        Log.d(TAG,"launcher drawn done,exit bootanim.");
+        SystemProperties.set("service.bootanim.exit", "1");
+        Settings.System.putInt(mAtmService.mContext.getContentResolver(), Settings.System.FORCE_TRAVERSAL_DISPLAY_LOCKED,1);
+        //SystemService.stop("bootanim");
+        if (!SurfaceControl.bootFinished()) {
+            Log.d(TAG,"stopBootanim: bootFinished() failed.");
+        }
+    }
+    //----------------------------------------
+
     /** Called when the windows associated app window container are drawn. */
     private void onWindowsDrawn() {
+        //-----------------------rk code----------
+        //Launcher is drawn completed,box can exit bootanim
+        if ("box".equals(SystemProperties.get("ro.target.product"))){
+            if(shortComponentName!=null && !shortComponentName.contains(".FallbackHome")
+                && !"1".equals(SystemProperties.get("service.bootanim.exit"))){
+                    stopBootanim();
+            }
+        }
+        //----------------------------------------
+
         final TransitionInfoSnapshot info = mTaskSupervisor
                 .getActivityMetricsLogger().notifyWindowsDrawn(this);
         final boolean validInfo = info != null;
