@@ -18,6 +18,7 @@ cc_defaults {
         "libcutils",
         "liblog",
         "libutils",
+        "libmedia",
     ],
 }
 
