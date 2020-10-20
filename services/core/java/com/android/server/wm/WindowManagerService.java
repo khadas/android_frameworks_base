@@ -3756,6 +3756,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 }
             }
 
+        //box:skip FallbackHome to fix 2-3s black screen before launcher.
+        if (!"box".equals(SystemProperties.get("ro.target.product"))) {
             if (!mBootAnimationStopped) {
                 Trace.asyncTraceBegin(TRACE_TAG_WINDOW_MANAGER, "Stop bootanim", 0);
                 // stop boot animation
@@ -3783,6 +3785,7 @@ public class WindowManagerService extends IWindowManager.Stub
             } catch (RemoteException ex) {
                 ProtoLog.e(WM_ERROR, "Boot completed: SurfaceFlinger is dead!");
             }
+        }
 
             EventLogTags.writeWmBootAnimationDone(SystemClock.uptimeMillis());
             Trace.asyncTraceEnd(TRACE_TAG_WINDOW_MANAGER, "Stop bootanim", 0);

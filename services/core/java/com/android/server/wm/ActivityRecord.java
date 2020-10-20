@@ -339,6 +339,10 @@ import android.window.SplashScreenView.SplashScreenViewParcelable;
 import android.window.TaskSnapshot;
 import android.window.TransitionInfo.AnimationOptions;
 import android.window.WindowContainerToken;
+import android.os.SystemProperties;
+import android.os.Parcel;
+import android.os.SystemService;
+import android.os.ServiceManager;
 
 import com.android.internal.R;
 import com.android.internal.annotations.VisibleForTesting;
@@ -6612,8 +6616,44 @@ final class ActivityRecord extends WindowToken implements WindowManagerService.A
         }
     }
 
+    private void stopBootanim() {
+        boolean wallpaperEnabled = mAtmService.mContext.getResources().getBoolean(
+            com.android.internal.R.bool.config_enableWallpaperService);
+        if(wallpaperEnabled){
+            Log.d(TAG,"----Launcher drawn done,not keyguradk,has wallpaper,ummmmmm----");
+            try {
+                    Thread.sleep(1000);
+            } catch (Exception e) {
+            }
+        }
+        Log.d(TAG,"----launcher drawn done,exit bootanim----");
+        SystemProperties.set("service.bootanim.exit", "1");
+        //SystemService.stop("bootanim");
+        try {
+            IBinder surfaceFlinger = ServiceManager.getService("SurfaceFlinger");
+            if (surfaceFlinger != null) {
+                Slog.i(TAG_WM, "******* TELLING SURFACE FLINGER WE ARE BOOTED!");
+                Parcel data = Parcel.obtain();
+                data.writeInterfaceToken("android.ui.ISurfaceComposer");
+                surfaceFlinger.transact(IBinder.FIRST_CALL_TRANSACTION, // BOOT_FINISHED
+                    data, null, 0);
+                data.recycle();
+            }
+        } catch (RemoteException ex) {
+            Slog.e(TAG_WM, "Boot completed: SurfaceFlinger is dead!");
+        }
+    }
+
     /** Called when the windows associated app window container are drawn. */
     private void onWindowsDrawn(long timestampNs) {
+        //Launcher is drawn completed,box can exit bootanim
+        if ("box".equals(SystemProperties.get("ro.target.product"))){
+            if(shortComponentName!=null && !shortComponentName.contains(".FallbackHome")
+                && !"1".equals(SystemProperties.get("service.bootanim.exit"))){
+                    stopBootanim();
+            }
+        }
+
         final TransitionInfoSnapshot info = mTaskSupervisor
                 .getActivityMetricsLogger().notifyWindowsDrawn(this, timestampNs);
         final boolean validInfo = info != null;
