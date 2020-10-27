@@ -82,6 +82,7 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.os.ServiceManager.ServiceNotFoundException;
 import android.os.StrictMode;
+import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.text.Selection;
@@ -3735,6 +3736,20 @@ public class Activity extends ContextThemeWrapper
      * @see android.view.KeyEvent
      */
     public boolean onKeyDown(int keyCode, KeyEvent event)  {
+        if("box".equals(SystemProperties.get("ro.target.product","unkonw"))){
+            String mstate=null;
+            mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
+
+            if ((keyCode == KeyEvent.KEYCODE_PROFILE_SWITCH)) {
+                if ("on".equals(mstate)) {
+                    Toast.makeText(Activity.this, "Enter into mouse mode, click again to quit", Toast.LENGTH_LONG).show();
+                } else if ("off".equals(mstate)) {
+                    Toast.makeText(Activity.this, "Restore to default button mode", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
+
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (getApplicationInfo().targetSdkVersion
                     >= Build.VERSION_CODES.ECLAIR) {

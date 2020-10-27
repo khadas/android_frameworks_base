@@ -115,6 +115,10 @@ interface IWindowManager
     void clearForcedDisplayDensityForUser(int displayId, int userId);
     void setForcedDisplayScalingMode(int displayId, int mode); // 0 = auto, 1 = disable
 
+    //interfaces for mouse keyevent input
+    void dispatchMouse(float x, float y, int w, int h);
+    void dispatchMouseByCd(float x, float y);
+
     // These can only be called when holding the MANAGE_APP_TOKENS permission.
     void setEventDispatching(boolean enabled);
 

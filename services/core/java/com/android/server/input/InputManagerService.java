@@ -354,6 +354,8 @@ public class InputManagerService extends IInputManager.Stub
     private static native boolean nativeEnableSensor(long ptr, int deviceId, int sensorType,
             int samplingPeriodUs, int maxBatchReportLatencyUs);
     private static native void nativeDisableSensor(long ptr, int deviceId, int sensorType);
+    private static native void nativedispatchMouse(float x, float y, int w, int h, long ptr);
+    private static native void nativedispatchMouseByCd(float x, float y, long ptr);
 
     // Maximum number of milliseconds to wait for input event injection.
     private static final int INJECTION_TIMEOUT_MILLIS = 30 * 1000;
@@ -610,6 +612,14 @@ public class InputManagerService extends IInputManager.Stub
             }
         }
         nativeSetDisplayViewports(mPtr, vArray);
+    }
+
+    public void dispatchMouse(float x, float y, int w, int h) {
+        nativedispatchMouse(x, y, w, h, mPtr);
+    }
+
+    public void dispatchMousebyCd(float x, float y) {
+        nativedispatchMouseByCd(x, y, mPtr);
     }
 
     /**
