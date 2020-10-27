@@ -33,6 +33,8 @@
 #include <android_os_MessageQueue.h>
 #include <android_runtime/AndroidRuntime.h>
 #include <android_runtime/Log.h>
+#include <cutils/properties.h>
+
 #include <android_view_InputChannel.h>
 #include <android_view_InputDevice.h>
 #include <android_view_KeyEvent.h>
@@ -60,6 +62,12 @@
 #include <cinttypes>
 #include <vector>
 
+#include <stddef.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <math.h>
+
 #include "android_hardware_display_DisplayViewport.h"
 #include "android_hardware_input_InputApplicationHandle.h"
 #include "android_hardware_input_InputWindowHandle.h"
@@ -86,6 +94,7 @@ namespace android {
 // The scaling factor is calculated as 2 ^ (speed * exponent),
 // where the speed ranges from -7 to + 7 and is supplied by the user.
 static const float POINTER_SPEED_EXPONENT = 1.0f / 4;
+std::shared_ptr<PointerControllerInterface> mPointerController;
 
 static struct {
     jclass clazz;
@@ -2257,6 +2266,65 @@ static void nativeSetMotionClassifierEnabled(JNIEnv* env, jobject nativeImplObj,
     im->setMotionClassifierEnabled(enabled);
 }
 
+static void android_server_InputManager_nativedispatchMouse(JNIEnv* env,jobject nativeImplObj, jfloat x,jfloat y, jint w, jint h) {
+    //NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);
+
+    NativeInputManager* im = getNativeInputManager(env, nativeImplObj);
+    int mID;
+    float mx, my;
+    float screenWidth, screenHeight;
+    char* mgetID = new char[PROPERTY_VALUE_MAX];
+    const char* mkeyMouseState;
+    screenWidth = (float)w;
+    screenHeight = (float)h;
+
+    property_get("sys.ID.mID", mgetID, 0);
+    mID = atoi(mgetID);
+
+    mPointerController = im->obtainPointerController(mID);
+
+    // start to dispatchMouse
+    mPointerController->setPresentation(PointerControllerInterface::Presentation::POINTER);
+    mPointerController->move(x, y);
+    mPointerController->unfade(PointerControllerInterface::Transition::IMMEDIATE);
+    mPointerController->getPosition(&mx, &my);
+
+    // if((mx<=0)||((mx>=(screenWidth-10.0f))||(my<=0)||(my>=(screenHeight-10.0f)))
+    //	x=0;y=0;
+
+    if (mx == 0) {
+        mkeyMouseState = "left";
+    } else if (mx >= (screenWidth - 5.0f)) {
+        mkeyMouseState = "right";
+    } else if (my == 0) {
+        mkeyMouseState = "up";
+    } else if (my >= (screenHeight - 5.0f)) {
+        mkeyMouseState = "down";
+    } else {
+        mkeyMouseState = "Non-boundary";
+    }
+
+    property_set("sys.keymouselimitstate", mkeyMouseState);
+}
+
+static void android_server_InputManager_nativedispatchMouseByCd(JNIEnv* env, jobject nativeImplObj, jfloat x,jfloat y) {
+    //NativeInputManager* im = reinterpret_cast<NativeInputManager*>(ptr);
+    NativeInputManager* im = getNativeInputManager(env, nativeImplObj);
+    int mID;
+    char* mgetID = new char[PROPERTY_VALUE_MAX];
+
+    property_get("sys.ID.mID", mgetID, 0);
+    mID = atoi(mgetID);
+
+    mPointerController = im->obtainPointerController(mID);
+
+    // start to dispatchMouse
+    mPointerController->setPresentation(PointerControllerInterface::Presentation::POINTER);
+    mPointerController->setPosition(x, y);
+    mPointerController->unfade(PointerControllerInterface::Transition::IMMEDIATE);
+    // mPointerController->fade(PointerControllerInterface::TRANSITION_IMMEDIATE);
+}
+
 static jobject createInputSensorInfo(JNIEnv* env, jstring name, jstring vendor, jint version,
                                      jint handle, jint type, jfloat maxRange, jfloat resolution,
                                      jfloat power, jfloat minDelay, jint fifoReservedEventCount,
@@ -2442,6 +2510,9 @@ static const JNINativeMethod gInputManagerMethods[] = {
         {"flushSensor", "(II)Z", (void*)nativeFlushSensor},
         {"cancelCurrentTouch", "()V", (void*)nativeCancelCurrentTouch},
         {"setPointerDisplayId", "(I)V", (void*)nativeSetPointerDisplayId},
+        {"dispatchMouse", "(FFII)V", (void*)android_server_InputManager_nativedispatchMouse},
+        {"dispatchMouseByCd", "(FF)V",
+         (void*)android_server_InputManager_nativedispatchMouseByCd},
 };
 
 #define FIND_CLASS(var, className) \

@@ -643,6 +643,51 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int MSG_LAUNCH_ASSIST = 23;
     private static final int MSG_RINGER_TOGGLE_CHORD = 24;
 
+    private int screenWidth;
+    private int screenHeight;
+    private String mstate = null;
+    private float mdeltax, mdeltay;
+    boolean keydown;
+
+    public Handler mKeyMouseHandler = new Handler() {
+        public void handleMessage(Message msg) {
+            switch(msg.what){
+            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT:
+                mdeltax = -1.0f;
+                mdeltay = 0;
+                break;
+            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT:
+                mdeltax = 1.0f;
+                mdeltay = 0;
+                break;
+            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP:
+                mdeltax = 0;
+                mdeltay = -1.0f;
+                break;
+            case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN:
+                mdeltax = 0;
+                mdeltay = 1.0f;
+                break;
+            case KeyEvent.KEYCODE_PROFILE_SWITCH:
+                mdeltax = 0;
+                mdeltay = 0;
+                break;
+            default:
+                break;
+            }
+
+            try {
+                mWindowManagerFuncs.dispatchMouse(mdeltax,mdeltay,screenWidth,screenHeight);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+
+            if (keydown) {
+                mKeyMouseHandler.sendEmptyMessageDelayed(msg.what,30);
+            }
+        }
+    };
+
     private class PolicyHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
@@ -2787,6 +2832,26 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     + repeatCount + " keyguardOn=" + keyguardOn + " canceled=" + canceled);
         }
 
+        //infrare simulate mouse
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+        if (isBox) {
+            mstate = SystemProperties.get("sys.KeyMouse.mKeyMouseState");
+            if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT)
+                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT)
+                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP)
+                || (keyCode == KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN)
+                || (keyCode == KeyEvent.KEYCODE_PROFILE_SWITCH))) {
+            keydown = down;
+            mKeyMouseHandler.sendEmptyMessage(keyCode);
+            //return -1;
+            }
+
+            if (mstate.equals("on") && ((keyCode == KeyEvent.KEYCODE_ENTER)
+                ||(keyCode == KeyEvent.KEYCODE_DPAD_CENTER))) {
+            return -1;
+            }
+        }
+
         if (mKeyCombinationManager.isKeyConsumed(event)) {
             return key_consumed;
         }
@@ -3797,6 +3862,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Basic policy based on interactive state.
         int result;
+	boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
         if (interactive || (isInjected && !isWakeKey)) {
             // When the device is interactive or the key is injected pass the
             // key to the application.
@@ -4032,8 +4098,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_LEFT:
                 // fall through
             case KeyEvent.KEYCODE_SYSTEM_NAVIGATION_RIGHT: {
-                result &= ~ACTION_PASS_TO_USER;
-                interceptSystemNavigationKey(event);
+                if(!isBox){
+                   result &= ~ACTION_PASS_TO_USER;
+                   interceptSystemNavigationKey(event);
+                }
                 break;
             }
 

@@ -228,6 +228,9 @@ public interface WindowManagerPolicy extends WindowManagerPolicyConstants {
         public static final int CAMERA_LENS_COVER_ABSENT = -1;
         public static final int CAMERA_LENS_UNCOVERED = 0;
         public static final int CAMERA_LENS_COVERED = 1;
+	//interfaces for mouse keyevent input
+	public void dispatchMouse(float x, float y, int w, int h);
+	public void dispatchMouseByCd(float x, float y);
 
         /**
          * Returns a code that describes the current state of the lid switch.

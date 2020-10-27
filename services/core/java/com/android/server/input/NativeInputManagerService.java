@@ -190,6 +190,9 @@ public interface NativeInputManagerService {
     /** Set the displayId on which the mouse cursor should be shown. */
     void setPointerDisplayId(int displayId);
 
+    void dispatchMouse(float x, float y, int w, int h);
+    void dispatchMouseByCd(float x, float y);
+
     /** The native implementation of InputManagerService methods. */
     class NativeImpl implements NativeInputManagerService {
         /** Pointer to native input manager service object, used by native code. */
@@ -405,6 +408,10 @@ public interface NativeInputManagerService {
         public native void cancelCurrentTouch();
 
         @Override
-        public native void setPointerDisplayId(int displayId);
+	public native void setPointerDisplayId(int displayId);
+        @Override
+	public native void dispatchMouse(float x, float y, int w, int h);
+        @Override
+	public native void dispatchMouseByCd(float x, float y);
     }
 }
