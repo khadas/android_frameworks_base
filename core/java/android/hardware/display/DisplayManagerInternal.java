@@ -117,6 +117,8 @@ public abstract class DisplayManagerInternal {
      * surface flinger transaction.
      */
     public abstract void performTraversal(SurfaceControl.Transaction t);
+	
+	public void setRotation(int newRotation) {return;}
 
     /**
      * Tells the display manager about properties of the display that depend on the windows on it.
