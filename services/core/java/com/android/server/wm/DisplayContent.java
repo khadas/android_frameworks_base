@@ -1113,6 +1113,7 @@ class DisplayContent extends WindowContainer<DisplayContent.DisplayChildWindowCo
             }, true /* traverseTopToBottom */);
         }
 
+		mService.mDisplayManagerInternal.setRotation(rotation%2);
         mService.mDisplayManagerInternal.performTraversal(getPendingTransaction());
         scheduleAnimation();
 

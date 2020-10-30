@@ -307,7 +307,7 @@ final class LogicalDisplay {
      */
     public void configureDisplayLocked(SurfaceControl.Transaction t,
             DisplayDevice device,
-            boolean isBlanked) {
+            boolean isBlanked,int rotation) {
         // Set the layer stack.
         device.setLayerStackLocked(t, isBlanked ? BLANK_LAYER_STACK : mLayerStack);
 
@@ -335,6 +335,10 @@ final class LogicalDisplay {
         if ((displayDeviceInfo.flags & DisplayDeviceInfo.FLAG_ROTATES_WITH_CONTENT) != 0) {
             orientation = displayInfo.rotation;
         }
+		
+		if (displayDeviceInfo.type == Display.TYPE_BUILT_IN){
+				displayDeviceInfo.rotation = rotation;
+		}
 
         // Apply the physical rotation of the display device itself.
         orientation = (orientation + displayDeviceInfo.rotation) % 4;
