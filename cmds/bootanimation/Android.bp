@@ -73,5 +73,6 @@ cc_library_shared {
         "libEGL",
         "libGLESv2",
         "libgui",
+        "libmedia",
     ],
 }

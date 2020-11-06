@@ -31,6 +31,7 @@ import android.view.WindowManager;
 
 import com.android.internal.R;
 import com.android.server.utils.AppInstallerUtil;
+import android.os.SystemProperties;
 
 public class DeprecatedTargetSdkVersionDialog {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "DeprecatedTargetSdkVersionDialog" : TAG_ATM;
@@ -82,6 +83,7 @@ public class DeprecatedTargetSdkVersionDialog {
 
     public void show() {
         Log.w(TAG, "Showing SDK deprecation warning for package " + mPackageName);
+        if(!"box".equals(SystemProperties.get("ro.target.product","unknow")))
         mDialog.show();
     }
 
