@@ -3458,6 +3458,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Basic policy based on interactive state.
         int result;
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+        if (isBox) {
+            isWakeKey = false;
+        }
+        if (isBox && keyCode == KeyEvent.KEYCODE_POWER &&
+        "true".equals(SystemProperties.get("persist.sys.poweroff_now"))) {
+            SystemProperties.set("sys.powerctl", "shutdown");
+            return 0;
+        }
+
         if (interactive || (isInjected && !isWakeKey)) {
             // When the device is interactive or the key is injected pass the
             // key to the application.

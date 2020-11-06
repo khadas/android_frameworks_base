@@ -923,7 +923,9 @@ public class AudioService extends IAudioService.Stub
         if (maxMusicVolume != -1) {
             MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] = maxMusicVolume;
         }
-
+        if(isBox()){
+            mFixedVolumeDevices.clear();
+        }
         int defaultMusicVolume = SystemProperties.getInt("ro.config.media_vol_default", -1);
         if (defaultMusicVolume != -1 &&
                 defaultMusicVolume <= MAX_STREAM_VOLUME[AudioSystem.STREAM_MUSIC] &&
@@ -1007,6 +1009,20 @@ public class AudioService extends IAudioService.Stub
         updateStreamVolumeAlias(false /*updateVolumes*/, TAG);
         readPersistedSettings();
         readUserRestrictions();
+
+        mSettingsObserver = new SettingsObserver();
+        createStreamStates();
+
+        // must be called after createStreamStates() as it uses MUSIC volume as default if no
+        // persistent data
+        initVolumeGroupStates();
+
+        // mSafeUsbMediaVolumeIndex must be initialized after createStreamStates() because it
+        // relies on audio policy having correct ranges for volume indexes.
+        mSafeUsbMediaVolumeIndex = getSafeUsbMediaVolumeIndex();
+        if(isBox()){
+            mSafeUsbMediaVolumeIndex = mSafeMediaVolumeIndex;
+        }
 
         mPlaybackMonitor =
                 new PlaybackActivityMonitor(context, MAX_STREAM_VOLUME[AudioSystem.STREAM_ALARM]);
@@ -1180,6 +1196,9 @@ public class AudioService extends IAudioService.Stub
                             AudioSystem.DEVICE_ALL_HDMI_SYSTEM_AUDIO_AND_SPEAKER_SET);
                 }
                 mHdmiPlaybackClient = mHdmiManager.getPlaybackClient();
+                if(isBox()){
+                    mFullVolumeDevices.clear();
+                }
                 mHdmiAudioSystemClient = mHdmiManager.getAudioSystemClient();
             }
         }
@@ -6053,7 +6072,9 @@ public class AudioService extends IAudioService.Stub
                 device = AudioSystem.DEVICE_OUT_SPDIF;
             } else if ((device & AudioSystem.DEVICE_OUT_AUX_LINE) != 0) {
                 device = AudioSystem.DEVICE_OUT_AUX_LINE;
-            } else {
+            } else if ((device & AudioSystem.DEVICE_OUT_AUX_DIGITAL) != 0) {
+                device = AudioSystem.DEVICE_OUT_AUX_DIGITAL;
+                } else {
                 for (int deviceType : AudioSystem.DEVICE_OUT_ALL_A2DP_SET) {
                     if ((deviceType & device) == deviceType) {
                         return deviceType;
@@ -6999,6 +7020,18 @@ public class AudioService extends IAudioService.Stub
                     hasModifyAudioSettings);
         }
 
+        public void restoreAllDeviceIndex(){
+            if(mStreamType == AudioSystem.STREAM_MUSIC){
+                for (int i = 0; i < mIndexMap.size(); i++) {
+                    int device = mIndexMap.keyAt(i);
+                    System.putIntForUser(mContentResolver,
+                          getSettingNameForDevice(device),
+                         (getIndex(device) + 5)/ 10,
+                          UserHandle.USER_CURRENT);
+                }
+            }
+        }
+
         public boolean setIndex(int index, int device, String caller,
                 boolean hasModifyAudioSettings) {
             boolean changed;
@@ -7011,7 +7044,13 @@ public class AudioService extends IAudioService.Stub
                         index = mIndexMax;
                     }
                     mIndexMap.put(device, index);
-
+                    if(isBox()){
+                       if(mStreamType == AudioSystem.STREAM_MUSIC){
+                          for (int i = 0;i<mIndexMap.size();i++){
+                             mIndexMap.put(mIndexMap.keyAt(i), index);
+                          }
+                       }
+                    }
                     changed = oldIndex != index;
                     // Apply change to all streams using this one as alias if:
                     // - the index actually changed OR
@@ -7450,6 +7489,8 @@ public class AudioService extends IAudioService.Stub
                         streamState.getSettingNameForDevice(device),
                         (streamState.getIndex(device) + 5)/ 10,
                         UserHandle.USER_CURRENT);
+                if(isBox())
+                    streamState.restoreAllDeviceIndex();
             }
         }
 
@@ -8438,7 +8479,11 @@ public class AudioService extends IAudioService.Stub
     private void enforceSafeMediaVolume(String caller) {
         VolumeStreamState streamState = mStreamStates[AudioSystem.STREAM_MUSIC];
         Set<Integer> devices = mSafeMediaVolumeDevices;
-
+        if(isBox() &&
+           ("false".equals(SystemProperties.get("persist.sys.audio.enforce_safevolume","true")))){
+            Log.d(TAG,"no need enforce safe media volume now!");
+            return ;
+        }
         for (int device : devices) {
             int index = streamState.getIndex(device);
             if (index > safeMediaVolumeIndex(device)) {
@@ -10550,7 +10595,11 @@ public class AudioService extends IAudioService.Stub
             Log.d(TAG, "Adding DeviceType: 0x" + Integer.toHexString(audioSystemDeviceOut)
                     + " to mFullVolumeDevices");
         }
-        mFullVolumeDevices.add(audioSystemDeviceOut);
+        if (isBox()) {
+            mFullVolumeDevices.clear();
+        } else {
+            mFullVolumeDevices.add(audioSystemDeviceOut);
+        }
     }
 
     private void removeAudioSystemDeviceOutFromFullVolumeDevices(int audioSystemDeviceOut) {

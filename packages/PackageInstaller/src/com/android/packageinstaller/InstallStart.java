@@ -102,6 +102,13 @@ public class InstallStart extends Activity {
             return;
         }
 
+        if (null == callingPackage && null != intent.getDataString()
+                && intent.getDataString().startsWith("content://com.android.rk.")) {
+            callingPackage = "com.android.rk";
+        } else if(callingPackage == null) {
+            callingPackage = intent.getStringExtra(PackageInstallerActivity.EXTRA_CALLING_PACKAGE);
+        }
+
         Intent nextActivity = new Intent(intent);
         nextActivity.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT
                 | Intent.FLAG_GRANT_READ_URI_PERMISSION);

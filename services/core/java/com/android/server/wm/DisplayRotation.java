@@ -384,6 +384,9 @@ public class DisplayRotation {
         mLastOrientation = newOrientation;
         if (newOrientation != mCurrentAppOrientation) {
             mCurrentAppOrientation = newOrientation;
+            String rot = SystemProperties.get("persist.sys.app.rotation", "middle_port");
+            if (rot.equals("force_land") && "box".equals(SystemProperties.get("ro.target.product")))
+                mCurrentAppOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
             if (isDefaultDisplay) {
                 updateOrientationListenerLw();
             }
@@ -1251,6 +1254,11 @@ public class DisplayRotation {
             preferredRotation = -1;
         }
 
+        String rot = SystemProperties.get("persist.sys.app.rotation", "middle_port");
+        if (rot.equals("force_land") && "box".equals(SystemProperties.get("ro.target.product"))) {
+            Slog.v(TAG, "asx force_land :" + mLandscapeRotation);
+            return mLandscapeRotation;
+        }
         switch (orientation) {
             case ActivityInfo.SCREEN_ORIENTATION_PORTRAIT:
                 // Return portrait unless overridden.
