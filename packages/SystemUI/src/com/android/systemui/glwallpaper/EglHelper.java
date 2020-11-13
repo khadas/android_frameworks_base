@@ -18,6 +18,7 @@ package com.android.systemui.glwallpaper;
 
 import static android.opengl.EGL14.EGL_ALPHA_SIZE;
 import static android.opengl.EGL14.EGL_BLUE_SIZE;
+import static android.opengl.EGL14.EGL_BUFFER_SIZE;
 import static android.opengl.EGL14.EGL_CONFIG_CAVEAT;
 import static android.opengl.EGL14.EGL_CONTEXT_CLIENT_VERSION;
 import static android.opengl.EGL14.EGL_DEFAULT_DISPLAY;
@@ -183,12 +184,13 @@ public class EglHelper {
 
     private int[] getConfig() {
         return new int[] {
-            EGL_RED_SIZE, 8,
-            EGL_GREEN_SIZE, 8,
-            EGL_BLUE_SIZE, 8,
+            EGL_RED_SIZE, 0,
+            EGL_GREEN_SIZE, 0,
+            EGL_BLUE_SIZE, 0,
             EGL_ALPHA_SIZE, 0,
             EGL_DEPTH_SIZE, 0,
             EGL_STENCIL_SIZE, 0,
+            EGL_BUFFER_SIZE, 24,
             EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
             EGL_CONFIG_CAVEAT, EGL_NONE,
             EGL_NONE
