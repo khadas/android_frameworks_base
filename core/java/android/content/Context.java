@@ -3058,6 +3058,7 @@ public abstract class Context {
             COMPANION_DEVICE_SERVICE,
             CROSS_PROFILE_APPS_SERVICE,
             //@hide: SYSTEM_UPDATE_SERVICE,
+	    //@hide: KHADAS_API_SERVICE,
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface ServiceName {}
@@ -3203,6 +3204,7 @@ public abstract class Context {
      */
     public abstract @Nullable Object getSystemService(@ServiceName @NonNull String name);
 
+    public static final String KHADAS_API_SERVICE = "khadas_api";
     /**
      * Return the handle to a system-level service by class.
      * <p>
