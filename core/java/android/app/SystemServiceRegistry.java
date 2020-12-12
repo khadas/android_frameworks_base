@@ -198,7 +198,8 @@ import com.android.internal.os.IDropBoxManagerService;
 import com.android.internal.policy.PhoneLayoutInflater;
 
 import java.util.Map;
-
+import android.os.IKhadasApiManager;
+import android.app.KhadasApiManager;
 /**
  * Manages all of the system services that can be returned by {@link Context#getSystemService}.
  * Used by {@link ContextImpl}.
@@ -526,7 +527,16 @@ final class SystemServiceRegistry {
                 return new PowerManager(ctx.getOuterContext(),
                         service, ctx.mMainThread.getHandler());
             }});
-
+			
+        registerService(Context.KHADAS_API_SERVICE, KhadasApiManager.class,
+                new CachedServiceFetcher<KhadasApiManager>() {
+            @Override
+            public KhadasApiManager createService(ContextImpl ctx) throws ServiceNotFoundException {
+                IBinder b = ServiceManager.getServiceOrThrow(Context.KHADAS_API_SERVICE);
+                IKhadasApiManager service = IKhadasApiManager.Stub.asInterface(b);
+                return new KhadasApiManager(ctx.getOuterContext(), service);
+            }});	
+					
         registerService(Context.RECOVERY_SERVICE, RecoverySystem.class,
                 new CachedServiceFetcher<RecoverySystem>() {
             @Override
