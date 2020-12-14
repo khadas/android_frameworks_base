@@ -371,7 +371,15 @@ final class LogicalDisplay {
             displayRectHeight = displayInfo.logicalHeight * physWidth / displayInfo.logicalWidth;
         } else {
             // Pillar box.
-            displayRectWidth = displayInfo.logicalWidth * physHeight / displayInfo.logicalHeight;
+			if( physWidth > physHeight && displayInfo.logicalWidth > displayInfo.logicalHeight)
+			{
+				displayRectWidth = physWidth;
+			}
+            else
+			{
+				displayRectWidth = displayInfo.logicalWidth * physHeight / displayInfo.logicalHeight;
+			}
+			
             displayRectHeight = physHeight;
         }
         int displayRectTop = (physHeight - displayRectHeight) / 2;
