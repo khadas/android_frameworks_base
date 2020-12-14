@@ -350,6 +350,9 @@ public final class ColorDisplayService extends SystemService {
                                 onAccessibilityDaltonizerChanged();
                                 onAccessibilityActivated();
                                 break;
+                            case Secure.ACCESSIBILITY_DISPLAY_COLOR_MATRIX:
+                                onAccessibilityDaltonizerChanged();
+                                break;								
                             case Secure.ACCESSIBILITY_DISPLAY_DALTONIZER:
                                 onAccessibilityDaltonizerChanged();
                                 break;
@@ -380,6 +383,9 @@ public final class ColorDisplayService extends SystemService {
         cr.registerContentObserver(
                 Secure.getUriFor(Secure.ACCESSIBILITY_DISPLAY_DALTONIZER_ENABLED),
                 false /* notifyForDescendants */, mContentObserver, mCurrentUser);
+        cr.registerContentObserver(
+                Secure.getUriFor(Secure.ACCESSIBILITY_DISPLAY_COLOR_MATRIX),
+                false /* notifyForDescendants */, mContentObserver, mCurrentUser);				
         cr.registerContentObserver(
                 Secure.getUriFor(Secure.ACCESSIBILITY_DISPLAY_DALTONIZER),
                 false /* notifyForDescendants */, mContentObserver, mCurrentUser);
@@ -527,7 +533,7 @@ public final class ColorDisplayService extends SystemService {
         return Secure.getIntForUser(getContext().getContentResolver(),
             Secure.ACCESSIBILITY_DISPLAY_DALTONIZER_ENABLED, 0, mCurrentUser) != 0;
     }
-
+	
     private boolean isAccessiblityInversionEnabled() {
         return Secure.getIntForUser(getContext().getContentResolver(),
             Secure.ACCESSIBILITY_DISPLAY_INVERSION_ENABLED, 0, mCurrentUser) != 0;
@@ -560,8 +566,26 @@ public final class ColorDisplayService extends SystemService {
             dtm.setColorMatrix(DisplayTransformManager.LEVEL_COLOR_MATRIX_GRAYSCALE, null);
             dtm.setDaltonizerMode(daltonizerMode);
         }
+		
+	String matrix = Secure.getStringForUser(getContext().getContentResolver(),Secure.ACCESSIBILITY_DISPLAY_COLOR_MATRIX, getContext().getUserId());
+        if (matrix != null) {
+              final float[] userMatrix = get4x4Matrix(matrix);
+              if (userMatrix != null) {
+                   dtm.setColorMatrix(DisplayTransformManager.LEVEL_COLOR_MATRIX_GRAYSCALE, userMatrix);
+              }
+
+         }
     }
 
+     private static float[] get4x4Matrix(String matrix) {
+         String[] strValues = matrix.split(",");
+         float[] values = new float[strValues.length];
+         for (int i = 0; i < values.length; i++) {
+            values[i] = Float.parseFloat(strValues[i]);
+         }
+         return values;
+     }
+	 
     /**
      * Apply the accessibility inversion transform based on the settings value.
      */
