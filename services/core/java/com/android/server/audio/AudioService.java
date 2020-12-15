@@ -374,10 +374,19 @@ public class AudioService extends IAudioService.Stub
     };
     private final int[] STREAM_VOLUME_ALIAS_TELEVISION = new int[] {
         AudioSystem.STREAM_MUSIC,       // STREAM_VOICE_CALL
-        AudioSystem.STREAM_MUSIC,       // STREAM_SYSTEM
-        AudioSystem.STREAM_MUSIC,       // STREAM_RING
+
+        /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+        /* Change-Id: Ice4c63a0cdb00a21d96bf4442d235aa1490eeabd */
+        AudioSystem.STREAM_SYSTEM,       // STREAM_SYSTEM
+        AudioSystem.STREAM_RING,       // STREAM_RING
+        /*[Amlogic end]-----------------------------------------------------------*/
         AudioSystem.STREAM_MUSIC,       // STREAM_MUSIC
-        AudioSystem.STREAM_MUSIC,       // STREAM_ALARM
+
+        /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+        /* Change-Id: Ice4c63a0cdb00a21d96bf4442d235aa1490eeabd */
+        AudioSystem.STREAM_ALARM,       // STREAM_ALARM
+        /*[Amlogic end]-----------------------------------------------------------*/
+
         AudioSystem.STREAM_MUSIC,       // STREAM_NOTIFICATION
         AudioSystem.STREAM_BLUETOOTH_SCO,       // STREAM_BLUETOOTH_SCO
         AudioSystem.STREAM_MUSIC,       // STREAM_SYSTEM_ENFORCED
