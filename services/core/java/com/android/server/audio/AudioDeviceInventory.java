@@ -548,6 +548,10 @@ public class AudioDeviceInventory {
                                 ? MediaMetrics.Value.DISCONNECTED : MediaMetrics.Value.CONNECTED);
         synchronized (mDevicesLock) {
             if ((wdcs.mState == AudioService.CONNECTION_STATE_DISCONNECTED)
+                    /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                    /* Change-Id: I61bda0cd9aec32c0c13a4193664d37c7d0a69098 */
+                    && ((wdcs.mType & AudioSystem.DEVICE_BIT_IN) == 0)
+                    /*[Amlogic end]-----------------------------------------------------------*/
                     && DEVICE_OVERRIDE_A2DP_ROUTE_ON_PLUG_SET.contains(wdcs.mType)) {
                 mDeviceBroker.setBluetoothA2dpOnInt(true, false /*fromA2dp*/,
                         "onSetWiredDeviceConnectionState state DISCONNECTED");
@@ -561,7 +565,11 @@ public class AudioDeviceInventory {
                 return;
             }
             if (wdcs.mState != AudioService.CONNECTION_STATE_DISCONNECTED) {
-                if (DEVICE_OVERRIDE_A2DP_ROUTE_ON_PLUG_SET.contains(wdcs.mType)) {
+                if (DEVICE_OVERRIDE_A2DP_ROUTE_ON_PLUG_SET.contains(wdcs.mType)
+                        /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                        /* Change-Id: I61bda0cd9aec32c0c13a4193664d37c7d0a69098 */
+                        && ((wdcs.mType & AudioSystem.DEVICE_BIT_IN) == 0)) {
+                        /*[Amlogic end]-----------------------------------------------------------*/
                     mDeviceBroker.setBluetoothA2dpOnInt(false, false /*fromA2dp*/,
                             "onSetWiredDeviceConnectionState state not DISCONNECTED");
                 }
@@ -692,7 +700,12 @@ public class AudioDeviceInventory {
                 }
                 mConnectedDevices.put(deviceKey, new DeviceInfo(
                         device, deviceName, address, AudioSystem.AUDIO_FORMAT_DEFAULT));
-                mDeviceBroker.postAccessoryPlugMediaUnmute(device);
+                /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                /* Change-Id: I111c8352818a3c08d732520e392fff327aea5059 */
+                if (device != AudioSystem.DEVICE_OUT_HDMI) {
+                    mDeviceBroker.postAccessoryPlugMediaUnmute(device);
+                }
+                /*[Amlogic end]-----------------------------------------------------------*/
                 mmi.set(MediaMetrics.Property.STATE, MediaMetrics.Value.CONNECTED).record();
                 return true;
             } else if (!connect && isConnected) {
