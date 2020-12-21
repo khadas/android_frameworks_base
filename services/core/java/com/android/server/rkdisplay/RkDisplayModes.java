@@ -489,6 +489,7 @@ public class RkDisplayModes {
         if (display == MAIN_DISPLAY) {
             mCurDisplayInfos = getDisplayConfigs(display);
             mAutoMode = SystemProperties.get("persist.vendor.resolution.main", "NULL");
+			SystemProperties.set("persist.vendor.hdmi.resolution", mCurMode);
         } else {
             mCurDisplayInfos = getDisplayConfigs(display);
             mAutoMode = SystemProperties.get("persist.vendor.resolution.aux", "NULL");
