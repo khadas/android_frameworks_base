@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"اچھا"</item>
     <item msgid="202124107702016530">"عمدہ"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"ہمیشہ"</item>
+    <item msgid="844721238536786870">"صرف پلگ ان ہونے پر"</item>
+    <item msgid="1986753720941888596">"کبھی نہیں"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"ہمیشہ"</item>
+    <item msgid="7433294150916905997">"صرف پلگ ان ہونے پر"</item>
+    <item msgid="1390404486722375028">"کبھی نہیں"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"آخری 30 دن"</item>
     <item msgid="3356834403629955571">"استعمال کا دور سیٹ کریں…"</item>

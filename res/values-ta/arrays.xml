@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"நன்று"</item>
     <item msgid="202124107702016530">"பிரமாதம்"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"எப்போதும்"</item>
+    <item msgid="844721238536786870">"செருகப்பட்டிருக்கும்போது மட்டும்"</item>
+    <item msgid="1986753720941888596">"எப்போதும் வேண்டாம்"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"எப்போதும்"</item>
+    <item msgid="7433294150916905997">"செருகப்பட்டிருக்கும்போது மட்டும்"</item>
+    <item msgid="1390404486722375028">"ஒருபோதும் வேண்டாம்"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"கடந்த 30 நாட்கள்"</item>
     <item msgid="3356834403629955571">"பயன்பாட்டு சுழற்சியை அமை..."</item>

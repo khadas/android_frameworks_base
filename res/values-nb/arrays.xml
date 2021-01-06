@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"Bra"</item>
     <item msgid="202124107702016530">"Utmerket"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"Alltid"</item>
+    <item msgid="844721238536786870">"Bare når tilkoblet strøm"</item>
+    <item msgid="1986753720941888596">"Aldri"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"Alltid"</item>
+    <item msgid="7433294150916905997">"Bare når tilkoblet strøm"</item>
+    <item msgid="1390404486722375028">"Aldri"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"De siste 30 dagene"</item>
     <item msgid="3356834403629955571">"Angi brukssyklus"</item>

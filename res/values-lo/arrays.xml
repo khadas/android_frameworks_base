@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"ດີ"</item>
     <item msgid="202124107702016530">"ດີເລີດ"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"ຕະຫຼອດເວລາ"</item>
+    <item msgid="844721238536786870">"ສະເພາະເມື່ອສຽບສາຍສາກ"</item>
+    <item msgid="1986753720941888596">"ບໍ່ໃຊ້"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"ຕະຫຼອດເວລາ"</item>
+    <item msgid="7433294150916905997">"ສະເພາະເມື່ອສຽບສາຍສາກເທົ່ານັ້ນ"</item>
+    <item msgid="1390404486722375028">"ບໍ່ໃຊ້"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"30 ມື້ທີ່ຜ່ານມາ"</item>
     <item msgid="3356834403629955571">"ຕັ້ງ​ຮອບ​ການ​ນຳ​ໃຊ້..."</item>

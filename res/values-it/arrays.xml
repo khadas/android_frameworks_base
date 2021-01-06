@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"Buona"</item>
     <item msgid="202124107702016530">"Ottima"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"Sempre"</item>
+    <item msgid="844721238536786870">"Solo quando collegato"</item>
+    <item msgid="1986753720941888596">"Mai"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"Sempre"</item>
+    <item msgid="7433294150916905997">"Solo quando collegato"</item>
+    <item msgid="1390404486722375028">"Mai"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"Ultimi 30 giorni"</item>
     <item msgid="3356834403629955571">"Imp. ciclo di utilizzo..."</item>

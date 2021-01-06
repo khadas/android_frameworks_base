@@ -72,6 +72,7 @@ public class ConfigureWifiSettings extends DashboardFragment {
         final List<AbstractPreferenceController> controllers = new ArrayList<>();
         controllers.add(new WifiP2pPreferenceController(context, getSettingsLifecycle(),
                 wifiManager));
+	controllers.add(new WifiSleepPolicyPreferenceController(context));
         return controllers;
     }
 

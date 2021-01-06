@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"強"</item>
     <item msgid="202124107702016530">"非常に強い"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"常に接続"</item>
+    <item msgid="844721238536786870">"電源接続時にのみ接続"</item>
+    <item msgid="1986753720941888596">"接続しない"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"常に使用"</item>
+    <item msgid="7433294150916905997">"電源接続時にのみ接続"</item>
+    <item msgid="1390404486722375028">"使用しない"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"過去30日間"</item>
     <item msgid="3356834403629955571">"使用サイクルを設定..."</item>

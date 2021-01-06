@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"Bună"</item>
     <item msgid="202124107702016530">"Excelentă"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"Întotdeauna"</item>
+    <item msgid="844721238536786870">"Doar atunci când este conectat"</item>
+    <item msgid="1986753720941888596">"Niciodată"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"Întotdeauna"</item>
+    <item msgid="7433294150916905997">"Doar atunci când este conectat"</item>
+    <item msgid="1390404486722375028">"Niciodată"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"Ultimele 30 de zile"</item>
     <item msgid="3356834403629955571">"Setați ciclu utilizare..."</item>

@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"Хороший"</item>
     <item msgid="202124107702016530">"Отличный"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"Не выключать"</item>
+    <item msgid="844721238536786870">"Только при питании от сети"</item>
+    <item msgid="1986753720941888596">"Всегда выключать"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"Не выключать"</item>
+    <item msgid="7433294150916905997">"Только при питании от сети"</item>
+    <item msgid="1390404486722375028">"Всегда выключать"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"За последние 30 дней"</item>
     <item msgid="3356834403629955571">"Цикл использования данных"</item>

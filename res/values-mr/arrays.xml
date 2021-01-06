@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"उत्तम"</item>
     <item msgid="202124107702016530">"उत्कृष्ट"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"नेहमी"</item>
+    <item msgid="844721238536786870">"फक्त प्लग इन केलेले असते तेव्हा"</item>
+    <item msgid="1986753720941888596">"कधीही नाही"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"नेहमी"</item>
+    <item msgid="7433294150916905997">"फक्त प्लग इन केलेले असते तेव्हा"</item>
+    <item msgid="1390404486722375028">"कधीही नाही"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"अंतिम 30 दिवस"</item>
     <item msgid="3356834403629955571">"वापर चक्र सेट करा..."</item>

@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"Dobrá"</item>
     <item msgid="202124107702016530">"Vynikajúce"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"Vždy"</item>
+    <item msgid="844721238536786870">"Iba počas napájania"</item>
+    <item msgid="1986753720941888596">"Nikdy"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"Vždy"</item>
+    <item msgid="7433294150916905997">"Iba počas napájania"</item>
+    <item msgid="1390404486722375028">"Nikdy"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"Posledných 30 dní"</item>
     <item msgid="3356834403629955571">"Nastaviť cyklus spotreby"</item>

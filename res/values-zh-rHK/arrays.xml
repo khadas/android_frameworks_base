@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"強"</item>
     <item msgid="202124107702016530">"非常強"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"永遠"</item>
+    <item msgid="844721238536786870">"只在充電時"</item>
+    <item msgid="1986753720941888596">"永不"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"永遠"</item>
+    <item msgid="7433294150916905997">"只在充電時"</item>
+    <item msgid="1390404486722375028">"永不"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"最近 30 天"</item>
     <item msgid="3356834403629955571">"設定用量週期…"</item>

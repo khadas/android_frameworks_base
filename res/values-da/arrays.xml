@@ -138,6 +138,16 @@
     <item msgid="7468449584777730187">"God"</item>
     <item msgid="202124107702016530">"Fremragende"</item>
   </string-array>
+  <string-array name="wifi_sleep_policy_entries">
+    <item msgid="3269131034472904310">"Altid"</item>
+    <item msgid="844721238536786870">"Kun når tilsluttet strøm"</item>
+    <item msgid="1986753720941888596">"Aldrig"</item>
+  </string-array>
+  <string-array name="wifi_sleep_policy_entries_wifi_only">
+    <item msgid="2124319326282651391">"Altid"</item>
+    <item msgid="7433294150916905997">"Kun når tilsluttet strøm"</item>
+    <item msgid="1390404486722375028">"Aldrig"</item>
+  </string-array>
   <string-array name="data_usage_data_range">
     <item msgid="3528385925116637939">"Seneste 30 dage"</item>
     <item msgid="3356834403629955571">"Angiv cyklus for brug..."</item>
