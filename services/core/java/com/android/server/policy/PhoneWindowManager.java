@@ -225,6 +225,10 @@ import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.List;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
+
 /**
  * WindowManagerPolicy implementation for the Android phone UI.  This
  * introduces a new method suffix, Lp, for an internal lock of the
@@ -1072,6 +1076,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private static final int POWER_KEY_SUSPEND  = 0;
+    private static final int POWER_KEY_SHUTDOWN = 1;
+    private static final int POWER_KEY_RESTART  = 2;
+
     private void powerPress(long eventTime, boolean interactive, int count) {
         if (mDefaultDisplayPolicy.isScreenOnEarly() && !mDefaultDisplayPolicy.isScreenOnFully()) {
             Slog.i(TAG, "Suppressed redundant power key press while "
@@ -1081,7 +1089,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         Slog.d(TAG, "powerPress: eventTime=" + eventTime + " interactive=" + interactive
                 + " count=" + count + " beganFromNonInteractive=" + mBeganFromNonInteractive +
                 " mShortPressOnPowerBehavior=" + mShortPressOnPowerBehavior);
-
+        final int definedPowerKey = SystemProperties.getInt("persist.sys.power.key.action", POWER_KEY_SUSPEND);
+        final boolean ddrWindow = SystemProperties.getBoolean("ro.first.boot.ddr.window", false);
+        Slog.d(TAG, "definedPowerKey=" + definedPowerKey + ",ddrWindow=" + ddrWindow);
+        if (definedPowerKey == POWER_KEY_SHUTDOWN || ddrWindow) {
+            mPowerManager.shutdown(false,"userrequested",false);
+            Slog.i(TAG, "shutdown here");
+            return;
+        }
+        if (definedPowerKey == POWER_KEY_RESTART) {
+            mPowerManager.reboot("");
+            Slog.i(TAG, "reboot here");
+            return;
+        }
         if (count == 2) {
             powerMultiPressAction(eventTime, interactive, mDoublePressOnPowerBehavior);
         } else if (count == 3) {
