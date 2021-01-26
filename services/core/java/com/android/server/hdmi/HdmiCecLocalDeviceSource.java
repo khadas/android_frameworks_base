@@ -19,9 +19,11 @@ package com.android.server.hdmi;
 import static com.android.internal.os.RoSystemProperties.PROPERTY_HDMI_IS_DEVICE_HDMI_CEC_SWITCH;
 
 import android.hardware.hdmi.HdmiControlManager;
+import android.hardware.hdmi.HdmiDeviceInfo;
 import android.hardware.hdmi.HdmiPortInfo;
 import android.hardware.hdmi.IHdmiControlCallback;
 import android.os.SystemProperties;
+import android.provider.Settings.Global;
 import android.util.Slog;
 
 import com.android.internal.annotations.GuardedBy;
@@ -41,6 +43,9 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     // Indicate if current device is Active Source or not
     @VisibleForTesting
     protected boolean mIsActiveSource = false;
+
+    // Indicate if one touch play is enabled
+    protected boolean mOneTouchPlayEnabed = false;
 
     // Device has cec switch functionality or not.
     // Default is false.
@@ -66,12 +71,17 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     @LocalActivePort
     protected int mLocalActivePort = Constants.CEC_SWITCH_HOME;
 
-    // Whether the Routing Coutrol feature is enabled or not. False by default.
+    // Whether the Routing Coutrol feature is enabled or not. True by default.
     @GuardedBy("mLock")
-    protected boolean mRoutingControlFeatureEnabled;
+    protected boolean mRoutingControlFeatureEnabled = true;
 
     protected HdmiCecLocalDeviceSource(HdmiControlService service, int deviceType) {
         super(service, deviceType);
+
+        mOneTouchPlayEnabed = service.readBooleanSetting(
+                Global.HDMI_CONTROL_ONE_TOUCH_PLAY_ENABLED, true);
+        service.writeBooleanSetting(
+                Global.HDMI_CONTROL_ONE_TOUCH_PLAY_ENABLED, mOneTouchPlayEnabed);
     }
 
     @Override
@@ -100,6 +110,10 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     void oneTouchPlay(IHdmiControlCallback callback) {
         assertRunOnServiceThread();
+        if (!mOneTouchPlayEnabed) {
+            Slog.e(TAG, "oneTouchPlay disabled!");
+            return;
+        }
         List<OneTouchPlayAction> actions = getActions(OneTouchPlayAction.class);
         if (!actions.isEmpty()) {
             Slog.i(TAG, "oneTouchPlay already in progress");
@@ -125,7 +139,6 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
         if (!getActiveSource().equals(activeSource)) {
             setActiveSource(activeSource);
         }
-        setIsActiveSource(physicalAddress == mService.getPhysicalAddress());
         updateDevicePowerStatus(logicalAddress, HdmiControlManager.POWER_STATUS_ON);
         if (isRoutingControlFeatureEnabled()) {
             switchInputOnReceivingNewActivePath(physicalAddress);
@@ -148,11 +161,19 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
         int physicalAddress = HdmiUtils.twoBytesToInt(message.getParams());
         // If current device is the target path, set to Active Source.
         // If the path is under the current device, should switch
-        if (physicalAddress == mService.getPhysicalAddress() && mService.isPlaybackDevice()) {
-            setAndBroadcastActiveSource(message, physicalAddress);
-        }
+        setActiveState(message, physicalAddress);
         switchInputOnReceivingNewActivePath(physicalAddress);
         return true;
+    }
+
+    protected void setActiveState(HdmiCecMessage message, int physicalAddress) {
+        if (mService.isPlaybackDevice()) {
+            if (physicalAddress == mService.getPhysicalAddress()) {
+                setAndBroadcastActiveSource(message, physicalAddress);
+            } else {
+                setIsActiveSource(false);
+            }
+        }
     }
 
     @Override
@@ -165,10 +186,8 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
         }
         int newPath = HdmiUtils.twoBytesToInt(message.getParams(), 2);
         // if the current device is a pure playback device
-        if (!mIsSwitchDevice
-                && newPath == mService.getPhysicalAddress()
-                && mService.isPlaybackDevice()) {
-            setAndBroadcastActiveSource(message, newPath);
+        if (!mIsSwitchDevice) {
+            setActiveState(message, newPath);
         }
         handleRoutingChangeAndInformation(newPath, message);
         return true;
@@ -184,10 +203,8 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
         }
         int physicalAddress = HdmiUtils.twoBytesToInt(message.getParams());
         // if the current device is a pure playback device
-        if (!mIsSwitchDevice
-                && physicalAddress == mService.getPhysicalAddress()
-                && mService.isPlaybackDevice()) {
-            setAndBroadcastActiveSource(message, physicalAddress);
+        if (!mIsSwitchDevice) {
+            setActiveState(message, physicalAddress);
         }
         handleRoutingChangeAndInformation(physicalAddress, message);
         return true;
@@ -225,7 +242,26 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     void setIsActiveSource(boolean on) {
         assertRunOnServiceThread();
-        mIsActiveSource = on;
+        if (mDeviceType == HdmiDeviceInfo.DEVICE_PLAYBACK) {
+            HdmiLogger.info("setIsActiveSource " + on + " cur:" + mIsActiveSource);
+            updateActiveness(on);
+            mIsActiveSource = on;
+        }
+    }
+
+    @ServiceThreadOnly
+    private void updateActiveness(boolean on) {
+        if (on) {
+            mService.setActiveness(HdmiCecActiveness.CEC_ACTIVE);
+        } else {
+            mService.setActiveness(HdmiCecActiveness.CEC_INACTIVE);
+        }
+    }
+
+    @ServiceThreadOnly
+    void setOneTouchPlay(boolean on) {
+        assertRunOnServiceThread();
+        mOneTouchPlayEnabed = on;
     }
 
     protected void wakeUpIfActiveSource() {

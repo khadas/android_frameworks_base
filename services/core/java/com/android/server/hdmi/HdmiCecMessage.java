@@ -18,6 +18,8 @@ package com.android.server.hdmi;
 
 import android.annotation.Nullable;
 
+import android.os.Build;
+
 import libcore.util.EmptyArray;
 
 import java.util.Arrays;
@@ -276,6 +278,9 @@ public final class HdmiCecMessage {
     }
 
     private static boolean filterMessageParameters(int opcode) {
+        if (Build.IS_DEBUGGABLE) {
+            return false;
+        }
         switch (opcode) {
             case Constants.MESSAGE_USER_CONTROL_PRESSED:
             case Constants.MESSAGE_USER_CONTROL_RELEASED:

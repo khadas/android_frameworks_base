@@ -91,6 +91,9 @@ final class HdmiCecController {
     /** Cookie for matching the right end point. */
     protected static final int HDMI_CEC_HAL_DEATH_COOKIE = 353;
 
+    // Common logical addresses used in reality.
+    private static final int[] COMMON_CANDIDATES = {0x0, 0x1, 0x3, 0x4, 0x5, 0x8, 0xb, 0xe};
+
     // Predicate for whether the given logical address is remote device's one or not.
     private final Predicate<Integer> mRemoteDeviceAddressPredicate = new Predicate<Integer>() {
         @Override
@@ -378,6 +381,7 @@ final class HdmiCecController {
     @ServiceThreadOnly
     void setLanguage(String language) {
         assertRunOnServiceThread();
+        HdmiLogger.debug("setLanguage:" + language);
         if (!LanguageTag.isLanguage(language)) {
             return;
         }
@@ -458,17 +462,17 @@ final class HdmiCecController {
         LinkedList<Integer> pollingCandidates = new LinkedList<>();
         switch (iterationStrategy) {
             case Constants.POLL_ITERATION_IN_ORDER:
-                for (int i = Constants.ADDR_TV; i <= Constants.ADDR_SPECIFIC_USE; ++i) {
-                    if (pickPredicate.test(i)) {
-                        pollingCandidates.add(i);
+                for (int i = 0; i <= COMMON_CANDIDATES.length - 1; ++i) {
+                    if (pickPredicate.test(COMMON_CANDIDATES[i])) {
+                        pollingCandidates.add(COMMON_CANDIDATES[i]);
                     }
                 }
                 break;
             case Constants.POLL_ITERATION_REVERSE_ORDER:
             default:  // The default is reverse order.
-                for (int i = Constants.ADDR_SPECIFIC_USE; i >= Constants.ADDR_TV; --i) {
-                    if (pickPredicate.test(i)) {
-                        pollingCandidates.add(i);
+                for (int i = COMMON_CANDIDATES.length - 1; i >= 0; --i) {
+                    if (pickPredicate.test(COMMON_CANDIDATES[i])) {
+                        pollingCandidates.add(COMMON_CANDIDATES[i]);
                     }
                 }
                 break;
@@ -554,7 +558,7 @@ final class HdmiCecController {
     // Run a Runnable on IO thread.
     // It should be careful to access member variables on IO thread because
     // it can be accessed from system thread as well.
-    private void runOnIoThread(Runnable runnable) {
+    void runOnIoThread(Runnable runnable) {
         mIoHandler.post(runnable);
     }
 
@@ -674,7 +678,7 @@ final class HdmiCecController {
     @ServiceThreadOnly
     private void handleHotplug(int port, boolean connected) {
         assertRunOnServiceThread();
-        HdmiLogger.debug("Hotplug event:[port:%d, connected:%b]", port, connected);
+        HdmiLogger.info("Hotplug event:[port:%d, connected:%b]", port, connected);
         addHotplugEventToHistory(port, connected);
         mService.onHotplug(port, connected);
     }

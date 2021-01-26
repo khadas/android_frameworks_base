@@ -73,19 +73,6 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
 
     // Seq #27
     protected void sendSystemAudioModeRequest() {
-        List<RoutingControlAction> routingActions = getActions(RoutingControlAction.class);
-        if (!routingActions.isEmpty()) {
-            mState = STATE_CHECK_ROUTING_IN_PRGRESS;
-            // Should have only one Routing Control Action
-            RoutingControlAction routingAction = routingActions.get(0);
-            routingAction.addOnFinishedCallback(this, new Runnable() {
-                @Override
-                public void run() {
-                    sendSystemAudioModeRequestInternal();
-                }
-            });
-            return;
-        }
         sendSystemAudioModeRequestInternal();
     }
 
@@ -98,9 +85,10 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
             public void onSendCompleted(int error) {
                 if (error != SendMessageResult.SUCCESS) {
                     HdmiLogger.debug("Failed to send <System Audio Mode Request>:" + error);
-                    setSystemAudioMode(false);
                     finishWithCallback(HdmiControlManager.RESULT_COMMUNICATION_FAILED);
+                    return;
                 }
+                HdmiLogger.info("SystemAudioAction sent:" + command);
             }
         });
         mState = STATE_WAIT_FOR_SET_SYSTEM_AUDIO_MODE;
@@ -146,7 +134,7 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
                 if (cmd.getOpcode() == Constants.MESSAGE_FEATURE_ABORT
                         && (cmd.getParams()[0] & 0xFF)
                                 == Constants.MESSAGE_SYSTEM_AUDIO_MODE_REQUEST) {
-                    HdmiLogger.debug("Failed to start system audio mode request.");
+                    HdmiLogger.info("audio system no support!");
                     setSystemAudioMode(false);
                     finishWithCallback(HdmiControlManager.RESULT_EXCEPTION);
                     return true;
@@ -158,7 +146,9 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
                 boolean receivedStatus = HdmiUtils.parseCommandParamSystemAudioStatus(cmd);
                 if (receivedStatus == mTargetAudioStatus) {
                     setSystemAudioMode(receivedStatus);
-                    startAudioStatusAction();
+                    if (receivedStatus) {
+                        startAudioStatusAction();
+                    }
                     return true;
                 } else {
                     HdmiLogger.debug("Unexpected system audio mode request:" + receivedStatus);
