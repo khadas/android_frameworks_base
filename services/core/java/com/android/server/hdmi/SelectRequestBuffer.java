@@ -30,12 +30,7 @@ import android.util.Slog;
 public class SelectRequestBuffer {
     private static final String TAG = "SelectRequestBuffer";
 
-    public static final SelectRequestBuffer EMPTY_BUFFER = new SelectRequestBuffer() {
-        @Override
-        public void process() {
-            // Do nothing.
-        }
-    };
+    public static final SelectRequestBuffer EMPTY_BUFFER = new SelectRequestBuffer();
 
     /**
      * Parent class from which buffer for select requests are inherited. Keeps the callback
@@ -94,7 +89,7 @@ public class SelectRequestBuffer {
         @Override
         public void process() {
             if (isLocalDeviceReady()) {
-                Slog.v(TAG, "calling delayed deviceSelect id:" + mId);
+                HdmiLogger.info("calling delayed deviceSelect id:" + mId);
                 tv().deviceSelect(mId, mCallback);
             }
         }
@@ -108,7 +103,7 @@ public class SelectRequestBuffer {
         @Override
         public void process() {
             if (isLocalDeviceReady()) {
-                Slog.v(TAG, "calling delayed portSelect id:" + mId);
+                HdmiLogger.info("calling delayed portSelect id:" + mId);
                 HdmiCecLocalDeviceTv tv = tv();
                 if (tv != null) {
                     tv.doManualPortSwitching(mId, mCallback);
@@ -124,11 +119,13 @@ public class SelectRequestBuffer {
 
     public static DeviceSelectRequest newDeviceSelect(HdmiControlService srv, int id,
             IHdmiControlCallback callback) {
+        HdmiLogger.info("set device select buffer " + id);
         return new DeviceSelectRequest(srv, id, callback);
     }
 
     public static PortSelectRequest newPortSelect(HdmiControlService srv, int id,
             IHdmiControlCallback callback) {
+        HdmiLogger.info("set port select buffer " + id);
         return new PortSelectRequest(srv, id, callback);
     }
 
@@ -140,6 +137,10 @@ public class SelectRequestBuffer {
         mRequest = request;
     }
 
+    public boolean isValid() {
+        return mRequest != null;
+    }
+
     public void process() {
         if (mRequest != null) {
             mRequest.process();
@@ -148,6 +149,7 @@ public class SelectRequestBuffer {
     }
 
     public void clear() {
+        HdmiLogger.debug("SelectRequestBuffer clear!");
         mRequest = null;
     }
 }

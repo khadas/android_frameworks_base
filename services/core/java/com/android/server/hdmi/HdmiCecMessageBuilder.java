@@ -25,7 +25,7 @@ import java.util.Arrays;
  * A helper class to build {@link HdmiCecMessage} from various cec commands.
  */
 public class HdmiCecMessageBuilder {
-    private static final int OSD_NAME_MAX_LENGTH = 13;
+    private static final int OSD_NAME_MAX_LENGTH = 14;
 
     private HdmiCecMessageBuilder() {}
 
@@ -93,6 +93,17 @@ public class HdmiCecMessageBuilder {
      */
     static HdmiCecMessage buildGiveDeviceVendorIdCommand(int src, int dest) {
         return buildCommand(src, dest, Constants.MESSAGE_GIVE_DEVICE_VENDOR_ID);
+    }
+
+    /**
+     * Build &lt;Get Menu Language Command&gt; command.
+     *
+     * @param src source address of command
+     * @param dest destination address of command
+     * @return newly created {@link HdmiCecMessage}
+     */
+    static HdmiCecMessage buildGetMenuLanguageCommand(int src, int dest) {
+        return buildCommand(src, dest, Constants.MESSAGE_GET_MENU_LANGUAGE);
     }
 
     /**

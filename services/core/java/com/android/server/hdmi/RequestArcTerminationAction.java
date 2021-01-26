@@ -55,4 +55,14 @@ final class RequestArcTerminationAction extends RequestArcAction {
         });
         return true;
     }
+
+    @Override
+    final void handleTimerEvent(int state) {
+        if (mState != state || state != STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE) {
+            return;
+        }
+        HdmiLogger.error("[T] RequestArcTerminationAction.");
+        disableArcTransmission();
+        finish();
+    }
 }

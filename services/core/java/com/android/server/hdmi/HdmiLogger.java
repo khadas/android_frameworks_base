@@ -92,6 +92,14 @@ final class HdmiLogger {
         }
     }
 
+    static void info(String logMessage, Object... objs) {
+        getLogger().infoInternal(toLogString(logMessage, objs));
+    }
+
+    private void infoInternal(String logMessage) {
+        Slog.i(TAG, logMessage);
+    }
+
     private static final String toLogString(String logMessage, Object[] objs) {
         if (objs.length > 0) {
             return String.format(logMessage, objs);

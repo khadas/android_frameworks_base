@@ -52,15 +52,20 @@ final class DelayedMessageBuffer {
                 mBuffer.add(message);
                 break;
             case Constants.MESSAGE_INITIATE_ARC:
-            case Constants.MESSAGE_SET_SYSTEM_AUDIO_MODE:
                 mBuffer.add(message);
+                break;
+            case Constants.MESSAGE_SET_SYSTEM_AUDIO_MODE:
+                boolean systemAudioStatus = HdmiUtils.parseCommandParamSystemAudioStatus(message);
+                if (systemAudioStatus) {
+                    mBuffer.add(message);
+                }
                 break;
             default:
                 buffered = false;
                 break;
         }
         if (buffered) {
-            HdmiLogger.debug("Buffering message:" + message);
+            HdmiLogger.info("Buffering message:" + message);
         }
     }
 
@@ -89,7 +94,7 @@ final class DelayedMessageBuffer {
         mBuffer.clear();
         for (HdmiCecMessage message : copiedBuffer) {
             mDevice.onMessage(message);
-            HdmiLogger.debug("Processing message:" + message);
+            HdmiLogger.debug("Processing delayed message:" + message);
         }
     }
 
@@ -131,18 +136,37 @@ final class DelayedMessageBuffer {
      * to ensure the processing of the message takes effect when transformed
      * to input change callback.
      *
+     */
+    void processActiveSource() {
+        ArrayList<HdmiCecMessage> copiedBuffer = new ArrayList<HdmiCecMessage>(mBuffer);
+        for (HdmiCecMessage message : copiedBuffer) {
+            if (message.getOpcode() == Constants.MESSAGE_ACTIVE_SOURCE) {
+                mBuffer.remove(message);
+                mDevice.onMessage(message);
+                HdmiLogger.debug("Processing delayed message:" + message);
+            }
+        }
+    }
+
+    /**
+     * Process &lt;Active Source&gt;.
+     *
+     * <p>The message has a dependency on TV input framework. Should be invoked
+     * after we get the callback
+     * {@link android.media.tv.TvInputManager.TvInputCallback#onInputAdded(String)}
+     * to ensure the processing of the message takes effect when transformed
+     * to input change callback.
+     *
      * @param address logical address of the device to be the active source
      */
     void processActiveSource(int address) {
         ArrayList<HdmiCecMessage> copiedBuffer = new ArrayList<>(mBuffer);
-        mBuffer.clear();
         for (HdmiCecMessage message : copiedBuffer) {
             if (message.getOpcode() == Constants.MESSAGE_ACTIVE_SOURCE
                     && message.getSource() == address) {
+                mBuffer.remove(message);
                 mDevice.onMessage(message);
-                HdmiLogger.debug("Processing message:" + message);
-            } else {
-                mBuffer.add(message);
+                HdmiLogger.debug("Processing delayed message:" + message);
             }
         }
     }

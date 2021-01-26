@@ -38,9 +38,10 @@ final class SystemAudioAutoInitiationAction extends HdmiCecFeatureAction {
     @Override
     boolean start() {
         mState = STATE_WAITING_FOR_SYSTEM_AUDIO_MODE_STATUS;
-
-        addTimer(mState, HdmiConfig.TIMEOUT_MS);
-        sendGiveSystemAudioModeStatus();
+        // Just directly start the system audio control process so that the audio system
+        // could output audio as quickly as possible.
+        handleSystemAudioModeStatusTimeout();
+        finish();
         return true;
     }
 
@@ -50,7 +51,7 @@ final class SystemAudioAutoInitiationAction extends HdmiCecFeatureAction {
             @Override
             public void onSendCompleted(int error) {
                 if (error != SendMessageResult.SUCCESS) {
-                    handleSystemAudioModeStatusTimeout();
+                    finish();
                 }
             }
         });
@@ -107,7 +108,7 @@ final class SystemAudioAutoInitiationAction extends HdmiCecFeatureAction {
 
     private void handleSystemAudioModeStatusTimeout() {
         if (!canChangeSystemAudio()) {
-            HdmiLogger.debug("Cannot change system audio mode in auto initiation action.");
+            HdmiLogger.error("Cannot change system audio mode in auto initiation action.");
             finish();
             return;
         }
