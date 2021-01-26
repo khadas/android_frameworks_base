@@ -17,6 +17,7 @@
 package com.android.server.hdmi;
 
 import android.annotation.Nullable;
+import android.hardware.hdmi.HdmiControlManager;
 import android.hardware.hdmi.HdmiDeviceInfo;
 import android.util.Slog;
 import android.util.SparseArray;
@@ -90,6 +91,16 @@ final class HdmiUtils {
     static final int TARGET_SAME_PHYSICAL_ADDRESS = 0;
 
     private HdmiUtils() { /* cannot be instantiated */ }
+
+    static boolean isPowerStandbyOrTransient(int powerStatus) {
+        return powerStatus == HdmiControlManager.POWER_STATUS_STANDBY
+                || powerStatus == HdmiControlManager.POWER_STATUS_TRANSIENT_TO_STANDBY;
+    }
+
+    static boolean isPowerOnOrTransient(int powerStatus) {
+        return powerStatus == HdmiControlManager.POWER_STATUS_ON
+                || powerStatus == HdmiControlManager.POWER_STATUS_TRANSIENT_TO_ON;
+    }
 
     /**
      * Check if the given logical address is valid. A logical address is valid

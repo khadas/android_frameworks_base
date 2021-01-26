@@ -470,7 +470,7 @@ public class HdmiDeviceInfo implements Parcelable {
                 s.append("logical_address: ").append(String.format("0x%02X", mLogicalAddress));
                 s.append(" ");
                 s.append("device_type: ").append(mDeviceType).append(" ");
-                s.append("vendor_id: ").append(mVendorId).append(" ");
+                s.append("vendor_id: ").append(String.format("0x%06X", mVendorId)).append(" ");
                 s.append("display_name: ").append(mDisplayName).append(" ");
                 s.append("power_status: ").append(mDevicePowerStatus).append(" ");
                 break;

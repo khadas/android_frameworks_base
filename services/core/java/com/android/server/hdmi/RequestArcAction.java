@@ -80,12 +80,11 @@ abstract class RequestArcAction extends HdmiCecFeatureAction {
     }
 
     @Override
-    final void handleTimerEvent(int state) {
+    void handleTimerEvent(int state) {
         if (mState != state || state != STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE) {
             return;
         }
-        HdmiLogger.debug("[T] RequestArcAction.");
-        disableArcTransmission();
+        HdmiLogger.error("[T] RequestArcAction.");
         finish();
     }
 }
