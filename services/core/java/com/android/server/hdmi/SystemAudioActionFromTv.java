@@ -42,6 +42,7 @@ final class SystemAudioActionFromTv extends SystemAudioAction {
 
     @Override
     boolean start() {
+        HdmiLogger.debug("SystemAudioActionFromTv start with target status:" + mTargetAudioStatus);
         removeSystemAudioActionInProgress();
         sendSystemAudioModeRequest();
         return true;

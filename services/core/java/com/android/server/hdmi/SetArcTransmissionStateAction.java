@@ -93,7 +93,7 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
                         // If <Report ARC Initiated> is negatively ack'ed, disable ARC and
                         // send <Report ARC Terminated> directly.
                         setArcStatus(false);
-                        HdmiLogger.debug("Failed to send <Report Arc Initiated>.");
+                        HdmiLogger.error("Failed to send <Report Arc Initiated>.");
                         finish();
                         break;
                 }
@@ -103,7 +103,7 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
 
     private void setArcStatus(boolean enabled) {
         boolean wasEnabled = tv().setArcStatus(enabled);
-        Slog.i(TAG, "Change arc status [old:" + wasEnabled + ", new:" + enabled + "]");
+        HdmiLogger.info("Change arc status [old:" + wasEnabled + ", new:" + enabled + "]");
 
         // If enabled before and set to "disabled" and send <Report Arc Terminated> to
         // av reciever.

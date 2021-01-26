@@ -9744,6 +9744,23 @@ public final class Settings {
                 "hdmi_control_auto_wakeup_enabled";
 
         /**
+         * Whether one touch play shall be enabled for source device.
+         * (0 = false, 1 = true)
+         * @hide
+         */
+        public static final String HDMI_CONTROL_ONE_TOUCH_PLAY_ENABLED =
+                "hdmi_control_one_touch_play_enabled";
+
+        /**
+         * Whether Playback will handle set menu language message.
+         * (0 = false, 1 = true)
+         *
+         * @hide
+         */
+        public static final String HDMI_CONTROL_AUTO_LANGUAGE_CHANGE_ENABLED =
+                "hdmi_control_auto_language_change_enabled";
+
+        /**
          * Whether TV will also turn off other CEC devices when it goes to standby mode.
          * (0 = false, 1 = true)
          *
