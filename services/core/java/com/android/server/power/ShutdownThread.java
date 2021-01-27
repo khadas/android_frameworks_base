@@ -21,6 +21,8 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.IActivityManager;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.IBluetoothManager;
 import android.app.admin.SecurityLog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -63,6 +65,7 @@ public final class ShutdownThread extends Thread {
     private static final String TAG = "ShutdownThread";
     private static final int ACTION_DONE_POLL_WAIT_MS = 500;
     private static final int RADIOS_STATE_POLL_SLEEP_MS = 100;
+    private static final int BT_SLEEP_TIME = 100;
     // maximum time we wait for the shutdown broadcast before going on.
     private static final int MAX_BROADCAST_TIME = 10*1000;
     private static final int MAX_SHUTDOWN_WAIT_TIME = 20*1000;
@@ -77,6 +80,8 @@ public final class ShutdownThread extends Thread {
 
     // length of vibration before shutting down
     private static final int SHUTDOWN_VIBRATE_MS = 500;
+    public static final String BT_NAME_QCA = "persist.vendor.bt_vendor";
+    private static boolean qcabt = false;
 
     // state tracking
     private static final Object sIsStartedGuard = new Object();
@@ -116,6 +121,7 @@ public final class ShutdownThread extends Thread {
     private static String METRIC_RADIOS = "shutdown_radios";
     private static String METRIC_RADIO = "shutdown_radio";
     private static String METRIC_SHUTDOWN_TIME_START = "begin_shutdown";
+    private static String METRIC_BT = "shutdown_bt";
 
     private final Object mActionDoneSync = new Object();
     private boolean mActionDone;
@@ -595,10 +601,33 @@ public final class ShutdownThread extends Thread {
             public void run() {
                 TimingsTraceLog shutdownTimingsTraceLog = newTimingsLog();
                 boolean radioOff;
+                boolean bluetoothReadyForShutdown = false;
 
+                String module = SystemProperties.get(BT_NAME_QCA, "null");
+                Log.d(TAG, " get module=" + module);
+                if (module.indexOf("qca") != -1)
+                    qcabt = true;
                 TelephonyManager telephonyManager = mContext.getSystemService(
                         TelephonyManager.class);
 
+                final IBluetoothManager bluetooth =
+                    IBluetoothManager.Stub.asInterface(ServiceManager.checkService(
+                        BluetoothAdapter.BLUETOOTH_MANAGER_SERVICE));
+                    if (qcabt) {
+                        try {
+                            bluetoothReadyForShutdown = bluetooth == null ||
+                                bluetooth.getState() == BluetoothAdapter.STATE_OFF;
+                            if (!bluetoothReadyForShutdown) {
+                                Log.w(TAG, "Disabling Bluetooth...");
+                                metricStarted(METRIC_BT);
+                                // disable but don't persist new state
+                                bluetooth.disable(mContext.getPackageName(), false);
+                            }
+                        } catch (RemoteException ex) {
+                            Log.e(TAG, "RemoteException during bluetooth shutdown", ex);
+                            bluetoothReadyForShutdown = true;
+                        }
+                    }
                 radioOff = telephonyManager == null
                         || !telephonyManager.isAnyRadioPoweredOn();
                 if (!radioOff) {
@@ -607,7 +636,7 @@ public final class ShutdownThread extends Thread {
                     telephonyManager.shutdownAllRadios();
                 }
 
-                Log.i(TAG, "Waiting for Radio...");
+                Log.i(TAG, "Waiting for Bluetooth and Radio...");
 
                 long delay = endTime - SystemClock.elapsedRealtime();
                 while (delay > 0) {
@@ -618,6 +647,27 @@ public final class ShutdownThread extends Thread {
                         sInstance.setRebootProgress(status, null);
                     }
 
+                    if (qcabt && (!bluetoothReadyForShutdown)) {
+                        try {
+                            // BLE only mode can happen when BT is turned off
+                            // We will continue shutting down in such case
+                            bluetoothReadyForShutdown =
+                            bluetooth.getState() == BluetoothAdapter.STATE_OFF ||
+                            bluetooth.getState() == BluetoothAdapter.STATE_BLE_TURNING_OFF ||
+                            bluetooth.getState() == BluetoothAdapter.STATE_BLE_ON;
+
+                            Log.i(TAG, "bluetoothReadyForShutdown.");
+                        } catch (RemoteException ex) {
+                            Log.e(TAG, "RemoteException during bluetooth shutdown", ex);
+                            bluetoothReadyForShutdown = true;
+                        }
+                        if (bluetoothReadyForShutdown) {
+                            Log.i(TAG, "Bluetooth turned off.");
+                            metricEnded(METRIC_BT);
+                            shutdownTimingsTraceLog
+                                    .logDuration("ShutdownBt", TRON_METRICS.get(METRIC_BT));
+                        }
+                    }
                     if (!radioOff) {
                         radioOff = !telephonyManager.isAnyRadioPoweredOn();
                         if (radioOff) {
@@ -628,7 +678,15 @@ public final class ShutdownThread extends Thread {
                         }
                     }
 
-                    if (radioOff) {
+                    if (radioOff && qcabt && bluetoothReadyForShutdown) {
+                        Log.i(TAG, "Radio and Bluetooth shutdown complete.");
+                        do {
+                            SystemClock.sleep(BT_SLEEP_TIME);
+                        } while (!(bluetooth == null));
+                        done[0] = true;
+                        break;
+                    }
+                    else if (radioOff && !qcabt) {
                         Log.i(TAG, "Radio shutdown complete.");
                         done[0] = true;
                         break;
@@ -645,7 +703,7 @@ public final class ShutdownThread extends Thread {
         } catch (InterruptedException ex) {
         }
         if (!done[0]) {
-            Log.w(TAG, "Timed out waiting for Radio shutdown.");
+            Log.w(TAG, "Timed out waiting for Radio and Bluetooth shutdown.");
         }
     }
 
