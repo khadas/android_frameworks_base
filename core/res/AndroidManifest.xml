@@ -647,6 +647,10 @@
     <protected-broadcast android:name="android.intent.action.DOCK_IDLE" />
     <protected-broadcast android:name="android.intent.action.DOCK_ACTIVE" />
 
+    <!-- For PPPoE -->
+    <protected-broadcast android:name="com.droidlogic.linkchange" />
+    <protected-broadcast android:name="com.droidlogic.pppoe.PPPOE_STATE_CHANGED" />
+
     <!-- Added in Q -->
     <protected-broadcast android:name="android.content.pm.action.SESSION_UPDATED" />
     <protected-broadcast android:name="android.settings.action.GRAYSCALE_CHANGED" />
