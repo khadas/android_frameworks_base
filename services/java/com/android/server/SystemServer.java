@@ -1443,6 +1443,11 @@ public final class SystemServer {
             }
             t.traceEnd();
 
+            if (SystemProperties.get("ro.vendor.platform.has.pppoe").equals("true")) {
+                t.traceBegin("StartPppoe_wrapperService");
+                SystemProperties.set("ctl.start", "pppoe_wrapper");
+                t.traceEnd();
+            }
 
             t.traceBegin("StartIpSecService");
             try {
