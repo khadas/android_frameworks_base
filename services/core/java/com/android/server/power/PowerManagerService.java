@@ -586,6 +586,17 @@ public final class PowerManagerService extends SystemService
     // but the DreamService has not yet been told to start (it's an async process).
     private boolean mDozeStartInProgress;
 
+    // forceSuspend
+    private boolean mForceSuspend;
+    private long mForceSuspendStartTime;
+    private static final int FORCE_SUSPEND = 3;
+    private static final int MSG_FORCE_SUSPEND = 10000;
+    private static final int FORCE_SUSPEND_CHECK_INTERVAL = 1 * 1000;
+    private static final int FORCE_SUSPEND_CHECK_START = 3 * FORCE_SUSPEND_CHECK_INTERVAL;
+    private static final int FORCE_SUSPEND_DEFAULT_TIMEOUT = 5 * 1000;
+    private static final String FORCE_SUSPEND_PROPERTY = "persist.sys.power.key.action";
+    private static final String FORCE_SUSPEND_MEDIA_SCANNER_STATUS = "sys.str.scanner.status";
+
     private final class ForegroundProfileObserver extends SynchronousUserSwitchObserver {
         @Override
         public void onUserSwitching(@UserIdInt int newUserId) throws RemoteException {
@@ -1842,6 +1853,23 @@ public final class PowerManagerService extends SystemService
             // Under lock, invalidate before set ensures caches won't return stale values.
             mInjector.invalidateIsInteractiveCaches();
             mWakefulnessRaw = wakefulness;
+
+            final int mPowerKeyAction = SystemProperties.getInt(FORCE_SUSPEND_PROPERTY, -1);
+            Slog.i(TAG, "force-suspend " + FORCE_SUSPEND_PROPERTY + ",mPowerKeyAction=" + mPowerKeyAction);
+            if (mPowerKeyAction == FORCE_SUSPEND) {
+                mForceSuspend = false;
+                mHandler.removeMessages(MSG_FORCE_SUSPEND);
+                if (mWakefulnessRaw == WAKEFULNESS_ASLEEP) {
+                    scheduleForceSuspendTimeout(FORCE_SUSPEND_CHECK_START);
+                    mForceSuspendStartTime = SystemClock.uptimeMillis();
+                    Slog.d(TAG, "force-suspend wait for " + FORCE_SUSPEND_CHECK_START + "MS,mForceSuspendStartTime=" + mForceSuspendStartTime);
+                } else if (mWakefulnessRaw == WAKEFULNESS_AWAKE) {
+                    mForceSuspendStartTime = 0;
+                    SystemProperties.set(FORCE_SUSPEND_MEDIA_SCANNER_STATUS, "0");
+                    Slog.d(TAG, "force-suspend set " + FORCE_SUSPEND_MEDIA_SCANNER_STATUS + "=0");
+                }
+            }
+
             mWakefulnessChanging = true;
             mDirty |= DIRTY_WAKEFULNESS;
 
@@ -2147,6 +2175,34 @@ public final class PowerManagerService extends SystemService
         }
     }
 
+    private boolean forceSuspendLocked () {
+        final long time = SystemClock.uptimeMillis() - mForceSuspendStartTime;
+        Slog.d(TAG, "force-suspend forceSuspendLocked time=" + time);
+        if (time > FORCE_SUSPEND_DEFAULT_TIMEOUT) {
+            Slog.i(TAG, "force-suspend here");
+            return true;
+        }
+
+        //Force setting exit mediascan property
+        //Prevent inserting the hard drive after standby
+        SystemProperties.set(FORCE_SUSPEND_MEDIA_SCANNER_STATUS, "1");
+        Slog.i(TAG, "force-suspend set " + FORCE_SUSPEND_MEDIA_SCANNER_STATUS + "=1");
+
+        final int numWakeLocks = mWakeLocks.size();
+        for (int i = 0; i < numWakeLocks; i++) {
+            final WakeLock wakeLock = mWakeLocks.get(i);
+            if ("PowerManagerService.Broadcasts".equals(wakeLock.mTag) 
+                        || "ActivityManager-Sleep".equals(wakeLock.mTag)
+                        || "MediaScannerService".equals(wakeLock.mTag)
+                        || "AudioMix".equals(wakeLock.mTag)) {
+                Slog.i(TAG, "force-suspend " + wakeLock.mTag + " wakeLock detected, waiting for release");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private int adjustWakeLockSummaryLocked(int wakeLockSummary) {
         // Cancel wake locks that make no sense based on the current state.
         if (getWakefulnessLocked() != WAKEFULNESS_DOZING) {
@@ -2377,6 +2433,13 @@ public final class PowerManagerService extends SystemService
         mHandler.sendMessageAtTime(msg, timeMs);
     }
 
+    private void scheduleForceSuspendTimeout(long timeMs) {
+        final Message msg = mHandler.obtainMessage(MSG_FORCE_SUSPEND);
+        msg.setAsynchronous(true);
+        final long now = SystemClock.uptimeMillis();
+        mHandler.sendMessageAtTime(msg, timeMs + now);
+    }
+
     /**
      * Finds the next profile timeout time or returns -1 if there are no profiles to be locked.
      */
@@ -2499,6 +2562,22 @@ public final class PowerManagerService extends SystemService
         }
 
         return Math.max(timeout, mMinimumScreenOffTimeoutConfig);
+    }
+
+    private void handleForceSuspendTimeout() { // runs on handler thread
+        synchronized (mLock) {
+            Slog.d(TAG, "force-suspend handleForceSuspendTimeout mForceSuspend=" + mForceSuspend
+                            + ",getWakefulnessLocked=" + getWakefulnessLocked());
+            if (getWakefulnessLocked() == WAKEFULNESS_ASLEEP ) {
+                if (!forceSuspendLocked()) {
+                    scheduleForceSuspendTimeout(FORCE_SUSPEND_CHECK_INTERVAL);
+                } else {
+                    mForceSuspend = true;
+                    mDirty |= DIRTY_WAKE_LOCKS;
+                    updatePowerStateLocked();
+                }
+            }
+        }
     }
 
     private long getSleepTimeoutLocked(long attentiveTimeout) {
@@ -3051,7 +3130,7 @@ public final class PowerManagerService extends SystemService
      * This function must have no other side-effects.
      */
     private void updateSuspendBlockerLocked() {
-        final boolean needWakeLockSuspendBlocker = ((mWakeLockSummary & WAKE_LOCK_CPU) != 0);
+        final boolean needWakeLockSuspendBlocker = mForceSuspend ? false : ((mWakeLockSummary & WAKE_LOCK_CPU) != 0);
         final boolean needDisplaySuspendBlocker = needDisplaySuspendBlockerLocked();
         final boolean autoSuspend = !needDisplaySuspendBlocker;
         final boolean interactive = mDisplayPowerRequest.isBrightOrDim();
@@ -4434,6 +4513,9 @@ public final class PowerManagerService extends SystemService
                     break;
                 case MSG_ATTENTIVE_TIMEOUT:
                     handleAttentiveTimeout();
+                    break;
+                case MSG_FORCE_SUSPEND:
+                    handleForceSuspendTimeout();
                     break;
             }
 
