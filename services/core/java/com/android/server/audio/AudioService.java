@@ -143,6 +143,7 @@ import android.widget.Toast;
 
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.annotations.VisibleForTesting;
+import com.android.internal.R;
 import com.android.internal.util.DumpUtils;
 import com.android.internal.util.Preconditions;
 import com.android.server.EventLogTags;
@@ -153,6 +154,7 @@ import com.android.server.audio.AudioServiceEvents.VolumeEvent;
 import com.android.server.pm.UserManagerService;
 import com.android.server.wm.ActivityTaskManagerInternal;
 
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -188,7 +190,7 @@ public class AudioService extends IAudioService.Stub
         implements AccessibilityManager.TouchExplorationStateChangeListener,
             AccessibilityManager.AccessibilityServicesStateChangeListener {
 
-    private static final String TAG = "AS.AudioService";
+    private static final String TAG = "AudioService";
 
     private final AudioSystemAdapter mAudioSystem;
     private final SystemServerAdapter mSystemServer;
@@ -200,7 +202,7 @@ public class AudioService extends IAudioService.Stub
     protected static final boolean DEBUG_AP = false;
 
     /** Debug volumes */
-    protected static final boolean DEBUG_VOL = false;
+    protected static final boolean DEBUG_VOL = Log.isLoggable(TAG, Log.DEBUG);
 
     /** debug calls to devices APIs */
     protected static final boolean DEBUG_DEVICES = false;
@@ -820,6 +822,10 @@ public class AudioService extends IAudioService.Stub
 
         mRecordMonitor = new RecordingActivityMonitor(mContext);
 
+        // Volume passhrough feature could be enabled for all projects.
+        mVolumePassthroughEnabled = SystemProperties.getBoolean(PROP_VOLUME_PASSTHROUGH, true);
+        mSupportDolbyMS12 = new File(PATH_LIB_DOLBY_SM12).exists();
+
         // must be called before readPersistedSettings() which needs a valid mStreamVolumeAlias[]
         // array initialized by updateStreamVolumeAlias()
         updateStreamVolumeAlias(false /*updateVolumes*/, TAG);
@@ -1348,6 +1354,7 @@ public class AudioService extends IAudioService.Stub
 
     private void onCheckVolumeCecOnHdmiConnection(
             @AudioService.ConnectionState int state, String caller) {
+        Slog.d(TAG, "onCheckVolumeCecOnHdmiConnection " + state);
         if (state == AudioService.CONNECTION_STATE_CONNECTED) {
             // DEVICE_OUT_HDMI is now connected
             if (mSafeMediaVolumeDevices.contains(AudioSystem.DEVICE_OUT_HDMI)) {
@@ -1360,22 +1367,18 @@ public class AudioService extends IAudioService.Stub
                         MUSIC_ACTIVE_POLL_PERIOD_MS);
             }
 
-            if (isPlatformTelevision()) {
-                checkAddAllFixedVolumeDevices(AudioSystem.DEVICE_OUT_HDMI, caller);
-                synchronized (mHdmiClientLock) {
-                    if (mHdmiManager != null && mHdmiPlaybackClient != null) {
-                        updateHdmiCecSinkLocked(mHdmiCecSink | false);
-                    }
+            synchronized (mHdmiClientLock) {
+                if (mHdmiManager != null && mHdmiPlaybackClient != null) {
+                    mHdmiPlaybackClient.queryDisplayStatus(mHdmiDisplayStatusCallback);
                 }
             }
+
             sendEnabledSurroundFormats(mContentResolver, true);
         } else {
             // DEVICE_OUT_HDMI disconnected
-            if (isPlatformTelevision()) {
-                synchronized (mHdmiClientLock) {
-                    if (mHdmiManager != null) {
-                        updateHdmiCecSinkLocked(mHdmiCecSink | false);
-                    }
+            synchronized (mHdmiClientLock) {
+                if (mHdmiManager != null) {
+                    updateHdmiCecSinkLocked(false);
                 }
             }
         }
@@ -1396,8 +1399,7 @@ public class AudioService extends IAudioService.Stub
         }
     }
 
-    private void checkAllFixedVolumeDevices()
-    {
+    private void checkAllFixedVolumeDevices() {
         int numStreamTypes = AudioSystem.getNumStreamTypes();
         for (int streamType = 0; streamType < numStreamTypes; streamType++) {
             mStreamStates[streamType].checkFixedVolumeDevices();
@@ -1406,6 +1408,10 @@ public class AudioService extends IAudioService.Stub
 
     private void checkAllFixedVolumeDevices(int streamType) {
         mStreamStates[streamType].checkFixedVolumeDevices();
+    }
+
+    private void checkAllFixedVolumeDevicesForCec(int streamType) {
+        mStreamStates[streamType].checkFixedVolumeDevicesForCec();
     }
 
     private void checkMuteAffectedStreams() {
@@ -2112,7 +2118,7 @@ public class AudioService extends IAudioService.Stub
             return;
         }
         if (DEBUG_VOL) Log.d(TAG, "adjustStreamVolume() stream=" + streamType + ", dir=" + direction
-                + ", flags=" + flags + ", caller=" + caller);
+                + ", flags=" + flags + ", keyEventMode=" + keyEventMode + ", caller=" + caller);
 
         ensureValidDirection(direction);
         ensureValidStreamType(streamType);
@@ -2233,11 +2239,13 @@ public class AudioService extends IAudioService.Stub
             adjustVolume = false;
         }
         int oldIndex = mStreamStates[streamType].getIndex(device);
+        synchronized (mHdmiClientLock) {
+            passthroughToTv(streamType, direction, oldIndex, oldIndex, keyEventMode);
+        }
 
         if (adjustVolume
                 && (direction != AudioManager.ADJUST_SAME) && (keyEventMode != VOL_ADJUST_END)) {
             mAudioHandler.removeMessages(MSG_UNMUTE_STREAM);
-
             if (isMuteAdjust) {
                 boolean state;
                 if (direction == AudioManager.ADJUST_TOGGLE_MUTE) {
@@ -2261,7 +2269,7 @@ public class AudioService extends IAudioService.Stub
                     !checkSafeMediaVolume(streamTypeAlias, aliasIndex + step, device)) {
                 Log.e(TAG, "adjustStreamVolume() safe volume index = " + oldIndex);
                 mVolumeController.postDisplaySafeVolumeWarning(flags);
-            } else if (!isFullVolumeDevice(device)
+            } else if (!isInVolumePassthrough()
                     && (streamState.adjustIndex(direction * step, device, caller,
                             hasModifyAudioSettings)
                             || streamState.mIsMuted)) {
@@ -2322,60 +2330,14 @@ public class AudioService extends IAudioService.Stub
 
         final int newIndex = mStreamStates[streamType].getIndex(device);
 
-        if (adjustVolume) {
-            synchronized (mHdmiClientLock) {
-                if (mHdmiManager != null) {
-                    // mHdmiCecSink true => mHdmiPlaybackClient != null
-                    if (mHdmiCecSink
-                            && mHdmiCecVolumeControlEnabled
-                            && streamTypeAlias == AudioSystem.STREAM_MUSIC
-                            // vol change on a full volume device
-                            && isFullVolumeDevice(device)) {
-                        int keyCode = KeyEvent.KEYCODE_UNKNOWN;
-                        switch (direction) {
-                            case AudioManager.ADJUST_RAISE:
-                                keyCode = KeyEvent.KEYCODE_VOLUME_UP;
-                                break;
-                            case AudioManager.ADJUST_LOWER:
-                                keyCode = KeyEvent.KEYCODE_VOLUME_DOWN;
-                                break;
-                            case AudioManager.ADJUST_TOGGLE_MUTE:
-                                keyCode = KeyEvent.KEYCODE_VOLUME_MUTE;
-                                break;
-                            default:
-                                break;
-                        }
-                        if (keyCode != KeyEvent.KEYCODE_UNKNOWN) {
-                            final long ident = Binder.clearCallingIdentity();
-                            try {
-                                final long time = java.lang.System.currentTimeMillis();
-                                switch (keyEventMode) {
-                                    case VOL_ADJUST_NORMAL:
-                                        mHdmiPlaybackClient.sendVolumeKeyEvent(keyCode, true);
-                                        mHdmiPlaybackClient.sendVolumeKeyEvent(keyCode, false);
-                                        break;
-                                    case VOL_ADJUST_START:
-                                        mHdmiPlaybackClient.sendVolumeKeyEvent(keyCode, true);
-                                        break;
-                                    case VOL_ADJUST_END:
-                                        mHdmiPlaybackClient.sendVolumeKeyEvent(keyCode, false);
-                                        break;
-                                    default:
-                                        Log.e(TAG, "Invalid keyEventMode " + keyEventMode);
-                                }
-                            } finally {
-                                Binder.restoreCallingIdentity(ident);
-                            }
-                        }
-                    }
-
-                    if (streamTypeAlias == AudioSystem.STREAM_MUSIC
-                            && (oldIndex != newIndex || isMuteAdjust)) {
-                        maybeSendSystemAudioStatusCommand(isMuteAdjust);
-                    }
-                }
+        synchronized (mHdmiClientLock) {
+            if (adjustVolume &&mHdmiManager != null
+                    && streamTypeAlias == AudioSystem.STREAM_MUSIC
+                    && (oldIndex != newIndex || isMuteAdjust)) {
+                maybeSendSystemAudioStatusCommand(isMuteAdjust);
             }
         }
+
         sendVolumeUpdate(streamType, oldIndex, newIndex, flags, device);
     }
 
@@ -2851,11 +2813,22 @@ public class AudioService extends IAudioService.Stub
                     && (oldIndex != index)) {
                 maybeSendSystemAudioStatusCommand(false);
             }
+            passthroughToTv(streamType, 0, oldIndex, index, VOL_ADJUST_NORMAL);
         }
         sendVolumeUpdate(streamType, oldIndex, index, flags, device);
     }
 
-
+    private int getDirection(int newIndex, int oldIndex, int maxIndex, int minIndex) {
+        Slog.d(TAG, "new=" + newIndex + " old=" + oldIndex + " max=" + maxIndex + " min=" + minIndex);
+        int direction = AudioManager.ADJUST_SAME;
+        int offset = newIndex - oldIndex;
+        if (offset > 0 || (offset == 0 && newIndex == maxIndex)) {
+            direction = AudioManager.ADJUST_RAISE;
+        } else if (offset < 0 || (offset == 0 && newIndex == minIndex)) {
+            direction = AudioManager.ADJUST_LOWER;
+        }
+        return direction;
+    }
 
     private int getVolumeGroupIdForAttributes(@NonNull AudioAttributes attributes) {
         Objects.requireNonNull(attributes, "attributes must not be null");
@@ -3015,7 +2988,9 @@ public class AudioService extends IAudioService.Stub
 
         if (streamType == AudioSystem.STREAM_MUSIC) {
             flags = updateFlagsForTvPlatform(flags);
-            if (isFullVolumeDevice(device)) {
+            // The volume bar ui shows depends on whether the device is in passthrough mode.
+            if (isInVolumePassthrough()) {
+                Slog.d(TAG, "no volume bar");
                 flags &= ~AudioManager.FLAG_SHOW_UI;
             }
         }
@@ -3024,12 +2999,12 @@ public class AudioService extends IAudioService.Stub
 
     // Don't show volume UI when:
     //  - Hdmi-CEC system audio mode is on and we are a TV panel
-    //  - CEC volume control enabled on a set-top box
     private int updateFlagsForTvPlatform(int flags) {
         synchronized (mHdmiClientLock) {
-            if ((mHdmiTvClient != null && mHdmiSystemAudioSupported && mHdmiCecVolumeControlEnabled)
-                    || (mHdmiPlaybackClient != null && mHdmiCecVolumeControlEnabled)) {
-                flags &= ~AudioManager.FLAG_SHOW_UI;
+            if (mHdmiTvClient != null && mHdmiSystemAudioSupported
+                    && mHdmiCecVolumeControlEnabled) {
+                // TV should always show its own volume bar.
+                //flags &= ~AudioManager.FLAG_SHOW_UI;
             }
         }
         return flags;
@@ -3066,7 +3041,10 @@ public class AudioService extends IAudioService.Stub
                                     int device,
                                     boolean force,
                                     String caller, boolean hasModifyAudioSettings) {
-        if (isFullVolumeDevice(device)) {
+        if (isInVolumePassthrough()) {
+            if (DEBUG_VOL) {
+                Slog.d(TAG, "setStreamVolumeInt is of no need in passthrough audio format.");
+            }
             return;
         }
         VolumeStreamState streamState = mStreamStates[streamType];
@@ -4951,20 +4929,32 @@ public class AudioService extends IAudioService.Stub
             //  - HDMI-CEC system audio mode only output: give priority to available item in order.
             // FIXME: Haven't applied audio device type refactor to this API
             //  as it is going to be deprecated.
-            if ((device & AudioSystem.DEVICE_OUT_SPEAKER) != 0) {
-                device = AudioSystem.DEVICE_OUT_SPEAKER;
-            } else if ((device & AudioSystem.DEVICE_OUT_HDMI_ARC) != 0) {
+            //
+            //
+            //
+            for (int deviceType : AudioSystem.DEVICE_OUT_ALL_A2DP_SET) {
+                if ((deviceType & device) == deviceType) {
+                    return deviceType;
+                }
+            }
+            for (int deviceType : AudioSystem.DEVICE_OUT_ALL_SCO_SET) {
+                if ((deviceType & device) == deviceType) {
+                    return deviceType;
+                }
+            }
+            for (int deviceType : AudioSystem.DEVICE_OUT_ALL_USB_SET) {
+                if ((deviceType & device) == deviceType) {
+                    return deviceType;
+                }
+            }
+            if ((device & AudioSystem.DEVICE_OUT_HDMI_ARC) != 0 && mHdmiSystemAudioSupported) {
                 device = AudioSystem.DEVICE_OUT_HDMI_ARC;
+            } else if ((device & AudioSystem.DEVICE_OUT_SPEAKER) != 0) {
+                device = AudioSystem.DEVICE_OUT_SPEAKER;
             } else if ((device & AudioSystem.DEVICE_OUT_SPDIF) != 0) {
                 device = AudioSystem.DEVICE_OUT_SPDIF;
             } else if ((device & AudioSystem.DEVICE_OUT_AUX_LINE) != 0) {
                 device = AudioSystem.DEVICE_OUT_AUX_LINE;
-            } else {
-                for (int deviceType : AudioSystem.DEVICE_OUT_ALL_A2DP_SET) {
-                    if ((deviceType & device) == deviceType) {
-                        return deviceType;
-                    }
-                }
             }
         }
         return device;
@@ -6068,6 +6058,9 @@ public class AudioService extends IAudioService.Stub
 
         public void checkFixedVolumeDevices() {
             synchronized (VolumeStreamState.class) {
+                if (DEBUG_VOL) {
+                    Slog.d(TAG, "checkFixedVolumeDevices");
+                }
                 // ignore settings for fixed volume devices: volume should always be at max or 0
                 if (mStreamVolumeAlias[mStreamType] == AudioSystem.STREAM_MUSIC) {
                     for (int i = 0; i < mIndexMap.size(); i++) {
@@ -6075,6 +6068,25 @@ public class AudioService extends IAudioService.Stub
                         int index = mIndexMap.valueAt(i);
                         if (isFullVolumeDevice(device)
                                 || (isFixedVolumeDevice(device) && index != 0)) {
+                            mIndexMap.put(device, mIndexMax);
+                        }
+                        applyDeviceVolume_syncVSS(device);
+                    }
+                }
+            }
+        }
+
+        public void checkFixedVolumeDevicesForCec() {
+            synchronized (VolumeStreamState.class) {
+                if (DEBUG_VOL) {
+                    Slog.d(TAG, "checkFixedVolumeDevicesForCec");
+                }
+                // ignore settings for fixed volume devices: volume should always be at max or 0
+                if (mStreamVolumeAlias[mStreamType] == AudioSystem.STREAM_MUSIC) {
+                    for (int i = 0; i < mIndexMap.size(); i++) {
+                        int device = mIndexMap.keyAt(i);
+                        int index = mIndexMap.valueAt(i);
+                        if ((isFixedVolumeDevice(device) && index != 0)) {
                             mIndexMap.put(device, mIndexMax);
                         }
                         applyDeviceVolume_syncVSS(device);
@@ -7261,25 +7273,19 @@ public class AudioService extends IAudioService.Stub
 
     @GuardedBy("mHdmiClientLock")
     private void updateHdmiCecSinkLocked(boolean hdmiCecSink) {
+        Log.d(TAG, "updateHdmiCecSinkLocked " + hdmiCecSink);
         mHdmiCecSink = hdmiCecSink;
         if (!hasDeviceVolumeBehavior(AudioSystem.DEVICE_OUT_HDMI)) {
             if (mHdmiCecSink) {
-                if (DEBUG_VOL) {
-                    Log.d(TAG, "CEC sink: setting HDMI as full vol device");
-                }
-                addAudioSystemDeviceOutToFullVolumeDevices(AudioSystem.DEVICE_OUT_HDMI);
+                Slog.i(TAG, "CEC sink: setting HDMI as full vol device");
+                //addAudioSystemDeviceOutToFullVolumeDevices(AudioSystem.DEVICE_OUT_HDMI);
             } else {
-                if (DEBUG_VOL) {
-                    Log.d(TAG, "TV, no CEC: setting HDMI as regular vol device");
-                }
+                Slog.i(TAG, "TV, no CEC: setting HDMI as regular vol device");
                 // Android TV devices without CEC service apply software volume on
                 // HDMI output
-                removeAudioSystemDeviceOutFromFullVolumeDevices(AudioSystem.DEVICE_OUT_HDMI);
+                //removeAudioSystemDeviceOutFromFullVolumeDevices(AudioSystem.DEVICE_OUT_HDMI);
             }
         }
-
-        checkAddAllFixedVolumeDevices(AudioSystem.DEVICE_OUT_HDMI,
-                "HdmiPlaybackClient.DisplayStatusCallback");
     }
 
     private class MyHdmiControlStatusChangeListenerCallback
@@ -7287,7 +7293,21 @@ public class AudioService extends IAudioService.Stub
         public void onStatusChange(boolean isCecEnabled, boolean isCecAvailable) {
             synchronized (mHdmiClientLock) {
                 if (mHdmiManager == null) return;
+                Slog.d(TAG, "cec status change enabled=" + isCecEnabled + " available=" + isCecAvailable);
                 updateHdmiCecSinkLocked(isCecEnabled ? isCecAvailable : false);
+                if (isCecEnabled != mHdmiCecEnabled) {
+                    mHdmiCecEnabled = isCecEnabled;
+                    // reset the volume to max when cec switch changes.
+                    checkAllFixedVolumeDevicesForCec(AudioSystem.STREAM_MUSIC);
+                    if (isCecEnabled && !isCecAvailable) {
+                        // try again if tv is not available to avoid compat issues.
+                        synchronized (mHdmiClientLock) {
+                            if (mHdmiPlaybackClient != null) {
+                                mHdmiPlaybackClient.queryDisplayStatus(mHdmiDisplayStatusCallback);
+                            }
+                        }
+                    }
+                }
             }
         }
     };
@@ -7298,6 +7318,15 @@ public class AudioService extends IAudioService.Stub
             synchronized (mHdmiClientLock) {
                 if (mHdmiManager == null) return;
                 mHdmiCecVolumeControlEnabled = enabled;
+            }
+        }
+    };
+
+    private class MyDisplayStatusCallback implements HdmiPlaybackClient.DisplayStatusCallback {
+        public void onComplete(int status) {
+            synchronized (mHdmiClientLock) {
+                if (mHdmiManager == null) return;
+                updateHdmiCecSinkLocked(status != HdmiControlManager.POWER_STATUS_UNKNOWN);
             }
         }
     };
@@ -7328,11 +7357,160 @@ public class AudioService extends IAudioService.Stub
     @GuardedBy("mHdmiClientLock")
     private boolean mHdmiCecVolumeControlEnabled;
 
-    private MyHdmiControlStatusChangeListenerCallback mHdmiControlStatusChangeListenerCallback =
+    // CEC Volume Passthrough feature related
+    private boolean mVolumePassthroughEnabled;
+    private boolean mSupportDolbyMS12;
+    private boolean mInVolumePassthrough;
+    private boolean mShowingPassthroughHint;
+
+    private boolean mHdmiCecEnabled = true;
+
+    private final Handler mHandler = new Handler();
+
+    private static final String PROP_VOLUME_PASSTHROUGH = "ro.hdmi.volume.passthrough";
+    private static final String PROP_VOLUME_CH_ENABLE = "sys.audio.passthrough";
+    private static final String PROP_PASSTHOURGH_TOAST = "sys.audio.passthrough.toast";
+    private static final String PATH_LIB_DOLBY_SM12 = "/odm/lib/ms12/libdolbyms12.so";
+    private static final String PARA_VOLUME_PASSTHROUGH = "hal_param_cec_control_tv";
+    private static final String HAL_IN_VOLUME_PASSTHROUGH = "hal_param_cec_control_tv=1";
+
+    //==========================================================================================
+    // Volume Passthrough
+    private boolean passthroughToTv(int streamType, int direction, int oldIndex, int newIndex, int keyEventMode) {
+        if (mHdmiManager == null || mHdmiPlaybackClient == null) {
+            // only for box devices
+            mInVolumePassthrough = false;
+            return false;
+        }
+
+        if (mStreamVolumeAlias[streamType] != AudioSystem.STREAM_MUSIC) {
+            if (DEBUG_VOL) {
+                Slog.d(TAG, "passthroughToTv not music stream type.");
+            }
+            mInVolumePassthrough = false;
+            return false;
+        }
+
+        // Not support passthrough feature
+        if (!mVolumePassthroughEnabled || mSupportDolbyMS12) {
+            if (DEBUG_VOL) {
+                Slog.d(TAG, "passthroughToTv not support.");
+            }
+            mInVolumePassthrough = false;
+            return false;
+        }
+
+        mInVolumePassthrough = SystemProperties.getBoolean(PROP_VOLUME_CH_ENABLE, false)
+            || HAL_IN_VOLUME_PASSTHROUGH.equals(AudioSystem.getParameters(PARA_VOLUME_PASSTHROUGH));
+
+        // Not in passthrough audio channel
+        if (!mInVolumePassthrough) {
+            if (DEBUG_VOL) {
+                Slog.d(TAG, "passthroughToTv not in passthrough audio format.");
+            }
+            return false;
+        }
+
+        mInVolumePassthrough = mHdmiCecSink && mHdmiCecVolumeControlEnabled;
+
+        // mHdmiCecSink true => mHdmiPlaybackClient != null && playback cec enalbed && tv cec enabled
+        if (mInVolumePassthrough) {
+            int keyCode = KeyEvent.KEYCODE_UNKNOWN;
+            if (direction == 0) {
+                direction = getDirection(newIndex, oldIndex, mStreamStates[streamType].getMaxIndex(),
+                                                        mStreamStates[streamType].getMinIndex());
+            }
+            switch (direction) {
+                case AudioManager.ADJUST_RAISE:
+                    keyCode = KeyEvent.KEYCODE_VOLUME_UP;
+                    break;
+                case AudioManager.ADJUST_LOWER:
+                    keyCode = KeyEvent.KEYCODE_VOLUME_DOWN;
+                    break;
+                case AudioManager.ADJUST_MUTE:
+                case AudioManager.ADJUST_TOGGLE_MUTE:
+                    keyCode = KeyEvent.KEYCODE_VOLUME_MUTE;
+                    break;
+                default:
+                    break;
+            }
+            if (DEBUG_VOL) {
+                Slog.d(TAG, "passthroughToTv send direction=" + direction + " key=" + keyCode);
+            }
+            if (keyCode != KeyEvent.KEYCODE_UNKNOWN) {
+                final long ident = Binder.clearCallingIdentity();
+                try {
+                    final long time = java.lang.System.currentTimeMillis();
+                    switch (keyEventMode) {
+                        case VOL_ADJUST_NORMAL:
+                            mHdmiPlaybackClient.sendVolumeKeyEvent(keyCode, true);
+                            mHdmiPlaybackClient.sendVolumeKeyEvent(keyCode, false);
+                            break;
+                        case VOL_ADJUST_START:
+                            mHdmiPlaybackClient.sendVolumeKeyEvent(keyCode, true);
+                            break;
+                        case VOL_ADJUST_END:
+                            mHdmiPlaybackClient.sendVolumeKeyEvent(keyCode, false);
+                            break;
+                        default:
+                            Log.e(TAG, "Invalid keyEventMode " + keyEventMode);
+                    }
+                } finally {
+                    Binder.restoreCallingIdentity(ident);
+                }
+            }
+
+            // show a hint to help the user switch to tv's remote in case tv does not
+            // support volume change even it receives the cec volume key events.
+            showPassthroughToast();
+            return true;
+        }
+        if (DEBUG_VOL) {
+            Slog.d(TAG, "passthroughToTv cec disabled or tv no suport cec!");
+        }
+
+        // show a warning to help the user switch to tv's remote when no key events is sent.
+        showPassthroughWarning();
+        return false;
+    }
+
+    private void showPassthroughToast() {
+        boolean showForEveryBoot  = SystemProperties.getBoolean(PROP_PASSTHOURGH_TOAST, true);
+        if (showForEveryBoot) {
+            Slog.d(TAG, "show passthrough hint for the first time");
+            showPassthroughWarning();
+            SystemProperties.set(PROP_PASSTHOURGH_TOAST, "false");
+        }
+    }
+
+    private void showPassthroughWarning() {
+        if (mShowingPassthroughHint) {
+            Slog.d(TAG, "on need to show other passthrough hint");
+            return;
+        }
+        mShowingPassthroughHint = true;
+        mHandler.post(()->{
+            Toast toast = Toast.makeText(mContext, com.android.internal.R.string.volume_passthrough_hint, Toast.LENGTH_LONG);
+            toast.addCallback(new Toast.Callback() {
+                public void onToastHidden() {
+                    mShowingPassthroughHint = false;
+                }
+            });
+            toast.show();
+        });
+    }
+
+    private boolean isInVolumePassthrough() {
+        return mInVolumePassthrough;
+    }
+
+    private final MyHdmiControlStatusChangeListenerCallback mHdmiControlStatusChangeListenerCallback =
             new MyHdmiControlStatusChangeListenerCallback();
 
-    private MyHdmiCecVolumeControlFeatureListener mMyHdmiCecVolumeControlFeatureListener =
+    private final MyHdmiCecVolumeControlFeatureListener mMyHdmiCecVolumeControlFeatureListener =
             new MyHdmiCecVolumeControlFeatureListener();
+
+    private final MyDisplayStatusCallback mHdmiDisplayStatusCallback = new MyDisplayStatusCallback();
 
     @Override
     public int setHdmiSystemAudioSupported(boolean on) {
@@ -7570,6 +7748,7 @@ public class AudioService extends IAudioService.Stub
         pw.print("  mIsSingleVolume="); pw.println(mIsSingleVolume);
         pw.print("  mUseFixedVolume="); pw.println(mUseFixedVolume);
         pw.print("  mFixedVolumeDevices="); pw.println(dumpDeviceTypes(mFixedVolumeDevices));
+        pw.print("  mFullVolumeDevices="); pw.println(dumpDeviceTypes(mFullVolumeDevices));
         pw.print("  mExtVolumeController="); pw.println(mExtVolumeController);
         pw.print("  mHdmiCecSink="); pw.println(mHdmiCecSink);
         pw.print("  mHdmiAudioSystemClient="); pw.println(mHdmiAudioSystemClient);
@@ -7577,6 +7756,9 @@ public class AudioService extends IAudioService.Stub
         pw.print("  mHdmiTvClient="); pw.println(mHdmiTvClient);
         pw.print("  mHdmiSystemAudioSupported="); pw.println(mHdmiSystemAudioSupported);
         pw.print("  mHdmiCecVolumeControlEnabled="); pw.println(mHdmiCecVolumeControlEnabled);
+        pw.print("  mVolumePassthroughEnabled="); pw.println(mVolumePassthroughEnabled);
+        pw.print("  mSupportDolbyMS12="); pw.println(mSupportDolbyMS12);
+        pw.print("  mInVolumePassthrough="); pw.println(mInVolumePassthrough);
         pw.print("  mIsCallScreeningModeSupported="); pw.println(mIsCallScreeningModeSupported);
         pw.print("  mic mute FromSwitch=" + mMicMuteFromSwitch
                         + " FromRestrictions=" + mMicMuteFromRestrictions
