@@ -807,4 +807,9 @@ interface IPackageManager {
     void setKeepUninstalledPackages(in List<String> packageList);
 
     boolean canPackageQuery(String sourcePackageName, String targetPackageName, int userId);
+
+    //For UiMode
+    void setPackageUiModeType(String packageName, int oldUiMode, int newUiMode);
+
+    int getPackageUiModeType(String packageName);
 }
