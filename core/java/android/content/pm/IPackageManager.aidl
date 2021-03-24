@@ -813,4 +813,9 @@ interface IPackageManager {
     ParceledListSlice queryProperty(String propertyName, int componentType);
 
     void setKeepUninstalledPackages(in List<String> packageList);
+
+    //For UiMode
+    void setPackageUiModeType(String packageName, int oldUiMode, int newUiMode);
+
+    int getPackageUiModeType(String packageName);
 }

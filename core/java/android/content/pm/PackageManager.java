@@ -9330,4 +9330,16 @@ public abstract class PackageManager {
             throw e.rethrowFromSystemServer();
         }
     }
+
+    /**
+     * @hide
+     */
+    @SuppressWarnings("HiddenAbstractMethod")
+    public abstract void setPackageUiModeType(String packageName, int oldUiMode, int newUiMode);
+
+    /**
+     * @hide
+     */
+    @SuppressWarnings("HiddenAbstractMethod")
+    public abstract int getPackageUiModeType(String packageName);
 }
