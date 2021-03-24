@@ -11151,4 +11151,17 @@ public abstract class PackageManager {
         throw new UnsupportedOperationException(
                 "relinquishUpdateOwnership not implemented in subclass");
     }
+    //rk code ------
+    /**
+     * @hide
+     */
+    @SuppressWarnings("HiddenAbstractMethod")
+    public abstract void setPackageUiModeType(String packageName, int oldUiMode, int newUiMode);
+
+    /**
+     * @hide
+     */
+    @SuppressWarnings("HiddenAbstractMethod")
+    public abstract int getPackageUiModeType(String packageName);
+    //----------------//
 }
