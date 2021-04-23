@@ -53,7 +53,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
-
+import android.os.SystemProperties;
 /**
  * Displays TV contents. The TvView class provides a high level interface for applications to show
  * TV programs from various TV sources that implement {@link TvInputService}. (Note that the list of
@@ -125,6 +125,7 @@ public class TvView extends ViewGroup {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             mSurface = holder.getSurface();
+            mSurfaceView.setResizeBackgroundColor(isBlueScreenEnabled() ? 0xff0000ff : 0);
             setSessionSurface(mSurface);
         }
 
@@ -366,7 +367,11 @@ public class TvView extends ViewGroup {
             mUseRequestedSurfaceLayout = false;
             mSession.release();
             mSession = null;
-            resetSurfaceView();
+            if (mSurface == null) {
+                resetSurfaceView();
+            } else {
+                mSurfaceView.setResizeBackgroundColor(isBlueScreenEnabled() ? 0xff0000ff : 0);
+            }
         }
     }
 
@@ -770,6 +775,11 @@ public class TvView extends ViewGroup {
         } else {
             removeSessionOverlayView();
         }
+    }
+
+    private boolean isBlueScreenEnabled () {
+        //no need show blue screen on preview window
+        return getWidth() > 720 && getHeight() > 480 && SystemProperties.getBoolean("persist.tv.blue.screen.enabled", false);
     }
 
     private void resetSurfaceView() {
