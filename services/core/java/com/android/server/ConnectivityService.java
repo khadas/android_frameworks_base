@@ -4040,7 +4040,7 @@ public class ConnectivityService extends IConnectivityManager.Stub
         // to a network that provides no or limited connectivity is not useful, because the user
         // cannot use that network except through the notification shown by this method, and the
         // notification is only shown if the network is explicitly selected by the user.
-        nai.asyncChannel.sendMessage(NetworkAgent.CMD_PREVENT_AUTOMATIC_RECONNECT);
+//        nai.asyncChannel.sendMessage(NetworkAgent.CMD_PREVENT_AUTOMATIC_RECONNECT);
 
         // TODO: Evaluate if it's needed to wait 8 seconds for triggering notification when
         // NetworkMonitor detects the network is partial connectivity. Need to change the design to
