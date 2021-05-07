@@ -27,6 +27,7 @@ import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_HDMI_CEC;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
+import static android.content.pm.PackageManager.FEATURE_TELEVISION;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.content.res.Configuration.EMPTY;
@@ -1633,6 +1634,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         private void handleLongPressOnHome(int deviceId, long eventTime) {
+            if (mHasFeatureLeanback && mShortPressOnWindowBehavior == SHORT_PRESS_WINDOW_PICTURE_IN_PICTURE) {
+                if (mPictureInPictureVisible) {
+                    Log.d("TvPip", "handleLongPressOnHome send show PIP Menu broadcast");
+                    Intent showPipMenu = new Intent("com.android.wm.shell.pip.tv.notification.action.SHOW_PIP_MENU");
+                    showPipMenu.setPackage("com.android.systemui");
+                    mContext.sendBroadcastAsUser(showPipMenu, UserHandle.CURRENT, "com.android.systemui.permission.SELF");
+                }
+            }
             if (mLongPressOnHomeBehavior == LONG_PRESS_HOME_NOTHING) {
                 return;
             }
@@ -1696,7 +1705,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mDisplayManagerInternal = LocalServices.getService(DisplayManagerInternal.class);
         mPackageManager = mContext.getPackageManager();
         mHasFeatureWatch = mPackageManager.hasSystemFeature(FEATURE_WATCH);
-        mHasFeatureLeanback = mPackageManager.hasSystemFeature(FEATURE_LEANBACK);
+        mHasFeatureLeanback = mPackageManager.hasSystemFeature(FEATURE_LEANBACK)
+            || mPackageManager.hasSystemFeature(FEATURE_TELEVISION)
+            || "box".equals(SystemProperties.get("ro.target.product"));
         mHasFeatureAuto = mPackageManager.hasSystemFeature(FEATURE_AUTOMOTIVE);
         mHasFeatureHdmiCec = mPackageManager.hasSystemFeature(FEATURE_HDMI_CEC);
         mAccessibilityShortcutController =

@@ -27,6 +27,8 @@ import com.android.systemui.R;
 import com.android.systemui.SystemUI;
 import com.android.wm.shell.pip.tv.TvPipNotificationController;
 
+import android.os.SystemProperties;
+
 import java.util.Arrays;
 
 public class NotificationChannels extends SystemUI {
@@ -149,6 +151,8 @@ public class NotificationChannels extends SystemUI {
 
     private static boolean isTv(Context context) {
         PackageManager packageManager = context.getPackageManager();
-        return packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+            || packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+            ||(android.os.SystemProperties.get("ro.target.product","").equals("box"));
     }
 }
