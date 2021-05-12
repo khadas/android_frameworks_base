@@ -2819,7 +2819,8 @@ public class AudioService extends IAudioService.Stub
     }
 
     private int getDirection(int newIndex, int oldIndex, int maxIndex, int minIndex) {
-        Slog.d(TAG, "new=" + newIndex + " old=" + oldIndex + " max=" + maxIndex + " min=" + minIndex);
+        Slog.d(TAG, "new=" + newIndex + " old=" + oldIndex + " max=" + maxIndex
+                        + " min=" + minIndex);
         int direction = AudioManager.ADJUST_SAME;
         int offset = newIndex - oldIndex;
         if (offset > 0 || (offset == 0 && newIndex == maxIndex)) {
@@ -6058,9 +6059,6 @@ public class AudioService extends IAudioService.Stub
 
         public void checkFixedVolumeDevices() {
             synchronized (VolumeStreamState.class) {
-                if (DEBUG_VOL) {
-                    Slog.d(TAG, "checkFixedVolumeDevices");
-                }
                 // ignore settings for fixed volume devices: volume should always be at max or 0
                 if (mStreamVolumeAlias[mStreamType] == AudioSystem.STREAM_MUSIC) {
                     for (int i = 0; i < mIndexMap.size(); i++) {
@@ -7293,7 +7291,8 @@ public class AudioService extends IAudioService.Stub
         public void onStatusChange(boolean isCecEnabled, boolean isCecAvailable) {
             synchronized (mHdmiClientLock) {
                 if (mHdmiManager == null) return;
-                Slog.d(TAG, "cec status change enabled=" + isCecEnabled + " available=" + isCecAvailable);
+                Slog.d(TAG, "cec status change enabled=" + isCecEnabled
+                                + " available=" + isCecAvailable);
                 updateHdmiCecSinkLocked(isCecEnabled ? isCecAvailable : false);
                 if (isCecEnabled != mHdmiCecEnabled) {
                     mHdmiCecEnabled = isCecEnabled;
@@ -7376,10 +7375,11 @@ public class AudioService extends IAudioService.Stub
 
     //==========================================================================================
     // Volume Passthrough
-    private boolean passthroughToTv(int streamType, int direction, int oldIndex, int newIndex, int keyEventMode) {
+    private boolean passthroughToTv(int streamType, int direction, int oldIndex, int newIndex,
+                        int keyEventMode) {
+        mInVolumePassthrough = false;
         if (mHdmiManager == null || mHdmiPlaybackClient == null) {
             // only for box devices
-            mInVolumePassthrough = false;
             return false;
         }
 
@@ -7387,7 +7387,6 @@ public class AudioService extends IAudioService.Stub
             if (DEBUG_VOL) {
                 Slog.d(TAG, "passthroughToTv not music stream type.");
             }
-            mInVolumePassthrough = false;
             return false;
         }
 
@@ -7396,29 +7395,28 @@ public class AudioService extends IAudioService.Stub
             if (DEBUG_VOL) {
                 Slog.d(TAG, "passthroughToTv not support.");
             }
-            mInVolumePassthrough = false;
             return false;
         }
 
-        mInVolumePassthrough = SystemProperties.getBoolean(PROP_VOLUME_CH_ENABLE, false)
-            || HAL_IN_VOLUME_PASSTHROUGH.equals(AudioSystem.getParameters(PARA_VOLUME_PASSTHROUGH));
+        mInVolumePassthrough = HAL_IN_VOLUME_PASSTHROUGH
+                                     .equals(AudioSystem.getParameters(PARA_VOLUME_PASSTHROUGH));
 
+        Slog.d(TAG, "passthroughToTv passthrough:" + mInVolumePassthrough + " tv status:" + mHdmiCecSink);
         // Not in passthrough audio channel
         if (!mInVolumePassthrough) {
-            if (DEBUG_VOL) {
-                Slog.d(TAG, "passthroughToTv not in passthrough audio format.");
-            }
+            Slog.d(TAG, "passthroughToTv not in passthrough audio format.");
             return false;
         }
 
         mInVolumePassthrough = mHdmiCecSink && mHdmiCecVolumeControlEnabled;
 
-        // mHdmiCecSink true => mHdmiPlaybackClient != null && playback cec enalbed && tv cec enabled
+        // mHdmiCecSink true => mHdmiPlaybackClient != null
         if (mInVolumePassthrough) {
             int keyCode = KeyEvent.KEYCODE_UNKNOWN;
             if (direction == 0) {
-                direction = getDirection(newIndex, oldIndex, mStreamStates[streamType].getMaxIndex(),
-                                                        mStreamStates[streamType].getMinIndex());
+                direction = getDirection(newIndex, oldIndex,
+                                mStreamStates[streamType].getMaxIndex(),
+                                mStreamStates[streamType].getMinIndex());
             }
             switch (direction) {
                 case AudioManager.ADJUST_RAISE:
@@ -7466,7 +7464,7 @@ public class AudioService extends IAudioService.Stub
             return true;
         }
         if (DEBUG_VOL) {
-            Slog.d(TAG, "passthroughToTv cec disabled or tv no suport cec!");
+            Slog.d(TAG, "passthroughToTv cec disabled or tv no support cec!");
         }
 
         // show a warning to help the user switch to tv's remote when no key events is sent.
@@ -7490,7 +7488,8 @@ public class AudioService extends IAudioService.Stub
         }
         mShowingPassthroughHint = true;
         mHandler.post(()->{
-            Toast toast = Toast.makeText(mContext, com.android.internal.R.string.volume_passthrough_hint, Toast.LENGTH_LONG);
+            Toast toast = Toast.makeText(mContext,
+                    com.android.internal.R.string.volume_passthrough_hint, Toast.LENGTH_LONG);
             toast.addCallback(new Toast.Callback() {
                 public void onToastHidden() {
                     mShowingPassthroughHint = false;
@@ -7504,13 +7503,13 @@ public class AudioService extends IAudioService.Stub
         return mInVolumePassthrough;
     }
 
-    private final MyHdmiControlStatusChangeListenerCallback mHdmiControlStatusChangeListenerCallback =
+    private MyHdmiControlStatusChangeListenerCallback mHdmiControlStatusChangeListenerCallback =
             new MyHdmiControlStatusChangeListenerCallback();
 
-    private final MyHdmiCecVolumeControlFeatureListener mMyHdmiCecVolumeControlFeatureListener =
+    private MyHdmiCecVolumeControlFeatureListener mMyHdmiCecVolumeControlFeatureListener =
             new MyHdmiCecVolumeControlFeatureListener();
 
-    private final MyDisplayStatusCallback mHdmiDisplayStatusCallback = new MyDisplayStatusCallback();
+    private MyDisplayStatusCallback mHdmiDisplayStatusCallback = new MyDisplayStatusCallback();
 
     @Override
     public int setHdmiSystemAudioSupported(boolean on) {
