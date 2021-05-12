@@ -62,7 +62,8 @@ final class DevicePowerStatusAction extends HdmiCecFeatureAction {
     boolean start() {
         queryDevicePowerStatus();
         mState = STATE_WAITING_FOR_REPORT_POWER_STATUS;
-        addTimer(mState, HdmiConfig.TIMEOUT_MS);
+        // The remote device might use more time to give a response.
+        addTimer(mState, HdmiConfig.TIMEOUT_MS * 2);
         return true;
     }
 
