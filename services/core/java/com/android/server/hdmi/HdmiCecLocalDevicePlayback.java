@@ -136,6 +136,17 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
                         }
                     });
         }
+        if (reason == mService.INITIATED_BY_BOOT_UP) {
+            Slog.d(TAG, "Trigger one touch play after boot!");
+            oneTouchPlay(new IHdmiControlCallback.Stub() {
+                @Override
+                public void onComplete(int result) {
+                    if (result != HdmiControlManager.RESULT_SUCCESS) {
+                        Slog.w(TAG, "One touch play failed: " + result);
+                    }
+                }
+            });
+        }
         startQueuedActions();
     }
 
