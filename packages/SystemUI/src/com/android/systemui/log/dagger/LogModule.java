@@ -44,7 +44,7 @@ public class LogModule {
     public static LogBuffer provideDozeLogBuffer(
             LogcatEchoTracker bufferFilter,
             DumpManager dumpManager) {
-        LogBuffer buffer = new LogBuffer("DozeLog", 100, 10, bufferFilter);
+        LogBuffer buffer = new LogBuffer("DozeLog", 10, 2, bufferFilter);
         buffer.attach(dumpManager);
         return buffer;
     }
@@ -56,7 +56,7 @@ public class LogModule {
     public static LogBuffer provideNotificationsLogBuffer(
             LogcatEchoTracker bufferFilter,
             DumpManager dumpManager) {
-        LogBuffer buffer = new LogBuffer("NotifLog", 1000, 10, bufferFilter);
+        LogBuffer buffer = new LogBuffer("NotifLog", 20, 2, bufferFilter);
         buffer.attach(dumpManager);
         return buffer;
     }
@@ -68,7 +68,7 @@ public class LogModule {
     public static LogBuffer provideNotificationSectionLogBuffer(
             LogcatEchoTracker bufferFilter,
             DumpManager dumpManager) {
-        LogBuffer buffer = new LogBuffer("NotifSectionLog", 1000, 10, bufferFilter);
+        LogBuffer buffer = new LogBuffer("NotifSectionLog", 20, 5, bufferFilter);
         buffer.attach(dumpManager);
         return buffer;
     }
@@ -80,7 +80,7 @@ public class LogModule {
     public static LogBuffer provideNotifInteractionLogBuffer(
             LogcatEchoTracker echoTracker,
             DumpManager dumpManager) {
-        LogBuffer buffer = new LogBuffer("NotifInteractionLog", 50, 10, echoTracker);
+        LogBuffer buffer = new LogBuffer("NotifInteractionLog", 5, 2, echoTracker);
         buffer.attach(dumpManager);
         return buffer;
     }
@@ -92,7 +92,7 @@ public class LogModule {
     public static LogBuffer provideQuickSettingsLogBuffer(
             LogcatEchoTracker bufferFilter,
             DumpManager dumpManager) {
-        LogBuffer buffer = new LogBuffer("QSLog", 500, 10, bufferFilter);
+        LogBuffer buffer = new LogBuffer("QSLog", 10, 2, bufferFilter);
         buffer.attach(dumpManager);
         return buffer;
     }
@@ -104,7 +104,7 @@ public class LogModule {
     public static LogBuffer provideBroadcastDispatcherLogBuffer(
             LogcatEchoTracker bufferFilter,
             DumpManager dumpManager) {
-        LogBuffer buffer = new LogBuffer("BroadcastDispatcherLog", 500, 10, bufferFilter);
+        LogBuffer buffer = new LogBuffer("BroadcastDispatcherLog", 20, 2, bufferFilter);
         buffer.attach(dumpManager);
         return buffer;
     }
