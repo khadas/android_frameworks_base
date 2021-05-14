@@ -107,6 +107,7 @@ public class TvView extends ViewGroup {
     private int mSurfaceViewTop;
     private int mSurfaceViewBottom;
     private TimeShiftPositionCallback mTimeShiftPositionCallback;
+    private boolean mIsBlueScreenEnable;
 
     private final SurfaceHolder.Callback mSurfaceHolderCallback = new SurfaceHolder.Callback() {
         @Override
@@ -571,6 +572,10 @@ public class TvView extends ViewGroup {
         if (TextUtils.isEmpty(action)) {
             throw new IllegalArgumentException("action cannot be null or an empty string");
         }
+        if (action.equals("blue_screen_setting")) {
+            mIsBlueScreenEnable = data.getBoolean("blue_screen_setting", false);;
+        }
+
         if (mSession != null) {
             mSession.sendAppPrivateCommand(action, data);
         } else {
@@ -779,7 +784,7 @@ public class TvView extends ViewGroup {
 
     private boolean isBlueScreenEnabled () {
         //no need show blue screen on preview window
-        return getWidth() > 720 && getHeight() > 480 && SystemProperties.getBoolean("persist.tv.blue.screen.enabled", false);
+        return getWidth() > 720 && getHeight() > 480 && mIsBlueScreenEnable;
     }
 
     private void resetSurfaceView() {
