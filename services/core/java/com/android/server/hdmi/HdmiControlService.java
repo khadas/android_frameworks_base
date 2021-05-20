@@ -531,9 +531,8 @@ public class HdmiControlService extends SystemService {
         }
         if (mCecController != null) {
             mCecController.setOption(OptionKey.ENABLE_CEC, mHdmiControlEnabled);
-            if (mHdmiControlEnabled) {
-                initializeCec(INITIATED_BY_BOOT_UP);
-            } else {
+            initializeCec(INITIATED_BY_BOOT_UP);
+            if (!mHdmiControlEnabled) {
                 setActiveness(HdmiCecActiveness.CEC_DISABLED);
             }
         } else {
@@ -839,6 +838,10 @@ public class HdmiControlService extends SystemService {
     @ServiceThreadOnly
     private void initializeLocalDevices(final int initiatedBy) {
         assertRunOnServiceThread();
+        if (!mHdmiControlEnabled) {
+            HdmiLogger.info("initializeLocalDevices no need for cec disabled.");
+            return;
+        }
         // A container for [Device type, Local device info].
         ArrayList<HdmiCecLocalDevice> localDevices = new ArrayList<>();
         for (int type : mLocalDevices) {
