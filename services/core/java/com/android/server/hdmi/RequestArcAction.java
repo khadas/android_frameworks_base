@@ -17,6 +17,7 @@
 package com.android.server.hdmi;
 
 import android.hardware.hdmi.HdmiDeviceInfo;
+import android.hardware.tv.cec.V1_0.SendMessageResult;
 
 /**
  * Base feature action class for &lt;Request ARC Initiation&gt;/&lt;Request ARC Termination&gt;.
@@ -63,9 +64,15 @@ abstract class RequestArcAction extends HdmiCecFeatureAction {
                     finish();
                     return true;
                 } else if (originalOpcode == Constants.MESSAGE_REQUEST_ARC_INITIATION) {
-                    tv().setArcStatus(false);
-                    finish();
-                    return true;
+                    // We should not turn off arc when the init arc message is not sent
+                    // or even the audio system reponds with Feature Abort.
+                    int abortCode = cmd.getParams()[1] & 0xFF;
+                    if (abortCode != Constants.ABORT_UNRECOGNIZED_OPCODE) {
+                        HdmiLogger.info("arc initiation retry for avr is not ready.");
+                        sendRequestArcInitiation();
+                        return true;
+                    }
+                    return false;
                 }
                 return false;
         }
@@ -77,6 +84,21 @@ abstract class RequestArcAction extends HdmiCecFeatureAction {
         SetArcTransmissionStateAction action = new SetArcTransmissionStateAction(localDevice(),
                 mAvrAddress, false);
         addAndStartAction(action);
+    }
+
+    protected final void sendRequestArcInitiation() {
+        HdmiCecMessage command = HdmiCecMessageBuilder.buildRequestArcInitiation(
+            getSourceAddress(), mAvrAddress);
+        sendCommand(command, new HdmiControlService.SendMessageCallback() {
+            @Override
+            public void onSendCompleted(int error) {
+                if (error != SendMessageResult.SUCCESS) {
+                    // Turn off ARC status if <Request ARC Initiation> fails.
+                    tv().setArcStatus(false);
+                    finish();
+                }
+            }
+        });
     }
 
     @Override

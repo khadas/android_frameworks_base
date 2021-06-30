@@ -46,6 +46,9 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
 
     private static final boolean SET_MENU_LANGUAGE =
             HdmiProperties.set_menu_language().orElse(false);
+    // System property indicating that the screen should remain off until an explicit user action
+    private static final String SYSTEM_PROPERTY_QUIESCENT = "ro.boot.quiescent";
+    private boolean mQuiescent;
 
     // Used to keep the device awake while it is the active source. For devices that
     // cannot wake up via CEC commands, this address the inconvenience of having to
@@ -74,6 +77,7 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
 
     HdmiCecLocalDevicePlayback(HdmiControlService service) {
         super(service, HdmiDeviceInfo.DEVICE_PLAYBACK);
+        mQuiescent = SystemProperties.get(SYSTEM_PROPERTY_QUIESCENT, "0").equals("1");
 
         mAutoTvOff = mService.readBooleanSetting(Global.HDMI_CONTROL_AUTO_DEVICE_OFF_ENABLED, true);
 
@@ -137,15 +141,20 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
                     });
         }
         if (reason == mService.INITIATED_BY_BOOT_UP) {
-            Slog.d(TAG, "Trigger one touch play after boot!");
-            oneTouchPlay(new IHdmiControlCallback.Stub() {
-                @Override
-                public void onComplete(int result) {
-                    if (result != HdmiControlManager.RESULT_SUCCESS) {
-                        Slog.w(TAG, "One touch play failed: " + result);
+            if (mQuiescent) {
+                mQuiescent = false;
+                Slog.d(TAG, "no one touch play for quiescent boot.");
+            } else {
+                Slog.d(TAG, "Trigger one touch play after boot!");
+                oneTouchPlay(new IHdmiControlCallback.Stub() {
+                    @Override
+                    public void onComplete(int result) {
+                        if (result != HdmiControlManager.RESULT_SUCCESS) {
+                            Slog.w(TAG, "One touch play failed: " + result);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         startQueuedActions();
     }

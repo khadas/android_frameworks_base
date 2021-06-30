@@ -887,8 +887,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         }
         HdmiDeviceInfo avr = getAvrDeviceInfo();
         if (!isConnectedToArcDevice(avr)) {
-            HdmiLogger.info("audio system device is not ready!");
-            resetAudioStatus();
+            HdmiLogger.info("audio system device is not ready.");
+
             return;
         }
         HdmiLogger.info("System Audio Mode change[old:%b new:%b]",
@@ -907,7 +907,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             || avr.getPortId() != mService.getArcPortId()) {
             return false;
         }
-        return mService.isConnected(avr.getPortId());
+        return true;
     }
 
     void resetAudioStatus() {
@@ -1174,6 +1174,12 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     protected boolean handleInitiateArc(HdmiCecMessage message) {
         assertRunOnServiceThread();
+        if (!isSystemAudioControlFeatureEnabled()) {
+            HdmiLogger.info("Ignoring <Init Arc> message "
+                    + "because the Arc feature is disabled: %s", message);
+            mService.maySendFeatureAbortCommand(message, Constants.ABORT_REFUSED);
+            return true;
+        }
 
         if (!canStartArcUpdateAction(message.getSource(), true)) {
             HdmiDeviceInfo avrDeviceInfo = getAvrDeviceInfo();
@@ -1268,6 +1274,12 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (!isMessageForSystemAudio(message)) {
             HdmiLogger.warning("Invalid <System Audio Mode Status> message:" + message);
             // Ignore this message.
+            return true;
+        }
+        if (!isSystemAudioControlFeatureEnabled()) {
+            HdmiLogger.info("Ignoring <System Audio Mode Status> message "
+                    + "because the System Audio Control feature is disabled: %s", message);
+            mService.maySendFeatureAbortCommand(message, Constants.ABORT_REFUSED);
             return true;
         }
         setSystemAudioMode(HdmiUtils.parseCommandParamSystemAudioStatus(message));
@@ -1764,7 +1776,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     private void disableArcIfExist() {
         assertRunOnServiceThread();
         HdmiDeviceInfo avr = getAvrDeviceInfo();
-        if (!isConnectedToArcDevice(avr)) {
+        if (!isConnectedToArcDevice(getAvrDeviceInfo())) {
             return;
         }
 
