@@ -53,6 +53,7 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
+        HdmiLogger.debug("SetArcTransmissionStateAction start " + mEnabled);
         // Seq #37.
         if (mEnabled) {
             // Enable ARC status immediately before sending <Report Arc Initiated>.
@@ -93,7 +94,7 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
                         // If <Report ARC Initiated> is negatively ack'ed, disable ARC and
                         // send <Report ARC Terminated> directly.
                         setArcStatus(false);
-                        HdmiLogger.error("Failed to send <Report Arc Initiated>.");
+                        HdmiLogger.debug("Failed to send <Report Arc Initiated>.");
                         finish();
                         break;
                 }

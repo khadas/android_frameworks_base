@@ -41,18 +41,7 @@ final class RequestArcInitiationAction extends RequestArcAction {
         mState = STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE;
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
 
-        HdmiCecMessage command = HdmiCecMessageBuilder.buildRequestArcInitiation(
-                getSourceAddress(), mAvrAddress);
-        sendCommand(command, new HdmiControlService.SendMessageCallback() {
-            @Override
-            public void onSendCompleted(int error) {
-                if (error != SendMessageResult.SUCCESS) {
-                    // Turn off ARC status if <Request ARC Initiation> fails.
-                    tv().setArcStatus(false);
-                    finish();
-                }
-            }
-        });
+        sendRequestArcInitiation();
         return true;
     }
 }
