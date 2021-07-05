@@ -2239,8 +2239,10 @@ public class AudioService extends IAudioService.Stub
             adjustVolume = false;
         }
         int oldIndex = mStreamStates[streamType].getIndex(device);
-        synchronized (mHdmiClientLock) {
-            passthroughToTv(streamType, direction, oldIndex, oldIndex, keyEventMode);
+        if ("WindowManager".equals(caller) || !isMuteAdjust) {
+            synchronized (mHdmiClientLock) {
+                passthroughToTv(streamType, direction, oldIndex, oldIndex, keyEventMode);
+            }
         }
 
         if (adjustVolume
@@ -7426,6 +7428,7 @@ public class AudioService extends IAudioService.Stub
                     keyCode = KeyEvent.KEYCODE_VOLUME_DOWN;
                     break;
                 case AudioManager.ADJUST_MUTE:
+                case AudioManager.ADJUST_UNMUTE:
                 case AudioManager.ADJUST_TOGGLE_MUTE:
                     keyCode = KeyEvent.KEYCODE_VOLUME_MUTE;
                     break;
