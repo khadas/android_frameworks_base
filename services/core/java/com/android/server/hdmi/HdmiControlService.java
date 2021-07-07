@@ -3300,10 +3300,16 @@ public class HdmiControlService extends SystemService {
 
     @ServiceThreadOnly
     private void disableHdmiControlService() {
+        final List<HdmiCecLocalDevice> devices = new ArrayList<HdmiCecLocalDevice>(getAllLocalDevices());
         disableDevices(new PendingActionClearedCallback() {
             @Override
             public void onCleared(HdmiCecLocalDevice device) {
                 assertRunOnServiceThread();
+                devices.remove(device);
+                if (!devices.isEmpty()) {
+                    return;
+                }
+                HdmiLogger.info("disableHdmiControlService finished.");
                 mCecController.flush(new Runnable() {
                     @Override
                     public void run() {

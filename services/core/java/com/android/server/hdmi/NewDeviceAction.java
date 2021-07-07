@@ -111,6 +111,12 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
                 } catch (UnsupportedEncodingException e) {
                     Slog.e(TAG, "Failed to get OSD name: " + e.getMessage());
                 }
+                if (localDevice() instanceof HdmiCecLocalDeviceAudioSystem) {
+                    // don't care about vendor id for audio system in hotplug scenario.
+                    addDeviceInfoForAudioSystem();
+                    finish();
+                    return true;
+                }
                 requestVendorId(true);
                 return true;
             } else if (opcode == Constants.MESSAGE_FEATURE_ABORT) {
@@ -162,6 +168,17 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
     }
 
+    private void addDeviceInfoForAudioSystem() {
+        if (mDisplayName == null) {
+            mDisplayName = HdmiUtils.getDefaultDeviceName(mDeviceLogicalAddress);
+        }
+        HdmiDeviceInfo deviceInfo = new HdmiDeviceInfo(
+                mDeviceLogicalAddress, mDevicePhysicalAddress,
+                audioSystem().getPortId(mDevicePhysicalAddress),
+                mDeviceType, mVendorId, mDisplayName);
+        audioSystem().addCecDevice(deviceInfo);
+    }
+
     private void addDeviceInfo() {
         // The device should be in the device list with default information.
         if (!tv().isInDeviceList(mDeviceLogicalAddress, mDevicePhysicalAddress)) {
@@ -191,6 +208,10 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
             if (++mTimeoutRetry < HdmiConfig.TIMEOUT_RETRY) {
                 requestOsdName(false);
                 return;
+            }
+            if (localDevice() instanceof HdmiCecLocalDeviceAudioSystem) {
+                addDeviceInfoForAudioSystem();
+                finish();
             }
             // Osd name request timed out. Try vendor id
             requestVendorId(true);

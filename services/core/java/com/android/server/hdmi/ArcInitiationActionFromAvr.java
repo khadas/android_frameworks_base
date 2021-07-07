@@ -34,6 +34,7 @@ public class ArcInitiationActionFromAvr extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
+        HdmiLogger.debug("ArcInitiationActionFromAvr start");
         audioSystem().setArcStatus(true);
         mState = STATE_WAITING_FOR_INITIATE_ARC_RESPONSE;
         addTimer(mState, TIMEOUT_MS);
