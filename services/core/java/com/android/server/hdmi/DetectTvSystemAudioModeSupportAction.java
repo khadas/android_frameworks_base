@@ -40,6 +40,7 @@ public class DetectTvSystemAudioModeSupportAction extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
+        HdmiLogger.debug("DetectTvSystemAudioModeSupportAction start");
         mState = STATE_WAITING_FOR_FEATURE_ABORT;
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
         sendSetSystemAudioMode();
