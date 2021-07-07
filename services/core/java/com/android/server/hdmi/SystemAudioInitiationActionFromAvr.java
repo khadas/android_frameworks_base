@@ -41,6 +41,7 @@ public class SystemAudioInitiationActionFromAvr extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
+        HdmiLogger.debug("SystemAudioInitiationActionFromAvr start with " + audioSystem().getActiveSource());
         if (audioSystem().getActiveSource().physicalAddress == Constants.INVALID_PHYSICAL_ADDRESS) {
             mState = STATE_WAITING_FOR_ACTIVE_SOURCE;
             addTimer(mState, HdmiConfig.TIMEOUT_MS);
@@ -114,12 +115,10 @@ public class SystemAudioInitiationActionFromAvr extends HdmiCecFeatureAction {
     }
 
     private void handleActiveSourceTimeout() {
-        HdmiLogger.debug("Cannot get active source.");
+        HdmiLogger.info("Cannot get active source.");
         // If not able to find Active Source and the current device has playbcak functionality,
         // claim Active Source and start to query TV system audio mode support.
         if (audioSystem().mService.isPlaybackDevice()) {
-            audioSystem().mService.setAndBroadcastActiveSourceFromOneDeviceType(
-                    Constants.ADDR_BROADCAST, getSourcePath());
             mState = STATE_WAITING_FOR_TV_SUPPORT;
             queryTvSystemAudioModeSupport();
         } else {
@@ -131,6 +130,7 @@ public class SystemAudioInitiationActionFromAvr extends HdmiCecFeatureAction {
     private void queryTvSystemAudioModeSupport() {
         audioSystem().queryTvSystemAudioModeSupport(
                 supported -> {
+                    HdmiLogger.info("queryTvSystemAudioModeSupport result=" + supported);
                     if (supported) {
                         if (audioSystem().checkSupportAndSetSystemAudioMode(true)) {
                             sendSetSystemAudioMode(true, Constants.ADDR_BROADCAST);
