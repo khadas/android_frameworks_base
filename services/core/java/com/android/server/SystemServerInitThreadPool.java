@@ -65,7 +65,7 @@ public class SystemServerInitThreadPool {
         final int size = Runtime.getRuntime().availableProcessors();
         Slog.i(TAG, "Creating instance with " + size + " threads");
         mService = ConcurrentUtils.newFixedThreadPool(size,
-                "system-server-init-thread", Process.THREAD_PRIORITY_FOREGROUND);
+                "system-server-init-thread", -18);//Process.THREAD_PRIORITY_FOREGROUND);
     }
 
     /**
