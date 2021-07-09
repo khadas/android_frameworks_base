@@ -436,6 +436,7 @@ public final class SystemServer {
     private void run() {
         TimingsTraceAndSlog t = new TimingsTraceAndSlog();
         try {
+            android.os.Process.setThreadPriority(-19);
             t.traceBegin("InitBeforeStartServices");
 
             // Record the process start information in sys props.
@@ -528,8 +529,8 @@ public final class SystemServer {
             BinderInternal.setMaxThreads(sMaxBinderThreads);
 
             // Prepare the main looper thread (this thread).
-            android.os.Process.setThreadPriority(
-                    android.os.Process.THREAD_PRIORITY_FOREGROUND);
+            //android.os.Process.setThreadPriority(
+            //        android.os.Process.THREAD_PRIORITY_FOREGROUND);
             android.os.Process.setCanSelfBackground(false);
             Looper.prepareMainLooper();
             Looper.getMainLooper().setSlowLogThresholdMs(
@@ -623,7 +624,8 @@ public final class SystemServer {
         if (!VMRuntime.hasBootImageSpaces()) {
             Slog.wtf(TAG, "Runtime is not running with a boot image!");
         }
-
+	android.os.Process.setThreadPriority(
+            android.os.Process.THREAD_PRIORITY_FOREGROUND);
         // Loop forever.
         Looper.loop();
         throw new RuntimeException("Main thread loop unexpectedly exited");
