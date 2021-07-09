@@ -1096,12 +1096,18 @@ status_t BootAnimation::readyToRun() {
     mMaxWidth = android::base::GetIntProperty("ro.surface_flinger.max_graphics_width", 0);
     mMaxHeight = android::base::GetIntProperty("ro.surface_flinger.max_graphics_height", 0);
     ui::Size resolution = displayConfig.resolution;
-    resolution = limitSurfaceSize(resolution.width, resolution.height);
+    //resolution = limitSurfaceSize(resolution.width, resolution.height);
     // create the native surface
+	Rect destRect(resolution.getWidth(), resolution.getHeight());
+	
+	SurfaceComposerClient::Transaction t;
+	t.setDisplayProjection(mDisplayToken, ui::ROTATION_0, destRect, destRect);
+	t.apply();
+	
     sp<SurfaceControl> control = session()->createSurface(String8("BootAnimation"),
             resolution.getWidth(), resolution.getHeight(), PIXEL_FORMAT_RGBA_8888);
 
-    SurfaceComposerClient::Transaction t;
+    //SurfaceComposerClient::Transaction t;
 
     // this guest property specifies multi-display IDs to show the boot animation
     // multiple ids can be set with comma (,) as separator, for example:
