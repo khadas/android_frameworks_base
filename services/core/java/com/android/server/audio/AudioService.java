@@ -825,6 +825,8 @@ public class AudioService extends IAudioService.Stub
         // Volume passhrough feature could be enabled for all projects.
         mVolumePassthroughEnabled = SystemProperties.getBoolean(PROP_VOLUME_PASSTHROUGH, true);
         mSupportDolbyMS12 = new File(PATH_LIB_DOLBY_SM12).exists();
+        mHdmiCecEnabled = Settings.Global.getInt(mContentResolver,
+                                            Settings.Global.HDMI_CEC_SWITCH_ENABLED, 1) == 1;
 
         // must be called before readPersistedSettings() which needs a valid mStreamVolumeAlias[]
         // array initialized by updateStreamVolumeAlias()
@@ -6078,15 +6080,11 @@ public class AudioService extends IAudioService.Stub
 
         public void checkFixedVolumeDevicesForCec() {
             synchronized (VolumeStreamState.class) {
-                if (DEBUG_VOL) {
-                    Slog.d(TAG, "checkFixedVolumeDevicesForCec");
-                }
                 // ignore settings for fixed volume devices: volume should always be at max or 0
                 if (mStreamVolumeAlias[mStreamType] == AudioSystem.STREAM_MUSIC) {
                     for (int i = 0; i < mIndexMap.size(); i++) {
                         int device = mIndexMap.keyAt(i);
-                        int index = mIndexMap.valueAt(i);
-                        if ((isFixedVolumeDevice(device) && index != 0)) {
+                        if ((device & AudioSystem.DEVICE_OUT_HDMI) != 0) {
                             mIndexMap.put(device, mIndexMax);
                         }
                         applyDeviceVolume_syncVSS(device);
@@ -7298,13 +7296,16 @@ public class AudioService extends IAudioService.Stub
                 updateHdmiCecSinkLocked(isCecEnabled ? isCecAvailable : false);
                 if (isCecEnabled != mHdmiCecEnabled) {
                     mHdmiCecEnabled = isCecEnabled;
-                    // reset the volume to max when cec switch changes.
-                    checkAllFixedVolumeDevicesForCec(AudioSystem.STREAM_MUSIC);
-                    if (isCecEnabled && !isCecAvailable) {
-                        // try again if tv is not available to avoid compat issues.
-                        synchronized (mHdmiClientLock) {
-                            if (mHdmiPlaybackClient != null) {
-                                mHdmiPlaybackClient.queryDisplayStatus(mHdmiDisplayStatusCallback);
+                    if (isCecEnabled) {
+                        Slog.d(TAG, "reset hdmi device's volume max");
+                        // reset the volume to max when cec switch changes.
+                        checkAllFixedVolumeDevicesForCec(AudioSystem.STREAM_MUSIC);
+                        if (!isCecAvailable) {
+                            // try again if tv is not available to avoid compat issues.
+                            synchronized (mHdmiClientLock) {
+                                if (mHdmiPlaybackClient != null) {
+                                    mHdmiPlaybackClient.queryDisplayStatus(mHdmiDisplayStatusCallback);
+                                }
                             }
                         }
                     }
@@ -7364,7 +7365,7 @@ public class AudioService extends IAudioService.Stub
     private boolean mInVolumePassthrough;
     private boolean mShowingPassthroughHint;
 
-    private boolean mHdmiCecEnabled = true;
+    private boolean mHdmiCecEnabled;
 
     private final Handler mHandler = new Handler();
 
