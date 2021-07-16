@@ -573,7 +573,13 @@ public class TvView extends ViewGroup {
             throw new IllegalArgumentException("action cannot be null or an empty string");
         }
         if (action.equals("blue_screen_setting")) {
-            mIsBlueScreenEnable = data.getBoolean("blue_screen_setting", false);;
+            Log.w(TAG, "recieve blue screen setting event.");
+            mIsBlueScreenEnable = data.getBoolean("blue_screen_setting", false);
+            if (mSurfaceView != null) {
+                mSurfaceView.setResizeBackgroundColor(isBlueScreenEnabled() ? 0xff0000ff : 0);
+            } else {
+                Log.w(TAG, "mSurfaceView is null");
+            }
         }
 
         if (mSession != null) {
