@@ -111,6 +111,7 @@ public class RecoverySystem {
     private static final File LOG_FILE = new File(RECOVERY_DIR, "log");
     private static final String LAST_INSTALL_PATH = "last_install";
     private static final String LAST_PREFIX = "last_";
+    private static final String RECOVERY_TEST_STATE  = "Recovery_state";
     private static final String ACTION_EUICC_FACTORY_RESET =
             "com.android.internal.action.EUICC_FACTORY_RESET";
     private static final String ACTION_EUICC_REMOVE_INVISIBLE_SUBSCRIPTIONS =
@@ -1351,8 +1352,10 @@ public class RecoverySystem {
         for (int i = 0; names != null && i < names.length; i++) {
             // Do not remove the last_install file since the recovery-persist takes care of it.
             if (names[i].startsWith(LAST_PREFIX) || names[i].equals(LAST_INSTALL_PATH)) continue;
+            if (names[i].equals(RECOVERY_TEST_STATE)) continue;
             if (reservePackage && names[i].equals(BLOCK_MAP_FILE.getName())) continue;
             if (reservePackage && names[i].equals(UNCRYPT_PACKAGE_FILE.getName())) continue;
+            Log.i(TAG,"names[i]:" + names[i]);
 
             recursiveDelete(new File(RECOVERY_DIR, names[i]));
         }
