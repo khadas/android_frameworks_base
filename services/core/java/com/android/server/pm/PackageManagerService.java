@@ -24829,6 +24829,8 @@ public class PackageManagerService extends IPackageManager.Stub
                     pw.println("Settings written.");
                     return;
                 }
+            } else if ("perf".equals(cmd)) {
+                dumpState.setDump(DumpState.DUMP_PERF_MODE);
             }
         }
 
@@ -25048,6 +25050,10 @@ public class PackageManagerService extends IPackageManager.Stub
                     }
                 }
             }
+        }
+
+        if (dumpState.isDumping(DumpState.DUMP_PERF_MODE) && packageName == null) {
+            mSettings.dumpPackagePerformanceMode(pw, dumpState);
         }
 
         if (!checkin && dumpState.isDumping(DumpState.DUMP_FROZEN) && packageName == null) {
@@ -28629,6 +28635,33 @@ public class PackageManagerService extends IPackageManager.Stub
         }
 
         return mProtectedPackages.isPackageStateProtected(userId, packageName);
+    }
+
+    /**
+     * @hide
+     */
+    public int getPackagePerformanceMode(String pkgName) {
+        for (int i = 0; i < mSettings.mPerformancePackages.size(); i++) {
+            if (pkgName.toLowerCase().contains(mSettings.mPerformancePackages.get(i).name.toLowerCase())) {
+                return mSettings.mPerformancePackages.get(i).mode;
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * @hide
+     */
+    public void setPackagePerformanceMode(String pkgName) {
+        for (int i = 0; i < mSettings.mPerformancePackages.size(); i++) {
+            if (pkgName.toLowerCase().contains(mSettings.mPerformancePackages.get(i).name.toLowerCase())) {
+                Slog.w(TAG, "Already in performance mode: " + pkgName);
+                return;
+            }
+        }
+        PackagePerformanceSetting app = new PackagePerformanceSetting(pkgName, 1 /* enable performance mode */);
+        mSettings.mPerformancePackages.add(app);
+        Slog.i(TAG, "Added in performance mode: " + pkgName);
     }
 
     @Override
