@@ -5301,6 +5301,8 @@
     <!-- Notification action for editing a screenshot (drawing on it, cropping it, etc) -->
     <string name="screenshot_edit">Edit</string>
 
+    <string name="sync_audio_system_volume">"Synchronizing volume from the audio system device"</string>
+
     <string name="volume_dialog_ringer_guidance_vibrate">Calls and notifications will vibrate</string>
     <string name="volume_dialog_ringer_guidance_silent">Calls and notifications will be muted</string>
 
