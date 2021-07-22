@@ -48,6 +48,7 @@ final class SystemAudioActionFromAvr extends SystemAudioAction {
     }
 
     private void handleSystemAudioActionFromAvr() {
+        sendCommand(HdmiCecMessageBuilder.buildGiveAudioStatus(getSourceAddress(), mAvrLogicalAddress));
         if (mTargetAudioStatus == tv().isSystemAudioActivated()) {
             finishWithCallback(HdmiControlManager.RESULT_SUCCESS);
             return;
