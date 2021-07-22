@@ -888,8 +888,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         HdmiDeviceInfo avr = getAvrDeviceInfo();
         if (!isConnectedToArcDevice(avr)) {
             HdmiLogger.info("audio system device is not ready.");
-
-            return;
+            //resetAudioStatus();
+            //return;
         }
         HdmiLogger.info("System Audio Mode change[old:%b new:%b]",
                 mService.isSystemAudioActivated(), on);
