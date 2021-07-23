@@ -2243,7 +2243,9 @@ public class AudioService extends IAudioService.Stub
         int oldIndex = mStreamStates[streamType].getIndex(device);
         if ("WindowManager".equals(caller) || !isMuteAdjust) {
             synchronized (mHdmiClientLock) {
-                passthroughToTv(streamType, direction, oldIndex, oldIndex, keyEventMode);
+                if (passthroughToTv(streamType, direction, oldIndex, oldIndex, keyEventMode)) {
+                    return;
+                }
             }
         }
 
@@ -2767,6 +2769,12 @@ public class AudioService extends IAudioService.Stub
 
             index = rescaleIndex(index * 10, streamType, streamTypeAlias);
 
+            synchronized (mHdmiClientLock) {
+                if (passthroughToTv(streamType, 0, oldIndex, index, VOL_ADJUST_NORMAL)) {
+                    return;
+                }
+            }
+
             if (streamTypeAlias == AudioSystem.STREAM_MUSIC
                     && AudioSystem.DEVICE_OUT_ALL_A2DP_SET.contains(device)
                     && (flags & AudioManager.FLAG_BLUETOOTH_ABS_VOLUME) == 0) {
@@ -2817,7 +2825,6 @@ public class AudioService extends IAudioService.Stub
                     && (oldIndex != index)) {
                 maybeSendSystemAudioStatusCommand(false);
             }
-            passthroughToTv(streamType, 0, oldIndex, index, VOL_ADJUST_NORMAL);
         }
         sendVolumeUpdate(streamType, oldIndex, index, flags, device);
     }
@@ -7467,13 +7474,11 @@ public class AudioService extends IAudioService.Stub
             showPassthroughToast();
             return true;
         }
-        if (DEBUG_VOL) {
-            Slog.d(TAG, "passthroughToTv cec disabled or tv no support cec!");
-        }
+        Slog.d(TAG, "passthroughToTv cec disabled or tv no support cec!");
 
         // show a warning to help the user switch to tv's remote when no key events is sent.
         showPassthroughWarning();
-        return false;
+        return true;
     }
 
     private void showPassthroughToast() {
