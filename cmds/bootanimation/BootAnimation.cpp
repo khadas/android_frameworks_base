@@ -67,14 +67,14 @@ namespace android {
 
 using ui::DisplayMode;
 
-static const char OEM_BOOTANIMATION_FILE[] = "/oem/media/bootanimation.zip";
+static const char OEM_BOOTANIMATION_FILE[] = "/odm/media/bootanimation.zip";
 static const char PRODUCT_BOOTANIMATION_DARK_FILE[] = "/product/media/bootanimation-dark.zip";
 static const char PRODUCT_BOOTANIMATION_FILE[] = "/product/media/bootanimation.zip";
 static const char SYSTEM_BOOTANIMATION_FILE[] = "/system/media/bootanimation.zip";
 static const char APEX_BOOTANIMATION_FILE[] = "/apex/com.android.bootanimation/etc/bootanimation.zip";
 static const char PRODUCT_ENCRYPTED_BOOTANIMATION_FILE[] = "/product/media/bootanimation-encrypted.zip";
 static const char SYSTEM_ENCRYPTED_BOOTANIMATION_FILE[] = "/system/media/bootanimation-encrypted.zip";
-static const char OEM_SHUTDOWNANIMATION_FILE[] = "/oem/media/shutdownanimation.zip";
+static const char OEM_SHUTDOWNANIMATION_FILE[] = "/odm/media/shutdownanimation.zip";
 static const char PRODUCT_SHUTDOWNANIMATION_FILE[] = "/product/media/shutdownanimation.zip";
 static const char SYSTEM_SHUTDOWNANIMATION_FILE[] = "/system/media/shutdownanimation.zip";
 
@@ -108,10 +108,11 @@ static const char PROGRESS_PROP_NAME[] = "service.bootanim.progress";
 static const char DISPLAYS_PROP_NAME[] = "persist.service.bootanim.displays";
 static const int ANIM_ENTRY_NAME_MAX = ANIM_PATH_MAX + 1;
 static constexpr size_t TEXT_POS_LEN_MAX = 16;
+static const char LOOP_COMPLETED_PROP_NAME[] = "sys.anim_loop.completed";
 
 // ---------------------------------------------------------------------------
 
-BootAnimation::BootAnimation(sp<Callbacks> callbacks)
+BootAnimation::BootAnimation(sp<Callbacks> callbacks, bool shutdown)
         : Thread(false), mLooper(new Looper(false)), mClockEnabled(true), mTimeIsAccurate(false),
         mTimeFormat12Hour(false), mTimeCheckThread(nullptr), mCallbacks(callbacks) {
     mSession = new SurfaceComposerClient();
@@ -124,6 +125,7 @@ BootAnimation::BootAnimation(sp<Callbacks> callbacks)
     }
     ALOGD("%sAnimationStartTiming start time: %" PRId64 "ms", mShuttingDown ? "Shutdown" : "Boot",
             elapsedRealtime());
+    mShutdown = shutdown;
 }
 
 BootAnimation::~BootAnimation() {
@@ -593,7 +595,7 @@ void BootAnimation::findBootAnimationFile() {
 
     if (android::base::GetBoolProperty("sys.init.userspace_reboot.in_progress", false)) {
         findBootAnimationFileInternal(userspaceRebootFiles);
-    } else if (mShuttingDown) {
+    } else if (mShutdown) {
         findBootAnimationFileInternal(shutdownFiles);
     } else {
         findBootAnimationFileInternal(bootFiles);
@@ -1365,6 +1367,11 @@ bool BootAnimation::playAnimation(const Animation& animation) {
                 break; // exit the infinite non-fading part when it has been played at least once
             }
         }
+    }
+
+    if (mShutdown) {
+        property_set(LOOP_COMPLETED_PROP_NAME, "true");
+        while(1);
     }
 
     // Free textures created for looping parts now that the animation is done.

@@ -127,7 +127,7 @@ public:
         virtual void shutdown() {}
     };
 
-    explicit BootAnimation(sp<Callbacks> callbacks);
+    explicit BootAnimation(sp<Callbacks> callbacks, bool shutdown);
     virtual ~BootAnimation();
 
     sp<SurfaceComposerClient> session() const;
@@ -209,6 +209,7 @@ private:
     sp<IBinder> mDisplayToken;
     sp<SurfaceControl> mFlingerSurfaceControl;
     sp<Surface> mFlingerSurface;
+    bool        mShutdown;
     bool        mClockEnabled;
     bool        mTimeIsAccurate;
     bool        mTimeFormat12Hour;
