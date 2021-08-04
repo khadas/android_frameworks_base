@@ -57,6 +57,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import android.view.IWindowManager;
 
 public final class ShutdownThread extends Thread {
     // constants
@@ -94,6 +95,10 @@ public final class ShutdownThread extends Thread {
     public static final String REBOOT_SAFEMODE_PROPERTY = "persist.sys.safemode";
     public static final String RO_SAFEMODE_PROPERTY = "ro.sys.safemode";
 
+    // Used for shutdownanimation
+    private static final String SYSTEM_SHUTDOWNANIMATION_FILE = "/odm/media/shutdownanimation.zip";
+    private static final String LOOP_COMPLETED_PROP_NAME = "sys.anim_loop.completed";
+    private static final String SHUTDOWNANIM_ORIEN_PROP_NAME = "vendor.shutdown_anim.orien";
     // static instance of this thread
     private static final ShutdownThread sInstance = new ShutdownThread();
 
@@ -468,6 +473,11 @@ public final class ShutdownThread extends Thread {
         }
         shutdownTimingLog.traceEnd(); // DumpPreRebootInfo
 
+        //Force to the animation orientation.
+        if (checkAnimationFileExist()) {
+            freeze_orien_shutdownanim();
+        }
+
         metricStarted(METRIC_SEND_BROADCAST);
         shutdownTimingLog.traceBegin("SendShutdownBroadcast");
         Log.i(TAG, "Sending shutdown broadcast...");
@@ -476,6 +486,9 @@ public final class ShutdownThread extends Thread {
         mActionDone = false;
         Intent intent = new Intent(Intent.ACTION_SHUTDOWN);
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND | Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+        if (checkAnimationFileExist()) {
+            intent.putExtra("PLAY_SHUTDOWN_ANIMATION",1);
+        }
         mContext.sendOrderedBroadcastAsUser(intent,
                 UserHandle.ALL, null, br, mHandler, 0, null, null);
 
@@ -503,6 +516,13 @@ public final class ShutdownThread extends Thread {
         shutdownTimingLog.traceEnd(); // SendShutdownBroadcast
         metricEnded(METRIC_SEND_BROADCAST);
 
+        /*
+         *Show shutdown animation if the resource file exists.
+         *thaw rotation here.
+         */
+        if (checkAnimationFileExist()) {
+            start_shutdownanim();
+        }
         Log.i(TAG, "Shutting down activity manager...");
         shutdownTimingLog.traceBegin("ShutdownActivityManager");
         metricStarted(METRIC_AM);
@@ -565,6 +585,12 @@ public final class ShutdownThread extends Thread {
         shutdownTimingLog.traceEnd(); // SystemServerShutdown
         metricEnded(METRIC_SYSTEM_SERVER);
         saveMetrics(mReboot, mReason);
+        //Wait for shutdown animation loop done.
+        if (checkAnimationFileExist()) {
+            wait_shutdownanim_end();
+            thaw_orien_shutdownanim();
+        }
+        mPowerManager.goToSleep(SystemClock.uptimeMillis());
         // Remaining work will be done by init, including vold shutdown
         rebootOrShutdown(mContext, mReboot, mReason);
     }
@@ -790,5 +816,63 @@ public final class ShutdownThread extends Thread {
                 Log.e(TAG, "Failed to write timeout message to uncrypt status", e);
             }
         }
+    }
+
+   //Show shutdown animation
+    private static void start_shutdownanim() {
+        try {
+            SystemProperties.set(LOOP_COMPLETED_PROP_NAME, "false");
+            SystemProperties.set("service.bootanim.exit", "0");
+            SystemProperties.set("ctl.start", "shutdownanim");
+        } catch (Exception e){
+           Log.e(TAG,"shutdownanim command exe err!");
+        }
+    }
+
+    //freeze to default orientation
+    private static void freeze_orien_shutdownanim() {
+        int orien = SystemProperties.getInt(SHUTDOWNANIM_ORIEN_PROP_NAME, -1);
+        if(orien > -1 && orien < 5){
+            IWindowManager wm = IWindowManager.Stub.asInterface(ServiceManager
+                    .getService(Context.WINDOW_SERVICE));
+            try {
+                wm.freezeRotation(orien);
+            } catch (RemoteException e) {
+                Log.e(TAG, "boot animation can not lock device!");
+            }
+        }
+    }
+
+
+
+    //thaw rotation
+    private static void thaw_orien_shutdownanim() {
+        int orien = SystemProperties.getInt(SHUTDOWNANIM_ORIEN_PROP_NAME, -1);
+        if(orien > -1 && orien < 5){
+            IWindowManager wm = IWindowManager.Stub.asInterface(ServiceManager
+                    .getService(Context.WINDOW_SERVICE));
+            try {
+                wm.thawRotation();
+            } catch (RemoteException e) {
+                Log.w(TAG, "boot animation can not lock device!");
+            }
+        }
+    }
+
+    //Wait until the animation loop finished
+    private static void wait_shutdownanim_end() {
+        while(!SystemProperties.get(LOOP_COMPLETED_PROP_NAME, "false").equals("true")) {
+            try {
+                Thread.sleep(500);
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    private static boolean checkAnimationFileExist() {
+       if (new File(SYSTEM_SHUTDOWNANIMATION_FILE).exists())
+            return true;
+        else
+            return false;
     }
 }
