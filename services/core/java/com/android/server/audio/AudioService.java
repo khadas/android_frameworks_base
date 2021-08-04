@@ -2308,6 +2308,13 @@ public class AudioService extends IAudioService.Stub
             if (streamTypeAlias == AudioSystem.STREAM_MUSIC
                     && AudioSystem.DEVICE_OUT_ALL_A2DP_SET.contains(device)
                     && (flags & AudioManager.FLAG_BLUETOOTH_ABS_VOLUME) == 0) {
+                /* Need set index 0 to AVRCP when music type is muted. */
+                /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                /* Change-Id: I67f8bc5298bb2f6f9dcfecfde26e55c448d16b5d */
+                if (mStreamStates[streamType].mIsMuted) {
+                    newIndex = 0;
+                }
+                /*[Amlogic end]-----------------------------------------------------------*/
                 if (DEBUG_VOL) {
                     Log.d(TAG, "adjustSreamVolume: postSetAvrcpAbsoluteVolumeIndex index="
                             + newIndex + "stream=" + streamType);
