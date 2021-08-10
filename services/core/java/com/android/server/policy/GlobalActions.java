@@ -64,14 +64,19 @@ class GlobalActions implements GlobalActionsProvider.GlobalActionsListener {
         mKeyguardShowing = keyguardShowing;
         mDeviceProvisioned = deviceProvisioned;
         mShowing = true;
-        if (mGlobalActionsAvailable) {
+        /*if (mGlobalActionsAvailable) {
             mHandler.postDelayed(mShowTimeout, 5000);
             mGlobalActionsProvider.showGlobalActions();
         } else {
             // SysUI isn't alive, show legacy menu.
             ensureLegacyCreated();
             mLegacyGlobalActions.showDialog(mKeyguardShowing, mDeviceProvisioned);
-        }
+        }*/
+        //service ('GlobalActionsComponent') was removed from /SystemUI/res/values/config.xml
+        //So it was not started and no componnet implements handleShowGlobalActionsMenu() in Android R now .
+        //So we use legacyGlobalAction instead.
+        ensureLegacyCreated();
+        mLegacyGlobalActions.showDialog(mKeyguardShowing, mDeviceProvisioned);
     }
 
     @Override
