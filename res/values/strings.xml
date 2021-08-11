@@ -13562,4 +13562,13 @@
     <string name="bluetooth_connect_access_dialog_negative">Don\u2019t connect</string>
     <!-- Strings for Dialog connect button -->
     <string name="bluetooth_connect_access_dialog_positive">Connect</string>
+
+    <string name="screenshot">Screenshot</string>
+    <string name="header_category_screenshot">Screenshot</string>
+    <string name="screenshot_dashboard_summary">Screenshot</string>
+    <string name="screenshot_settings_activity_title">Screenshot Settings</string>
+    <string name="screenshot_delay_title">Select delay time to capture the screen </string>
+    <string name="screenshot_show_title">Show the screenshot button in the statusbar</string>
+    <string name="later">s later capture</string>
+    <string name="help_url_screenshot" translatable="false"></string>
 </resources>

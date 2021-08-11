@@ -45,6 +45,7 @@ import com.android.settings.privacy.PrivacyDashboardFragment;
 import com.android.settings.security.LockscreenDashboardFragment;
 import com.android.settings.security.SecuritySettings;
 import com.android.settings.system.SystemDashboardFragment;
+import com.android.settings.screenshot.ScreenshotSettings;
 import com.android.settingslib.drawer.CategoryKey;
 
 import java.util.Map;
@@ -96,6 +97,8 @@ public class DashboardFragmentRegistry {
                 CategoryKey.CATEGORY_ACCOUNT);
         PARENT_TO_CATEGORY_KEY_MAP.put(
                 SystemDashboardFragment.class.getName(), CategoryKey.CATEGORY_SYSTEM);
+        PARENT_TO_CATEGORY_KEY_MAP.put(
+                ScreenshotSettings.class.getName(), CategoryKey.CATEGORY_SCREENSHOT);
         PARENT_TO_CATEGORY_KEY_MAP.put(LanguageAndInputSettings.class.getName(),
                 CategoryKey.CATEGORY_SYSTEM_LANGUAGE);
         PARENT_TO_CATEGORY_KEY_MAP.put(DevelopmentSettingsDashboardFragment.class.getName(),
