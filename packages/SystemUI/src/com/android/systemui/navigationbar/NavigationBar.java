@@ -79,6 +79,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -176,6 +178,7 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
     /** Allow some time inbetween the long press for back and recents. */
     private static final int LOCK_TO_APP_GESTURE_TOLERENCE = 200;
     private static final long AUTODIM_TIMEOUT_MS = 2250;
+    private static final long SCREENSHOT_TIME_INTERVAL = 3000;
 
     private final Context mContext;
     private final WindowManager mWindowManager;
@@ -212,6 +215,7 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
     private int mNavigationIconHints = 0;
     private @TransitionMode int mNavigationBarMode;
     private ContentResolver mContentResolver;
+    private ContentObserver mScreenshotShowObserver;
     private boolean mAssistantAvailable;
     private boolean mLongPressHomeEnabled;
     private boolean mAssistantTouchGestureEnabled;
@@ -260,6 +264,7 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
     private int mCurrentRotation;
     private ViewTreeObserver.OnGlobalLayoutListener mOrientationHandleGlobalLayoutListener;
     private boolean mShowOrientedHandleForImmersiveMode;
+    private long mLastClickScreenshotTime = 0;
 
     @com.android.internal.annotations.VisibleForTesting
     public enum NavBarActionEvent implements UiEventLogger.UiEventEnum {
@@ -564,6 +569,17 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
         mContentResolver.registerContentObserver(
                 Settings.Secure.getUriFor(Settings.Secure.ASSIST_TOUCH_GESTURE_ENABLED),
                 false, mAssistContentObserver, UserHandle.USER_ALL);
+        mScreenshotShowObserver = new ContentObserver(mContext.getMainThreadHandler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                boolean isShow = Settings.System.getInt(mContext.getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 1) == 1;
+                ButtonDispatcher screenshotButton = mNavigationBarView.getScreenshotButton();
+                screenshotButton.setVisibility(isShow ? View.VISIBLE : View.GONE);
+            }
+        };
+        mContentResolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.SCREENSHOT_BUTTON_SHOW), true,
+                mScreenshotShowObserver, UserHandle.USER_ALL);
         mAllowForceNavBarHandleOpaque = mContext.getResources().getBoolean(
                 R.bool.allow_force_nav_bar_handle_opaque);
         mForceNavBarHandleOpaque = DeviceConfig.getBoolean(
@@ -609,6 +625,9 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
 
         mAccessibilityManagerWrapper.removeCallback(mAccessibilityListener);
         mContentResolver.unregisterContentObserver(mAssistContentObserver);
+        if (null != mScreenshotShowObserver) {
+            mContentResolver.unregisterContentObserver(mScreenshotShowObserver);
+        }
         mDeviceProvisionedController.removeCallback(mUserSetupListener);
         mNotificationShadeDepthController.removeListener(mDepthListener);
 
@@ -1166,6 +1185,31 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
         accessibilityButton.setOnLongClickListener(this::onAccessibilityLongClick);
         updateAccessibilityServicesState(mAccessibilityManager);
 
+        ButtonDispatcher screenshotButton = mNavigationBarView.getScreenshotButton();
+        screenshotButton.setOnClickListener(this:: screenshotClick);
+        boolean isShow=Settings.System.getInt(mContext.getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 1) == 1;
+        if(isShow){
+            screenshotButton.setVisibility(View.VISIBLE);
+        }else{
+            screenshotButton.setVisibility(View.GONE);
+        }
+
+        ButtonDispatcher volumeAddButton=mNavigationBarView.getVolumeAddButton();
+        ButtonDispatcher volumeSubButton=mNavigationBarView.getVolumeSubButton();
+        //boolean isShowVolumeButton = "true".equals(SystemProperties.get("ro.rk.systembar.voiceicon","true"));
+        boolean isShowVolumeButton = true;
+        if(isShowVolumeButton){
+            volumeAddButton.setVisibility(View.VISIBLE);
+            volumeSubButton.setVisibility(View.VISIBLE);
+        }else{
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
+        if (mContext.getResources().getConfiguration().smallestScreenWidthDp < 400) {
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
+
         ButtonDispatcher imeSwitcherButton = mNavigationBarView.getImeSwitchButton();
         imeSwitcherButton.setOnClickListener(this::onImeSwitcherClick);
 
@@ -1374,6 +1418,16 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
         final Display display = v.getDisplay();
         mAccessibilityManager.notifyAccessibilityButtonClicked(
                 display != null ? display.getDisplayId() : DEFAULT_DISPLAY);
+    }
+
+    private void screenshotClick(View v) {
+        long nowTime = SystemClock.elapsedRealtime();
+        if (nowTime - mLastClickScreenshotTime < SCREENSHOT_TIME_INTERVAL) {
+            return;
+        }
+        Intent intent=new Intent("android.intent.action.SCREENSHOT");
+        mContext.sendBroadcast(intent);
+        mLastClickScreenshotTime = nowTime;
     }
 
     private boolean onAccessibilityLongClick(View v) {
