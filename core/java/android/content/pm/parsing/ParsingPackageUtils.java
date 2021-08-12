@@ -208,6 +208,8 @@ public class ParsingPackageUtils {
     public static final int PARSE_IS_SYSTEM_DIR = 1 << 4;
     public static final int PARSE_COLLECT_CERTIFICATES = 1 << 5;
     public static final int PARSE_ENFORCE_CODE = 1 << 6;
+    public static final int PARSE_IS_PREINSTALL = 1<<8;//need same as PackageParser
+    public static final int PARSE_IS_PREBUNDLED_DIR = 1<<9;//need same as PackageParser
     public static final int PARSE_CHATTY = 1 << 31;
 
     @IntDef(flag = true, prefix = { "PARSE_" }, value = {
