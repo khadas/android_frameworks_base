@@ -120,6 +120,13 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
                 requestVendorId(true);
                 return true;
             } else if (opcode == Constants.MESSAGE_FEATURE_ABORT) {
+                if (localDevice() instanceof HdmiCecLocalDeviceAudioSystem) {
+                    // don't care about vendor id for audio system in hotplug scenario.
+                    addDeviceInfoForAudioSystem();
+                    finish();
+                    return true;
+                }
+
                 int requestOpcode = params[0] & 0xFF;
                 if (requestOpcode == Constants.MESSAGE_GIVE_OSD_NAME) {
                     requestVendorId(true);
@@ -180,6 +187,10 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
     }
 
     private void addDeviceInfo() {
+        if (!(localDevice() instanceof HdmiCecLocalDeviceTv)) {
+            HdmiLogger.error("addDeviceInfo but no tv device");
+            return;
+        }
         // The device should be in the device list with default information.
         if (!tv().isInDeviceList(mDeviceLogicalAddress, mDevicePhysicalAddress)) {
             Slog.w(TAG, String.format("Device not found (%02x, %04x)",
@@ -212,6 +223,7 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
             if (localDevice() instanceof HdmiCecLocalDeviceAudioSystem) {
                 addDeviceInfoForAudioSystem();
                 finish();
+                return;
             }
             // Osd name request timed out. Try vendor id
             requestVendorId(true);
