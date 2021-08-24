@@ -3053,12 +3053,6 @@ public class AudioService extends IAudioService.Stub
                                     int device,
                                     boolean force,
                                     String caller, boolean hasModifyAudioSettings) {
-        if (isInVolumePassthrough()) {
-            if (DEBUG_VOL) {
-                Slog.d(TAG, "setStreamVolumeInt is of no need in passthrough audio format.");
-            }
-            return;
-        }
         VolumeStreamState streamState = mStreamStates[streamType];
 
         if (streamState.setIndex(index, device, caller, hasModifyAudioSettings) || force) {
