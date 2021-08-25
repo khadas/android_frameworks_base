@@ -193,6 +193,9 @@ public class ScreenMediaRecorder {
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaCodecInfo.VideoCapabilities maxInfo = null;
         for (MediaCodecInfo codec : codecList.getCodecInfos()) {
+            if (!codec.isEncoder()) {
+                continue;
+            }
             String videoType = MediaFormat.MIMETYPE_VIDEO_AVC;
             String[] types = codec.getSupportedTypes();
             for (String t : types) {
@@ -228,10 +231,13 @@ public class ScreenMediaRecorder {
                         Log.d(TAG, "Screen size supported at rate " + refreshRate);
                         return new int[]{screenWidthAligned, screenHeightAligned, refreshRate};
                     }
-
+                    int sw = Math.min(width, height);
+                    int sh = Math.max(width, height);
+                    int scw = Math.min(screenWidth, screenHeight);
+                    int sch = Math.max(screenWidth, screenHeight);
                     // Otherwise, continue searching
-                    double scale = Math.min(((double) width / screenWidth),
-                            ((double) height / screenHeight));
+                    double scale = Math.min(((double) sw / scw),
+                            ((double) sh / sch));
                     if (scale > maxScale) {
                         maxScale = Math.min(1, scale);
                         maxInfo = vc;
