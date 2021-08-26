@@ -270,6 +270,7 @@ public class BluetoothDetailsProfilesController extends BluetoothDetailsControll
     @Override
     protected void refresh() {
         for (LocalBluetoothProfile profile : getProfiles()) {
+            if(profile == null)continue;
             if (!profile.isProfileReady()) {
                 continue;
             }
