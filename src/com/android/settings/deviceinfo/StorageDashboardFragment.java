@@ -123,6 +123,7 @@ public class StorageDashboardFragment extends DashboardFragment
                 case VolumeInfo.STATE_MOUNTED:
                 case VolumeInfo.STATE_MOUNTED_READ_ONLY:
                 case VolumeInfo.STATE_UNMOUNTABLE:
+                case VolumeInfo.STATE_UNMOUNTED:
                     // Add mounted or unmountable storage in the list and show it on spinner.
                     // Unmountable storages are the storages which has a problem format and android
                     // is not able to mount it automatically.
@@ -137,7 +138,6 @@ public class StorageDashboardFragment extends DashboardFragment
                     refreshUi();
                     break;
                 case VolumeInfo.STATE_REMOVED:
-                case VolumeInfo.STATE_UNMOUNTED:
                 case VolumeInfo.STATE_BAD_REMOVAL:
                 case VolumeInfo.STATE_EJECTING:
                     // Remove removed storage from list and don't show it on spinner.
