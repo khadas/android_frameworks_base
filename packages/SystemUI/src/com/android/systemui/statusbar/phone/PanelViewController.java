@@ -27,9 +27,12 @@ import static java.lang.Float.isNaN;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.app.KeyguardManager;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.VibrationEffect;
 import android.util.Log;
 import android.util.MathUtils;
@@ -406,7 +409,13 @@ public abstract class PanelViewController {
                             : (mKeyguardStateController.canDismissLockScreen()
                                     ? UNLOCK : BOUNCER_UNLOCK);
 
-            fling(vel, expand, isFalseTouch(x, y, interactionType));
+            if (isQuicklyUnlockMachine()) {
+                if (mExpandedFraction > 0f) {
+                    fling(vel, expand, isFalseTouch(x, y, interactionType));
+                }
+            } else {
+                fling(vel, expand, isFalseTouch(x, y, interactionType));
+            }
             onTrackingStopped(expand);
             mUpdateFlingOnLayout = expand && mPanelClosedOnDown && !mHasLayoutedSinceDown;
             if (mUpdateFlingOnLayout) {
@@ -748,10 +757,32 @@ public abstract class PanelViewController {
                 mHeightAnimator.end();
             }
         }
+        if (isQuicklyUnlockMachine() && null != mView) {
+            KeyguardManager mKeyguardManager = (KeyguardManager) mView.getContext().getSystemService(Context.KEYGUARD_SERVICE);
+            boolean flag = mKeyguardManager.inKeyguardRestrictedInputMode();
+            if (flag) {
+                if (mExpandedHeight <= maxPanelHeight/1.5) {
+                    mExpandedHeight = 0;
+                }
+            }
+        }
+
         mExpandedFraction = Math.min(1f,
                 maxPanelHeight == 0 ? 0 : mExpandedHeight / maxPanelHeight);
         onHeightUpdated(mExpandedHeight);
         notifyBarPanelExpansionChanged();
+    }
+
+    private boolean isQuicklyUnlockMachine() {
+        String platformName = SystemProperties.get("ro.board.platform");
+        if ("rk312x".equals(platformName)
+                || "rk3126c".equals(platformName)
+                || "rk3326".equals(platformName)
+                || "rk3399".equals(platformName)
+                || "rk356x".equals(platformName)) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1251,7 +1282,8 @@ public abstract class PanelViewController {
             }
 
             // On expanding, single mouse click expands the panel instead of dragging.
-            if (isFullyCollapsed() && event.isFromSource(InputDevice.SOURCE_MOUSE)) {
+            if (isFullyCollapsed() && event.isFromSource(InputDevice.SOURCE_MOUSE)
+                    && !isQuicklyUnlockMachine()) {
                 if (event.getAction() == MotionEvent.ACTION_UP) {
                     expand(true);
                 }
