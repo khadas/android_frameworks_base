@@ -207,7 +207,7 @@ public class ScreenMediaRecorder {
                 if (capabilities != null && capabilities.getVideoCapabilities() != null) {
                     MediaCodecInfo.VideoCapabilities vc = capabilities.getVideoCapabilities();
 
-                    int width = vc.getSupportedWidths().getUpper();
+                    int width = vc.getSmallerDimensionUpperLimit();
                     int height = vc.getSupportedHeights().getUpper();
 
                     int screenWidthAligned = screenWidth;
