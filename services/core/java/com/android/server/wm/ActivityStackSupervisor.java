@@ -170,6 +170,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
     /** How long we can hold the sleep wake lock before giving up. */
     private static final int SLEEP_TIMEOUT = 5 * 1000;
 
+    private static final int RESUME_POLLING = 50;
     // How long we can hold the launch wake lock before giving up.
     private static final int LAUNCH_TIMEOUT = 10 * 1000;
 
@@ -182,6 +183,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
     private static final int SLEEP_TIMEOUT_MSG = FIRST_SUPERVISOR_STACK_MSG + 3;
     private static final int LAUNCH_TIMEOUT_MSG = FIRST_SUPERVISOR_STACK_MSG + 4;
     private static final int PROCESS_STOPPING_AND_FINISHING_MSG = FIRST_SUPERVISOR_STACK_MSG + 5;
+    private static final int SLEEP_ACTIVITY_RESUME_POLLING_MSG = FIRST_SUPERVISOR_STACK_MSG + 6;
     private static final int LAUNCH_TASK_BEHIND_COMPLETE = FIRST_SUPERVISOR_STACK_MSG + 12;
     private static final int RESTART_ACTIVITY_PROCESS_TIMEOUT_MSG = FIRST_SUPERVISOR_STACK_MSG + 13;
     private static final int REPORT_MULTI_WINDOW_MODE_CHANGED_MSG = FIRST_SUPERVISOR_STACK_MSG + 14;
@@ -1760,6 +1762,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
 
         if (!mRootWindowContainer.putStacksToSleep(
                 allowDelay, false /* shuttingDown */)) {
+            scheduleSleepResumesPoll();
             return;
         }
 
@@ -1767,6 +1770,7 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
         mRootWindowContainer.sendPowerHintForLaunchEndIfNeeded();
 
         removeSleepTimeouts();
+        removeSleepResumesPoll();
 
         if (mGoingToSleepWakeLock.isHeld()) {
             mGoingToSleepWakeLock.release();
@@ -2124,6 +2128,15 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
         mHandler.sendEmptyMessageDelayed(SLEEP_TIMEOUT_MSG, SLEEP_TIMEOUT);
     }
 
+    void removeSleepResumesPoll() {
+        mHandler.removeMessages(SLEEP_ACTIVITY_RESUME_POLLING_MSG);
+    }
+
+    final void scheduleSleepResumesPoll() {
+        removeSleepResumesPoll();
+        mHandler.sendEmptyMessageDelayed(SLEEP_ACTIVITY_RESUME_POLLING_MSG, RESUME_POLLING);
+    }
+
     void removeRestartTimeouts(ActivityRecord r) {
         mHandler.removeMessages(RESTART_ACTIVITY_PROCESS_TIMEOUT_MSG, r);
     }
@@ -2416,6 +2429,12 @@ public class ActivityStackSupervisor implements RecentTasks.Callbacks {
                     if (mService.isSleepingOrShuttingDownLocked()) {
                         Slog.w(TAG, "Sleep timeout!  Sleeping now.");
                         checkReadyForSleepLocked(false /* allowDelay */);
+                    }
+                } break;
+                case SLEEP_ACTIVITY_RESUME_POLLING_MSG: {
+                    if (mService.isSleepingOrShuttingDownLocked()) {
+                        Slog.w(TAG, "some activity isn't pausing ,resume polling");
+                        checkReadyForSleepLocked(true /* allowDelay */);
                     }
                 } break;
                 case LAUNCH_TIMEOUT_MSG: {
