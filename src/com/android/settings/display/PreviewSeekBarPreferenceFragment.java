@@ -64,8 +64,8 @@ public abstract class PreviewSeekBarPreferenceFragment extends SettingsPreferenc
     private long mLastCommitTime;
 
     private class onPreviewSeekBarChangeListener implements OnSeekBarChangeListener {
-        private static final long CHANGE_BY_SEEKBAR_DELAY_MS = 100;
-        private static final long CHANGE_BY_BUTTON_DELAY_MS = 300;
+        private static final long CHANGE_BY_SEEKBAR_DELAY_MS = 0;//100;
+        private static final long CHANGE_BY_BUTTON_DELAY_MS = 0;//300;
 
         private boolean mSeekByTouch;
         private boolean mIsChanged;
