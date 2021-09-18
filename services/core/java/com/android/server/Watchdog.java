@@ -110,8 +110,8 @@ public class Watchdog extends Thread {
         "/vendor/bin/hdmicecd",
         "/vendor/bin/hw/android.hardware.tv.cec@1.0-service",
         "/vendor/bin/hw/android.hardware.tv.input@1.0-service",
-        "/vendor/bin/hw/android.hardware.graphics.composer@2.3-service.droidlogic",
-        "/vendor/bin/hw/android.hardware.graphics.allocator@3.0-service",
+        "/vendor/bin/hw/android.hardware.graphics.composer@2.4-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.graphics.allocator@4.0-service",
     };
 
     public static final List<String> HAL_INTERFACES_OF_INTEREST = Arrays.asList(
@@ -124,8 +124,8 @@ public class Watchdog extends Thread {
             "android.hardware.bluetooth@1.0::IBluetoothHci",
             "android.hardware.camera.provider@2.4::ICameraProvider",
             "android.hardware.gnss@1.0::IGnss",
-            "android.hardware.graphics.allocator@2.0::IAllocator",
-            "android.hardware.graphics.composer@2.1::IComposer",
+            "android.hardware.graphics.allocator@4.0::IAllocator",
+            "android.hardware.graphics.composer@2.4::IComposer",
             "android.hardware.health@2.0::IHealth",
             "android.hardware.light@2.0::ILight",
             "android.hardware.media.c2@1.0::IComponentStore",
