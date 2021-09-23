@@ -280,6 +280,7 @@
     <allow-in-power-save package="com.android.cellbroadcastreceiver.module" />
     <allow-in-power-save package="com.android.cellbroadcastreceiver" />
     <allow-in-power-save package="com.android.shell" />
+    <allow-in-power-save package="com.android.deskclock" />
 
     <!-- Emergency app needs to run in the background to reliably provide safety features -->
     <allow-in-power-save package="com.android.emergency" />
