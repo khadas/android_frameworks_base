@@ -158,7 +158,7 @@ public class ScreenMediaRecorder extends MediaProjection.Callback {
 
         // Set up audio
         if (mAudioSource == MIC) {
-            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.HE_AAC);
+            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
             mMediaRecorder.setAudioChannels(TOTAL_NUM_TRACKS);
             mMediaRecorder.setAudioEncodingBitRate(AUDIO_BIT_RATE);
             mMediaRecorder.setAudioSamplingRate(AUDIO_SAMPLE_RATE);
