@@ -86,8 +86,8 @@
 
     <dimen name="fab_margin">24dp</dimen>
 
-    <dimen name="navigation_key_width">128dp</dimen>
-    <dimen name="navigation_key_padding">25dp</dimen>
+    <dimen name="navigation_key_width">80dp</dimen>
+    <dimen name="navigation_key_padding">0dp</dimen>
 
     <!-- Keyboard shortcuts helper -->
     <dimen name="ksh_layout_width">488dp</dimen>
