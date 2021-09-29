@@ -214,6 +214,16 @@ public class NotificationShadeWindowController implements Callback, Dumpable,
         }
     }
 
+	//add to control NavigationBar
+    public void Notification_control(boolean visible) {
+        if (visible) {
+            mNotificationShadeView.setVisibility(View.INVISIBLE);
+        } else {
+            mNotificationShadeView.setVisibility(View.GONE);
+        }
+    }
+	//add end
+
     public void setNotificationShadeView(ViewGroup view) {
         mNotificationShadeView = view;
     }
@@ -319,6 +329,11 @@ public class NotificationShadeWindowController implements Callback, Dumpable,
             }
             visible = true;
         }
+		//add to control NavigationBar
+		if(android.os.SystemProperties.getInt("persist.sys.show_upper_bar",1) == 0){
+			return;
+		}
+		//add end
         if (visible) {
             mNotificationShadeView.setVisibility(View.VISIBLE);
         } else {
