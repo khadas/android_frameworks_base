@@ -1369,6 +1369,7 @@ public class HdmiControlService extends SystemService {
         }
         AudioManager audioManager = getAudioManager();
         boolean muted = audioManager.isStreamMute(AudioManager.STREAM_MUSIC);
+        int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         if (mute) {
             if (!muted) {
                 audioManager.setStreamMute(AudioManager.STREAM_MUSIC, true);
@@ -1382,6 +1383,10 @@ public class HdmiControlService extends SystemService {
             int flag = AudioManager.FLAG_HDMI_SYSTEM_AUDIO_VOLUME;
             if (0 <= volume && volume <= 100) {
                 Slog.i(TAG, "volume: " + volume);
+                if (currentVolume == volume) {
+                    Slog.d(TAG, "no need to update volume for it's equal");
+                    return;
+                }
                 flag |= AudioManager.FLAG_SHOW_UI;
                 audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, flag);
             }
