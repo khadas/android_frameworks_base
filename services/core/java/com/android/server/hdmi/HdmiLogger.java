@@ -17,6 +17,7 @@
 package com.android.server.hdmi;
 
 import android.annotation.Nullable;
+import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Pair;
@@ -42,7 +43,7 @@ final class HdmiLogger {
     // Logging duration for same error message.
     private static final long ERROR_LOG_DURATION_MILLIS = 20 * 1000;  // 20s
 
-    private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+    private static final boolean DEBUG = Build.IS_USERDEBUG || Log.isLoggable(TAG, Log.DEBUG);
 
     private static final ThreadLocal<HdmiLogger> sLogger = new ThreadLocal<>();
 
