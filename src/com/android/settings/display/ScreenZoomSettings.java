@@ -58,6 +58,8 @@ public class ScreenZoomSettings extends PreviewSeekBarPreferenceFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setOverlayDelayMs(0);
+
         final DisplayDensityUtils density = new DisplayDensityUtils(getContext());
 
         final int initialIndex = density.getCurrentIndex();

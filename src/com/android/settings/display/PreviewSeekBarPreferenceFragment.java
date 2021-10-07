@@ -62,10 +62,15 @@ public abstract class PreviewSeekBarPreferenceFragment extends SettingsPreferenc
 
     private static final long MIN_COMMIT_INTERVAL_MS = 800;
     private long mLastCommitTime;
+    private long mOverlayTouchDelayMs = -1;
+
+    public void setOverlayDelayMs(long overlayTouchDelayMs) {
+        mOverlayTouchDelayMs = overlayTouchDelayMs;
+    }
 
     private class onPreviewSeekBarChangeListener implements OnSeekBarChangeListener {
-        private static final long CHANGE_BY_SEEKBAR_DELAY_MS = 0;//100;
-        private static final long CHANGE_BY_BUTTON_DELAY_MS = 0;//300;
+        private static final long CHANGE_BY_SEEKBAR_DELAY_MS = 100;
+        private static final long CHANGE_BY_BUTTON_DELAY_MS = 300;
 
         private boolean mSeekByTouch;
         private boolean mIsChanged;
@@ -85,7 +90,7 @@ public abstract class PreviewSeekBarPreferenceFragment extends SettingsPreferenc
             mIsChanged = true;
             setPreviewLayer(progress, false);
             if (mSeekByTouch) {
-                mCommitDelayMs = CHANGE_BY_SEEKBAR_DELAY_MS;
+                mCommitDelayMs = mOverlayTouchDelayMs > -1? mOverlayTouchDelayMs:CHANGE_BY_SEEKBAR_DELAY_MS;
             } else {
                 mCommitDelayMs = CHANGE_BY_BUTTON_DELAY_MS;
                 commitOnNextFrame();
