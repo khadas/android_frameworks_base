@@ -6647,6 +6647,15 @@ public class PackageManagerService extends IPackageManager.Stub
             int flags, int privateResolveFlags, List<ResolveInfo> query, int userId,
             boolean queryMayBeFiltered) {
         if (query != null) {
+			//add to disable open com.android.tv.settings
+			if(SystemProperties.getInt("persist.sys.use.tv_settings",0) == 0){
+				for(int i=0;i<query.size();i++){
+					if(query.get(i).activityInfo.packageName.equals("com.android.tv.settings")){
+						query.remove(i);
+					}
+				}
+			}
+			//add end
             final int N = query.size();
             if (N == 1) {
                 return query.get(0);
