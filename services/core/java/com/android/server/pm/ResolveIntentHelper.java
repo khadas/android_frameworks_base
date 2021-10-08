@@ -48,6 +48,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Process;
 import android.os.RemoteException;
+import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.text.TextUtils;
@@ -218,6 +219,15 @@ final class ResolveIntentHelper {
             @PackageManagerInternal.PrivateResolveFlags long privateResolveFlags,
             List<ResolveInfo> query, int userId, boolean queryMayBeFiltered) {
         if (query != null) {
+			//add to disable open com.android.tv.settings
+			if(SystemProperties.getInt("persist.sys.use.tv_settings",0) == 0){
+				for(int i=0;i<query.size();i++){
+					if(query.get(i).activityInfo.packageName.equals("com.android.tv.settings")){
+						query.remove(i);
+					}
+				}
+			}
+			//add end
             final int n = query.size();
             if (n == 1) {
                 return query.get(0);
