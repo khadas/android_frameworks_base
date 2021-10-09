@@ -390,6 +390,7 @@ public class DividerView extends FrameLayout implements OnTouchListener,
             return;
         }
         mSurfaceHidden = hidden;
+        setVisibility(hidden? View.INVISIBLE:View.VISIBLE);
         post(() -> {
             final SurfaceControl sc = getWindowSurfaceControl();
             if (sc == null) {
