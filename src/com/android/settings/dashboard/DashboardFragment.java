@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.app.settings.SettingsEnums;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.ArrayMap;
@@ -66,6 +67,7 @@ public abstract class DashboardFragment extends SettingsPreferenceFragment
         BasePreferenceController.UiBlockListener {
     public static final String CATEGORY = "category";
     private static final String TAG = "DashboardFragment";
+    private static final String EMERGENCY_KEY = "top_level_emergency";
 
     @VisibleForTesting
     final ArrayMap<String, List<DynamicDataObserver>> mDashboardTilePrefKeys = new ArrayMap<>();
@@ -359,6 +361,14 @@ public abstract class DashboardFragment extends SettingsPreferenceFragment
      */
     protected void updatePreferenceStates() {
         final PreferenceScreen screen = getPreferenceScreen();
+        PackageManager packageManager = getContext().getPackageManager();
+        if(!packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)){
+            Preference preference = screen.findPreference(EMERGENCY_KEY);
+            if(preference != null){
+                screen.removePreference(preference);
+            }
+        }
+
         Collection<List<AbstractPreferenceController>> controllerLists =
                 mPreferenceControllers.values();
         for (List<AbstractPreferenceController> controllerList : controllerLists) {
