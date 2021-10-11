@@ -729,6 +729,17 @@ public class ApplicationPackageManager extends PackageManager {
 
     @Override
     public boolean hasSystemFeature(String name, int version) {
+        // Support vulkan v1.1 when antutu is running in forceground.
+        if (!SystemProperties.getBoolean("cts_gts.status", false) &&
+                name.equals("android.hardware.vulkan.version") &&
+                "true".equals(SystemProperties.get("persist.vendor.rk_vulkan"))) {
+            final String packageName = mContext.getOpPackageName();
+            if (packageName.contains("com.antutu.benchmark.full") ||
+                packageName.contains("com.antutu.ABenchMark")) {
+                Log.w("ATTU", "Support vulkan 1.1.0 now!");
+                return 4198400 >= version;
+            }
+        }
         return mHasSystemFeatureCache.query(new HasSystemFeatureQuery(name, version));
     }
 
