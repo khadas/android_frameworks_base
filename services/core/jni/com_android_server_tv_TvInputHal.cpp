@@ -298,6 +298,15 @@ private:
         JTvInputHal* mHal;
     };
 
+    class TvInputHalDeathReceivier : public android::hardware::hidl_death_recipient {
+    public:
+        TvInputHalDeathReceivier(JTvInputHal* hal): mHal(hal) {};
+        virtual void serviceDied(uint64_t cookie,
+                                 const wp<::android::hidl::base::V1_0::IBase>& service) override;
+    private:
+        JTvInputHal* mHal;
+    };
+
     JTvInputHal(JNIEnv* env, jobject thiz, sp<ITvInput> tvInput, const sp<Looper>& looper);
 
     Mutex mLock;
@@ -309,6 +318,7 @@ private:
 
     sp<ITvInput> mTvInput;
     sp<ITvInputCallback> mTvInputCallback;
+    sp<TvInputHalDeathReceivier> mDeathReceiver;
 };
 
 JTvInputHal::JTvInputHal(JNIEnv* env, jobject thiz, sp<ITvInput> tvInput,
@@ -318,6 +328,8 @@ JTvInputHal::JTvInputHal(JNIEnv* env, jobject thiz, sp<ITvInput> tvInput,
     mLooper = looper;
     mTvInputCallback = new TvInputCallback(this);
     mTvInput->setCallback(mTvInputCallback);
+    mDeathReceiver = new TvInputHalDeathReceivier(this);
+    mTvInput->linkToDeath(mDeathReceiver, /*cookie*/ 0);
 }
 
 JTvInputHal::~JTvInputHal() {
@@ -334,6 +346,7 @@ JTvInputHal* JTvInputHal::createInstance(JNIEnv* env, jobject thiz, const sp<Loo
         ALOGE("Couldn't get tv.input service.");
         return nullptr;
     }
+    ALOGI("got tv.input service.");
 
     return new JTvInputHal(env, thiz, tvInput, looper);
 }
@@ -586,6 +599,20 @@ JTvInputHal::TvInputCallback::TvInputCallback(JTvInputHal* hal) {
 Return<void> JTvInputHal::TvInputCallback::notify(const TvInputEvent& event) {
     mHal->mLooper->sendMessage(new NotifyHandler(mHal, event), static_cast<int>(event.type));
     return Void();
+}
+
+void JTvInputHal::TvInputHalDeathReceivier::serviceDied(
+        uint64_t /* cookie */,
+        const wp<::android::hidl::base::V1_0::IBase>& /* service */) {
+    ALOGE("TvInput HAL died, attempting to reconnect.");
+    sp<ITvInput> tvInput = ITvInput::getService();
+    if (tvInput == nullptr) {
+        ALOGE("Couldn't get tv.input service.");
+        return;
+    }
+    tvInput->setCallback(mHal->mTvInputCallback);
+    tvInput->linkToDeath(mHal->mDeathReceiver, /*cookie*/ 0);
+    mHal->mTvInput = tvInput;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
