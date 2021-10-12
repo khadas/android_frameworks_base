@@ -474,7 +474,8 @@ public abstract class ToggleFeaturePreferenceFragment extends SettingsPreference
                 generateFooterContentDescription(htmlDescription));
 
         // Only framework tools support help link
-        if (getHelpResource() != 0) {
+        if (getHelpResource() != 0
+                && !TextUtils.isEmpty(getContext().getString(getHelpResource()))) {
             htmlFooterPreference.setLearnMoreAction(view -> {
                 final Intent helpIntent = HelpUtils.getHelpIntent(
                         getContext(), getContext().getString(getHelpResource()),
@@ -524,7 +525,8 @@ public abstract class ToggleFeaturePreferenceFragment extends SettingsPreference
                 generateFooterContentDescription(summary));
 
         // Only framework tools support help link
-        if (getHelpResource() != 0) {
+        if (getHelpResource() != 0
+                && !TextUtils.isEmpty(getContext().getString(getHelpResource()))) {
             footerPreference.setLearnMoreAction(view -> {
                 final Intent helpIntent = HelpUtils.getHelpIntent(
                         getContext(), getContext().getString(getHelpResource()),

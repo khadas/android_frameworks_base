@@ -18,6 +18,7 @@ package com.android.settings.accessibility;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 
 import androidx.preference.PreferenceScreen;
 
@@ -68,7 +69,8 @@ public abstract class AccessibilityFooterPreferenceController extends BasePrefer
                 .append(footerPreference.getTitle());
         footerPreference.setContentDescription(sb);
 
-        if (getHelpResource() != 0) {
+        if (getHelpResource() != 0
+                && !TextUtils.isEmpty(mContext.getString(getHelpResource()))) {
             footerPreference.setLearnMoreAction(view -> {
                 final Intent helpIntent = HelpUtils.getHelpIntent(
                         mContext, mContext.getString(getHelpResource()),
