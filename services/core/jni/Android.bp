@@ -68,6 +68,7 @@ cc_library_static {
         "com_android_server_pm_PackageManagerShellCommandDataLoader.cpp",
         "com_android_server_sensor_SensorService.cpp",
         "com_android_server_wm_TaskFpsCallbackController.cpp",
+        "com_android_server_rkdisplay_RkDisplayModes.cpp",
         "onload.cpp",
         ":lib_cachedAppOptimizer_native",
         ":lib_gameManagerService_native",
@@ -187,6 +188,7 @@ cc_defaults {
         "android.system.suspend.control-V1-cpp",
         "android.system.suspend.control.internal-cpp",
         "android.system.suspend-V1-ndk",
+        "rockchip.hardware.outputmanager@1.0",
         "service.incremental",
     ],
 

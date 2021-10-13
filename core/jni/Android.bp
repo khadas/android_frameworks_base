@@ -306,6 +306,7 @@ cc_library_shared {
                 "libvintf",
                 "libnativedisplay",
                 "libnativewindow",
+                "libhwui",
                 "libdl",
                 "libdl_android",
                 "libtimeinstate",
@@ -314,6 +315,9 @@ cc_library_shared {
             export_shared_lib_headers: [
                 // our headers include libnativewindow's public headers
                 "libnativewindow",
+
+                // GraphicsJNI.h includes hwui headers
+                "libhwui",
             ],
             export_static_lib_headers: [
                 // AndroidRuntime.h depends on nativehelper/jni.h
