@@ -991,7 +991,7 @@ public class NavigationBarView extends FrameLayout implements PluginListener<Nav
 		 Log.d(TAG, "NavigationBar shortSize:"+ shortSize +"DisplayMetrics.DENSITY_DEFAULT:"+ DisplayMetrics.DENSITY_DEFAULT +"DENSITY_DEVICE:"+DisplayMetrics.DENSITY_DEVICE);
 	        // mNavigationBarCanMove = width != height && shortSizeDp < 600; from PhoneWindowManager.java
 		        // this situation, NavigationBar will be moved to LEFT/RIGHT side to show.
-		        if (dp < 600 && width != heigth) {
+		        if (dp < 600 && width != heigth && rot!= 1 && rot !=3) {
 			            rot = (rot + 1) % 4;
 			            Log.d(TAG, "NavigationBar orient is workaround displayed");
 			        }
