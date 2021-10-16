@@ -2374,7 +2374,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
             loadBooleanSetting(stmt, Settings.Secure.USER_SETUP_COMPLETE,
                     R.bool.def_user_setup_complete);
-
+			//add to set TV_USER_SETUP_COMPLETE
+            loadBooleanSetting(stmt, Settings.Secure.TV_USER_SETUP_COMPLETE,
+                    R.bool.def_user_setup_complete);
+			//add end
             loadStringSetting(stmt, Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS,
                         R.string.def_immersive_mode_confirmations);
 
