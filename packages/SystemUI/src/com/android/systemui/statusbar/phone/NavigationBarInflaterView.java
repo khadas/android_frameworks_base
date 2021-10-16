@@ -65,6 +65,9 @@ public class NavigationBarInflaterView extends FrameLayout
     public static final String CONTEXTUAL = "contextual";
     public static final String IME_SWITCHER = "ime_switcher";
 
+	public static final String VOLUME_ADD = "volume_add";
+    public static final String VOLUME_SUB = "volume_sub";
+
     public static final String GRAVITY_SEPARATOR = ";";
     public static final String BUTTON_SEPARATOR = ",";
 
@@ -371,6 +374,10 @@ public class NavigationBarInflaterView extends FrameLayout
             v = inflater.inflate(R.layout.back, parent, false);
         } else if (RECENT.equals(button)) {
             v = inflater.inflate(R.layout.recent_apps, parent, false);
+        } else if (VOLUME_ADD.equals(button)) {
+            v = inflater.inflate(R.layout.volume_add, parent, false);
+        } else if (VOLUME_SUB.equals(button)) {
+            v = inflater.inflate(R.layout.volume_sub, parent, false);
         } else if (MENU_IME_ROTATE.equals(button)) {
             v = inflater.inflate(R.layout.menu_ime, parent, false);
         } else if (NAVSPACE.equals(button)) {

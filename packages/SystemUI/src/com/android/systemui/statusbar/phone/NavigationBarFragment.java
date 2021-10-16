@@ -999,6 +999,12 @@ public class NavigationBarFragment extends LifecycleFragment implements Callback
         homeButton.setOnTouchListener(this::onHomeTouch);
         homeButton.setOnLongClickListener(this::onHomeLongClick);
 
+        ButtonDispatcher volumeAddButton = mNavigationBarView.getVolumeAddButton();
+        ButtonDispatcher volumeSubButton = mNavigationBarView.getVolumeSubButton();
+
+        volumeAddButton.setVisibility(View.VISIBLE);
+        volumeSubButton.setVisibility(View.VISIBLE);
+
         ButtonDispatcher accessibilityButton = mNavigationBarView.getAccessibilityButton();
         accessibilityButton.setOnClickListener(this::onAccessibilityClick);
         accessibilityButton.setOnLongClickListener(this::onAccessibilityLongClick);
