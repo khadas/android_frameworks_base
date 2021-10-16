@@ -120,6 +120,8 @@ public class NavigationBarView extends FrameLayout implements
     private KeyButtonDrawable mBackIcon;
     private KeyButtonDrawable mHomeDefaultIcon;
     private KeyButtonDrawable mRecentIcon;
+    private KeyButtonDrawable mVolumeAddIcon;
+    private KeyButtonDrawable mVolumeSubIcon;
     private KeyButtonDrawable mDockedIcon;
 
     private EdgeBackGestureHandler mEdgeBackGestureHandler;
@@ -317,6 +319,8 @@ public class NavigationBarView extends FrameLayout implements
         mButtonDispatchers.put(R.id.home_handle, new ButtonDispatcher(R.id.home_handle));
         mButtonDispatchers.put(R.id.recent_apps, new ButtonDispatcher(R.id.recent_apps));
         mButtonDispatchers.put(R.id.ime_switcher, imeSwitcherButton);
+        mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
+        mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
         mButtonDispatchers.put(R.id.accessibility_button, accessibilityButton);
         mButtonDispatchers.put(R.id.rotate_suggestion, rotateSuggestionButton);
         mButtonDispatchers.put(R.id.menu_container, mContextualButtonGroup);
@@ -460,6 +464,14 @@ public class NavigationBarView extends FrameLayout implements
         return mButtonDispatchers.get(R.id.ime_switcher);
     }
 
+    public ButtonDispatcher getVolumeAddButton() {
+        return mButtonDispatchers.get(R.id.volume_add);
+    }
+
+    public ButtonDispatcher getVolumeSubButton() {
+        return mButtonDispatchers.get(R.id.volume_sub);
+    }
+
     public ButtonDispatcher getAccessibilityButton() {
         return mButtonDispatchers.get(R.id.accessibility_button);
     }
@@ -503,6 +515,8 @@ public class NavigationBarView extends FrameLayout implements
         }
         if (densityChange || dirChange) {
             mRecentIcon = getDrawable(R.drawable.ic_sysbar_recent);
+            mVolumeAddIcon = getDrawable(R.drawable.ic_sysbar_volume_add);
+            mVolumeSubIcon = getDrawable(R.drawable.ic_sysbar_volume_sub);
             mContextualButtonGroup.updateIcons();
         }
         if (orientationChange || densityChange || dirChange) {
@@ -664,6 +678,8 @@ public class NavigationBarView extends FrameLayout implements
 
         updateRecentsIcon();
 
+        getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
+        getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
         // Update IME button visibility, a11y and rotate button always overrides the appearance
         mContextualButtonGroup.setButtonVisibility(R.id.ime_switcher,
                 (mNavigationIconHints & StatusBarManager.NAVIGATION_HINT_IME_SHOWN) != 0);
