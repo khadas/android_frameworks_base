@@ -77,7 +77,7 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
     }
 
     private void sendSystemAudioModeRequestInternal() {
-        if (!tv().isSystemAudioControlFeatureEnabled()) {
+        if (!tv().isSystemAudioControlFeatureEnabled() && mTargetAudioStatus) {
             HdmiLogger.debug("Ignoring <System Audio Mode Request> message "
                     + "because the System Audio Control feature is disabled.");
             return;
