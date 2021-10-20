@@ -84,6 +84,7 @@ import com.android.settings.deviceinfo.StorageDashboardFragment;
 import com.android.settings.deviceinfo.aboutphone.MyDeviceInfoFragment;
 import com.android.settings.deviceinfo.firmwareversion.FirmwareVersionSettings;
 import com.android.settings.deviceinfo.legal.ModuleLicensesDashboard;
+import com.android.settings.display.HdmiSettings;
 import com.android.settings.display.NightDisplaySettings;
 import com.android.settings.display.SmartAutoRotatePreferenceFragment;
 import com.android.settings.display.darkmode.DarkModeSettingsFragment;
@@ -183,6 +184,7 @@ public class SettingsGateway {
             WifiTetherSettings.class.getName(),
             BackgroundCheckSummary.class.getName(),
             VpnSettings.class.getName(),
+            HdmiSettings.class.getName(),
             DataSaverSummary.class.getName(),
             DateTimeSettings.class.getName(),
             LocaleListEditor.class.getName(),
@@ -356,5 +358,7 @@ public class SettingsGateway {
             Settings.MyDeviceInfoActivity.class.getName(),
             Settings.ModuleLicensesActivity.class.getName(),
             UserBackupSettingsActivity.class.getName(),
+            // Home page > Display
+            Settings.HdmiSettingsActivity.class.getName(),
     };
 }

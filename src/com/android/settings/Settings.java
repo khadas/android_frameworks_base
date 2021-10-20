@@ -327,4 +327,6 @@ public class Settings extends SettingsActivity {
      * Activity for Screenshot.
      */
     public static class ScreenshotSettingsActivity extends SettingsActivity {}
+
+    public static class HdmiSettingsActivity extends SettingsActivity {}
 }

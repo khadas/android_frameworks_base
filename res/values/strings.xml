@@ -13571,4 +13571,21 @@
     <string name="screenshot_show_title">Show the screenshot button in the statusbar</string>
     <string name="later">s later capture</string>
     <string name="help_url_screenshot" translatable="false"></string>
+
+    <!--hdmi settings-->
+    <string name="hdmi_settings">HDMI</string>
+    <string name="system_rotation">System Direction</string>
+    <string name="screen_title">Screen Setting</string>
+    <string name="screen_main_title">Main Screen</string>
+    <string name="screen_aux_title">Aux Screen</string>
+    <string name="screen_switch">Turn on/off</string>
+    <string name="screen_resolution">Resolution</string>
+    <string name="screen_scale">Screen Zoom</string>
+    <string name="screen_rotation">Screen Rotation</string>
+    <string name="screen_full_vh">screen full display</string>
+    <string name="confirm_dialog_title">Save Confirm</string>
+    <string name="confirm_dialog_message">Will cancel it</string>
+    <string name="dialog_getting_screen_info">getting screen info...</string>
+    <string name="dialog_update_resolution">Updating resolution...</string>
+    <string name="dialog_wait_screen_connect">please wait while updating info to the device...</string>
 </resources>
