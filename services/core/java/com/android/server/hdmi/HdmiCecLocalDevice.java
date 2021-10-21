@@ -1143,6 +1143,11 @@ abstract class HdmiCecLocalDevice {
                 HdmiCecMessageBuilder.buildUserControlReleased(mAddress, targetAddress));
     }
 
+    protected boolean mEarcOn = false;
+    protected void onEarcStateChanged(boolean earcOn) {
+        HdmiLogger.info("onEarcStateChanged current:" + mEarcOn + " new:" + earcOn);
+    }
+
     /** Dump internal status of HdmiCecLocalDevice object. */
     protected void dump(final IndentingPrintWriter pw) {
         pw.println("mDeviceType: " + mDeviceType);

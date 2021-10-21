@@ -269,6 +269,10 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
         if (HdmiUtils.getTypeFromAddress(address) != HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM) {
             return;
         }
+        if (tv().isEarcOn()) {
+            HdmiLogger.info("No need to turn off system audio for earc on");
+            return;
+        }
 
         tv().setSystemAudioMode(false);
     }
