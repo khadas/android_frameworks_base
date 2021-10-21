@@ -41,7 +41,7 @@ import java.util.HashMap;
 */
 public abstract class UEventObserver {
     private static final String TAG = "UEventObserver";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static UEventThread sThread;
 
@@ -163,6 +163,7 @@ public abstract class UEventObserver {
         }
 
         public String toString() {
+            mMap.forEach((k, v) -> Log.d(TAG, "key:" + k + " value:" + v));
             return mMap.toString();
         }
     }

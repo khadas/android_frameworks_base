@@ -221,6 +221,35 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         startQueuedActions();
     }
 
+    public boolean isEarcOn() {
+        return mEarcOn;
+    }
+
+    protected void onEarcStateChanged(boolean earcOn) {
+        super.onEarcStateChanged(earcOn);
+        if (mEarcOn == earcOn) {
+            return;
+        }
+        mEarcOn = earcOn;
+        HdmiLogger.info("onEarcStateChanged current earc state:" + mEarcOn);
+        updateEarcState(earcOn);
+    }
+
+    private void updateEarcState(boolean earcOn) {
+        HdmiLogger.info("updateEarcState:" + earcOn);
+        updateAudioManagerForSystemAudio(earcOn);
+        mService.getAudioManager().setWiredDeviceConnectionState(
+                AudioSystem.DEVICE_OUT_HDMI_ARC, (earcOn ? 1 : 0), "", "");
+        mService.getAudioManager().setParameters("HDMI ARC Switch=" + (earcOn ? 1 : 0));
+        mService.getAudioManager().setParameters("speaker_mute=" + (earcOn ? 1 : 0));
+        if (!earcOn) {
+            mService.getAudioManager().setParameters("set_ARC_format=[2, 0, 0, 0, 0]");
+            mService.getAudioManager().setParameters("set_ARC_format=[7, 0, 0, 0, 0]");
+            mService.getAudioManager().setParameters("set_ARC_format=[10, 0, 0, 0, 0]");
+            mService.getAudioManager().setParameters("set_ARC_format=[11, 0, 0, 0, 0]");
+        }
+    }
+
     @ServiceThreadOnly
     private List<Integer> initLocalDeviceAddresses() {
         assertRunOnServiceThread();
@@ -841,7 +870,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         HdmiLogger.debug("onNewAvrAdded " + avr);
         addAndStartAction(new SystemAudioActionFromTv(this, avr.getLogicalAddress(),
                 isSystemAudioControlFeatureEnabled(), null));
-        if (isConnected(avr.getPortId()) && isArcFeatureEnabled(avr.getPortId())
+        if (isEarcOn()) {
+            HdmiLogger.info("No need to start system arc for earc on");
+            return;
+        }
+        if (isArcFeatureEnabled(avr.getPortId())
                 && !hasAction(SetArcTransmissionStateAction.class)) {
             startArcAction(true);
         }
@@ -966,6 +999,12 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
         HdmiLogger.info("Set Arc Status[old:%b new:%b], and audio mode:%b",
             mArcEstablished, enabled, mService.isSystemAudioActivated());
+
+        if (isEarcOn()) {
+            HdmiLogger.info("No need to setArcStatus for earc on");
+            return false;
+        }
+
         if (mArcEstablished == enabled) {
             return mArcEstablished;
         }
@@ -1002,7 +1041,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         // Note that we don't set any name to ARC.
         mService.getAudioManager().setWiredDeviceConnectionState(
                 AudioSystem.DEVICE_OUT_HDMI_ARC,
-                enabled ? 1 : 0, "", "");
+                // Either earc or arc is on, then the audio device is HDMI_ARC.
+                mEarcOn || enabled ? 1 : 0, "", "");
     }
 
     /**
@@ -1107,7 +1147,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             // On initialization process, getAvrDeviceInfo() may return null and cause exception
             return;
         }
-        if (delta == 0 || !isSystemAudioActivated() || !mService.isHdmiCecVolumeControlEnabled()) {
+        if (delta == 0 || (!isSystemAudioActivated() && !isEarcOn()) || !mService.isHdmiCecVolumeControlEnabled()) {
             return;
         }
 
@@ -1211,7 +1251,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                 && isConnectedToArcPort(avr.getPhysicalAddress())
                 && isDirectConnectAddress(avr.getPhysicalAddress())) {
             if (enabled) {
-                return isConnected(avr.getPortId()) && isArcFeatureEnabled(avr.getPortId());
+                return isArcFeatureEnabled(avr.getPortId());
             } else {
                 return true;
             }
@@ -1260,6 +1300,13 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                     false, null));
             return true;
         }
+        if (isEarcOn()) {
+            if (systemAudioStatus)
+                updateEarcState(true);
+            else
+                updateEarcState(false);
+        }
+
         removeAction(SystemAudioAutoInitiationAction.class);
         SystemAudioActionFromAvr action = new SystemAudioActionFromAvr(this,
                 message.getSource(), systemAudioStatus, null);
@@ -1741,6 +1788,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         // Remove any repeated working actions.
         removeAllActions();
 
+        onEarcStateChanged(false);
         disableSystemAudioIfExist();
         disableArcIfExist();
 
@@ -2039,6 +2087,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     protected void dump(final IndentingPrintWriter pw) {
         super.dump(pw);
         pw.println("mArcEstablished: " + mArcEstablished);
+        pw.println("mEarcOn: " + mEarcOn);
         pw.println("mArcFeatureEnabled: " + mArcFeatureEnabled);
         pw.println("mSystemAudioMute: " + mSystemAudioMute);
         pw.println("mSystemAudioControlFeatureEnabled: " + mSystemAudioControlFeatureEnabled);

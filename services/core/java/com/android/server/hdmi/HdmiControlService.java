@@ -515,6 +515,7 @@ public class HdmiControlService extends SystemService {
     @Override
     public void onStart() {
         Slog.i(TAG, "hdmi service start.");
+        initEarcState();
         if (mIoLooper == null) {
             mIoThread.start();
             mIoLooper = mIoThread.getLooper();
@@ -784,6 +785,48 @@ public class HdmiControlService extends SystemService {
         }
     }
 
+    /*********************EARC BEGIN************************************************/
+    private boolean mEarcSupported;
+    private EarcObserver mEarcObserver;
+
+    private void initEarcState() {
+        int deviceType = HdmiDeviceInfo.DEVICE_TV;
+        if (isTvDevice()) {
+            deviceType = HdmiDeviceInfo.DEVICE_TV;
+        } else if (isAudioSystemDevice()) {
+            deviceType = HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM;
+        }
+        mEarcSupported = EarcObserver.isEarcSupport();
+        Slog.i(TAG, "initEarcState isEarcSupported " + mEarcSupported);
+
+        if (!mEarcSupported) {
+            return;
+        }
+        mEarcObserver = EarcObserver.ceateEarcObserver(this, deviceType);
+    }
+
+    public boolean isEarcSupport() {
+        return mEarcSupported;
+    }
+
+    public boolean isEarcOn() {
+        return mEarcSupported
+               && mEarcObserver.isEarcOn();
+    }
+
+    public void onEarcStateChanged(final boolean isEarcOn) {
+        runOnServiceThread(()->{
+            if (tv() != null) {
+                tv().onEarcStateChanged(isEarcOn);
+            } else if (audioSystem() != null) {
+                audioSystem().onEarcStateChanged(isEarcOn);
+            }
+        });
+
+    }
+
+    /*********************EARC END************************************************/
+
     private static int toInt(boolean enabled) {
         return enabled ? ENABLED : DISABLED;
     }
@@ -889,6 +932,9 @@ public class HdmiControlService extends SystemService {
                         mCecController.addLogicalAddress(logicalAddress);
                         allocatedDevices.add(localDevice);
                     }
+
+                    // Init earc state.
+                    localDevice.onEarcStateChanged(isEarcOn());
 
                     // Address allocation completed for all devices. Notify each device.
                     if (allocatingDevices.size() == ++finished[0]) {
@@ -1193,6 +1239,9 @@ public class HdmiControlService extends SystemService {
     @ServiceThreadOnly
     void sendCecCommand(HdmiCecMessage command, @Nullable SendMessageCallback callback) {
         assertRunOnServiceThread();
+        if (filterForEarc(command)) {
+            return;
+        }
         if (mMessageValidator.isValid(command) == HdmiCecMessageValidator.OK) {
             mCecController.sendCommand(command, callback);
         } else {
@@ -1224,6 +1273,9 @@ public class HdmiControlService extends SystemService {
     @ServiceThreadOnly
     boolean handleCecCommand(HdmiCecMessage message) {
         assertRunOnServiceThread();
+        if (filterForEarc(message)) {
+            return true;
+        }
         int errorCode = mMessageValidator.isValid(message);
         if (errorCode != HdmiCecMessageValidator.OK) {
             // We'll not response on the messages with the invalid source or destination
@@ -1239,6 +1291,34 @@ public class HdmiControlService extends SystemService {
         }
 
         return (!mAddressAllocated) ? mCecMessageBuffer.bufferMessage(message) : false;
+    }
+
+    private boolean filterForEarc(HdmiCecMessage cecMessage) {
+        if (isTvDevice() && isEarcOn()) {
+            switch (cecMessage.getOpcode()) {
+                // audio message from audio system
+                case Constants.MESSAGE_SYSTEM_AUDIO_MODE_REQUEST:
+                case Constants.MESSAGE_SET_SYSTEM_AUDIO_MODE:
+                    HdmiLogger.info("MESSAGE_SET_SYSTEM_AUDIO_MODE / MESSAGE_SYSTEM_AUDIO_MODE_REQUEST: message for earc on %s", cecMessage);
+                    return false;
+                case Constants.MESSAGE_SYSTEM_AUDIO_MODE_STATUS:
+                case Constants.MESSAGE_INITIATE_ARC:
+                case Constants.MESSAGE_TERMINATE_ARC:
+                    HdmiLogger.info("Ignoring receiving audio arc message for earc on %s", cecMessage);
+                    maySendFeatureAbortCommand(cecMessage, Constants.ABORT_REFUSED);
+                    return true;
+                // audio message to audio system
+                case Constants.MESSAGE_REPORT_ARC_INITIATED:
+                case Constants.MESSAGE_REPORT_ARC_TERMINATED:
+                case Constants.MESSAGE_REQUEST_ARC_INITIATION:
+                case Constants.MESSAGE_REQUEST_ARC_TERMINATION:
+                    HdmiLogger.info("Ignoring sending audio arc message for earc on %s", cecMessage);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        return false;
     }
 
     void enableAudioReturnChannel(int portId, boolean enabled) {
@@ -2390,6 +2470,8 @@ public class HdmiControlService extends SystemService {
 
             pw.println("mProhibitMode: " + mProhibitMode);
             pw.println("mPowerStatus: " + mPowerStatus);
+            pw.decreaseIndent();
+            pw.println("mEarcSupported: " + mEarcSupported);
 
             // System settings
             pw.println("System_settings:");
