@@ -1,5 +1,5 @@
 bootanimation_CommonCFlags = -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
-bootanimation_CommonCFlags += -Wall -Werror -Wunused -Wunreachable-code
+bootanimation_CommonCFlags += -Wall -Werror -Wunused -Wunreachable-code -Wno-format
 
 
 # bootanimation executable
