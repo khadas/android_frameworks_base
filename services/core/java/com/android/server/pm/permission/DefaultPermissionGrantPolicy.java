@@ -195,6 +195,14 @@ final class DefaultPermissionGrantPolicy {
         CAMERA_PERMISSIONS.add(Manifest.permission.CAMERA);
     }
 
+    private static final Set<String> GALLERY_PERMISSIONS = new ArraySet<>();
+    static {
+        GALLERY_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        GALLERY_PERMISSIONS.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        GALLERY_PERMISSIONS.add(Manifest.permission.RECORD_AUDIO);
+        GALLERY_PERMISSIONS.add(Manifest.permission.CAMERA);
+    }
+
     private static final Set<String> SENSORS_PERMISSIONS = new ArraySet<>();
     static {
         SENSORS_PERMISSIONS.add(Manifest.permission.BODY_SENSORS);
@@ -567,6 +575,11 @@ final class DefaultPermissionGrantPolicy {
         grantPermissionsToSystemPackage(pm,
                 getDefaultSystemHandlerActivityPackage(pm, MediaStore.ACTION_IMAGE_CAPTURE, userId),
                 userId, CAMERA_PERMISSIONS, MICROPHONE_PERMISSIONS, STORAGE_PERMISSIONS);
+
+        // Gallery
+        grantPermissionsToSystemPackage(pm,
+                "com.android.gallery3d",
+                userId, GALLERY_PERMISSIONS);
 
         // Sound recorder
         grantPermissionsToSystemPackage(pm,
