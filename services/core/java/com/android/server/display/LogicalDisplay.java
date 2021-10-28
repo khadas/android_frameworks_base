@@ -24,6 +24,7 @@ import android.annotation.Nullable;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManagerInternal;
+import android.os.SystemProperties;
 import android.util.ArraySet;
 import android.util.SparseArray;
 import android.view.Display;
@@ -433,7 +434,30 @@ final class LogicalDisplay {
             mBaseDisplayInfo.brightnessDefault = deviceInfo.brightnessDefault;
             mBaseDisplayInfo.roundedCorners = deviceInfo.roundedCorners;
             mBaseDisplayInfo.installOrientation = deviceInfo.installOrientation;
-            mPrimaryDisplayDeviceInfo = deviceInfo;
+            
+            if(SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
+                if (deviceInfo.type == Display.TYPE_EXTERNAL) {
+                    int mPhysicalDisplayId = Integer.valueOf(deviceInfo.uniqueId.split(":")[1]);
+                    String property = "persist.sys.rotation.einit-" + mPhysicalDisplayId;
+                    if (SystemProperties.getInt(property, 0) % 2 != 0) {
+                        mBaseDisplayInfo.appWidth = deviceInfo.height;
+                        mBaseDisplayInfo.appHeight = deviceInfo.width;
+                        mBaseDisplayInfo.logicalWidth = deviceInfo.height;
+                        mBaseDisplayInfo.logicalHeight = deviceInfo.width;
+                    }
+                }
+            }else{
+                if(deviceInfo.type==Display.TYPE_EXTERNAL) {
+                    if (SystemProperties.getInt("persist.sys.rotation.einit", 0) % 2 != 0) {
+                        mBaseDisplayInfo.appWidth = deviceInfo.height;
+                        mBaseDisplayInfo.appHeight = deviceInfo.width;
+                        mBaseDisplayInfo.logicalWidth = deviceInfo.height;
+                        mBaseDisplayInfo.logicalHeight = deviceInfo.width;
+                    }
+                }
+            }
+
+	    mPrimaryDisplayDeviceInfo = deviceInfo;
             mInfo.set(null);
         }
     }
@@ -617,6 +641,30 @@ final class LogicalDisplay {
         } else {  // Surface.ROTATION_270
             mTempDisplayRect.offset(-mDisplayOffsetY, mDisplayOffsetX);
         }
+
+        if (SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
+            if (displayDeviceInfo.type == Display.TYPE_EXTERNAL) {
+                int mPhysicalDisplayId = Integer.valueOf(device.getDisplayDeviceInfoLocked().uniqueId.split(":")[1]);
+                String property="persist.sys.rotation.efull-"+mPhysicalDisplayId;
+                if (SystemProperties.getBoolean(property, false)) {
+                    mTempDisplayRect.top = 0;
+                    mTempDisplayRect.left = 0;
+                    mTempDisplayRect.right = physWidth;
+                    mTempDisplayRect.bottom = physHeight;
+                }
+            }
+        } else {
+            if (device.getDisplayDeviceInfoLocked().type == Display.TYPE_EXTERNAL) {
+                if (SystemProperties.getBoolean("persist.sys.rotation.efull", false)) {
+                    mTempDisplayRect.top = 0;
+                    mTempDisplayRect.left = 0;
+                    mTempDisplayRect.right = physWidth;
+                    mTempDisplayRect.bottom = physHeight;
+                }
+            }
+        }
+
+
 
         mDisplayPosition.set(mTempDisplayRect.left, mTempDisplayRect.top);
         device.setProjectionLocked(t, orientation, mTempLayerStackRect, mTempDisplayRect);

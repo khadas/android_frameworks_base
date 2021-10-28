@@ -669,6 +669,16 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                                 com.android.internal.R.bool.config_localDisplaysMirrorContent)) {
                         mInfo.flags |= DisplayDeviceInfo.FLAG_OWN_CONTENT_ONLY;
                     }
+                    if (SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
+                        String property="persist.sys.rotation.einit-" + mPhysicalDisplayId;
+                        int rotation = SystemProperties.getInt(property, 0);
+                        Slog.d(TAG, "mPhysicalDisplayId" + mPhysicalDisplayId + " set rotation " + rotation);
+                        mInfo.rotation = rotation;
+
+                    } else {
+                        int rotation = SystemProperties.getInt("persist.sys.rotation.einit", 0);
+                        mInfo.rotation = rotation;
+                    }
 
                     if (isDisplayPrivate(physicalAddress)) {
                         mInfo.flags |= DisplayDeviceInfo.FLAG_PRIVATE;
@@ -702,6 +712,9 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                     mInfo.type = Display.TYPE_EXTERNAL;
                     mInfo.touch = DisplayDeviceInfo.TOUCH_EXTERNAL;
                     mInfo.flags |= DisplayDeviceInfo.FLAG_PRESENTATION;
+                    if (SystemProperties.getBoolean("persist.demo.hdmirotates", false)) {
+                        mInfo.flags |= DisplayDeviceInfo.FLAG_ROTATES_WITH_CONTENT;
+                    }
                     mInfo.name = getContext().getResources().getString(
                             com.android.internal.R.string.display_manager_hdmi_display_name);
                 }
