@@ -614,6 +614,27 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                                 com.android.internal.R.bool.config_localDisplaysMirrorContent)) {
                         mInfo.flags |= DisplayDeviceInfo.FLAG_OWN_CONTENT_ONLY;
                     }
+                    if (SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
+                        if (mPhysicalDisplayId == 1) {
+                            String rotation = SystemProperties.get("persist.sys.rotation.einit-1", "0");
+                            Slog.d(TAG, "mPhysicalDisplayId 1,set rotation " + rotation);
+
+                            mInfo.rotation = Integer.valueOf(rotation);
+                        } else if (mPhysicalDisplayId == 2) {
+                            String rotation = SystemProperties.get("persist.sys.rotation.einit-2", "0");
+                            Slog.d(TAG, "mPhysicalDisplayId 2,set rotation " + rotation);
+
+                            mInfo.rotation = Integer.valueOf(rotation);
+
+                        }
+
+                    } else {
+                        String rotation = SystemProperties.get("persist.sys.rotation.einit", "0");
+
+                        //mInfo.width = config_external.height;
+                        //mInfo.height = config_external.width;
+                        mInfo.rotation = Integer.valueOf(rotation);
+                    }
 
                     if (isDisplayPrivate(physicalAddress)) {
                         mInfo.flags |= DisplayDeviceInfo.FLAG_PRIVATE;
@@ -630,6 +651,9 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                     mInfo.type = Display.TYPE_EXTERNAL;
                     mInfo.touch = DisplayDeviceInfo.TOUCH_EXTERNAL;
                     mInfo.flags |= DisplayDeviceInfo.FLAG_PRESENTATION;
+                    if (SystemProperties.getBoolean("persist.demo.hdmirotates", false)) {
+                        mInfo.flags |= DisplayDeviceInfo.FLAG_ROTATES_WITH_CONTENT;
+                    }
                     mInfo.name = getContext().getResources().getString(
                             com.android.internal.R.string.display_manager_hdmi_display_name);
                 }
