@@ -25,6 +25,7 @@ import android.util.FloatProperty;
 import android.util.Slog;
 import android.view.Choreographer;
 import android.view.Display;
+import com.android.internal.display.BrightnessSynchronizer;
 
 import java.io.PrintWriter;
 
@@ -484,8 +485,9 @@ final class DisplayPowerState {
                     stateChanged = (state != mActualState);
                     brightnessState = mPendingBacklight;
                     sdrBrightnessState = mPendingSdrBacklight;
-                    backlightChanged = brightnessState != mActualBacklight
-                            || sdrBrightnessState != mActualSdrBacklight;
+                    backlightChanged = !BrightnessSynchronizer.floatEquals(
+                            brightnessState, mActualBacklight)||!BrightnessSynchronizer.floatEquals(
+                            sdrBrightnessState, mActualSdrBacklight);
                     if (!stateChanged) {
                         // State changed applied, notify outer class.
                         postScreenUpdateThreadSafe();
