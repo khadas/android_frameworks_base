@@ -1282,7 +1282,8 @@ bool BootAnimation::threadLoop() {
     bool result = false;
     // We have no bootanimation file, so we use the stock android logo
     // animation.
-
+    SLOGD("BootAnimation::threadLoop");
+    property_set(BOOT_VIDEO_RUNNING_STATUS_PROP_NAME, "1");
     if (mZipFileName.isEmpty()) {
         result = android();
     } else {
