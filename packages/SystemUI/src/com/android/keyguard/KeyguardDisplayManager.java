@@ -120,6 +120,10 @@ public class KeyguardDisplayManager {
             return false;
         }
 
+        if (display.getType() == Display.TYPE_EXTERNAL) {
+            Log.w(TAG,"Do not show keyguard presentation on external display");
+            return false;
+        }
         return true;
     }
     /**
