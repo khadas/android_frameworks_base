@@ -969,7 +969,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (mArcEstablished == enabled) {
             return mArcEstablished;
         }
-        HdmiLogger.debug("setArcStatus " + Log.getStackTraceString(new Exception()));
         boolean oldStatus = mArcEstablished;
         // 1. Enable/disable ARC circuit.
         enableAudioReturnChannel(enabled);
@@ -1081,7 +1080,9 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     }
 
     void setAudioStatus(boolean mute, int volume) {
+        HdmiLogger.debug("setAudioStatus mute:" + mute + " vol:" + volume);
         if (!isSystemAudioActivated() || !mService.isHdmiCecVolumeControlEnabled()) {
+            HdmiLogger.error("setAudioStatus return for no audio control or disabled");
             return;
         }
         synchronized (mLock) {
@@ -1102,7 +1103,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         HdmiLogger.info("changeVolume curVolume=" + curVolume
                     + " delta=" + delta + " mSystemAudioVolume=" + mSystemAudioVolume);
         // Mute status should be updated with volume up and down key besides mute key.
-        updateMuteWithVolumeKey(curVolume, delta);
+        //updateMuteWithVolumeKey(curVolume, delta);
         if (getAvrDeviceInfo() == null) {
             // On initialization process, getAvrDeviceInfo() may return null and cause exception
             return;
@@ -1150,15 +1151,18 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         assertRunOnServiceThread();
         if (getAvrDeviceInfo() == null || !mService.isHdmiCecVolumeControlEnabled()) {
             // On initialization process, getAvrDeviceInfo() may return null and cause exception
-            return;
+            // return;
         }
-        HdmiLogger.debug("[A]:Change mute:%b mSystemAudioMute:%b", mute, mSystemAudioMute);
+        HdmiLogger.debug("[A]:Change mute:%b previous Mute:%b", mute, mSystemAudioMute);
+
         synchronized (mLock) {
             if (mSystemAudioMute == mute) {
                 HdmiLogger.debug("No need to change mute.");
                 return;
             }
         }
+
+        mSystemAudioMute = mute;
         if (!isSystemAudioActivated()) {
             HdmiLogger.debug("[A]:System audio is not activated.");
             return;

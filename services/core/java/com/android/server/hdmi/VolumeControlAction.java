@@ -23,9 +23,6 @@ import static com.android.server.hdmi.HdmiConfig.IRT_MS;
 import static com.android.server.hdmi.HdmiConfig.TIMEOUT_MS;
 
 import android.media.AudioManager;
-import android.widget.Toast;
-
-import com.android.internal.R;
 
 /**
  * Feature action that transmits volume change to Audio Receiver.
@@ -110,14 +107,16 @@ final class VolumeControlAction extends HdmiCecFeatureAction {
         mActionTimer.clearTimerMessage();
         // android input key time interval is 50ms.
         addTimer(STATE_WAIT_FOR_NEXT_VOLUME_PRESS, IRT_MS);
-        addTimer(STATE_WAIT_FOR_REPORT_AUDIO_STATUS, TIMEOUT_MS * 2);
+        addTimer(STATE_WAIT_FOR_REPORT_AUDIO_STATUS, TIMEOUT_MS);
     }
 
     void handleVolumeChange(boolean isVolumeUp) {
-        HdmiLogger.info("Volume Key Status Changed[old:%b new:%b]", mIsVolumeUp, isVolumeUp);
-        // The time interval of android key events is 50ms, and just fire them.
-        mIsVolumeUp = isVolumeUp;
-        sendVolumeKeyPressed();
+        if (mIsVolumeUp != isVolumeUp) {
+            HdmiLogger.debug("Volume Key Status Changed[old:%b new:%b]", mIsVolumeUp, isVolumeUp);
+            sendVolumeKeyReleased();
+            mIsVolumeUp = isVolumeUp;
+            sendVolumeKeyPressed();
+        }
         updateLastKeyUpdateTime();
     }
 
@@ -147,11 +146,9 @@ final class VolumeControlAction extends HdmiCecFeatureAction {
         int volume = HdmiUtils.getAudioStatusVolume(cmd);
         mLastAvrVolume = volume;
         mLastAvrMute = mute;
-        HdmiLogger.info("update volume state form avr[mute:%b, volume=%d]", mute, volume);
+        HdmiLogger.debug("volume form avr[mute:%b, volume=%d]", mute, volume);
         if (shouldUpdateAudioVolume(mute)) {
-            HdmiLogger.info("Update TV's volume to be in accord with the avr");
-            showHint();
-
+            HdmiLogger.debug("Force volume change[mute:%b, volume=%d]", mute, volume);
             tv().setAudioStatus(mute, volume);
             mLastAvrVolume = UNKNOWN_AVR_VOLUME;
             mLastAvrMute = false;
@@ -195,28 +192,23 @@ final class VolumeControlAction extends HdmiCecFeatureAction {
         int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         HdmiLogger.debug("final tv current volume=%d, avr volume=%d", currentVolume, mLastAvrVolume);
         if ((mLastAvrVolume != UNKNOWN_AVR_VOLUME) && (currentVolume != mLastAvrVolume)) {
-            showHint();
             tv().setAudioStatus(mLastAvrMute, mLastAvrVolume);
             mLastAvrVolume = UNKNOWN_AVR_VOLUME;
             mLastAvrMute = false;
         }
     }
 
-    private void showHint() {
-        Toast hint =Toast.makeText(tv().getService().getContext(), R.string.sync_audio_system_volume,
-            Toast.LENGTH_LONG);
-        hint.show();
-    }
-
     @Override
     void handleTimerEvent(int state) {
         if (state == STATE_WAIT_FOR_NEXT_VOLUME_PRESS) {
-            if (mSentKeyPressed
-                && (System.currentTimeMillis() - mLastKeyUpdateTime >= IRT_MS)) {
-                sendVolumeKeyReleased();
-                mSentKeyPressed = false;
+            if (mSentKeyPressed) {
+                if ((System.currentTimeMillis() - mLastKeyUpdateTime >= IRT_MS)) {
+                    sendVolumeKeyReleased();
+                    mSentKeyPressed = false;
+                } else {
+                    sendVolumeKeyPressed();
+                }
             }
-            return;
         } else if (state == STATE_WAIT_FOR_REPORT_AUDIO_STATUS) {
             HdmiLogger.info("VolumeControlAction timeout for report audio status");
             finish();

@@ -25,7 +25,7 @@ import android.util.Slog;
 import com.android.server.hdmi.HdmiControlService.SendMessageCallback;
 
 /**
- * Action to update audio status (volume or mute) of audio amplifier
+ * Action to update audio status (volume or mute) of audio amplifier when connected.
  */
 final class SystemAudioStatusAction extends HdmiCecFeatureAction {
     private static final String TAG = "SystemAudioStatusAction";
@@ -45,8 +45,9 @@ final class SystemAudioStatusAction extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
+        HdmiLogger.debug("SystemAudioStatusAction start");
         mState = STATE_WAIT_FOR_REPORT_AUDIO_STATUS;
-        addTimer(mState, HdmiConfig.TIMEOUT_MS);
+        addTimer(mState, HdmiConfig.TIMEOUT_MS * 2);
         sendGiveAudioStatus();
         return true;
     }
@@ -88,12 +89,15 @@ final class SystemAudioStatusAction extends HdmiCecFeatureAction {
         byte[] params = cmd.getParams();
         boolean mute = HdmiUtils.isAudioStatusMute(cmd);
         int volume = HdmiUtils.getAudioStatusVolume(cmd);
-        tv().setAudioStatus(mute, volume);
+        tv().setAudioStatus(false, volume);
 
-        if (!(tv().isSystemAudioActivated() ^ mute)) {
-            // Toggle AVR's mute status to match with the system audio status.
-            sendUserControlPressedAndReleased(mAvrAddress, HdmiCecKeycode.CEC_KEYCODE_MUTE);
+        if (mute) {
+            // Don't toggle AVR's mute status to match with the system audio status.
+            // The avr may not be mute and send a wrong mesage.
+            HdmiLogger.info("No send a mute key to unmute the avr when avr is connected.");
+            //sendUserControlPressedAndReleased(mAvrAddress, HdmiCecKeycode.CEC_KEYCODE_MUTE);
         }
+
         finishWithCallback(HdmiControlManager.RESULT_SUCCESS);
     }
 
