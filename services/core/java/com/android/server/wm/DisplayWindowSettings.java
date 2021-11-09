@@ -30,6 +30,7 @@ import android.annotation.Nullable;
 import android.app.WindowConfiguration;
 import android.os.Environment;
 import android.os.FileUtils;
+import android.os.SystemProperties;
 import android.provider.Settings;
 import android.util.AtomicFile;
 import android.util.Slog;
@@ -102,7 +103,7 @@ class DisplayWindowSettings {
         private final String mName;
         private int mWindowingMode = WindowConfiguration.WINDOWING_MODE_UNDEFINED;
         private int mUserRotationMode = WindowManagerPolicy.USER_ROTATION_FREE;
-        private int mUserRotation = Surface.ROTATION_0;
+        private int mUserRotation = SystemProperties.getInt("persist.sys.builtinrotation", 0);
         private int mForcedWidth;
         private int mForcedHeight;
         private int mForcedDensity;
@@ -111,7 +112,7 @@ class DisplayWindowSettings {
         private boolean mShouldShowWithInsecureKeyguard = false;
         private boolean mShouldShowSystemDecors = false;
         private boolean mShouldShowIme = false;
-        private int mFixedToUserRotation = IWindowManager.FIXED_TO_USER_ROTATION_DEFAULT;
+        private int mFixedToUserRotation = IWindowManager.FIXED_TO_USER_ROTATION_DISABLED;
 
         private Entry(String name) {
             mName = name;

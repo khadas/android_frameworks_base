@@ -251,6 +251,7 @@ private:
     Animation* mAnimation = nullptr;
     std::unique_ptr<DisplayEventReceiver> mDisplayEventReceiver;
     sp<Looper> mLooper;
+    ui::Rotation         mRotation;
 };
 
 // ---------------------------------------------------------------------------

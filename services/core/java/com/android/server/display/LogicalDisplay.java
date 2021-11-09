@@ -372,7 +372,7 @@ final class LogicalDisplay {
      */
     public void configureDisplayLocked(SurfaceControl.Transaction t,
             DisplayDevice device,
-            boolean isBlanked) {
+            boolean isBlanked, int rotation) {
         // Set the layer stack.
         device.setLayerStackLocked(t, isBlanked ? BLANK_LAYER_STACK : mLayerStack);
 
@@ -405,6 +405,10 @@ final class LogicalDisplay {
         int orientation = Surface.ROTATION_0;
         if ((displayDeviceInfo.flags & DisplayDeviceInfo.FLAG_ROTATES_WITH_CONTENT) != 0) {
             orientation = displayInfo.rotation;
+        }
+
+        if (displayDeviceInfo.type == Display.TYPE_INTERNAL){
+            displayDeviceInfo.rotation = rotation;
         }
 
         // Apply the physical rotation of the display device itself.
@@ -444,8 +448,13 @@ final class LogicalDisplay {
             displayRectHeight = displayInfo.logicalHeight * physWidth / displayInfo.logicalWidth;
         } else {
             // Pillar box.
-            displayRectWidth = displayInfo.logicalWidth * physHeight / displayInfo.logicalHeight;
+            if (physWidth > physHeight && displayInfo.logicalWidth > displayInfo.logicalHeight) {
+                displayRectWidth = physWidth;
+            } else {
+                displayRectWidth = displayInfo.logicalWidth * physHeight / displayInfo.logicalHeight;
+            }
             displayRectHeight = physHeight;
+
         }
         int displayRectTop = (physHeight - displayRectHeight) / 2;
         int displayRectLeft = (physWidth - displayRectWidth) / 2;
