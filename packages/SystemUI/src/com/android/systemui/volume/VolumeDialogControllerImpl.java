@@ -466,6 +466,9 @@ public class VolumeDialogControllerImpl implements VolumeDialogController, Dumpa
     }
 
     private boolean shouldShowUI(int flags) {
+        if (android.os.SystemProperties.get("ro.target.product", "box").equals("box")) {
+            return ((flags & AudioManager.FLAG_SHOW_UI) != 0);
+        }
         int wakefulness = mWakefulnessLifecycle.getWakefulness();
         return wakefulness != WakefulnessLifecycle.WAKEFULNESS_ASLEEP
                 && wakefulness != WakefulnessLifecycle.WAKEFULNESS_GOING_TO_SLEEP
