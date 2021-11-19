@@ -19,6 +19,7 @@ package com.android.server.display;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManagerInternal;
+import android.os.SystemProperties;
 import android.view.Display;
 import android.view.DisplayInfo;
 import android.view.Surface;
@@ -66,6 +67,7 @@ final class LogicalDisplay {
 
     private final int mDisplayId;
     private final int mLayerStack;
+    private String mBuiltInUserRotation = SystemProperties.get("persist.sys.builtinrotation", "");
     /**
      * Override information set by the window manager. Will be reported instead of {@link #mInfo}
      * if not null.
@@ -372,7 +374,7 @@ final class LogicalDisplay {
      */
     public void configureDisplayLocked(SurfaceControl.Transaction t,
             DisplayDevice device,
-            boolean isBlanked, int rotation) {
+            boolean isBlanked) {
         // Set the layer stack.
         device.setLayerStackLocked(t, isBlanked ? BLANK_LAYER_STACK : mLayerStack);
 
@@ -405,10 +407,6 @@ final class LogicalDisplay {
         int orientation = Surface.ROTATION_0;
         if ((displayDeviceInfo.flags & DisplayDeviceInfo.FLAG_ROTATES_WITH_CONTENT) != 0) {
             orientation = displayInfo.rotation;
-        }
-
-        if (displayDeviceInfo.type == Display.TYPE_INTERNAL){
-            displayDeviceInfo.rotation = rotation;
         }
 
         // Apply the physical rotation of the display device itself.
@@ -448,11 +446,7 @@ final class LogicalDisplay {
             displayRectHeight = displayInfo.logicalHeight * physWidth / displayInfo.logicalWidth;
         } else {
             // Pillar box.
-            if (physWidth > physHeight && displayInfo.logicalWidth > displayInfo.logicalHeight) {
-                displayRectWidth = physWidth;
-            } else {
-                displayRectWidth = displayInfo.logicalWidth * physHeight / displayInfo.logicalHeight;
-            }
+            displayRectWidth = displayInfo.logicalWidth * physHeight / displayInfo.logicalHeight;
             displayRectHeight = physHeight;
 
         }

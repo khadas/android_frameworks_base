@@ -835,9 +835,10 @@ BootAnimation::BootAnimation(sp<Callbacks> callbacks)
     } else {
         mShuttingDown = true;
     }
-    char rotate[PROPERTY_VALUE_MAX];
-    if (property_get("persist.sys.builtinrotation", rotate, "0") > 0)
-        mRotation = (ui::Rotation)atoi(rotate);
+
+    int rotate = android::base::GetIntProperty("persist.sys.builtinrotation", 0);
+    if (rotate != 0)
+        mRotation = (ui::Rotation) rotate;
     else
         ALOGD("BootAnimation get property error\n");
 

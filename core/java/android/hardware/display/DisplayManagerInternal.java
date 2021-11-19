@@ -151,11 +151,6 @@ public abstract class DisplayManagerInternal {
     public abstract void performTraversal(Transaction t);
 
     /**
-     * Called by the window manager to set rotation for display.
-     */
-    public abstract void setRotation(int newRotation);
-
-    /**
      * Tells the display manager about properties of the display that depend on the windows on it.
      * This includes whether there is interesting unique content on the specified logical display,
      * and whether the one of the windows has a preferred refresh rate.

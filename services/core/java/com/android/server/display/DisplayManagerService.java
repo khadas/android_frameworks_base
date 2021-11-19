@@ -1573,7 +1573,7 @@ public final class DisplayManagerService extends SystemService {
                     + device.getDisplayDeviceInfoLocked());
             return;
         }
-        display.configureDisplayLocked(t, device, info.state == Display.STATE_OFF, getRotation());
+        display.configureDisplayLocked(t, device, info.state == Display.STATE_OFF);
         final Optional<Integer> viewportType = getViewportType(info);
         if (viewportType.isPresent()) {
             populateViewportLocked(viewportType.get(), display.getDisplayIdLocked(), device, info);
@@ -2529,11 +2529,6 @@ public final class DisplayManagerService extends SystemService {
         }
     }
 
-
-    public int mRotation = 0;
-    public int getRotation() {
-        return mRotation;
-    }
     private final class LocalService extends DisplayManagerInternal {
 
         @Override
@@ -2631,11 +2626,6 @@ public final class DisplayManagerService extends SystemService {
         @Override
         public void getNonOverrideDisplayInfo(int displayId, DisplayInfo outInfo) {
             getNonOverrideDisplayInfoInternal(displayId, outInfo);
-        }
-
-        @Override
-        public void setRotation(int newRotation) {
-            mRotation = newRotation;
         }
 
         @Override
