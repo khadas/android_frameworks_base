@@ -120,7 +120,7 @@ public class DisplayRotation {
      * @see #updateRotationUnchecked
      */
     @Surface.Rotation
-    private int mRotation = SystemProperties.getInt("persist.sys.builtinrotation", 0);
+    private int mRotation;
 
     @VisibleForTesting
     int mLandscapeRotation;  // default landscape
@@ -177,7 +177,8 @@ public class DisplayRotation {
     private int mUserRotationMode = WindowManagerPolicy.USER_ROTATION_FREE;
 
     @Surface.Rotation
-    private int mUserRotation = SystemProperties.getInt("persist.sys.builtinrotation", 0);
+    private int mUserRotation = Surface.ROTATION_0;
+    private String mBuiltInUserRotation = SystemProperties.get("persist.sys.builtinrotation", "");
 
     /**
      * Flag that indicates this is a display that may run better when fixed to user rotation.
@@ -189,7 +190,7 @@ public class DisplayRotation {
      * regardless of all other states (including app requrested orientation). {@code true} the
      * display rotation should be fixed to user specified rotation, {@code false} otherwise.
      */
-    private int mFixedToUserRotation = IWindowManager.FIXED_TO_USER_ROTATION_DISABLED;
+    private int mFixedToUserRotation = IWindowManager.FIXED_TO_USER_ROTATION_DEFAULT;
 
     private int mDemoHdmiRotation;
     private int mDemoRotation;
@@ -245,6 +246,11 @@ public class DisplayRotation {
         mDeskDockRotation = readRotation(R.integer.config_deskDockRotation);
         mUndockedHdmiRotation = readRotation(R.integer.config_undockedHdmiRotation);
 
+        if (mBuiltInUserRotation != null && !mBuiltInUserRotation.isEmpty()) {
+            mUserRotation = Integer.parseInt(mBuiltInUserRotation) % 4;
+            mRotation = mUserRotation;
+        }
+
         if (isDefaultDisplay) {
             final Handler uiHandler = UiThread.getHandler();
             mOrientationListener = new OrientationListener(mContext, uiHandler);
@@ -285,8 +291,8 @@ public class DisplayRotation {
     void configure(int width, int height, int shortSizeDp, int longSizeDp) {
         final Resources res = mContext.getResources();
         if (width > height) {
-            mLandscapeRotation = SystemProperties.getInt("persist.sys.builtinrotation", 0);
-            mSeascapeRotation = (mLandscapeRotation + 2) % 4;
+            mLandscapeRotation = Surface.ROTATION_0;
+            mSeascapeRotation = Surface.ROTATION_180;
             if (res.getBoolean(R.bool.config_reverseDefaultRotation)) {
                 mPortraitRotation = Surface.ROTATION_90;
                 mUpsideDownRotation = Surface.ROTATION_270;
@@ -295,8 +301,8 @@ public class DisplayRotation {
                 mUpsideDownRotation = Surface.ROTATION_90;
             }
         } else {
-            mPortraitRotation = SystemProperties.getInt("persist.sys.builtinrotation", 0);
-            mUpsideDownRotation = (mLandscapeRotation + 2) % 4;
+            mPortraitRotation = Surface.ROTATION_0;
+            mUpsideDownRotation = Surface.ROTATION_180;
             if (res.getBoolean(R.bool.config_reverseDefaultRotation)) {
                 mLandscapeRotation = Surface.ROTATION_270;
                 mSeascapeRotation = Surface.ROTATION_90;
@@ -1088,7 +1094,7 @@ public class DisplayRotation {
         if (!isDefaultDisplay) {
             // For secondary displays we ignore things like displays sensors, docking mode and
             // rotation lock, and always prefer user rotation.
-            preferredRotation = SystemProperties.getInt("persist.sys.builtinrotation", 0);
+            preferredRotation = mUserRotation;
         } else if (lidState == LID_OPEN && mLidOpenRotation >= 0) {
             // Ignore sensor when lid switch is open and rotation is forced.
             preferredRotation = mLidOpenRotation;
@@ -1240,7 +1246,7 @@ public class DisplayRotation {
                 if (preferredRotation >= 0) {
                     return preferredRotation;
                 }
-                return SystemProperties.getInt("persist.sys.builtinrotation", 0);
+                return Surface.ROTATION_0;
         }
     }
 
@@ -1395,8 +1401,12 @@ public class DisplayRotation {
 
             // Configure rotation lock.
             int userRotation = Settings.System.getIntForUser(resolver,
-                    Settings.System.USER_ROTATION, SystemProperties.getInt("persist.sys.builtinrotation", 0),
+                    Settings.System.USER_ROTATION, Surface.ROTATION_0,
                     UserHandle.USER_CURRENT);
+
+            if (mBuiltInUserRotation != null && !mBuiltInUserRotation.isEmpty()) {
+                userRotation = Integer.parseInt(mBuiltInUserRotation) % 4;
+            }
 
             if (mUserRotation != userRotation) {
                 mUserRotation = userRotation;

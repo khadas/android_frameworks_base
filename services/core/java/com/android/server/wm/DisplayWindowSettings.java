@@ -82,6 +82,7 @@ class DisplayWindowSettings {
     private final WindowManagerService mService;
     private final HashMap<String, Entry> mEntries = new HashMap<>();
     private final SettingPersister mStorage;
+    private static String mBuiltInUserRotation = SystemProperties.get("persist.sys.builtinrotation", "");
 
     /**
      * The preferred type of a display identifier to use when storing and retrieving entries.
@@ -103,7 +104,7 @@ class DisplayWindowSettings {
         private final String mName;
         private int mWindowingMode = WindowConfiguration.WINDOWING_MODE_UNDEFINED;
         private int mUserRotationMode = WindowManagerPolicy.USER_ROTATION_FREE;
-        private int mUserRotation = SystemProperties.getInt("persist.sys.builtinrotation", 0);
+        private int mUserRotation = Surface.ROTATION_0;
         private int mForcedWidth;
         private int mForcedHeight;
         private int mForcedDensity;
@@ -112,7 +113,7 @@ class DisplayWindowSettings {
         private boolean mShouldShowWithInsecureKeyguard = false;
         private boolean mShouldShowSystemDecors = false;
         private boolean mShouldShowIme = false;
-        private int mFixedToUserRotation = IWindowManager.FIXED_TO_USER_ROTATION_DISABLED;
+        private int mFixedToUserRotation = IWindowManager.FIXED_TO_USER_ROTATION_DEFAULT;
 
         private Entry(String name) {
             mName = name;
@@ -515,6 +516,9 @@ class DisplayWindowSettings {
                     WindowManagerPolicy.USER_ROTATION_FREE);
             entry.mUserRotation = getIntAttribute(parser, "userRotation",
                     Surface.ROTATION_0);
+            if (mBuiltInUserRotation != null && !mBuiltInUserRotation.isEmpty()) {
+                entry.mUserRotation = Integer.parseInt(mBuiltInUserRotation) % 4;
+            }
             entry.mForcedWidth = getIntAttribute(parser, "forcedWidth");
             entry.mForcedHeight = getIntAttribute(parser, "forcedHeight");
             entry.mForcedDensity = getIntAttribute(parser, "forcedDensity");
