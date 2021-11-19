@@ -1535,12 +1535,17 @@ public final class BroadcastQueue {
                             && ((r.intent.getFlags()
                                     & Intent.FLAG_RECEIVER_INCLUDE_BACKGROUND) == 0)
                             && !isSignaturePerm(r.requiredPermissions))) {
-                    mService.addBackgroundCheckViolationLocked(r.intent.getAction(),
-                            component.getPackageName());
-                    Slog.w(TAG, "Background execution not allowed: receiving "
-                            + r.intent + " to "
-                            + component.flattenToShortString());
-                    skip = true;
+                    String packageName = component.getPackageName();
+                    if ("com.android.music".equals(packageName)) {
+                        skip = false;
+                    } else {
+                        mService.addBackgroundCheckViolationLocked(r.intent.getAction(),
+                                packageName);
+                        Slog.w(TAG, "Background execution not allowed: receiving "
+                                + r.intent + " to "
+                                + component.flattenToShortString());
+                        skip = true;
+                    }
                 }
             }
         }
