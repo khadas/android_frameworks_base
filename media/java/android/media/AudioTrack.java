@@ -1692,12 +1692,17 @@ public class AudioTrack extends PlayerBase
         }
         mSampleRate = sampleRateInHz;
 
+        /**
+         * IEC61937 stream is not always stereo, for example: TrueHD,Atoms,DTS-HD
+         * is 8 channels
+         */
+        /*
         if (audioFormat == AudioFormat.ENCODING_IEC61937
                 && channelConfig != AudioFormat.CHANNEL_OUT_STEREO
                 && AudioFormat.channelCountFromOutChannelMask(channelConfig) != 8) {
             Log.w(TAG, "ENCODING_IEC61937 is configured with channel mask as " + channelConfig
                     + ", which is not 2 or 8 channels");
-        }
+        }*/
 
         //--------------
         // channel config
