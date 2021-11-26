@@ -4516,14 +4516,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     @Override
     public void screenTurningOn(int displayId, final ScreenOnListener screenOnListener) {
         if (DEBUG_WAKEUP) Slog.i(TAG, "Display " + displayId + " turning on...");
-		try
-		{
-			Thread.sleep(500);
-		}
-		catch (InterruptedException e)
-		{
-			e.printStackTrace();
-		}
 
         if (displayId == DEFAULT_DISPLAY) {
             Trace.asyncTraceBegin(Trace.TRACE_TAG_WINDOW_MANAGER, "screenTurningOn",
@@ -4606,19 +4598,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return;
         }
 
-	mHandler.postDelayed(new Runnable() {
-            public void run() {
-                mDefaultDisplayRotation.updateOrientationListener();
-            }
-        }, 500);
-
         finishScreenTurningOn();
     }
 
     private void finishScreenTurningOn() {
         // We have just finished drawing screen content. Since the orientation listener
         // gets only installed when all windows are drawn, we try to install it again.
-        //mDefaultDisplayRotation.updateOrientationListener();
+        mDefaultDisplayRotation.updateOrientationListener();
 
         final ScreenOnListener listener = mDefaultDisplayPolicy.getScreenOnListener();
         if (!mDefaultDisplayPolicy.finishScreenTurningOn()) {
