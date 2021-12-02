@@ -237,7 +237,7 @@ public interface RILConstants {
     int PREFERRED_NETWORK_MODE = Optional.of(TelephonyProperties.default_network())
             .filter(list -> !list.isEmpty())
             .map(list -> list.get(0))
-            .orElse(NETWORK_MODE_WCDMA_PREF);
+            .orElse(NETWORK_MODE_LTE_GSM_WCDMA);
 
     int BAND_MODE_UNSPECIFIED = 0;      //"unspecified" (selected by baseband automatically)
     int BAND_MODE_EURO = 1;             //"EURO band" (GSM-900 / DCS-1800 / WCDMA-IMT-2000)
