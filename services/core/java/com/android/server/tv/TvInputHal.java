@@ -29,6 +29,8 @@ import android.view.Surface;
 
 import java.util.LinkedList;
 import java.util.Queue;
+import android.util.Log;
+ 
 
 /**
  * Provides access to the low-level TV input hardware abstraction layer.
@@ -89,9 +91,11 @@ final class TvInputHal implements Handler.Callback {
                 return ERROR_NO_INIT;
             }
             int generation = mStreamConfigGenerations.get(deviceId, 0);
-            if (generation != streamConfig.getGeneration()) {
+	Log.d("TvInputHal.java", "generation=" + generation);
+Log.d("TvInputHal.java", "streamConfig.getGeneration()=" + streamConfig.getGeneration());
+            /*if (generation != streamConfig.getGeneration()) {
                 return ERROR_STALE_CONFIG;
-            }
+            }*/
             if (nativeAddOrUpdateStream(mPtr, deviceId, streamConfig.getStreamId(), surface) == 0) {
                 return SUCCESS;
             } else {
@@ -106,9 +110,11 @@ final class TvInputHal implements Handler.Callback {
                 return ERROR_NO_INIT;
             }
             int generation = mStreamConfigGenerations.get(deviceId, 0);
-            if (generation != streamConfig.getGeneration()) {
+Log.d("TvInputHal.java", "removeStream-->generation=" + generation);
+Log.d("TvInputHal.java", "removeStream-->streamConfig.getGeneration()=" + streamConfig.getGeneration());
+            /*if (generation != streamConfig.getGeneration()) {
                 return ERROR_STALE_CONFIG;
-            }
+            }*/
             if (nativeRemoveStream(mPtr, deviceId, streamConfig.getStreamId()) == 0) {
                 return SUCCESS;
             } else {
@@ -127,6 +133,7 @@ final class TvInputHal implements Handler.Callback {
 
     private void retrieveStreamConfigsLocked(int deviceId) {
         int generation = mStreamConfigGenerations.get(deviceId, 0) + 1;
+Log.d("wgh", "retrieveStreamConfigsLocked-->deviceId = " + deviceId + ", generation=" + generation);
         mStreamConfigs.put(deviceId, nativeGetStreamConfigs(mPtr, deviceId, generation));
         mStreamConfigGenerations.put(deviceId, generation);
     }
