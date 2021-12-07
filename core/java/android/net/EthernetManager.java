@@ -149,6 +149,54 @@ public class EthernetManager {
     }
 
     /**
+     * @hide
+     */
+    @UnsupportedAppUsage
+    public String getIpAddress(String iface) {
+        try {
+            return mService.getIpAddress(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * @hide
+     */
+    @UnsupportedAppUsage
+    public String getNetmask(String iface) {
+        try {
+            return mService.getNetmask(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * @hide
+     */
+    @UnsupportedAppUsage
+    public String getGateway(String iface) {
+        try {
+            return mService.getGateway(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * @hide
+     */
+    @UnsupportedAppUsage
+    public String getDns(String iface) {
+        try {
+            return mService.getDns(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
      * Adds a listener.
      *
      * Consider using {@link #addListener(Listener, Executor)} instead: this method uses a default
