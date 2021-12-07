@@ -1650,6 +1650,16 @@
         <item>5 minute later</item>
     </string-array>
 
+    <!--ethernet mode select -->
+    <string-array name="ethernet_mode_location">
+        <item>@string/usestatic</item>
+        <item>@string/usedhcp</item>
+    </string-array>
+    <string-array name="ethernet_mode_values">
+        <item>StaticIP</item>
+        <item>DHCP</item>
+    </string-array>
+
     <!-- HDMI -->
     <string-array name="hdmi_resolution_entries">
         <item>1920x1080p-50Hz </item>

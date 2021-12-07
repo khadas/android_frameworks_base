@@ -124,4 +124,12 @@
         android:summary="@string/summary_placeholder"
         android:order="25"
         settings:controller="com.android.settings.network.AdaptiveConnectivityPreferenceController"/>
+
+    <com.android.settingslib.RestrictedPreference
+        android:fragment="com.android.settings.ethernet.EthernetSettings"
+        android:icon="@drawable/ic_ethernet"
+        android:key="ethernet_settings"
+        android:title="@string/ethernet_settings_title"
+        settings:useAdminDisabledSummary="true"
+        settings:userRestriction="no_ethernet_settings" />
 </PreferenceScreen>
