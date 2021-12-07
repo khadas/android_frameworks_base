@@ -948,8 +948,10 @@ public class NotificationStackScrollLayout extends ViewGroup implements Dumpable
             mSidePaddings = mMinimumPaddings;
             return;
         }
+
         // Portrait is easy, just use the dimen for paddings
-        if (RotationUtils.getRotation(mContext) == RotationUtils.ROTATION_NONE) {
+        //if (RotationUtils.getRotation(mContext) == RotationUtils.ROTATION_NONE) {
+        if (getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) {
             mSidePaddings = mMinimumPaddings;
             return;
         }
