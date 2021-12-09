@@ -258,6 +258,7 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
         }
         connection.mSurface.clear();
     }
+    int32_t extInfo = 2;
     bool bSidebandFlow = connection.mStreamType == TV_STREAM_TYPE_INDEPENDENT_VIDEO_SOURCE ? true : false;
     tv_stream_config_t streamConfig;
     streamConfig.device_id = deviceId;
@@ -265,6 +266,7 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
     if (!bSidebandFlow) {
         streamConfig.type = TV_STREAM_TYPE_BUFFER_PRODUCER;
     } else {
+        extInfo = 1;
         streamConfig.type = TV_STREAM_TYPE_INDEPENDENT_VIDEO_SOURCE;
     }
     if (connection.mSourceHandle == NULL && connection.mThread == NULL) {
@@ -301,7 +303,7 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
             streamConfig.format = list[configIndex].format;//HAL_PIXEL_FORMAT_YCrCb_NV12;
             streamConfig.buffCount = list[configIndex].buffCount;
             ALOGD("stream config info: width=%d, height=%d, format=%d, usage=%" PRIu64", buffCount=%d", streamConfig.width, streamConfig.height, streamConfig.format, streamConfig.usage, streamConfig.buffCount);
-            mTvInput->setPreviewInfo(deviceId, streamId, 0, 0, 0, 0);
+            mTvInput->setPreviewInfo(deviceId, streamId, 0, 0, 0, 0, extInfo);
             connection.mThread = new BufferProducerThread(this, mTvInput, deviceId, &streamConfig);
             int buffSize = connection.mThread->initPreviewBuffPoll(surface);
             if (buffSize != list[configIndex].buffCount) {
@@ -343,29 +345,24 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
 
 int JTvInputHal::removeStream(int deviceId, int streamId) {
     Mutex::Autolock autoLock(&mStreamLock);
-    ALOGD("%s in wgh-3 at %d", __FUNCTION__, __LINE__);
     KeyedVector<int, Connection>& connections = mConnections.editValueFor(deviceId);
     if (connections.indexOfKey(streamId) < 0) {
         return BAD_VALUE;
     }
-    ALOGD("%s in at %d", __FUNCTION__, __LINE__);
     Connection& connection = connections.editValueFor(streamId);
     if (connection.mSurface == NULL) {
         // Nothing to do
         return NO_ERROR;
     }
-    ALOGD("%s in at %d", __FUNCTION__, __LINE__);
     if (Surface::isValid(connection.mSurface)) {
         if (connection.mStreamType == TV_STREAM_TYPE_INDEPENDENT_VIDEO_SOURCE) {
             connection.mSurface->setSidebandStream(NULL);
         }
     }
-    ALOGD("%s in at %d", __FUNCTION__, __LINE__);
     if (mTvInput->closeStream(deviceId, streamId) != Result::OK) {
         ALOGE("Couldn't close stream. device id:%d stream id:%d", deviceId, streamId);
         return BAD_VALUE;
     }
-    ALOGD("%s in at %d", __FUNCTION__, __LINE__);
     if (connection.mThread != NULL) {
         connection.mThread->shutdown();
         connection.mThread.clear();
@@ -373,11 +370,9 @@ int JTvInputHal::removeStream(int deviceId, int streamId) {
     }
     connection.mSurface.clear();
     connection.mSurface = NULL;
-    ALOGD("%s in at %d", __FUNCTION__, __LINE__);
     if (connection.mSourceHandle != NULL) {
         connection.mSourceHandle.clear();
     }
-    ALOGD("%s in at %d", __FUNCTION__, __LINE__);
     return NO_ERROR;
 }
 
@@ -669,7 +664,7 @@ void JTvInputHal::BufferProducerThread::surfaceBuffDestory() {
     sp<ANativeWindow> anw(mSurface);
     if (!mTvHalPreviewBuff.empty()) {
         for (int i=0; i< mTvHalPreviewBuff.size(); i++) {
-            ALOGD("buff[%d], bufferId[%" PRIu64"] buffStatus = %d", i, mTvHalPreviewBuff[i].buffId, mTvHalPreviewBuff[i].buffStatus);
+            ALOGV("buff[%d], bufferId[%" PRIu64"] buffStatus = %d", i, mTvHalPreviewBuff[i].buffId, mTvHalPreviewBuff[i].buffStatus);
             if (mTvHalPreviewBuff[i].buffStatus == BUFF_STATUS_DEQUEUED) {
                 err = anw->cancelBuffer(anw.get(), mTvHalPreviewBuff[i].mGraphicBuffer->getNativeBuffer(), mTvHalPreviewBuff[i].bufferFenceFd);
                 if (err != NO_ERROR) {
