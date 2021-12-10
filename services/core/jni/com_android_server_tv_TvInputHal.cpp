@@ -303,7 +303,11 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
             streamConfig.format = list[configIndex].format;//HAL_PIXEL_FORMAT_YCrCb_NV12;
             streamConfig.buffCount = list[configIndex].buffCount;
             ALOGD("stream config info: width=%d, height=%d, format=%d, usage=%" PRIu64", buffCount=%d", streamConfig.width, streamConfig.height, streamConfig.format, streamConfig.usage, streamConfig.buffCount);
-            mTvInput->setPreviewInfo(deviceId, streamId, 0, 0, 0, 0, extInfo);
+            Result infores = mTvInput->setPreviewInfo(deviceId, streamId, 0, 0, 0, 0, extInfo);
+	    if (infores != Result::OK) {
+		ALOGE("initPreviewBuffPoll setPreviewInfo failed");
+		return BAD_VALUE;
+	    }
             connection.mThread = new BufferProducerThread(this, mTvInput, deviceId, &streamConfig);
             int buffSize = connection.mThread->initPreviewBuffPoll(surface);
             if (buffSize != list[configIndex].buffCount) {
@@ -699,6 +703,7 @@ void JTvInputHal::BufferProducerThread::onCaptured(uint64_t buffId, int buffSeq,
         return;
     }
     sp<ANativeWindow> anw(mSurface);
+    mSeq = buffSeq;
     if (buffSeq != mSeq) {
         ALOGW("Incorrect sequence value: expected %u actual %u", mSeq, buffSeq);
     }
@@ -794,7 +799,7 @@ bool JTvInputHal::BufferProducerThread::threadLoop() {
         }
         ALOGV("before request: capture hanele=%p mCurrBuffId=%" PRIu64, mBuffer.get()->handle, mCurrBuffId);
         mBufferState = CAPTURING;
-        mTvInputPtr->requestCapture(mDeviceId, mStream.stream_id, mCurrBuffId, mBuffer.get()->handle, ++mSeq);
+        mTvInputPtr->requestCapture(mDeviceId, mStream.stream_id, mCurrBuffId, mBuffer.get()->handle, mSeq);
         buffer = NULL;
     }
 
