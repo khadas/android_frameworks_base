@@ -24,6 +24,7 @@ import android.provider.Settings;
 
 import java.util.Arrays;
 
+
 /**
  * This action is to send 'Request Short Audio Descriptor' HDMI-CEC command to AVR when connects.
  * And call setParameters to Audio HAL to update audio format support list.
@@ -82,7 +83,7 @@ final class RequestShortAudioDescriptorAction extends HdmiCecFeatureAction {
 
     private final int SAD_REQ_TIMEOUT_MS = 10000;
 
-    private final int[] SUPPORT_CODECS = {SAD_CODEC_AC3, SAD_CODEC_DTS, SAD_CODEC_DDP, SAD_CODEC_DTSHD};
+    private final int[] SUPPORT_CODECS = {SAD_CODEC_AC3, SAD_CODEC_DTS, SAD_CODEC_DDP, SAD_CODEC_DTSHD, SAD_CODEC_MAT};
 
     private final byte SUPPORT = 1;
     private final byte UNSUPPORT = 0;
@@ -145,11 +146,25 @@ final class RequestShortAudioDescriptorAction extends HdmiCecFeatureAction {
             case Constants.MESSAGE_REPORT_SHORT_AUDIO_DESCRIPTOR:
                 // If avr returns REPORT_SHORT_AUDIO_DESCRIPTOR, it should have at least one short
                 // audio descriptor. If it returns invalid value, TV should ignore the message.
-                if (params.length == 0) {
-                    mDescriptor = null;
+                if (tv().isEarcOn()) {
+                    String s1 = getParameters("hal_param_get_earctx_cds");
+                    String s2 = s1.replaceAll("hal_param_get_earctx_cds=", "");
+                    String[] s3 = s2.split(", ");
+                    int i = 0;
+                    HdmiLogger.info("cds:" + s2 + ":" + s3.length);
+                    mDescriptor = new byte[s3.length];
+
+                    for (String retval: s3){
+                        mDescriptor[i] = (byte) (Integer.parseInt(retval));
+                        i++;
+                    }
                 } else {
-                    mDescriptor = new byte[params.length];
-                    System.arraycopy(params, 0, mDescriptor, 0, params.length);
+                    if (params.length == 0) {
+                        mDescriptor = null;
+                    } else {
+                        mDescriptor = new byte[params.length];
+                        System.arraycopy(params, 0, mDescriptor, 0, params.length);
+                    }
                 }
                 setAudioFormat();
                 return true;
@@ -244,6 +259,15 @@ final class RequestShortAudioDescriptorAction extends HdmiCecFeatureAction {
             mService.getAudioManager().setParameters(parameters);
             HdmiLogger.debug("Set Audio Format [%s]", parameters);
         }
+    }
+
+    /**
+     * get k-v parameters to audio HAL
+     */
+    private String getParameters(String parameters) {
+        if (mService != null)
+            return mService.getAudioManager().getParameters(parameters);
+        return null;
     }
 
     private void sendRequestShortAudioDescriptor() {
