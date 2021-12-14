@@ -227,12 +227,26 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     protected void onEarcStateChanged(boolean earcOn) {
         super.onEarcStateChanged(earcOn);
+        if (mService.isSystemAudioActivated()) {
+            // Give a shot for arc action when earc is off.
+            HdmiLogger.debug("Going to start arc action when earc is changed");
+            startArcAction(!earcOn);
+        }
         if (mEarcOn == earcOn) {
             return;
         }
         mEarcOn = earcOn;
         HdmiLogger.info("onEarcStateChanged current earc state:" + mEarcOn);
         updateEarcState(earcOn);
+    }
+
+    public void onEarcSettingChanged(boolean on) {
+        HdmiLogger.debug("TV onEarcSettingChanged when arc is " + mArcEstablished);
+        if (on && mArcEstablished) {
+            addAndStartAction(new RequestArcTerminationAction(this, Constants.ADDR_AUDIO_SYSTEM, on));
+        } else if (!on && !mArcEstablished) {
+            startArcAction(true);
+        }
     }
 
     private void updateEarcState(boolean earcOn) {
@@ -896,7 +910,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     void changeSystemAudioMode(boolean enabled, IHdmiControlCallback callback) {
         assertRunOnServiceThread();
         if (!mService.isControlEnabled()) {
+            HdmiLogger.debug("changeSystemAudioMode false while cec is disabled!");
             setSystemAudioMode(false);
+            mService.sendCecCommand(HdmiCecMessageBuilder.buildSystemAudioModeRequest(
+                mAddress, Constants.ADDR_AUDIO_SYSTEM, 0, false));
             invokeCallback(callback, HdmiControlManager.RESULT_INCORRECT_MODE);
             return;
         }
@@ -1082,10 +1099,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     void startArcAction(boolean enabled) {
         assertRunOnServiceThread();
-        HdmiLogger.info("startArcAction[old:%b new:%b]", mArcEstablished, enabled);
-        if (enabled == mArcEstablished) {
-            return;
-        }
+        HdmiLogger.info("startArcAction [old:%b new:%b]", mArcEstablished, enabled);
 
         HdmiDeviceInfo info = getAvrDeviceInfo();
         if (!isConnectedToArcDevice(info)) {

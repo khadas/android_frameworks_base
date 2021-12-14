@@ -1148,6 +1148,9 @@ abstract class HdmiCecLocalDevice {
         HdmiLogger.info("onEarcStateChanged current:" + mEarcOn + " new:" + earcOn);
     }
 
+    protected void onEarcSettingChanged(boolean isEarcOn) {
+    }
+
     /** Dump internal status of HdmiCecLocalDevice object. */
     protected void dump(final IndentingPrintWriter pw) {
         pw.println("mDeviceType: " + mDeviceType);

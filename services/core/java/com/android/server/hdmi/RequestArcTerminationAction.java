@@ -25,6 +25,7 @@ import android.hardware.tv.cec.V1_0.SendMessageResult;
  */
 final class RequestArcTerminationAction extends RequestArcAction {
     private static final String TAG = "RequestArcTerminationAction";
+    private boolean mEarc;
 
     /**
      * @Constructor
@@ -34,6 +35,12 @@ final class RequestArcTerminationAction extends RequestArcAction {
     RequestArcTerminationAction(HdmiCecLocalDevice source, int avrAddress) {
         super(source, avrAddress);
     }
+
+    RequestArcTerminationAction(HdmiCecLocalDevice source, int avrAddress, boolean earcOn) {
+        super(source, avrAddress);
+        mEarc = earcOn;
+    }
+
 
     @Override
     boolean start() {
@@ -55,6 +62,38 @@ final class RequestArcTerminationAction extends RequestArcAction {
         });
         return true;
     }
+
+    @Override
+    boolean processCommand(HdmiCecMessage cmd) {
+        if (mState != STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE
+                || !HdmiUtils.checkCommandSource(cmd, mAvrAddress, TAG)) {
+            return false;
+        }
+        int opcode = cmd.getOpcode();
+        switch (opcode) {
+            // Handles only <Feature Abort> here and, both <Initiate ARC> and <Terminate ARC>
+            // are handled in HdmiControlService itself because both can be
+            // received without <Request ARC Initiation> or <Request ARC Termination>.
+            case Constants.MESSAGE_FEATURE_ABORT:
+                int originalOpcode = cmd.getParams()[0] & 0xFF;
+                if (originalOpcode == Constants.MESSAGE_REQUEST_ARC_TERMINATION) {
+                    disableArcTransmission();
+                    finish();
+                    return true;
+                }
+                break;
+            case Constants.MESSAGE_TERMINATE_ARC:
+                if (mEarc) {
+                    HdmiLogger.info("Terminate arc and then start earc.");
+                    tv().handleTerminateArc(cmd);
+                    tv().mService.setEarcMode(true);
+                    return true;
+                }
+                break;
+        }
+        return false;
+    }
+
 
     @Override
     final void handleTimerEvent(int state) {

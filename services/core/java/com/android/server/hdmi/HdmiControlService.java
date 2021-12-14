@@ -360,6 +360,8 @@ public class HdmiControlService extends SystemService {
 
     private HdmiCecMessageValidator mMessageValidator;
 
+    private boolean mBootComplete;
+
     @ServiceThreadOnly
     private int mPowerStatus = HdmiControlManager.POWER_STATUS_UNKNOWN;
 
@@ -570,10 +572,13 @@ public class HdmiControlService extends SystemService {
     }
 
     private void bootCompleted() {
+        HdmiLogger.info("bootCompleted");
         // on boot, if device is interactive, set HDMI CEC state as powered on as well
         if (mPowerManager.isInteractive() && isPowerStandbyOrTransient()) {
             onWakeUp();
         }
+        mBootComplete = true;
+        onEarcStateChanged(isEarcOn());
     }
 
     /**
@@ -693,7 +698,8 @@ public class HdmiControlService extends SystemService {
                 Global.MHL_INPUT_SWITCHING_ENABLED,
                 Global.MHL_POWER_CHARGE_ENABLED,
                 Global.HDMI_CEC_SWITCH_ENABLED,
-                Global.DEVICE_NAME
+                Global.DEVICE_NAME,
+                EARC_ENABLE
         };
         for (String s : settings) {
             resolver.registerContentObserver(Global.getUriFor(s), false, mSettingsObserver,
@@ -781,11 +787,21 @@ public class HdmiControlService extends SystemService {
                     String deviceName = readStringSetting(option, Build.MODEL);
                     setDisplayName(deviceName);
                     break;
+                case EARC_ENABLE:
+                    mEarcSettings = enabled;
+                    HdmiLogger.debug("earc settings changed to " + enabled);
+                    onEarcSettingChanged(enabled);
+                    break;
             }
         }
     }
 
     /*********************EARC BEGIN************************************************/
+    public static final String HAL_PARAM_EARCTX_EARC_MODE  = "hal_param_earctx_earc_mode=";
+
+    public static final String EARC_ENABLE = "earc_enable";
+
+    private boolean mEarcSettings;
     private boolean mEarcSupported;
     private EarcObserver mEarcObserver;
 
@@ -797,10 +813,15 @@ public class HdmiControlService extends SystemService {
             deviceType = HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM;
         }
         mEarcSupported = EarcObserver.isEarcSupport();
-        Slog.i(TAG, "initEarcState isEarcSupported " + mEarcSupported);
+        mEarcSettings = readBooleanSetting(EARC_ENABLE, true);
+        Slog.i(TAG, "initEarcState isEarcSupported:" + mEarcSupported
+                    + " settings:" + mEarcSettings);
 
         if (!mEarcSupported) {
             return;
+        }
+        if (!mEarcSettings) {
+            setEarcMode(false);
         }
         mEarcObserver = EarcObserver.ceateEarcObserver(this, deviceType);
     }
@@ -811,10 +832,15 @@ public class HdmiControlService extends SystemService {
 
     public boolean isEarcOn() {
         return mEarcSupported
-               && mEarcObserver.isEarcOn();
+               && mEarcObserver.isEarcOn()
+               && mEarcSettings;
     }
 
     public void onEarcStateChanged(final boolean isEarcOn) {
+        if (!mBootComplete) {
+            HdmiLogger.info("onEarcStateChanged abort for not boot completed " + isEarcOn);
+            return;
+        }
         runOnServiceThread(()->{
             if (tv() != null) {
                 tv().onEarcStateChanged(isEarcOn);
@@ -823,6 +849,23 @@ public class HdmiControlService extends SystemService {
             }
         });
 
+    }
+
+    public void onEarcSettingChanged(boolean on) {
+        if (!on) {
+            // directly turn off earc.
+            setEarcMode(false);
+        }
+        if (tv() != null) {
+            tv().onEarcSettingChanged(on);
+        } else if (audioSystem() != null) {
+            audioSystem().onEarcSettingChanged(on);
+        }
+    }
+
+    public void setEarcMode(boolean on) {
+        HdmiLogger.info("setEarcMode " + on);
+        getAudioManager().setParameters(HAL_PARAM_EARCTX_EARC_MODE + (on ? 1 : 0));
     }
 
     /*********************EARC END************************************************/
@@ -934,7 +977,9 @@ public class HdmiControlService extends SystemService {
                     }
 
                     // Init earc state.
-                    localDevice.onEarcStateChanged(isEarcOn());
+                    if (mBootComplete) {
+                        localDevice.onEarcStateChanged(isEarcOn());
+                    }
 
                     // Address allocation completed for all devices. Notify each device.
                     if (allocatingDevices.size() == ++finished[0]) {
