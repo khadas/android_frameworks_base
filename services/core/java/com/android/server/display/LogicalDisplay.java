@@ -428,27 +428,20 @@ final class LogicalDisplay {
             mBaseDisplayInfo.brightnessDefault = deviceInfo.brightnessDefault;
             mBaseDisplayInfo.roundedCorners = deviceInfo.roundedCorners;
 
-            if(SystemProperties.get("ro.board.platform").equals("rk356x")) {
-                if(deviceInfo.type==Display.TYPE_EXTERNAL) {
+            if (SystemProperties.get("ro.board.platform").equals("rk356x") ||
+                SystemProperties.get("ro.board.platform").equals("rk3588")) {
+                if (deviceInfo.type == Display.TYPE_EXTERNAL) {
                     int mPhysicalDisplayId = Integer.valueOf(deviceInfo.uniqueId.split(":")[1]);
-                    if (mPhysicalDisplayId == 1) {
-                        if (SystemProperties.getInt("persist.sys.rotation.einit-1", 0)%2!=0) {
-                            mBaseDisplayInfo.appWidth = deviceInfo.height;
-                            mBaseDisplayInfo.appHeight = deviceInfo.width;
-                            mBaseDisplayInfo.logicalWidth = deviceInfo.height;
-                            mBaseDisplayInfo.logicalHeight = deviceInfo.width;
-                        }
-                    } else if (mPhysicalDisplayId == 2) {
-                        if (SystemProperties.getInt("persist.sys.rotation.einit-2", 0)%2!=0) {
-                            mBaseDisplayInfo.appWidth = deviceInfo.height;
-                            mBaseDisplayInfo.appHeight = deviceInfo.width;
-                            mBaseDisplayInfo.logicalWidth = deviceInfo.height;
-                            mBaseDisplayInfo.logicalHeight = deviceInfo.width;
-                        }
+                    String property = "persist.sys.rotation.einit-" + mPhysicalDisplayId;
+                    if (SystemProperties.getInt(property, 0) % 2 != 0) {
+                        mBaseDisplayInfo.appWidth = deviceInfo.height;
+                        mBaseDisplayInfo.appHeight = deviceInfo.width;
+                        mBaseDisplayInfo.logicalWidth = deviceInfo.height;
+                        mBaseDisplayInfo.logicalHeight = deviceInfo.width;
                     }
                 }
-            }else{
-                if(deviceInfo.type==Display.TYPE_EXTERNAL) {
+            } else {
+                if (deviceInfo.type == Display.TYPE_EXTERNAL) {
                     if (SystemProperties.getInt("persist.sys.rotation.einit", 0) % 2 != 0) {
                         mBaseDisplayInfo.appWidth = deviceInfo.height;
                         mBaseDisplayInfo.appHeight = deviceInfo.width;
@@ -641,23 +634,15 @@ final class LogicalDisplay {
             mTempDisplayRect.offset(-mDisplayOffsetY, mDisplayOffsetX);
         }
 
-        if (SystemProperties.get("ro.board.platform").equals("rk356x")) {
+        if (SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
             if (displayDeviceInfo.type == Display.TYPE_EXTERNAL) {
                 int mPhysicalDisplayId = Integer.valueOf(device.getDisplayDeviceInfoLocked().uniqueId.split(":")[1]);
-                if (mPhysicalDisplayId == 1) {
-                    if (SystemProperties.getBoolean("persist.sys.rotation.efull-1", false)) {
-                        mTempDisplayRect.top = 0;
-                        mTempDisplayRect.left = 0;
-                        mTempDisplayRect.right = physWidth;
-                        mTempDisplayRect.bottom = physHeight;
-                    }
-                } else if (mPhysicalDisplayId == 2) {
-                    if (SystemProperties.getBoolean("persist.sys.rotation.efull-2", false)) {
-                        mTempDisplayRect.top = 0;
-                        mTempDisplayRect.left = 0;
-                        mTempDisplayRect.right = physWidth;
-                        mTempDisplayRect.bottom = physHeight;
-                    }
+                String property="persist.sys.rotation.efull-"+mPhysicalDisplayId;
+                if (SystemProperties.getBoolean(property, false)) {
+                    mTempDisplayRect.top = 0;
+                    mTempDisplayRect.left = 0;
+                    mTempDisplayRect.right = physWidth;
+                    mTempDisplayRect.bottom = physHeight;
                 }
             }
         } else {

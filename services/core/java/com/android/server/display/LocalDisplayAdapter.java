@@ -606,26 +606,17 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                                 com.android.internal.R.bool.config_localDisplaysMirrorContent)) {
                         mInfo.flags |= DisplayDeviceInfo.FLAG_OWN_CONTENT_ONLY;
                     }
-                    if (SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
-                        if (mPhysicalDisplayId == 1) {
-                            String rotation = SystemProperties.get("persist.sys.rotation.einit-1", "0");
-                            Slog.d(TAG, "mPhysicalDisplayId 1,set rotation " + rotation);
-
-                            mInfo.rotation = Integer.valueOf(rotation);
-                        } else if (mPhysicalDisplayId == 2) {
-                            String rotation = SystemProperties.get("persist.sys.rotation.einit-2", "0");
-                            Slog.d(TAG, "mPhysicalDisplayId 2,set rotation " + rotation);
-
-                            mInfo.rotation = Integer.valueOf(rotation);
-
-                        }
-
+                    if (SystemProperties.get("ro.board.platform").equals("rk356x") ||
+                        SystemProperties.get("ro.board.platform").equals("rk3588")) {
+                        String property="persist.sys.rotation.einit-" + mPhysicalDisplayId;
+                        int rotation = SystemProperties.getInt(property, 0);
+                        Slog.d(TAG, "mPhysicalDisplayId" + mPhysicalDisplayId + " set rotation " + rotation);
+                        mInfo.rotation = rotation;
                     } else {
-                        String rotation = SystemProperties.get("persist.sys.rotation.einit", "0");
-
+                        int rotation = SystemProperties.getInt("persist.sys.rotation.einit", 0);
                         //mInfo.width = config_external.height;
                         //mInfo.height = config_external.width;
-                        mInfo.rotation = Integer.valueOf(rotation);
+                        mInfo.rotation = rotation;
                     }
 
                     if (isDisplayPrivate(physicalAddress)) {
