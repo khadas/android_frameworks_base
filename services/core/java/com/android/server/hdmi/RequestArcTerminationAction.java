@@ -87,13 +87,13 @@ final class RequestArcTerminationAction extends RequestArcAction {
                     HdmiLogger.info("Terminate arc and then start earc.");
                     tv().handleTerminateArc(cmd);
                     tv().mService.setEarcMode(true);
+                    finish();
                     return true;
                 }
                 break;
         }
         return false;
     }
-
 
     @Override
     final void handleTimerEvent(int state) {
@@ -102,6 +102,9 @@ final class RequestArcTerminationAction extends RequestArcAction {
         }
         HdmiLogger.error("[T] RequestArcTerminationAction.");
         disableArcTransmission();
+        if (mEarc) {
+            tv().mService.setEarcMode(true);
+        }
         finish();
     }
 }

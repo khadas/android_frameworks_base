@@ -242,10 +242,20 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     public void onEarcSettingChanged(boolean on) {
         HdmiLogger.debug("TV onEarcSettingChanged when arc is " + mArcEstablished);
-        if (on && mArcEstablished) {
-            addAndStartAction(new RequestArcTerminationAction(this, Constants.ADDR_AUDIO_SYSTEM, on));
-        } else if (!on && !mArcEstablished) {
-            startArcAction(true);
+        mEarcOn = on;
+        if (on) {
+            if (mArcEstablished) {
+                // Earc should be turned on after the arc is terminated.
+                addAndStartAction(new RequestArcTerminationAction(this, Constants.ADDR_AUDIO_SYSTEM, on));
+            } else {
+                mService.setEarcMode(true);
+            }
+        } else if (!on) {
+            // Earc should be directly turned off.
+            mService.setEarcMode(false);
+            if (!mArcEstablished) {
+                startArcAction(true);
+            }
         }
     }
 
@@ -1001,6 +1011,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         synchronized (mLock) {
             mSystemAudioControlFeatureEnabled = enabled;
         }
+        if (isEarcOn()) {
+            HdmiLogger.debug("setSystemAudioControlFeatureEnabled abort for earc on");
+            return;
+        }
         if (hasSystemAudioDevice()) {
             changeSystemAudioMode(enabled, null);
         }
@@ -1011,7 +1025,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     boolean isSystemAudioControlFeatureEnabled() {
         synchronized (mLock) {
-            return mSystemAudioControlFeatureEnabled;
+            return isEarcOn() || mSystemAudioControlFeatureEnabled;
         }
     }
 
@@ -1026,11 +1040,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
         HdmiLogger.info("Set Arc Status[old:%b new:%b], and audio mode:%b",
             mArcEstablished, enabled, mService.isSystemAudioActivated());
-
-        if (isEarcOn()) {
-            HdmiLogger.info("No need to setArcStatus for earc on");
-            return false;
-        }
 
         if (mArcEstablished == enabled) {
             return mArcEstablished;

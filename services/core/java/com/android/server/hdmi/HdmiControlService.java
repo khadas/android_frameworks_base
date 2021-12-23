@@ -852,10 +852,6 @@ public class HdmiControlService extends SystemService {
     }
 
     public void onEarcSettingChanged(boolean on) {
-        if (!on) {
-            // directly turn off earc.
-            setEarcMode(false);
-        }
         if (tv() != null) {
             tv().onEarcSettingChanged(on);
         } else if (audioSystem() != null) {
