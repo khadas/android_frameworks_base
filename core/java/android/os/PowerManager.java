@@ -1885,6 +1885,19 @@ public final class PowerManager {
     }
 
     /**
+     * Enables or disableds the power mode.
+     *
+     * @hide
+     */
+    public void setPowerModeWithHal(int mode, boolean enable) {
+        try {
+            mService.setPowerMode(mode, enable);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
      * Indicates automatic battery saver toggling by the system will be based on percentage.
      *
      * @see PowerManager#getPowerSaveModeTrigger()
