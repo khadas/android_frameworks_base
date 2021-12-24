@@ -529,8 +529,9 @@ public final class CachedAppOptimizer {
      */
     @GuardedBy("mPhenotypeFlagLock")
     private void updateUseCompaction() {
+        boolean is_low_ram_device = ActivityManager.isLowRamDeviceStatic();
         mUseCompaction = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_ACTIVITY_MANAGER,
-                    KEY_USE_COMPACTION, DEFAULT_USE_COMPACTION);
+                    KEY_USE_COMPACTION, is_low_ram_device ? true:DEFAULT_USE_COMPACTION);
 
         if (mUseCompaction && mCompactionHandler == null) {
             if (!mCachedAppOptimizerThread.isAlive()) {
