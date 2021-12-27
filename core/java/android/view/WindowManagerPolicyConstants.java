@@ -88,6 +88,8 @@ public interface WindowManagerPolicyConstants {
      */
     String EXTRA_HDMI_PLUGGED_STATE = "state";
 
+    String EXTRA_MULTI_HDMI_PLUGGED_NAME = "extcon_name";
+
     /**
      * Set to {@code true} when intent was invoked from pressing the home key.
      * @hide

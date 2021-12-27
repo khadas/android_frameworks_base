@@ -88,6 +88,7 @@ import static android.view.WindowManagerPolicyConstants.ALT_BAR_RIGHT;
 import static android.view.WindowManagerPolicyConstants.ALT_BAR_TOP;
 import static android.view.WindowManagerPolicyConstants.ALT_BAR_UNKNOWN;
 import static android.view.WindowManagerPolicyConstants.EXTRA_HDMI_PLUGGED_STATE;
+import static android.view.WindowManagerPolicyConstants.EXTRA_MULTI_HDMI_PLUGGED_NAME;
 import static android.view.WindowManagerPolicyConstants.NAV_BAR_BOTTOM;
 import static android.view.WindowManagerPolicyConstants.NAV_BAR_INVALID;
 import static android.view.WindowManagerPolicyConstants.NAV_BAR_LEFT;
@@ -162,6 +163,7 @@ import com.android.internal.util.ScreenshotHelper;
 import com.android.internal.util.function.TriConsumer;
 import com.android.internal.view.AppearanceRegion;
 import com.android.internal.widget.PointerLocationView;
+import com.android.server.ExtconUEventObserver;
 import com.android.server.LocalServices;
 import com.android.server.UiThread;
 import com.android.server.policy.WindowManagerPolicy;
@@ -173,6 +175,7 @@ import com.android.server.wallpaper.WallpaperManagerInternal;
 import com.android.server.wm.InputMonitor.EventReceiverInputConsumer;
 
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.function.Consumer;
 
 /**
@@ -388,6 +391,8 @@ public class DisplayPolicy {
     private final GestureNavigationSettingsObserver mGestureNavigationSettingsObserver;
 
     private final WindowManagerInternal.AppTransitionListener mAppTransitionListener;
+
+    private HashMap<String,Boolean> mHdmiPluggedMap=new HashMap<>();
 
     private class PolicyHandler extends Handler {
 
@@ -694,6 +699,28 @@ public class DisplayPolicy {
             mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
         }
     }
+
+    public void setMultiHdmiPlugged(boolean plugged, ExtconUEventObserver.ExtconInfo info) {
+        setMultiHdmiPlugged(plugged, false /* force */,info);
+    }
+
+    public void setMultiHdmiPlugged(boolean plugged, boolean force,ExtconUEventObserver.ExtconInfo info) {
+        if (force || mHdmiPluggedMap.get(info.getName()) != plugged) {
+            mHdmiPluggedMap.replace(info.getName(),plugged);
+            mHdmiPlugged=false;
+            for (String key : mHdmiPluggedMap.keySet()) {
+                mHdmiPlugged|=mHdmiPluggedMap.get(key);
+            }
+            mService.updateRotation(true /* alwaysSendConfiguration */, true /* forceRelayout */);
+            final Intent intent = new Intent(ACTION_HDMI_PLUGGED);
+            intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+            intent.putExtra(EXTRA_HDMI_PLUGGED_STATE, plugged);
+            intent.putExtra(EXTRA_MULTI_HDMI_PLUGGED_NAME,info.getName());
+            mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
+            Slog.d(TAG,"hdmi plugged state change, name="+info.getName()+" plugged="+plugged);
+        }
+    }
+
 
     boolean isHdmiPlugged() {
         return mHdmiPlugged;
@@ -3087,5 +3114,9 @@ public class DisplayPolicy {
      */
     boolean shouldAttachNavBarToAppDuringTransition() {
         return mShouldAttachNavBarToAppDuringTransition && mNavigationBar != null;
+    }
+
+    public void addHdmiPluggedState(String extconPath,Boolean plugged){
+        mHdmiPluggedMap.put(extconPath,plugged);
     }
 }
