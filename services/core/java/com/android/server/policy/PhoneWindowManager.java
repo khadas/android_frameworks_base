@@ -216,6 +216,7 @@ import com.android.server.wm.DisplayPolicy;
 import com.android.server.wm.DisplayRotation;
 import com.android.server.wm.WindowManagerInternal;
 import com.android.server.wm.WindowManagerInternal.AppTransitionListener;
+import android.app.ActivityManager.RunningTaskInfo;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -305,6 +306,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static public final String SYSTEM_DIALOG_REASON_HOME_KEY = "homekey";
     static public final String SYSTEM_DIALOG_REASON_ASSIST = "assist";
     static public final String SYSTEM_DIALOG_REASON_SCREENSHOT = "screenshot";
+	private static final String LAUNCHER_PACKNAME= "com.android.launcher3";
 
     private static final int POWER_BUTTON_SUPPRESSION_DELAY_DEFAULT_MILLIS = 800;
     private static final AudioAttributes VIBRATION_ATTRIBUTES = new AudioAttributes.Builder()
@@ -1594,6 +1596,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+	private int isGoLauncherApplicationMenu() {
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        List<RunningTaskInfo> list = am.getRunningTasks(100);
+        if(list!=null && list.size()>0) {
+            String packName=list.get(0).topActivity.getPackageName();
+            if(packName.equals(LAUNCHER_PACKNAME)) {
+                 if ("1".equals(SystemProperties.get("sys.launcher.state", "1")))
+                      return 1;
+            }
+            else
+                 return 0;
+        }
+        return 0;
+    }
+
     /** A handler to handle home keys per display */
     private class DisplayHomeButtonHandler {
 
@@ -1652,6 +1669,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mHomeDoubleTapPending = true;
                     mHandler.postDelayed(mHomeDoubleTapTimeoutRunnable,
                             ViewConfiguration.getDoubleTapTimeout());
+                    return -1;
+                }
+
+                if (isGoLauncherApplicationMenu() == 1) {
+                    final Intent statusIntent = new Intent("action.launcher.application.menu");
+                    statusIntent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+                    mHandler.post(new Runnable() {
+                         @Override
+                         public void run() {
+                            mContext.sendBroadcastAsUser(statusIntent, UserHandle.ALL);
+                         }
+                    });
                     return -1;
                 }
 
