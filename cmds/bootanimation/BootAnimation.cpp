@@ -1343,6 +1343,16 @@ status_t BootAnimation::readyToRun() {
     mLooper->addFd(mDisplayEventReceiver->getFd(), 0, Looper::EVENT_INPUT,
             new DisplayEventCallback(this), nullptr);
 
+    /*resync display mode after bind event handle, for displaymode may changed*/
+    const status_t mode_error = SurfaceComposerClient::getActiveDisplayMode(
+        mDisplayToken, &displayMode);
+    if (mode_error != NO_ERROR) {
+        SLOGE("Can't get active display mode for RESIZE");
+    } else {
+        resizeSurface(displayMode.resolution.getWidth(),
+            displayMode.resolution.getHeight());
+    }
+
     return NO_ERROR;
 }
 
@@ -1400,15 +1410,16 @@ void BootAnimation::resizeSurface(int newWidth, int newHeight) {
     if (newWidth == mWidth && newHeight == mHeight) {
         return;
     }
-    SLOGV("Resizing the boot animation surface to %d %d", newWidth, newHeight);
 
     eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroySurface(mDisplay, mSurface);
 
-    mFlingerSurfaceControl->updateDefaultBufferSize(newWidth, newHeight);
     const auto limitedSize = limitSurfaceSize(newWidth, newHeight);
     mWidth = limitedSize.width;
     mHeight = limitedSize.height;
+    SLOGD("resizeSurface BLASTBufferQueue to %d %d.", mWidth, mHeight);
+    /*BLASTBufferQueue need this function to update default size*/
+    mFlingerSurfaceControl->updateDefaultBufferSize(mWidth, mHeight);
 
     EGLConfig config = getEglConfig(mDisplay);
     EGLSurface surface = eglCreateWindowSurface(mDisplay, config, mFlingerSurface.get(), nullptr);
