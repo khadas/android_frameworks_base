@@ -222,27 +222,26 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     }
 
     public boolean isEarcOn() {
-        return mEarcOn;
+        return mService.isEarcOn();
     }
 
     protected void onEarcStateChanged(boolean earcOn) {
         super.onEarcStateChanged(earcOn);
+        mEarcOn = earcOn;
+        HdmiLogger.info("onEarcStateChanged current earc state:" + mEarcOn);
+        // 1.Update earc status.
+        updateEarcState(earcOn);
+        // 2.Update the arc status.
         if (mService.isSystemAudioActivated()) {
             // Give a shot for arc action when earc is off.
             HdmiLogger.debug("Going to start arc action when earc is changed");
             startArcAction(!earcOn);
         }
-        if (mEarcOn == earcOn) {
-            return;
-        }
-        mEarcOn = earcOn;
-        HdmiLogger.info("onEarcStateChanged current earc state:" + mEarcOn);
-        updateEarcState(earcOn);
+
     }
 
     public void onEarcSettingChanged(boolean on) {
         HdmiLogger.debug("TV onEarcSettingChanged when arc is " + mArcEstablished);
-        mEarcOn = on;
         if (on) {
             if (mArcEstablished) {
                 // Earc should be turned on after the arc is terminated.
@@ -250,12 +249,9 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             } else {
                 mService.setEarcMode(true);
             }
-        } else if (!on) {
+        } else {
             // Earc should be directly turned off.
             mService.setEarcMode(false);
-            if (!mArcEstablished) {
-                startArcAction(true);
-            }
         }
     }
 
@@ -266,12 +262,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                 AudioSystem.DEVICE_OUT_HDMI_ARC, (earcOn ? 1 : 0), "", "");
         mService.getAudioManager().setParameters("HDMI ARC Switch=" + (earcOn ? 1 : 0));
         mService.getAudioManager().setParameters("speaker_mute=" + (earcOn ? 1 : 0));
-        if (!earcOn) {
-            mService.getAudioManager().setParameters("set_ARC_format=[2, 0, 0, 0, 0]");
-            mService.getAudioManager().setParameters("set_ARC_format=[7, 0, 0, 0, 0]");
-            mService.getAudioManager().setParameters("set_ARC_format=[10, 0, 0, 0, 0]");
-            mService.getAudioManager().setParameters("set_ARC_format=[11, 0, 0, 0, 0]");
-        }
+        updateAudioFormat(earcOn);
     }
 
     @ServiceThreadOnly
@@ -955,13 +946,16 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         }
         HdmiLogger.info("System Audio Mode change[old:%b new:%b]",
                 mService.isSystemAudioActivated(), on);
-        HdmiLogger.debug("setSystemAudioMode " + Log.getStackTraceString(new Exception()));
         synchronized (mLock) {
             mService.updateSystemAudioActivated(on);
             updateAudioFormat(on);
         }
 
-        startArcAction(on);
+        if (!isEarcOn()) {
+            startArcAction(on);
+        } else {
+            updateEarcState(on);
+        }
     }
 
     boolean isConnectedToArcDevice(HdmiDeviceInfo avr) {
@@ -1041,9 +1035,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         HdmiLogger.info("Set Arc Status[old:%b new:%b], and audio mode:%b",
             mArcEstablished, enabled, mService.isSystemAudioActivated());
 
-        if (mArcEstablished == enabled) {
-            return mArcEstablished;
-        }
         boolean oldStatus = mArcEstablished;
         // 1. Enable/disable ARC circuit.
         enableAudioReturnChannel(enabled);
@@ -1051,6 +1042,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         notifyArcStatusToAudioService(enabled);
         // 3. Update arc status;
         mArcEstablished = enabled;
+        updateAudioFormat(enabled);
         return oldStatus;
     }
 
@@ -1077,7 +1069,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         mService.getAudioManager().setWiredDeviceConnectionState(
                 AudioSystem.DEVICE_OUT_HDMI_ARC,
                 // Either earc or arc is on, then the audio device is HDMI_ARC.
-                mEarcOn || enabled ? 1 : 0, "", "");
+                enabled ? 1 : 0, "", "");
     }
 
     /**
@@ -1119,15 +1111,19 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     void startArcAction(boolean enabled) {
         assertRunOnServiceThread();
         HdmiLogger.info("startArcAction [old:%b new:%b]", mArcEstablished, enabled);
+        if (mArcEstablished == enabled) {
+            HdmiLogger.debug("startArcAction arc already established:" + mArcEstablished);
+            return;
+        }
 
         HdmiDeviceInfo info = getAvrDeviceInfo();
         if (!isConnectedToArcDevice(info)) {
             mArcEstablished = false;
-            Slog.w(TAG, "Failed to start arc action; No AVR device.");
+            HdmiLogger.info("Failed to start arc action; No AVR device.");
             return;
         }
         if (!canStartArcUpdateAction(info.getLogicalAddress(), enabled)) {
-            Slog.w(TAG, "Failed to start arc action; ARC configuration check failed.");
+            HdmiLogger.info("Failed to start arc action; ARC configuration check failed.");
             if (enabled && !isConnectedToArcPort(info.getPhysicalAddress())) {
                 displayOsd(OSD_MESSAGE_ARC_CONNECTED_INVALID_PORT);
             }
@@ -1866,8 +1862,21 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             return;
         }
 
-        // Seq #44.
-        startArcAction(false);
+        if (mArcEstablished) {
+            HdmiLogger.debug("disableArcIfExist terminate arc directly.");
+            // Use actions to disable arc may not be called in time before late suspend.
+            // The reset arc operation could be done after the device wakes up and may influence
+            // other modules like dtvkit.
+            removeAction(RequestArcInitiationAction.class);
+            HdmiCecMessage command =
+                    HdmiCecMessageBuilder.buildRequestArcTermination(mAddress, Constants.ADDR_AUDIO_SYSTEM);
+            mService.sendCecCommand(command, new HdmiControlService.SendMessageCallback() {
+                @Override
+                public void onSendCompleted(int error) {
+                    setArcStatus(false);
+                }
+            });
+        }
     }
 
     @Override

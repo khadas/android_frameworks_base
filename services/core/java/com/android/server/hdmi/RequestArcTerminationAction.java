@@ -85,7 +85,9 @@ final class RequestArcTerminationAction extends RequestArcAction {
             case Constants.MESSAGE_TERMINATE_ARC:
                 if (mEarc) {
                     HdmiLogger.info("Terminate arc and then start earc.");
-                    tv().handleTerminateArc(cmd);
+                    tv().setArcStatus(false);
+                    sendCommand(HdmiCecMessageBuilder.buildReportArcTerminated(getSourceAddress(),
+                            mAvrAddress));
                     tv().mService.setEarcMode(true);
                     finish();
                     return true;

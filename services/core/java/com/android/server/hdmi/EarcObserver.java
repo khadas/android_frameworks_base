@@ -70,7 +70,8 @@ public abstract class EarcObserver extends UEventObserver {
         Slog.d(TAG, "onUEvent new=" + connectType + " current=" + mCurrentConnectType);
         if (mCurrentConnectType == connectType) {
             Slog.d(TAG, "connect type no change");
-            return;
+            // For earc settings's related demands, remove the duplication check.
+            //return;
         }
         mCurrentConnectType = connectType;
         mService.onEarcStateChanged(isEarcOn());
