@@ -108,6 +108,12 @@ public class DexMetadataHelper {
         return dexMetadataFile.exists() ? dexMetadataFile : null;
     }
 
+    public static File findDexMetadataForPackage(String packageName) {
+        String cloudDmPath = "/vendor/etc/clouds/" + packageName + DEX_METADATA_FILE_EXTENSION;
+        File cloudDmFile = new File(cloudDmPath);
+        return cloudDmFile.exists() ? cloudDmFile : null;
+    }
+
     /**
      * Return the dex metadata files for the given package as a map
      * [code path -> dex metadata path].

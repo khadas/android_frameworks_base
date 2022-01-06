@@ -2515,6 +2515,15 @@ public class PackageInstallerSession extends IPackageInstallerSession.Stub {
         }
     }
 
+    private static void maybeCopyFile(File from, File to) throws PackageManagerException {
+        if (!from.equals(to)) {
+            if (!FileUtils.copyFile(from, to)) {
+                throw new PackageManagerException(INSTALL_FAILED_INTERNAL_ERROR,
+                        "Could not copy file " + from + " to " + to);
+            }
+        }
+    }
+
     private void logDataLoaderInstallationSession(int returnCode) {
         // Skip logging the side-loaded app installations, as those are private and aren't reported
         // anywhere; app stores already have a record of the installation and that's why reporting
@@ -3024,6 +3033,13 @@ public class PackageInstallerSession extends IPackageInstallerSession.Stub {
     }
 
     @GuardedBy("mLock")
+    private void stageCopyFileLocked(File origFile, File targetFile)
+            throws PackageManagerException {
+        mResolvedStagedFiles.add(targetFile);
+        maybeCopyFile(origFile, targetFile);
+    }
+
+    @GuardedBy("mLock")
     private void maybeStageFsveritySignatureLocked(File origFile, File targetFile,
             boolean fsVerityRequired) throws PackageManagerException {
         final File originalSignature = new File(
@@ -3041,19 +3057,25 @@ public class PackageInstallerSession extends IPackageInstallerSession.Stub {
     @GuardedBy("mLock")
     private void maybeStageDexMetadataLocked(File origFile, File targetFile)
             throws PackageManagerException {
-        final File dexMetadataFile = DexMetadataHelper.findDexMetadataForFile(origFile);
-        if (dexMetadataFile == null) {
+        final File tmpSessionDmFile = DexMetadataHelper.findDexMetadataForFile(origFile);
+        final File cloudMetadataFile = DexMetadataHelper.findDexMetadataForPackage(getPackageName());
+        final boolean useCloudDmFile = tmpSessionDmFile == null;
+        if (tmpSessionDmFile == null && cloudMetadataFile == null) {
             return;
         }
-
+        final File dexMetadataFile = useCloudDmFile ? cloudMetadataFile : tmpSessionDmFile;
         if (!FileUtils.isValidExtFilename(dexMetadataFile.getName())) {
             throw new PackageManagerException(INSTALL_FAILED_INVALID_APK,
                     "Invalid filename: " + dexMetadataFile);
         }
         final File targetDexMetadataFile = new File(stageDir,
                 DexMetadataHelper.buildDexMetadataPathForApk(targetFile.getName()));
-
-        stageFileLocked(dexMetadataFile, targetDexMetadataFile);
+        if (useCloudDmFile) {
+            Slog.i("BJC", "Found prebuilt dex metadata file at " + cloudMetadataFile);
+            stageCopyFileLocked(dexMetadataFile, targetDexMetadataFile);
+        } else {
+            stageFileLocked(dexMetadataFile, targetDexMetadataFile);
+        }
 
         // Also stage .dm.fsv_sig. .dm may be required to install with fs-verity signature on
         // supported on older devices.
