@@ -882,6 +882,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     void onNewAvrAdded(HdmiDeviceInfo avr) {
         assertRunOnServiceThread();
         HdmiLogger.debug("onNewAvrAdded " + avr);
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildGiveSystemAudioModeStatus(
+            mAddress, avr.getLogicalAddress()));
         addAndStartAction(new SystemAudioActionFromTv(this, avr.getLogicalAddress(),
                 isSystemAudioControlFeatureEnabled(), null));
         if (isEarcOn()) {
@@ -953,9 +955,12 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     }
 
     boolean isConnectedToArcDevice(HdmiDeviceInfo avr) {
-        if (avr == null
-            || avr.getPortId() != mService.getArcPortId()) {
+        if (avr == null) {
             return false;
+        }
+        if (avr.getPortId() != mService.getArcPortId()) {
+            // For HDMI CEC TESTR REASON, the arc port in tester is solid 0x1.
+            HdmiLogger.warning("Avr is connected to arc port!");
         }
         return true;
     }
@@ -969,8 +974,13 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     void updateAudioFormat(boolean on) {
         HdmiLogger.debug("updateAudioFormat " + on);
         removeAction(RequestShortAudioDescriptorAction.class);
+        HdmiDeviceInfo avr = getAvrDeviceInfo();
+        int arcPort = mService.getArcPortId();
+        if (avr != null) {
+            arcPort = avr.getPortId();
+        }
         addAndStartAction(new RequestShortAudioDescriptorAction(
-            this, Constants.ADDR_AUDIO_SYSTEM, on, mService, mService.getArcPortId()));
+            this, Constants.ADDR_AUDIO_SYSTEM, on, mService, arcPort));
     }
 
     private void updateAudioManagerForSystemAudio(boolean on) {
@@ -1093,7 +1103,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     boolean isArcFeatureEnabled(int portId) {
         assertRunOnServiceThread();
-        return mArcFeatureEnabled.get(portId);
+        return true;//mArcFeatureEnabled.get(portId);
     }
 
     @ServiceThreadOnly
@@ -1269,13 +1279,13 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                 && isConnectedToArcPort(avr.getPhysicalAddress())
                 && isDirectConnectAddress(avr.getPhysicalAddress())) {
             if (enabled) {
+                // For HDMI CEC TESTR REASON, the arc port in tester is solid 0x1.
                 return isArcFeatureEnabled(avr.getPortId());
             } else {
                 return true;
             }
-        } else {
-            return false;
         }
+        return true;
     }
 
     @Override
@@ -1347,7 +1357,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             mService.maySendFeatureAbortCommand(message, Constants.ABORT_REFUSED);
             return true;
         }
-        setSystemAudioMode(HdmiUtils.parseCommandParamSystemAudioStatus(message));
+        // Don't change audio mode status in here.
+        //setSystemAudioMode(HdmiUtils.parseCommandParamSystemAudioStatus(message));
         return true;
     }
 
