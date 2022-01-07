@@ -168,8 +168,6 @@ private:
     status_t initFont(Font* font, const char* fallback);
     bool android();
     bool movie();
-    //add for bootvideo
-    bool video();
     void drawText(const char* str, const Font& font, bool bold, int* x, int* y);
     void drawClock(const Font& font, const int xPos, const int yPos);
     void drawProgress(int percent, const Font& font, const int xPos, const int yPos);
@@ -217,10 +215,6 @@ private:
     bool        mTimeFormat12Hour;
     bool        mShuttingDown;
     String8     mZipFileName;
-    bool mVideoAnimation;
-    char* mVideoFile;
-    nsecs_t mStartbootanimaTime;
-    int  mBootVideoTime;
     SortedVector<String8> mLoadedFiles;
     sp<TimeCheckThread> mTimeCheckThread = nullptr;
     sp<Callbacks> mCallbacks;
