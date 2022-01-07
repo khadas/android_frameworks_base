@@ -786,6 +786,7 @@ public abstract class PanelViewController {
                 || "rk3126c".equals(platformName)
                 || "rk3326".equals(platformName)
                 || "rk3399".equals(platformName)
+                || "rk3588".equals(platformName)
                 || "rk356x".equals(platformName)) {
             return true;
         }
