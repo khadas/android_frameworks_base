@@ -33,7 +33,7 @@
 
 using namespace android;
 
-int main(int argc, char** argv)
+int main()
 {
     setpriority(PRIO_PROCESS, 0, ANDROID_PRIORITY_DISPLAY);
 
@@ -45,14 +45,7 @@ int main(int argc, char** argv)
         ProcessState::self()->startThreadPool();
 
         // create the boot animation object (may take up to 200ms for 2MB zip)
-        sp<BootAnimation> boot;
-        if (argc > 1) {
-            if (strcmp(argv[1], "shutdown") == 0) {
-                boot = new BootAnimation(audioplay::createAnimationCallbacks(), true);
-            }
-        } else {
-            boot = new BootAnimation(audioplay::createAnimationCallbacks(), false);
-        }
+        sp<BootAnimation> boot = new BootAnimation(audioplay::createAnimationCallbacks());
 
         waitForSurfaceFlinger();
 
