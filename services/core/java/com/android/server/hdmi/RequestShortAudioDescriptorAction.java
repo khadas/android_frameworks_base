@@ -152,10 +152,24 @@ final class RequestShortAudioDescriptorAction extends HdmiCecFeatureAction {
                     String[] s3 = s2.split(", ");
                     int i = 0;
                     HdmiLogger.info("cds:" + s2 + ":" + s3.length);
-                    mDescriptor = new byte[s3.length];
+                    if (s3.length == 1) {
+                        /*
+                         * there is no raw data info from eARC AVR
+                         * so only send 0
+                         */
+                        mDescriptor = new byte[]{0, 0, 0};
+                    } else {
+                        mDescriptor = new byte[s3.length];
+                    }
 
-                    for (String retval: s3){
-                        mDescriptor[i] = (byte) (Integer.parseInt(retval));
+                    for (String retval: s3) {
+                        int val = 0;
+                        try {
+                            val = Integer.parseInt(retval);
+                        } catch(Exception e) {
+                            HdmiLogger.error("parse sad error:" + e);
+                        }
+                        mDescriptor[i] = (byte) val;
                         i++;
                     }
                 } else {
