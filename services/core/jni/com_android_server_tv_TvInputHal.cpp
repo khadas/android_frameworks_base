@@ -560,7 +560,7 @@ status_t JTvInputHal::BufferProducerThread::configPreviewBuff() {
     ALOGV("%s in", __FUNCTION__);
     status_t err = native_window_api_connect(anw.get(), NATIVE_WINDOW_API_CAMERA);
     if (err != NO_ERROR) {
-        ALOGE("%s native_window_api_connect failed.", __FUNCTION__);
+        ALOGE("%s native_window_api_connect failed. err=%d", __FUNCTION__, err);
         return err;
     } else {
         ALOGV("native_window_api_connect succeed");
@@ -726,7 +726,8 @@ void JTvInputHal::BufferProducerThread::onCaptured(uint64_t buffId, int buffSeq,
                     ALOGE("error %d while queueing buffer to surface", err);
                     return;
                 } else {
-                    ALOGV("queueBuffer succeed buff id = %" PRIu64, mTvHalPreviewBuff[i].buffId);
+                    ALOGV("queueBuffer succeed mFirstCaptured=%d buff i=%d id = %" PRIu64,
+                        mFirstCaptured, i, mTvHalPreviewBuff[i].buffId);
                     mTvHalPreviewBuff[i].buffStatus = BUFF_STATUS_QUEUED;
                     mCurrBuffId = buffId;
                     if (!mFirstCaptured) {
@@ -770,9 +771,9 @@ bool JTvInputHal::BufferProducerThread::threadLoop() {
         if (mCurrBuffId != 0) {
             int index = -1;
             uint64_t dequeueBuffId = 0;
-            // int fenceFd = -1;
-            err = native_window_dequeue_buffer_and_wait(anw.get(), &buffer);
-            // err = anw->dequeueBuffer(anw.get(), &buffer, &fenceFd);
+            //err = native_window_dequeue_buffer_and_wait(anw.get(), &buffer);
+            int fenceFd = -1;
+            err = anw->dequeueBuffer(anw.get(), &buffer, &fenceFd);
             if (err != NO_ERROR) {
                 ALOGE("error %d while dequeueing buffer to surface", err);
                 return false;
@@ -787,9 +788,19 @@ bool JTvInputHal::BufferProducerThread::threadLoop() {
                     mBuffer = mTvHalPreviewBuff.at(i).anwbPtr;
                     mCurrBuffId = mTvHalPreviewBuff.at(i).buffId;
                     mTvHalPreviewBuff[i].buffStatus = BUFF_STATUS_DEQUEUED;
-                    ALOGV("find the right buff");
+                    ALOGV("find the %d right buff %" PRIu64,i, mCurrBuffId);
                     break;
                 }
+            }
+            sp<Fence> hwcFence(new Fence(fenceFd));
+            //ALOGE("wait fence start %" PRIu64 , dequeueBuffId);
+            //err = hwcFence->waitForever("dequeueBuffer_tv");
+            err = hwcFence->wait(100);
+            //ALOGE("wait fence end %" PRIu64 , dequeueBuffId);
+            if (err != OK) {
+                ALOGE("Fence wait err fenceFd %d err=%d, dequeueBuffId %" PRIx64, fenceFd, err, dequeueBuffId);
+                //anw->cancelBuffer(anw.get(), buffer, fenceFd);
+                //return false;
             }
             if (index == -1) {
                 ALOGE("ERROR hapened, after dequeueing, there is no right buff id");
