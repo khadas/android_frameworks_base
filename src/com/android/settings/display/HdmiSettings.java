@@ -99,7 +99,6 @@ public class HdmiSettings extends SettingsPreferenceFragment
     private boolean mResume;
     private long mWaitDialogCountTime;
     private int mRotation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
-    private long mInitTime;
 
     private HashMap<Integer, DisplayInfo> mDisplayInfoList = new HashMap<Integer, DisplayInfo>();
 
@@ -214,9 +213,6 @@ public class HdmiSettings extends SettingsPreferenceFragment
                 } else {
                     Log.d(TAG, "BroadcastReceiver.onReceive() : Disconnected HDMI-TV");
                 }
-                if (mEnableDisplayListener && System.currentTimeMillis() - mInitTime > 2000) {
-                    refreshState();
-                }
             }
         }
     };
@@ -239,7 +235,6 @@ public class HdmiSettings extends SettingsPreferenceFragment
         addPreferencesFromResource(R.xml.hdmi_settings);
 
         init();
-        mInitTime = System.currentTimeMillis();
         mEnableDisplayListener = true;
     }
 
@@ -258,7 +253,7 @@ public class HdmiSettings extends SettingsPreferenceFragment
         IntentFilter filter = new IntentFilter("android.intent.action.HDMI_PLUGGED");
         getContext().registerReceiver(HdmiListener, filter);
         //refreshState();
-        //mDisplayManager.registerDisplayListener(mDisplayListener, null);
+        mDisplayManager.registerDisplayListener(mDisplayListener, null);
         mResume = true;
     }
 
@@ -288,7 +283,7 @@ public class HdmiSettings extends SettingsPreferenceFragment
         super.onPause();
         mResume = false;
         Log.d(TAG, "onPause----------------");
-        //mDisplayManager.unregisterDisplayListener(mDisplayListener);
+        mDisplayManager.unregisterDisplayListener(mDisplayListener);
         getContext().unregisterReceiver(HdmiListener);
     }
 
