@@ -1111,10 +1111,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     void startArcAction(boolean enabled) {
         assertRunOnServiceThread();
         HdmiLogger.info("startArcAction [old:%b new:%b]", mArcEstablished, enabled);
-        if (mArcEstablished == enabled) {
-            HdmiLogger.debug("startArcAction arc already established:" + mArcEstablished);
-            return;
-        }
 
         HdmiDeviceInfo info = getAvrDeviceInfo();
         if (!isConnectedToArcDevice(info)) {
