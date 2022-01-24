@@ -235,8 +235,13 @@ public class AssistManager {
 
         final boolean isService = assistComponent.equals(getVoiceInteractorComponentName());
         if (!isService || (!isVoiceSessionRunning() && shouldShowOrb())) {
-            mOrbController.showOrb(assistComponent, isService);
-            mOrbController.postHideDelayed(isService ? TIMEOUT_SERVICE : TIMEOUT_ACTIVITY);
+            if (AssistUtils.isDisclosureEnabled(mContext)) {
+                mOrbController.showOrb(assistComponent, isService);
+                mOrbController.postHideDelayed(isService ? TIMEOUT_SERVICE : TIMEOUT_ACTIVITY);
+            } else {
+                Log.w(TAG, "Skip showing orb because flash screen is disabled");
+                Log.w(TAG, "Required by Exp+ MADA checklist M31");
+            }
         }
 
         if (args == null) {
