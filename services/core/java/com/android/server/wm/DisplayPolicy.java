@@ -82,11 +82,13 @@ import static android.view.WindowManager.LayoutParams.TYPE_VOICE_INTERACTION_STA
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 import static android.view.WindowManagerGlobal.ADD_OKAY;
 import static android.view.WindowManagerPolicyConstants.ACTION_HDMI_PLUGGED;
+import static android.view.WindowManagerPolicyConstants.ACTION_DP_PLUGGED;
 import static android.view.WindowManagerPolicyConstants.ALT_BAR_BOTTOM;
 import static android.view.WindowManagerPolicyConstants.ALT_BAR_LEFT;
 import static android.view.WindowManagerPolicyConstants.ALT_BAR_RIGHT;
 import static android.view.WindowManagerPolicyConstants.ALT_BAR_TOP;
 import static android.view.WindowManagerPolicyConstants.ALT_BAR_UNKNOWN;
+import static android.view.WindowManagerPolicyConstants.EXTRA_DP_PLUGGED_STATE;
 import static android.view.WindowManagerPolicyConstants.EXTRA_HDMI_PLUGGED_STATE;
 import static android.view.WindowManagerPolicyConstants.EXTRA_MULTI_HDMI_PLUGGED_NAME;
 import static android.view.WindowManagerPolicyConstants.NAV_BAR_BOTTOM;
@@ -394,6 +396,8 @@ public class DisplayPolicy {
 
     private HashMap<String,Boolean> mHdmiPluggedMap=new HashMap<>();
 
+    private HashMap<String,Boolean> mDpPluggedMap=new HashMap<>();
+
     private class PolicyHandler extends Handler {
 
         PolicyHandler(Looper looper) {
@@ -683,6 +687,23 @@ public class DisplayPolicy {
 
     private int getDisplayId() {
         return mDisplayContent.getDisplayId();
+    }
+
+    public void setMultiDpPlugged(boolean plugged, ExtconUEventObserver.ExtconInfo info) {
+        setMultiDpPlugged(plugged, false, info);
+    }
+
+    public void setMultiDpPlugged(boolean plugged, boolean force, ExtconUEventObserver.ExtconInfo info) {
+        if (force || mDpPluggedMap.get(info.getName()) != plugged) {
+            mDpPluggedMap.replace(info.getName(),plugged);
+            mService.updateRotation(true, true);
+            Intent intent = new Intent(ACTION_DP_PLUGGED);
+            intent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY_BEFORE_BOOT);
+            intent.putExtra(EXTRA_DP_PLUGGED_STATE, plugged);
+            intent.putExtra(EXTRA_MULTI_HDMI_PLUGGED_NAME,info.getName());
+            mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
+            Slog.d(TAG,"dp plugged state change, name="+info.getName()+" plugged="+plugged);
+        }
     }
 
     public void setHdmiPlugged(boolean plugged) {
@@ -3119,5 +3140,9 @@ public class DisplayPolicy {
 
     public void addHdmiPluggedState(String extconPath,Boolean plugged){
         mHdmiPluggedMap.put(extconPath,plugged);
+    }
+
+    public void addDpPluggedState(String extconPath,Boolean plugged){
+        mDpPluggedMap.put(extconPath,plugged);
     }
 }
