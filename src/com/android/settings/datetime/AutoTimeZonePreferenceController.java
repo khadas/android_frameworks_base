@@ -16,6 +16,12 @@
 
 package com.android.settings.datetime;
 
+import static android.app.time.Capabilities.CAPABILITY_NOT_APPLICABLE;
+import static android.app.time.Capabilities.CAPABILITY_POSSESSED;
+
+import android.app.time.TimeManager;
+import android.app.time.TimeZoneCapabilities;
+import android.app.time.TimeZoneCapabilitiesAndConfig;
 import android.content.Context;
 import android.provider.Settings;
 
@@ -34,16 +40,31 @@ public class AutoTimeZonePreferenceController extends AbstractPreferenceControll
     private final boolean mIsFromSUW;
     private final UpdateTimeAndDateCallback mCallback;
 
+    private final TimeManager mTimeManager;
+    private TimeZoneCapabilitiesAndConfig mTimeZoneCapabilitiesAndConfig;
+
     public AutoTimeZonePreferenceController(Context context, UpdateTimeAndDateCallback callback,
             boolean isFromSUW) {
         super(context);
         mCallback = callback;
         mIsFromSUW = isFromSUW;
+        mTimeManager = context.getSystemService(TimeManager.class);
     }
 
     @Override
     public boolean isAvailable() {
-        return !(Utils.isWifiOnly(mContext) || mIsFromSUW);
+        boolean isWifiOnly = Utils.isWifiOnly(mContext);
+        if (isWifiOnly) {
+            if (mTimeZoneCapabilitiesAndConfig == null) {
+                mTimeZoneCapabilitiesAndConfig = mTimeManager.getTimeZoneCapabilitiesAndConfig();
+            }
+            TimeZoneCapabilities timeZoneCapabilities = mTimeZoneCapabilitiesAndConfig.getCapabilities();
+            int capability = timeZoneCapabilities.getConfigureGeoDetectionEnabledCapability();
+            if (capability == CAPABILITY_NOT_APPLICABLE || capability == CAPABILITY_POSSESSED) {
+                isWifiOnly = false;
+            }
+        }
+        return !(isWifiOnly || mIsFromSUW);
     }
 
     @Override
