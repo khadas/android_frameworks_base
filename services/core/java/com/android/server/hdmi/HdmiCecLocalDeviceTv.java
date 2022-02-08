@@ -232,9 +232,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         // 1.Update earc status.
         updateEarcState(earcOn);
         // 2.Update the arc status.
-        if (mService.isSystemAudioActivated()) {
-            // Give a shot for arc action when earc is off.
-            HdmiLogger.debug("Going to start arc action when earc is changed");
+        if (mService.isSystemAudioActivated() && !earcOn) {
+            // Give a shot for arc action when earc is off. There is no case
+            // where arc switches to earc.
+            HdmiLogger.debug("Going to start arc action when earc is off");
             startArcAction(!earcOn);
         }
 
@@ -1005,10 +1006,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         synchronized (mLock) {
             mSystemAudioControlFeatureEnabled = enabled;
         }
-        if (isEarcOn()) {
-            HdmiLogger.debug("setSystemAudioControlFeatureEnabled abort for earc on");
-            return;
-        }
         if (hasSystemAudioDevice()) {
             changeSystemAudioMode(enabled, null);
         }
@@ -1019,7 +1016,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     boolean isSystemAudioControlFeatureEnabled() {
         synchronized (mLock) {
-            return isEarcOn() || mSystemAudioControlFeatureEnabled;
+            return mSystemAudioControlFeatureEnabled;
         }
     }
 
@@ -1173,7 +1170,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             // On initialization process, getAvrDeviceInfo() may return null and cause exception
             return;
         }
-        if (delta == 0 || (!isSystemAudioActivated() && !isEarcOn()) || !mService.isHdmiCecVolumeControlEnabled()) {
+        if (delta == 0 || (!isSystemAudioActivated()) || !mService.isHdmiCecVolumeControlEnabled()) {
             return;
         }
 
