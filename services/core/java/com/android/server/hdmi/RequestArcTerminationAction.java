@@ -83,15 +83,13 @@ final class RequestArcTerminationAction extends RequestArcAction {
                 }
                 break;
             case Constants.MESSAGE_TERMINATE_ARC:
+
                 if (mEarc) {
-                    HdmiLogger.info("Terminate arc and then start earc.");
-                    tv().setArcStatus(false);
-                    sendCommand(HdmiCecMessageBuilder.buildReportArcTerminated(getSourceAddress(),
-                            mAvrAddress));
-                    tv().mService.setEarcMode(true);
-                    finish();
-                    return true;
+                    tv().onArcTerminated();;
+                } else {
+                    disableArcTransmission();
                 }
+                finish();
                 break;
         }
         return false;
@@ -103,9 +101,10 @@ final class RequestArcTerminationAction extends RequestArcAction {
             return;
         }
         HdmiLogger.error("[T] RequestArcTerminationAction.");
-        disableArcTransmission();
         if (mEarc) {
-            tv().mService.setEarcMode(true);
+            tv().onArcTerminated();;
+        } else {
+            disableArcTransmission();
         }
         finish();
     }

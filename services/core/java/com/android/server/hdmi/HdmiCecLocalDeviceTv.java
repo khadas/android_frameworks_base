@@ -227,43 +227,57 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     protected void onEarcStateChanged(boolean earcOn) {
         super.onEarcStateChanged(earcOn);
+        if (mEarcOn == earcOn) {
+            HdmiLogger.debug("no need to update for same earc state:" + earcOn);
+            return;
+        }
         mEarcOn = earcOn;
         HdmiLogger.info("onEarcStateChanged current earc state:" + mEarcOn);
-        // 1.Update earc status.
-        updateEarcState(earcOn);
-        // 2.Update the arc status.
-        if (mService.isSystemAudioActivated() && !earcOn) {
-            // Give a shot for arc action when earc is off. There is no case
-            // where arc switches to earc.
-            HdmiLogger.debug("Going to start arc action when earc is off");
-            startArcAction(!earcOn);
+        //1. No matter earc or arc is turned on, audio format should be updated.
+        //2. Audio hal connection status should be updated when earc or arc is
+        // turned on, no need to disable it when the two states exchange.
+        if (earcOn) {
+            updateEarcState(true);
+        } else {
+            // Only try to start arc when earc is off.
+            startArcAction(true);
         }
-
     }
 
     public void onEarcSettingChanged(boolean on) {
         HdmiLogger.debug("TV onEarcSettingChanged when arc is " + mArcEstablished);
-        if (on) {
-            if (mArcEstablished) {
-                // Earc should be turned on after the arc is terminated.
-                addAndStartAction(new RequestArcTerminationAction(this, Constants.ADDR_AUDIO_SYSTEM, on));
-            } else {
-                mService.setEarcMode(true);
-            }
+        if (on && mArcEstablished) {
+            // Earc should be turned on after the arc is terminated.
+            addAndStartAction(new RequestArcTerminationAction(this, Constants.ADDR_AUDIO_SYSTEM, on));
         } else {
             // Earc should be directly turned off.
-            mService.setEarcMode(false);
+            mService.setEarcMode(on);
         }
     }
 
     private void updateEarcState(boolean earcOn) {
-        HdmiLogger.info("updateEarcState:" + earcOn);
+        HdmiLogger.info("updateEarcState: " + earcOn);
+        // update SAD
+        updateAudioFormat(earcOn);
+        // Directly use arc interface to update the arc connection status.
+        // For amazon there could be no room for much modifications.
+        setArcStatus(earcOn);
+        /*
         updateAudioManagerForSystemAudio(earcOn);
         mService.getAudioManager().setWiredDeviceConnectionState(
                 AudioSystem.DEVICE_OUT_HDMI_ARC, (earcOn ? 1 : 0), "", "");
         mService.getAudioManager().setParameters("HDMI ARC Switch=" + (earcOn ? 1 : 0));
         mService.getAudioManager().setParameters("speaker_mute=" + (earcOn ? 1 : 0));
         updateAudioFormat(earcOn);
+        */
+    }
+
+    void onArcTerminated() {
+        HdmiLogger.debug("onArcTerminated and start earc mode");
+        // Hold arc connection status and updated after earc state callback.
+        //setArcStatus(false);
+        // Trigger earc state on.
+        mService.setEarcMode(true);
     }
 
     @ServiceThreadOnly
@@ -949,12 +963,13 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                 mService.isSystemAudioActivated(), on);
         synchronized (mLock) {
             mService.updateSystemAudioActivated(on);
-            updateAudioFormat(on);
+            //updateAudioFormat(on);
         }
 
         if (!isEarcOn()) {
             startArcAction(on);
         } else {
+            // change earc status and audio format.
             updateEarcState(on);
         }
     }
@@ -1025,7 +1040,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
      *
      * @return {@code true} if ARC was in "Enabled" status
      */
-    @ServiceThreadOnly
     boolean setArcStatus(boolean enabled) {
         assertRunOnServiceThread();
 
@@ -1036,10 +1050,10 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         // 1. Enable/disable ARC circuit.
         enableAudioReturnChannel(enabled);
         // 2. Notify arc status to audio service.
+        // No need to disconnect if changes from ARC to EARC.
         notifyArcStatusToAudioService(enabled);
         // 3. Update arc status;
         mArcEstablished = enabled;
-        updateAudioFormat(enabled);
         return oldStatus;
     }
 
@@ -1122,6 +1136,9 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             }
             return;
         }
+
+        // update SAD
+        updateAudioFormat(enabled);
 
         // Terminate opposite action and start action if not exist.
         if (enabled) {
@@ -1325,12 +1342,6 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
             addAndStartAction(new SystemAudioActionFromTv(this, message.getSource(),
                     false, null));
             return true;
-        }
-        if (isEarcOn()) {
-            if (systemAudioStatus)
-                updateEarcState(true);
-            else
-                updateEarcState(false);
         }
 
         removeAction(SystemAudioAutoInitiationAction.class);
