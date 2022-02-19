@@ -590,6 +590,15 @@
     <item msgid="6242790734457941014">"RUIM/SIM"</item>
     <item msgid="8980776035119085660">"NV"</item>
   </string-array>
+  <string-array name="screenshot_delay_entries">
+    <item>15秒后</item>
+    <item>30秒后</item>
+    <item>1分钟后</item>
+    <item>2分钟后</item>
+    <item>3分钟后</item>
+    <item>4分钟后</item>
+    <item>5分钟后</item>
+  </string-array>
     <!-- no translation found for enhanced_4g_lte_mode_title_variant:0 (1841976293698111057) -->
     <!-- no translation found for enhanced_4g_lte_mode_title_variant:1 (6822859933189908133) -->
     <!-- no translation found for enhanced_4g_lte_mode_title_variant:2 (4543171628914168621) -->
