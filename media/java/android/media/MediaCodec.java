@@ -32,6 +32,9 @@ import android.os.IHwBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PersistableBundle;
+import android.os.RkDisplayOutputManager;
+import android.os.SystemProperties;
+import android.util.Log;
 import android.view.Surface;
 
 import java.io.IOException;
@@ -2126,6 +2129,9 @@ final public class MediaCodec {
     private static final int BUFFER_MODE_LEGACY = 0;
     private static final int BUFFER_MODE_BLOCK = 1;
     private int mBufferMode = BUFFER_MODE_INVALID;
+    private float frameRate = -1;
+    private RkDisplayOutputManager mRkDisplayOutputManager = new RkDisplayOutputManager();
+    private String currentResolution;
 
     private void configure(
             @Nullable MediaFormat format, @Nullable Surface surface,
@@ -2158,6 +2164,16 @@ final public class MediaCodec {
                 } else {
                     keys[i] = entry.getKey();
                     values[i] = entry.getValue();
+                }
+                if (SystemProperties.get("ro.target.product", "").equals("box") && !getCodecInfo().isEncoder() && SystemProperties.get("persist.sys.adapt_framerate", "false").equals("true") && entry.getKey().equals(MediaFormat.KEY_FRAME_RATE)) {
+                    Log.d("MediaCodec", "ROCKCHIP configure: KEY_FRAME_RATE = " + entry.toString());
+                    try {
+                        frameRate = ((Integer)entry.getValue()).floatValue();
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                        throw new IllegalArgumentException("Wrong Frame Rate Parameter!");
+                    }
                 }
                 ++i;
             }
@@ -2281,6 +2297,7 @@ final public class MediaCodec {
      * for start may be attributed to future method calls.
      */
     public final void start() {
+        setTargetResolution();
         native_start();
         synchronized(mBufferLock) {
             cacheBuffers(true /* input */);
@@ -2288,6 +2305,108 @@ final public class MediaCodec {
         }
     }
     private native final void native_start();
+
+    private void setTargetResolution() {
+        if (!SystemProperties.get("ro.target.product", "").equals("box")) {
+            return;
+        }
+        if (getCodecInfo().isEncoder()) {
+            return;
+        }
+        Log.d("MediaCodec", "ROCKCHIP setTargetResolution format = " + getOutputFormat().toString());
+        String isAutoAdaptFrameRate = SystemProperties.get("persist.sys.adapt_framerate", "false");
+        if (isAutoAdaptFrameRate.equals("false")) {
+            Log.d("MediaCodec", "ROCKCHIP No adapt framerate");
+            return;
+        }
+        int curMainType = mRkDisplayOutputManager.getCurrentInterface(0);
+        String[] displayResolution = mRkDisplayOutputManager.getModeList(0, curMainType);
+        for (String str : displayResolution) {
+            Log.d("MediaCodec", "ROCKCHIP displayResolution: " + str);
+        }
+        String testResolution = SystemProperties.get("persist.framerate", "");
+        if (testResolution != null && !testResolution.equals("")){
+            currentResolution = mRkDisplayOutputManager.getCurrentMode(0, curMainType);
+            SystemProperties.set("persist.sys.current_resolution", currentResolution);
+            mRkDisplayOutputManager.setMode(0, curMainType, testResolution);
+            mRkDisplayOutputManager.saveConfig();
+        } else {
+            recoverLastResolution();
+            if (frameRate <= 0) {
+                return;
+            }
+            currentResolution = mRkDisplayOutputManager.getCurrentMode(0, curMainType);
+            SystemProperties.set("persist.sys.current_resolution", currentResolution);
+            Log.d("MediaCodec", "ROCKCHIP currentResolution = " + currentResolution);
+            String targetResolution = SystemProperties.get("persist.framerate", "");
+            if (targetResolution.equals("")) {
+                for (String str : displayResolution) {
+                    if (str.equals("Auto")) continue;
+                    String tmpResolution = str;
+                    tmpResolution = str;
+                    tmpResolution = tmpResolution.indexOf("-") > 0
+                            ? tmpResolution.substring(0, tmpResolution.indexOf("-"))
+                            : tmpResolution;
+                    int indexOfX = tmpResolution.indexOf("x");
+                    int endIndex = tmpResolution.indexOf("p") > 0 ? tmpResolution.indexOf("p") : 0;
+                    endIndex = tmpResolution.indexOf("i") > 0 ? tmpResolution.indexOf("i") : endIndex;
+                    int targetWeight = 0;
+                    int targetHeight = 0;
+                    float refreshRate = 0;
+                    if (indexOfX > 0 && endIndex > 0) {
+                        targetWeight = Integer.parseInt(tmpResolution.substring(0, indexOfX));
+                        targetHeight = Integer.parseInt(tmpResolution.substring(indexOfX + 1, endIndex));
+                        refreshRate = Float.parseFloat(
+                                tmpResolution.substring(endIndex + 1, tmpResolution.length()));
+                    }
+                    Log.d("MediaCodec", "ROCKCHIP targetWeight = " + targetWeight + ", targetHeight = " + targetHeight
+                            + ", refreshRate = " + refreshRate);
+                    // 帧率匹配方法需要自己扩展
+                    if (Math.abs(refreshRate - frameRate) <= 1) {
+                        targetResolution = str;
+                        Log.d("MediaCodec", "ROCKCHIP abs <= 1, ROCKCHIP targetResolution = " + targetResolution);
+                        break;
+                    }
+                }
+            }
+            if (targetResolution != null && !targetResolution.equals("")) {
+                Log.d("MediaCodec", "ROCKCHIP targetResolution = " + targetResolution);
+                mRkDisplayOutputManager.setMode(0, curMainType, targetResolution);
+                mRkDisplayOutputManager.saveConfig();
+            }
+        }
+    }
+
+    private void recoverLastResolution () {
+        if (!SystemProperties.get("ro.target.product", "").equals("box")) {
+            return;
+        }
+        if (getCodecInfo().isEncoder()) {
+            return;
+        }
+        Log.d("MediaCodec", "ROCKCHIP recoverLastResolution()");
+        String isAutoAdaptFrameRate = SystemProperties.get("persist.sys.adapt_framerate", "false");
+        if (isAutoAdaptFrameRate.equals("false")) {
+            Log.d("MediaCodec", "No adapt framerate");
+            return;
+        } else {
+            int curMainType = mRkDisplayOutputManager.getCurrentInterface(0);
+            String[] displayResolution = mRkDisplayOutputManager.getModeList(0, curMainType);
+            Log.d("MediaCodec", "ROCKCHIP prop current = " + SystemProperties.get("persist.sys.current_resolution", ""));
+            for (String str : displayResolution) {
+                Log.d("MediaCodec", "displayResolution: " + str);
+                if (str.equals(currentResolution)) {
+                    mRkDisplayOutputManager.setMode(0, curMainType, currentResolution);
+                    mRkDisplayOutputManager.saveConfig();
+                    frameRate = -1;
+                    Log.d("MediaCodec", "ROCKCHIP currentResolution = " + currentResolution);
+                    currentResolution = "";
+                    SystemProperties.set("persist.sys.current_resolution", "");
+                    break;
+                }
+            }
+        }
+    }
 
     /**
      * Finish the decode/encode session, note that the codec instance
@@ -2297,6 +2416,7 @@ final public class MediaCodec {
      * @throws IllegalStateException if in the Released state.
      */
     public final void stop() {
+        recoverLastResolution();
         native_stop();
         freeAllTrackedBuffers();
 

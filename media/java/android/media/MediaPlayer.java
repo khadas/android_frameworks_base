@@ -51,6 +51,7 @@ import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.os.PowerManager;
 import android.os.Process;
+import android.os.RkDisplayOutputManager;
 import android.os.SystemProperties;
 import android.provider.Settings;
 import android.system.ErrnoException;
@@ -2175,6 +2176,7 @@ public class MediaPlayer extends PlayerBase
      * at the same time.
      */
     public void release() {
+        recoverLastResolution();
         baseRelease();
         stayAwake(false);
         updateSurfaceScreenOn();
@@ -2212,6 +2214,34 @@ public class MediaPlayer extends PlayerBase
     }
 
     private native void _release();
+
+    private void recoverLastResolution() {
+        if (!SystemProperties.get("ro.target.product", "").equals("box")) {
+            return;
+        }
+        Log.d(TAG, "Mediaplayer recoverLastResolution()");
+        String isAutoAdaptFrameRate = SystemProperties.get("persist.sys.adapt_framerate", "false");
+        if (isAutoAdaptFrameRate.equals("false")) {
+            Log.d(TAG, "No adapt framerate");
+            // return;
+        } else {
+            int curMainType = mRkDisplayOutputManager.getCurrentInterface(0);
+            String tmpResolution = SystemProperties.get("persist.sys.current_resolution", "");
+            if (tmpResolution != null && !tmpResolution.equals("")) {
+                currentResolution = tmpResolution;
+            }
+            String[] displayResolution = mRkDisplayOutputManager.getModeList(0, curMainType);
+            for (String str : displayResolution) {
+                Log.d(TAG, "ROCKCHIP displayResolution: " + str);
+                if (str.equals(currentResolution)) {
+                    mRkDisplayOutputManager.setMode(0, curMainType, currentResolution);
+                    mRkDisplayOutputManager.saveConfig();
+                    SystemProperties.set("persist.sys.current_resolution", "");
+                    currentResolution = "";
+                }
+            }
+        }
+    }
 
     /**
      * Resets the MediaPlayer to its uninitialized state. After calling
@@ -3409,6 +3439,7 @@ public class MediaPlayer extends PlayerBase
     private static final int MEDIA_DRM_INFO = 210;
     private static final int MEDIA_TIME_DISCONTINUITY = 211;
     private static final int MEDIA_RTP_RX_NOTICE = 300;
+    private static final int MEDIA_FRAME_RATE = 301;
     private static final int MEDIA_AUDIO_ROUTING_CHANGED = 10000;
 
     private TimeProvider mTimeProvider;
@@ -3538,6 +3569,9 @@ public class MediaPlayer extends PlayerBase
                 return;
 
             case MEDIA_SET_VIDEO_SIZE:
+                Log.d(TAG, "ROCKCHIP MEDIA_SET_VIDEO_SIZE width = " + msg.arg1 + ", height = " + msg.arg2);
+                currentWidth = msg.arg1;
+                currentHeight = msg.arg2;
                 OnVideoSizeChangedListener onVideoSizeChangedListener = mOnVideoSizeChangedListener;
                 if (onVideoSizeChangedListener != null) {
                     onVideoSizeChangedListener.onVideoSizeChanged(
@@ -3738,6 +3772,64 @@ public class MediaPlayer extends PlayerBase
                                     .onRtpRxNotice(mMediaPlayer, noticeType, data));
                 }
                 return;
+            case MEDIA_FRAME_RATE:
+                if (!SystemProperties.get("ro.target.product", "").equals("box")) {
+                    return;
+                }
+                Log.d(TAG, "ROCKCHIP MEDIA_FRAME_RATE msg.arg1 = " + msg.arg1 + ", msg.arg2 = " + msg.arg2 + ", msg.obj = " + msg.obj);
+                String isAutoAdaptFrameRate = SystemProperties.get("persist.sys.adapt_framerate", "false");
+                if (isAutoAdaptFrameRate.equals("false")) {
+                    Log.d(TAG, "No adapt framerate");
+                    return;
+                }
+                int curMainType = mRkDisplayOutputManager.getCurrentInterface(0);
+                String[] displayResolution = mRkDisplayOutputManager.getModeList(0, curMainType);
+                for (String str : displayResolution) {
+                    Log.d(TAG, "ROCKCHIP displayResolution: " + str);
+                }
+                if (msg.arg1 == 0) {
+                    recoverLastResolution();
+                } else {
+                    recoverLastResolution();
+                    currentResolution = mRkDisplayOutputManager.getCurrentMode(0, curMainType);
+                    Log.d(TAG, "currentResolution = " + currentResolution);
+                    SystemProperties.set("persist.sys.current_resolution", currentResolution);
+                    String targetResolution = SystemProperties.get("persist.framerate", "");
+                    if (targetResolution.equals("")) {
+                        for (String str : displayResolution) {
+                            Log.d(TAG, "ROCKCHIP displayResolution: " + str);
+                            if (str.equals("Auto")) continue;
+                            String tmpResolution = str;
+                            tmpResolution = str;
+                            tmpResolution = tmpResolution.indexOf("-") > 0 ? tmpResolution.substring(0, tmpResolution.indexOf("-")) : tmpResolution;
+                            int indexOfX = tmpResolution.indexOf("x");
+                            int endIndex = tmpResolution.indexOf("p") > 0 ? tmpResolution.indexOf("p") : 0;
+                            endIndex = tmpResolution.indexOf("i") > 0 ? tmpResolution.indexOf("i") : endIndex;
+                            int targetWeight = 0;
+                            int targetHeight = 0;
+                            float refreshRate = 0;
+                            if (indexOfX > 0 && endIndex > 0 ) {
+                                targetWeight = Integer.parseInt(tmpResolution.substring(0, indexOfX));
+                                targetHeight = Integer.parseInt(tmpResolution.substring(indexOfX + 1, endIndex));
+                                refreshRate = Float.parseFloat(
+                                        tmpResolution.substring(endIndex +1 , tmpResolution.length()));
+                            }
+                            Log.d(TAG, "ROCKCHIP targetWeight = " + targetWeight + ", targetHeight = " + targetHeight + ", refreshRate = " + refreshRate);
+                            //帧率匹配方法需要自己扩展
+                            if (Math.abs(refreshRate - msg.arg1) <= 1) {
+                                targetResolution = str;
+                                Log.d(TAG, "abs <= 1, ROCKCHIP targetResolution = " + targetResolution);
+                                break;
+                            }
+                        }
+                    }
+                    if (targetResolution != null && !targetResolution.equals("")) {
+                        Log.d(TAG, "targetResolution = " + targetResolution);
+                        mRkDisplayOutputManager.setMode(0, curMainType, targetResolution);
+                        mRkDisplayOutputManager.saveConfig();
+                    }
+                }
+                return;
 
             default:
                 Log.e(TAG, "Unknown message type " + msg.what);
@@ -3745,6 +3837,12 @@ public class MediaPlayer extends PlayerBase
             }
         }
     }
+
+    private int currentWidth = 0;
+    private int currentHeight = 0;
+    private String currentResolution;
+
+    private RkDisplayOutputManager mRkDisplayOutputManager = new RkDisplayOutputManager();
 
     /*
      * Called from native code when an interesting event happens.  This method
