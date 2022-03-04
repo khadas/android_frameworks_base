@@ -159,6 +159,7 @@ public class VolumeDialogImpl implements VolumeDialog,
     private int mRingerCount;
     private final boolean mShowLowMediaVolumeIcon;
     private final boolean mChangeVolumeRowTintWhenInactive;
+    private int mCalculateW;
 
     private final Context mContext;
     private final H mHandler = new H();
@@ -571,6 +572,10 @@ public class VolumeDialogImpl implements VolumeDialog,
         mRingerRowsPadding = mContext.getResources().getDimensionPixelSize(
                 R.dimen.volume_dialog_ringer_rows_padding);
         mShowVibrate = mController.hasVibrator();
+        mCalculateW = mRingerDrawerItemSize + 2 * mRingerRowsPadding;
+        if (mDialogWidth < mCalculateW) {
+            mDialogWidth = mCalculateW;
+        }
 
         // Normal, mute, and possibly vibrate.
         mRingerCount = mShowVibrate ? 3 : 2;
@@ -685,6 +690,7 @@ public class VolumeDialogImpl implements VolumeDialog,
         row.important = important;
         row.defaultStream = defaultStream;
         row.view = mDialog.getLayoutInflater().inflate(R.layout.volume_dialog_row, null);
+        //row.view.setMinimumWidth(mCalculateW);//maybe need modify the row background too
         row.view.setId(row.stream);
         row.view.setTag(row);
         row.header = row.view.findViewById(R.id.volume_row_header);
