@@ -48,6 +48,12 @@ import com.android.systemui.util.leak.RotationUtils;
 import java.util.List;
 import java.util.Objects;
 
+import android.util.Log;
+
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
+
 public class PhoneStatusBarView extends PanelBar {
     private static final String TAG = "PhoneStatusBarView";
     private static final boolean DEBUG = StatusBar.DEBUG;
@@ -91,6 +97,10 @@ public class PhoneStatusBarView extends PanelBar {
         super(context, attrs);
         mCommandQueue = Dependency.get(CommandQueue.class);
         mContentInsetsProvider = Dependency.get(StatusBarContentInsetsProvider.class);
+
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(Intent.ACTION_USER_PRESENT);
+		context.registerReceiver(mBroadcastReceiver, filter);
     }
 
     public void setBar(StatusBar bar) {
@@ -134,6 +144,16 @@ public class PhoneStatusBarView extends PanelBar {
         Dependency.get(DarkIconDispatcher.class).removeDarkReceiver(mClock);
         mDisplayCutout = null;
     }
+
+	private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+			if (Intent.ACTION_USER_PRESENT.equals(action)) {
+				updateLayoutForCutout();
+            }
+        }
+    };
 
     @Override
     protected void onConfigurationChanged(Configuration newConfig) {
