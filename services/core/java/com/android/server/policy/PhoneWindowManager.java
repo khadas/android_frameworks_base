@@ -1007,6 +1007,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         } else if (powerKey == 2) {
                             reboot();
                         } else {
+                            mContext.sendBroadcastAsUser(new Intent(Intent.ACTION_SCREEN_OFF), UserHandle.CURRENT);
                             sleepDefaultDisplayFromPowerButton(eventTime, 0);
                         }
                     } else {
