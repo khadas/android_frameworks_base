@@ -43,6 +43,9 @@ public class RkDisplayModes {
     private static native int nativeSetColorMode(int display, String format);
     private static native RkDisplayModes.RkConnectorInfo[] nativeGetConnectorInfo();
     private static native int nativeUpdateDispHeader();
+    private static native String nativeGetModeState(String mode);
+    private static native int nativeSetModeState(String mode, String state);
+    private static native int nativeGetHdrResolutionSupported(int dpy, String hdrMode);
 
 
     private static RkDisplayModes.RkPhysicalDisplayInfo mDisplayInfos[];
@@ -122,8 +125,17 @@ public class RkDisplayModes {
     private  static String STR_DEPTH_8BIT = "8bit";
     private  static String STR_DEPTH_10BIT = "10bit";
 
+    public final int HDR10 = 1;
+    public final int DOLBY_VISION = 2;
+
     private static final  String RESOLUTION_XML_PATH = "/system/usr/share/resolution_white.xml";
     private final  String HDMI_DBG_STATUS = "/d/dw-hdmi/status";
+
+    private static final String PROP_SVEP = "persist.sys.svep.mode";
+    private static final String PROP_SVEP_LAB_MODE = "persist.sys.svep.lab_mode";
+    private static final String PROP_SVEP_CONTRAST_MODE = "persist.sys.svep.contrast_mode";
+    private static final String PROP_SVEP_CONTRAST_OFFSET_RATIO = "persist.sys.svep.contrast_offset_ratio";
+    private static final String PROP_HDR10_FORCE_DISABLE = "vendor.hwc.hdr_force_disable";
 
     public RkDisplayModes(){
         mWhiteList = new ArrayList<>();
@@ -793,6 +805,54 @@ public class RkDisplayModes {
 
     public int updateDispHeader(){
         return nativeUpdateDispHeader();
+    }
+
+    public int getResolutionSupported(int display, String resolution) {
+        return nativeGetHdrResolutionSupported(display, resolution);
+}
+
+    public boolean isDolbyVisionStatus() {
+        Log.d(TAG, "isDolbyVisionStatus ===========  ");
+        return false;
+    }
+
+    public boolean setDolbyVisionEnabled(boolean enabled) {
+        nativeSetModeState("dolby vision", String.valueOf(enabled));
+        return false;
+    }
+
+    public boolean isHDR10Status() {
+        Log.d(TAG, "isHDR10Status ===========  ");
+        return nativeGetModeState(PROP_HDR10_FORCE_DISABLE).equals("0");
+    }
+
+    public boolean setHDR10Enabled(boolean enabled) {
+        Log.d(TAG, "setHDR10Enabled ===========  " + enabled);
+        return nativeSetModeState(PROP_HDR10_FORCE_DISABLE, enabled ? "0" : "1") == 0 ? true : false;
+    }
+
+    public boolean isAiImageQuality() {
+        String ret = nativeGetModeState(PROP_SVEP);
+        Log.d(TAG, "isAiImageQuality ===========  ret = " + ret);
+        return ret.equals("1");
+    }
+
+    public boolean setAiImageQuality(boolean enabled) {
+        int ret = nativeSetModeState(PROP_SVEP, enabled ? "1" : "0");
+        Log.d(TAG, "setAiImageQuality ===========  enabled = " + enabled + " ret = " + ret);
+        return ret == 0;
+    }
+
+    public boolean isAiImageQualityLabMode() {
+        String ret = nativeGetModeState(PROP_SVEP_LAB_MODE);
+        Log.d(TAG, "isAiImageQualityLabMode ===========  ret = " + ret);
+        return ret.equals("1");
+    }
+
+    public boolean setAiImageQualityLabMode(boolean enabled) {
+        int ret = nativeSetModeState(PROP_SVEP_LAB_MODE, enabled ? "1" : "0");
+        Log.d(TAG, "setAiImageQualityLabMode ===========  enabled = " + enabled + " ret = " + ret);
+        return ret == 0;
     }
 
 }

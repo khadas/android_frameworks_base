@@ -532,6 +532,48 @@ static int nativeUpdateDispHeader(JNIEnv* env, jobject obj) {
     }
 }
 
+static jstring nativeGetModeState(JNIEnv* env, jobject obj, jstring mode) {
+    std::string state;
+    if (mComposer != nullptr)
+        mComposer->getModeState(env->GetStringUTFChars(mode, NULL), [&](const auto& tmpResult, const auto& tmpState)
+        {
+            if (tmpResult == Result::OK) {
+                state = tmpState;
+            }
+        });
+    ALOGD("nativeGetModeState state %s\n", state.c_str());
+    return env->NewStringUTF(state.c_str());
+}
+
+static int nativeSetModeState(JNIEnv* env, jobject obj, jstring mode, jstring state) {
+    Result res = Result::UNKNOWN;
+    const char* tmpMode = env->GetStringUTFChars(mode, NULL);
+    const char* tmpState = env->GetStringUTFChars(state, NULL);
+    if (mComposer != nullptr)
+        res = mComposer->setModeState(tmpMode, tmpState);
+    env->ReleaseStringUTFChars(mode, tmpMode);
+    env->ReleaseStringUTFChars(state, tmpState);
+    ALOGD("nativeSetModeState mode = %s, state = %s res %d\n", tmpMode, tmpState, res);
+    if (res == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeGetHdrResolutionSupported(JNIEnv* env, jobject obj, jint dpy, jstring mode) {
+    uint32_t res = -1;
+    if (mComposer != nullptr)
+        mComposer->getHdrResolutionSupported(dpy, env->GetStringUTFChars(mode, NULL),
+                                             [&](const auto& tmpResult, const auto& tmpMode) {
+                                                 if (tmpResult == Result::OK) {
+                                                     res = tmpMode;
+                                                 }
+                                             });
+    ALOGD("nativeGetHdrResolutionMode mode %d\n", res);
+    return (int)res;
+}
+
 // ----------------------------------------------------------------------------
 //com.android.server.rkdisplay
 static const JNINativeMethod sRkDrmModeMethods[] = {
@@ -583,6 +625,9 @@ static const JNINativeMethod sRkDrmModeMethods[] = {
         (void*)nativeGetConnectorInfo},
     {"nativeUpdateDispHeader", "()I",
         (void*)nativeUpdateDispHeader},
+    {"nativeGetModeState", "(Ljava/lang/String;)Ljava/lang/String;", (void*)nativeGetModeState},
+    {"nativeSetModeState", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)nativeSetModeState},
+    {"nativeGetHdrResolutionSupported", "(ILjava/lang/String;)I", (void*)nativeGetHdrResolutionSupported},
 
 };
 
@@ -650,4 +695,3 @@ int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env)
     return 0;
 }
 };
-

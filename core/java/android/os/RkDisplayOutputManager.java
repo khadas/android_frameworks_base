@@ -97,6 +97,9 @@ public class RkDisplayOutputManager {
     public final int HDR_OPEN = 1;
     public final int HDR_AUTO = 2;
 
+    public final int HDR10 = 1;
+    public final int DOLBY_VISION = 2;
+
     private int m_main_iface[] = null;
     private int m_aux_iface[] = null;
 
@@ -762,6 +765,105 @@ public class RkDisplayOutputManager {
         } catch (Exception e) {
             Log.e(TAG, "Error updateDispHeader :" + e);
             return -1;
+        }
+        return ret;
+    }
+
+    public int getResolutionSupported(int display, String resolution) {
+        int ret;
+        try {
+            ret = mService.getResolutionSupported(display, resolution);
+        } catch (Exception e) {
+            Log.e(TAG, "Error getResolutionSupported :" + e);
+            return -1;
+        }
+        return ret;
+    }
+
+    public boolean isDolbyVisionStatus() {
+        boolean ret;
+        try {
+            ret = mService.isDolbyVisionStatus();
+        } catch (Exception e) {
+            Log.e(TAG, "Error isDolbyVisionSupported :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public boolean setDolbyVisionEnabled(boolean enable) {
+        boolean ret;
+        try {
+            ret = mService.setDolbyVisionEnabled(enable);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setDolbyVisionEnabled :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public boolean isHDR10Status() {
+        boolean ret;
+        try {
+            ret = mService.isHDR10Status();
+        } catch (Exception e) {
+            Log.e(TAG, "Error isHDR10Status :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public boolean setHDR10Enabled(boolean enable) {
+        boolean ret;
+        try {
+            ret = mService.setHDR10Enabled(enable);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setHDR10Status :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public boolean isAiImageQuality() {
+        boolean ret;
+        try {
+            ret = mService.isAiImageQuality();
+        } catch (Exception e) {
+            Log.e(TAG, "Error isAiImageQuality :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public boolean setAiImageQuality(boolean enabled) {
+        boolean ret;
+        try {
+            ret = mService.setAiImageQuality(enabled);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setAiImageQuality :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public boolean isAiImageQualityLabMode() {
+        boolean ret;
+        try {
+            ret = mService.isAiImageQualityLabMode();
+        } catch (Exception e) {
+            Log.e(TAG, "Error isAiImageQualityLabMode :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public boolean setAiImageQualityLabMode(boolean enable) {
+        boolean ret;
+        try {
+            ret = mService.setAiImageQualityLabMode(enable);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setAiImageQualityLabMode :" + e);
+            return false;
         }
         return ret;
     }

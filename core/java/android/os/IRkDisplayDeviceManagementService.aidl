@@ -158,4 +158,63 @@ interface IRkDisplayDeviceManagementService
      *updateDispHeader
     */
     int updateDispHeader();
+
+    /**
+     * 返回该分辨率支持的各种模式，如HDR10、杜比视界等，通过位运算获取是否支持
+     * resolution: String  分辨率
+     * return: int 是否支持的状态相加
+    */
+    int getResolutionSupported(int display, String resolution);
+
+    /**
+     * 当前杜比视界状态
+     * return: boolean true为打开杜比视界，false为关闭
+    */
+    boolean isDolbyVisionStatus();
+
+    /**
+     * 当前HDR10状态
+     * return: boolean true为打开，false为关闭
+    */
+    boolean isHDR10Status();
+
+    /**
+     * 设置杜比视界状态
+     * enabled: boolean 设置的状态
+     * return: boolean 是否成功
+    */
+    boolean setDolbyVisionEnabled(boolean enabled);
+
+    /**
+     * 设置HDR10状态
+     * enabled: boolean 设置的状态
+     * return: boolean 是否成功
+    */
+    boolean setHDR10Enabled(boolean enabled);
+
+    /**
+     * 当前AI画质功能状态
+     * return: boolean true为打开，false为关闭
+    */
+    boolean isAiImageQuality();
+
+    /**
+     * 设置AI画质状态
+     * enabled: boolean 设置的状态
+     * return: boolean 是否成功
+    */
+    boolean setAiImageQuality(boolean enabled);
+
+    /**
+     * 当前AI画质实验室功能状态
+     * return: boolean true为打开，false为关闭
+    */
+    boolean isAiImageQualityLabMode();
+
+    /**
+     * 设置AI画质实验室功能状态
+     * enabled: boolean 设置的状态
+     * return: boolean 是否成功
+    */
+    boolean setAiImageQualityLabMode(boolean enabled);
 }

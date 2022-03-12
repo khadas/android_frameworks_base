@@ -234,4 +234,40 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         return mdrmModes.updateDispHeader();
     }
 
+    public int getResolutionSupported(int display, String resolution) {
+        return mdrmModes.getResolutionSupported(display, resolution);
+    }
+
+    public boolean isDolbyVisionStatus(){
+        return mdrmModes.isDolbyVisionStatus();
+    }
+
+    public boolean setDolbyVisionEnabled(boolean enable){
+        return mdrmModes.setDolbyVisionEnabled(enable);
+    }
+
+    public boolean isHDR10Status(){
+        return mdrmModes.isHDR10Status();
+    }
+
+    public boolean setHDR10Enabled(boolean enable){
+        return mdrmModes.setHDR10Enabled(enable);
+    }
+
+    public boolean isAiImageQuality() {
+        return mdrmModes.isAiImageQuality();
+    }
+
+    public boolean setAiImageQuality(boolean enable) {
+        return mdrmModes.setAiImageQuality(enable);
+    }
+
+    public boolean isAiImageQualityLabMode() {
+        return mdrmModes.isAiImageQualityLabMode();
+    }
+
+    public boolean setAiImageQualityLabMode(boolean enable) {
+        return mdrmModes.setAiImageQualityLabMode(enable);
+    }
+
 }
