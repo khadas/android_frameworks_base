@@ -163,9 +163,6 @@ public class ChooserActivity extends ResolverActivity implements
     private AppPredictor mWorkAppPredictor;
     private boolean mShouldDisplayLandscape;
 
-    private static final int MAX_TARGETS_PER_ROW_PORTRAIT = 4;
-    private static final int MAX_TARGETS_PER_ROW_LANDSCAPE = 8;
-
     @UnsupportedAppUsage
     public ChooserActivity() {
     }
@@ -275,6 +272,7 @@ public class ChooserActivity extends ResolverActivity implements
 
     private int mCurrAvailableWidth = 0;
     private int mLastNumberOfChildren = -1;
+    private int mMaxTargetsPerRow = 1;
 
     private static final String TARGET_DETAILS_FRAGMENT_TAG = "targetDetailsFragment";
 
@@ -741,8 +739,9 @@ public class ChooserActivity extends ResolverActivity implements
             mCallerChooserTargets = targets;
         }
 
-        mShouldDisplayLandscape = shouldDisplayLandscape(
-                getResources().getConfiguration().orientation);
+        mMaxTargetsPerRow = getResources().getInteger(R.integer.config_chooser_max_targets_per_row);
+        mShouldDisplayLandscape =
+                shouldDisplayLandscape(getResources().getConfiguration().orientation);
         setRetainInOnStop(intent.getBooleanExtra(EXTRA_PRIVATE_RETAIN_IN_ON_STOP, false));
         super.onCreate(savedInstanceState, target, title, defaultTitleRes, initialIntents,
                 null, false);
@@ -916,7 +915,7 @@ public class ChooserActivity extends ResolverActivity implements
                 adapter,
                 getPersonalProfileUserHandle(),
                 /* workProfileUserHandle= */ null,
-                isSendAction(getTargetIntent()), getMaxTargetsPerRow());
+                isSendAction(getTargetIntent()), mMaxTargetsPerRow);
     }
 
     private ChooserMultiProfilePagerAdapter createChooserMultiProfilePagerAdapterForTwoProfiles(
@@ -945,7 +944,7 @@ public class ChooserActivity extends ResolverActivity implements
                 selectedProfile,
                 getPersonalProfileUserHandle(),
                 getWorkProfileUserHandle(),
-                isSendAction(getTargetIntent()), getMaxTargetsPerRow());
+                isSendAction(getTargetIntent()), mMaxTargetsPerRow);
     }
 
     private int findSelectedProfile() {
@@ -1107,6 +1106,7 @@ public class ChooserActivity extends ResolverActivity implements
         }
 
         mShouldDisplayLandscape = shouldDisplayLandscape(newConfig.orientation);
+        mMaxTargetsPerRow = getResources().getInteger(R.integer.config_chooser_max_targets_per_row);
         adjustPreviewWidth(newConfig.orientation, null);
         updateStickyContentPreview();
     }
@@ -2696,7 +2696,7 @@ public class ChooserActivity extends ResolverActivity implements
                 // and b/150936654
                 recyclerView.setAdapter(gridAdapter);
                 ((GridLayoutManager) recyclerView.getLayoutManager()).setSpanCount(
-                        getMaxTargetsPerRow());
+                        mMaxTargetsPerRow);
             }
 
             UserHandle currentUserHandle = mChooserMultiProfilePagerAdapter.getCurrentUserHandle();
@@ -2861,7 +2861,7 @@ public class ChooserActivity extends ResolverActivity implements
 
     @Override // ChooserListCommunicator
     public int getMaxRankedTargets() {
-        return getMaxTargetsPerRow();
+        return mMaxTargetsPerRow;
     }
 
     @Override // ChooserListCommunicator
@@ -3209,13 +3209,6 @@ public class ChooserActivity extends ResolverActivity implements
         }
     }
 
-    int getMaxTargetsPerRow() {
-        int maxTargets = MAX_TARGETS_PER_ROW_PORTRAIT;
-        if (mShouldDisplayLandscape) {
-            maxTargets = MAX_TARGETS_PER_ROW_LANDSCAPE;
-        }
-        return maxTargets;
-    }
     /**
      * Adapter for all types of items and targets in ShareSheet.
      * Note that ranked sections like Direct Share - while appearing grid-like - are handled on the
@@ -3283,7 +3276,11 @@ public class ChooserActivity extends ResolverActivity implements
                 return false;
             }
 
-            int newWidth = width / getMaxTargetsPerRow();
+            // Limit width to the maximum width of the chooser activity
+            int maxWidth = getResources().getDimensionPixelSize(R.dimen.chooser_width);
+            width = Math.min(maxWidth, width);
+
+            int newWidth = width / mMaxTargetsPerRow;
             if (newWidth != mChooserTargetWidth) {
                 mChooserTargetWidth = newWidth;
                 return true;
@@ -3318,7 +3315,7 @@ public class ChooserActivity extends ResolverActivity implements
                             + getAzLabelRowCount()
                             + Math.ceil(
                             (float) mChooserListAdapter.getAlphaTargetCount()
-                                    / getMaxTargetsPerRow())
+                                    / mMaxTargetsPerRow)
             );
         }
 
@@ -3358,7 +3355,7 @@ public class ChooserActivity extends ResolverActivity implements
         public int getCallerAndRankedTargetRowCount() {
             return (int) Math.ceil(
                     ((float) mChooserListAdapter.getCallerTargetCount()
-                            + mChooserListAdapter.getRankedTargetCount()) / getMaxTargetsPerRow());
+                            + mChooserListAdapter.getRankedTargetCount()) / mMaxTargetsPerRow);
         }
 
         // There can be at most one row in the listview, that is internally
@@ -3557,7 +3554,7 @@ public class ChooserActivity extends ResolverActivity implements
                 parentGroup.addView(row2);
 
                 mDirectShareViewHolder = new DirectShareViewHolder(parentGroup,
-                        Lists.newArrayList(row1, row2), getMaxTargetsPerRow(), viewType);
+                        Lists.newArrayList(row1, row2), mMaxTargetsPerRow, viewType);
                 loadViewsIntoGroup(mDirectShareViewHolder);
 
                 return mDirectShareViewHolder;
@@ -3565,7 +3562,7 @@ public class ChooserActivity extends ResolverActivity implements
                 ViewGroup row = (ViewGroup) mLayoutInflater.inflate(R.layout.chooser_row, parent,
                         false);
                 ItemGroupViewHolder holder =
-                        new SingleRowViewHolder(row, getMaxTargetsPerRow(), viewType);
+                        new SingleRowViewHolder(row, mMaxTargetsPerRow, viewType);
                 loadViewsIntoGroup(holder);
 
                 return holder;
@@ -3657,7 +3654,7 @@ public class ChooserActivity extends ResolverActivity implements
             final int serviceCount = mChooserListAdapter.getServiceTargetCount();
             final int serviceRows = (int) Math.ceil((float) serviceCount / getMaxRankedTargets());
             if (position < serviceRows) {
-                return position * getMaxTargetsPerRow();
+                return position * mMaxTargetsPerRow;
             }
 
             position -= serviceRows;
@@ -3666,7 +3663,7 @@ public class ChooserActivity extends ResolverActivity implements
                                                  + mChooserListAdapter.getRankedTargetCount();
             final int callerAndRankedRows = getCallerAndRankedTargetRowCount();
             if (position < callerAndRankedRows) {
-                return serviceCount + position * getMaxTargetsPerRow();
+                return serviceCount + position * mMaxTargetsPerRow;
             }
 
             position -= getAzLabelRowCount() + callerAndRankedRows;
@@ -3679,7 +3676,7 @@ public class ChooserActivity extends ResolverActivity implements
             if (mDirectShareViewHolder != null && canExpandDirectShare) {
                 mDirectShareViewHolder.handleScroll(
                         mChooserMultiProfilePagerAdapter.getActiveAdapterView(), y, oldy,
-                        getMaxTargetsPerRow());
+                        mMaxTargetsPerRow);
             }
         }
 

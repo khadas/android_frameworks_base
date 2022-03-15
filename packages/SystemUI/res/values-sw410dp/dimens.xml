@@ -27,8 +27,6 @@
     <dimen name="global_actions_grid_horizontal_padding">4dp</dimen>
 
     <dimen name="global_actions_grid_item_side_margin">12dp</dimen>
-    <dimen name="global_actions_grid_item_vertical_margin">8dp</dimen>
-    <dimen name="global_actions_grid_item_width">72dp</dimen>
     <dimen name="global_actions_grid_item_height">72dp</dimen>
 
     <dimen name="global_actions_grid_item_icon_width">24dp</dimen>

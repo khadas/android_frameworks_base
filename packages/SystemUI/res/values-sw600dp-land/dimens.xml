@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+<<<<<<< HEAD
  * Copyright (c) 2012, The Android Open Source Project
+=======
+ * Copyright (c) 2021, The Android Open Source Project
+>>>>>>> android-12.1.0_r1
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +20,15 @@
 */
 -->
 <resources>
+    <!-- keyguard-->
+    <dimen name="keyguard_indication_margin_bottom">25dp</dimen>
+    <dimen name="ambient_indication_margin_bottom">115dp</dimen>
+    <dimen name="lock_icon_margin_bottom">60dp</dimen>
+
+    <!-- margin from keyguard status bar to clock. For split shade it should be
+         keyguard_split_shade_top_margin - status_bar_header_height_keyguard = 8dp -->
+    <dimen name="keyguard_clock_top_margin">8dp</dimen>
+
     <dimen name="navigation_key_width">120dp</dimen>
     <dimen name="navigation_key_padding">50dp</dimen>
-
 </resources>

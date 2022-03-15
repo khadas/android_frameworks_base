@@ -41,6 +41,7 @@ import android.content.pm.ShortcutManager;
 import android.content.res.Resources;
 import android.hardware.SensorManager;
 import android.hardware.SensorPrivacyManager;
+import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.display.ColorDisplayManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.face.FaceManager;
@@ -73,6 +74,7 @@ import android.view.inputmethod.InputMethodManager;
 
 import com.android.internal.app.IBatteryStats;
 import com.android.internal.appwidget.IAppWidgetService;
+import com.android.internal.jank.InteractionJankMonitor;
 import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.util.LatencyTracker;
 import com.android.systemui.dagger.qualifiers.DisplayId;
@@ -159,6 +161,12 @@ public class FrameworkServicesModule {
 
     @Provides
     @Singleton
+    static DeviceStateManager provideDeviceStateManager(Context context) {
+        return context.getSystemService(DeviceStateManager.class);
+    }
+
+    @Provides
+    @Singleton
     static IActivityManager provideIActivityManager() {
         return ActivityManager.getService();
     }
@@ -209,6 +217,12 @@ public class FrameworkServicesModule {
     @Nullable
     static FingerprintManager providesFingerprintManager(Context context) {
         return context.getSystemService(FingerprintManager.class);
+    }
+
+    @Provides
+    @Singleton
+    static InteractionJankMonitor provideInteractionJankMonitor() {
+        return InteractionJankMonitor.getInstance();
     }
 
     @Provides
@@ -356,6 +370,12 @@ public class FrameworkServicesModule {
     @Nullable
     static TelecomManager provideTelecomManager(Context context) {
         return context.getSystemService(TelecomManager.class);
+    }
+
+    @Provides
+    @Singleton
+    static Optional<TelecomManager> provideOptionalTelecomManager(Context context) {
+        return Optional.ofNullable(context.getSystemService(TelecomManager.class));
     }
 
     @Provides
