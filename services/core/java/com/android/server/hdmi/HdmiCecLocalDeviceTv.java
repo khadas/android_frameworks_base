@@ -227,7 +227,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     protected void onEarcStateChanged(boolean earcOn) {
         super.onEarcStateChanged(earcOn);
-        if (mEarcOn == earcOn) {
+        if (earcOn && (mEarcOn == earcOn)) {
             HdmiLogger.debug("no need to update for same earc state:" + earcOn);
             return;
         }
@@ -980,7 +980,7 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         }
         if (avr.getPortId() != mService.getArcPortId()) {
             // For HDMI CEC TESTR REASON, the arc port in tester is solid 0x1.
-            HdmiLogger.warning("Avr is connected to arc port!");
+            HdmiLogger.warning("Avr is not connected to arc port!");
         }
         return true;
     }
