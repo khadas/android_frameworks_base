@@ -208,6 +208,7 @@ public class ConnectivityService extends IConnectivityManager.Stub
 
     private static final boolean LOGD_RULES = false;
     private static final boolean LOGD_BLOCKED_NETWORKINFO = true;
+	private static final boolean ENABLE_NETWORK_COEXIST = true;
 
     // TODO: create better separation between radio types and network types
 
@@ -5162,8 +5163,22 @@ public class ConnectivityService extends IConnectivityManager.Stub
                 break;
             }
         }
-        nai.asyncChannel.disconnect();
-    }
+		 if (ENABLE_NETWORK_COEXIST) {
+		 log("Skip teardownUnneededNetwork: " + nai.name());
+		 if (nai.getCurrentScore() > 0) {
+		     try {
+		         mNetd.removeInterfaceFromNetwork(nai.linkProperties.getInterfaceName(), nai.network.netId);
+		         mNetd.addInterfaceToLocalNetwork(nai.linkProperties.getInterfaceName(), nai.linkProperties.getRoutes());
+		         mLegacyTypeTracker.add(nai.networkInfo.getType(), nai);
+		     } catch (RemoteException e) {
+		         Log.e(TAG, "Failed to add iface to local network " + e);
+		     }
+		 }
+		} else{
+
+		     nai.asyncChannel.disconnect();
+		 }
+ }
 
     private void handleLingerComplete(NetworkAgentInfo oldNetwork) {
         if (oldNetwork == null) {
@@ -5310,6 +5325,14 @@ public class ConnectivityService extends IConnectivityManager.Stub
                     } else {
                         if (VDBG) log("   accepting network in place of null");
                     }
+
+		        if (ENABLE_NETWORK_COEXIST) {
+		           try {
+		                mNetd.removeInterfaceFromLocalNetwork(newNetwork.linkProperties.getInterfaceName());
+		             } catch(RemoteException e) {}
+		                 updateLinkProperties(newNetwork,null);
+		           }
+
                     newNetwork.unlingerRequest(nri.request);
                     setNetworkForRequest(nri.request.requestId, newNetwork);
                     if (!newNetwork.addRequest(nri.request)) {
@@ -5640,6 +5663,11 @@ public class ConnectivityService extends IConnectivityManager.Stub
             // This has to happen after matching the requests, because callbacks are just requests.
             notifyNetworkCallbacks(networkAgent, ConnectivityManager.CALLBACK_PRECHECK);
         } else if (state == NetworkInfo.State.DISCONNECTED) {
+            if (ENABLE_NETWORK_COEXIST) {
+            try {
+                mNetd.removeInterfaceFromLocalNetwork(networkAgent.linkProperties.getInterfaceName());
+                } catch(RemoteException e) {}
+            }
             networkAgent.asyncChannel.disconnect();
             if (networkAgent.isVPN()) {
                 synchronized (mProxyLock) {

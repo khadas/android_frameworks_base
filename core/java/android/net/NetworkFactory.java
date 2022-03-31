@@ -229,7 +229,7 @@ public class NetworkFactory extends Handler {
 
     private void evalRequest(NetworkRequestInfo n) {
         if (VDBG) log("evalRequest");
-        if (n.requested == false && n.score < mScore &&
+        if (n.requested == false && 0 < mScore &&
                 n.request.networkCapabilities.satisfiedByNetworkCapabilities(
                 mCapabilityFilter) && acceptRequest(n.request, n.score)) {
             if (VDBG) log("  needNetworkFor");
