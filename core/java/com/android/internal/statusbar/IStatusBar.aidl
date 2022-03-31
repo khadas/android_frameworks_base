@@ -57,6 +57,10 @@ oneway interface IStatusBar
     void setImeWindowStatus(in IBinder token, int vis, int backDisposition,
             boolean showImeSwitcher);
     void setWindowState(int window, int state);
+    void addBottomBar();
+    void removeBottomBar();
+    void addUpperBar();
+    void removeUpperBar();
 
     void showRecentApps(boolean triggeredFromAltTab);
     void hideRecentApps(boolean triggeredFromAltTab, boolean triggeredFromHomeKey);

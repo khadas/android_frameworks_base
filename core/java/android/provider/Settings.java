@@ -4819,6 +4819,8 @@ public final class Settings {
             MOVED_TO_GLOBAL.add(Settings.Global.CAPTIVE_PORTAL_DETECTION_ENABLED);
             MOVED_TO_GLOBAL.add(Settings.Global.CAPTIVE_PORTAL_SERVER);
             MOVED_TO_GLOBAL.add(Settings.Global.NSD_ON);
+            MOVED_TO_GLOBAL.add(Settings.Global.STATUS_BAR_UPPER);
+            MOVED_TO_GLOBAL.add(Settings.Global.STATUS_BAR_BOTTOM);
             MOVED_TO_GLOBAL.add(Settings.Global.SET_INSTALL_LOCATION);
             MOVED_TO_GLOBAL.add(Settings.Global.DEFAULT_INSTALL_LOCATION);
             MOVED_TO_GLOBAL.add(Settings.Global.INET_CONDITION_DEBOUNCE_UP_DELAY);
@@ -10322,6 +10324,20 @@ public final class Settings {
          * @hide
          */
         public static final String NSD_ON = "nsd_on";
+
+        /**
+         * Whether to show upper status bar.
+         *
+         * @hide
+         */
+        public static final String STATUS_BAR_UPPER = "status_bar_upper";
+
+        /**
+         * Whether to show bottom status bar.
+         *
+         * @hide
+         */
+        public static final String STATUS_BAR_BOTTOM = "status_bar_bottom";
 
         /**
          * Let user pick default install location.

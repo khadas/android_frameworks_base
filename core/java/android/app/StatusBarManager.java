@@ -158,6 +158,54 @@ public class StatusBarManager {
         }
     }
 
+
+    public void addBottomBar() {
+        try {
+            final IStatusBarService svc = getService();
+            if (svc != null) {
+                svc.addBottomBar();
+            }
+        } catch (RemoteException ex) {
+            // system process is dead anyway.
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void removeBottomBar() {
+        try {
+            final IStatusBarService svc = getService();
+            if (svc != null) {
+                svc.removeBottomBar();
+            }
+        } catch (RemoteException ex) {
+            // system process is dead anyway.
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void addUpperBar() {
+        try {
+            final IStatusBarService svc = getService();
+            if (svc != null) {
+                svc.addUpperBar();
+            }
+        } catch (RemoteException ex) {
+            // system process is dead anyway.
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public void removeUpperBar() {
+        try {
+            final IStatusBarService svc = getService();
+            if (svc != null) {
+                svc.removeUpperBar();
+            }
+        } catch (RemoteException ex) {
+            // system process is dead anyway.
+            throw new RuntimeException(ex);
+        }
+    }
     /**
      * Expand the notifications panel.
      */

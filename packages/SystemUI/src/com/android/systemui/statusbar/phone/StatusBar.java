@@ -248,6 +248,22 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import android.content.ServiceConnection;
+import android.os.Messenger;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageInfo;
+import android.app.Instrumentation;
+import android.content.SharedPreferences;
+import android.view.IRotationWatcher;
+import android.view.ViewGroup.LayoutParams;
+import com.android.systemui.statusbar.policy.KeyButtonView;
+import android.view.accessibility.AccessibilityEvent;
+import android.telecom.TelecomManager;
+import android.app.ActivityManagerNative;
+import android.app.IActivityManager;
 
 public class StatusBar extends SystemUI implements DemoMode,
         DragDownHelper.DragDownCallback, ActivityStarter, OnUnlockMethodChangedListener,
@@ -875,10 +891,11 @@ public class StatusBar extends SystemUI implements DemoMode,
         }
 
         try {
+            mBottomBarIsAdd = Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_BOTTOM, 0) == 1;
             boolean showNav = mWindowManagerService.hasNavigationBar();
             if (DEBUG) Log.v(TAG, "hasNavigationBar=" + showNav);
-            if (showNav) {
-                createNavigationBar();
+            if (showNav && mBottomBarIsAdd) {
+                showNavigationBar();
             }
         } catch (RemoteException ex) {
             // no window manager? good luck with that
@@ -1066,14 +1083,102 @@ public class StatusBar extends SystemUI implements DemoMode,
         ThreadedRenderer.overrideProperty("ambientRatio", String.valueOf(1.5f));
     }
 
+    private boolean mBottomBarIsAdd = false;
+    private boolean mUpperBarIsAdd = false;
+    private boolean isNavigationBarEnd = true;
+    private Handler mNavigationBarHandler = new Handler();
+    private Runnable NavigationBarRunnable = new Runnable() {
+         @Override
+         public void run() {
+              isNavigationBarEnd = true;
+         }
+    };
+
+    private void hideNavigationBar() {
+         if(DEBUG)Log.d(TAG, "hideNavigationBar() : about to hide mNavigationBarView");
+         if (mNavigationBarView == null) return;
+         mWindowManager.removeViewImmediate(mNavigationBarView);
+         mNavigationBarView = null;
+    }
+    /*
+     *showNavigationBar
+     */
+    private void showNavigationBar(){
+         if(DEBUG)Log.d(TAG, "showNavigationBar() : about to show mNavigationBarView");
+         createNavigationBar();
+    }
+    /*
+     * create navigationBar
+     */
+
     protected void createNavigationBar() {
-        mNavigationBarView = NavigationBarFragment.create(mContext, (tag, fragment) -> {
+       if(DEBUG) Log.d(TAG, "createNavigationBar() : about to create mNavigationBarView");
+       mNavigationBarView = NavigationBarFragment.create(mContext, (tag, fragment) -> {
             mNavigationBar = (NavigationBarFragment) fragment;
             if (mLightBarController != null) {
                 mNavigationBar.setLightBarController(mLightBarController);
             }
             mNavigationBar.setCurrentSysuiVisibility(mSystemUiVisibility);
         });
+    }
+
+    private void addBottomBarInside() {
+        if (!mBottomBarIsAdd) {
+            if(!isNavigationBarEnd) return;
+            mBottomBarIsAdd = true;
+            mHandler.postDelayed(NavigationBarRunnable, 500);
+            createNavigationBar();
+            Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_BOTTOM, 1);
+        }
+    }
+
+    private void removeBottomBarInside() {
+        if (mBottomBarIsAdd) {
+            if(!isNavigationBarEnd) return;
+            mBottomBarIsAdd = false;
+            mHandler.postDelayed(NavigationBarRunnable, 500);
+            hideNavigationBar();
+            Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_BOTTOM, 0);
+        }
+    }
+
+    @Override
+    public void addBottomBar() {
+       if(DEBUG) Log.d(TAG, "addBottomBar");
+       addBottomBarInside();
+    }
+
+    @Override
+    public void removeBottomBar(){
+       if(DEBUG) Log.d(TAG, "removeBottomBar");
+       removeBottomBarInside();
+    }
+
+    /*TBC*/
+    @Override
+    public void addUpperBar() {
+	if(DEBUG) Log.d(TAG, "addUpperBar = "+mUpperBarIsAdd);
+
+	if (!mUpperBarIsAdd) {
+           if(!isNavigationBarEnd) return;
+               mUpperBarIsAdd = true;
+               mHandler.postDelayed(NavigationBarRunnable, 500);
+               mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
+               Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 1);
+        }
+    }
+
+    /*TBC*/
+    @Override
+    public void removeUpperBar(){
+	Log.d(TAG, "removeUpperBar = "+mUpperBarIsAdd);
+	if (mUpperBarIsAdd) {
+            if(!isNavigationBarEnd) return;
+               mUpperBarIsAdd = false;
+               mHandler.postDelayed(NavigationBarRunnable, 500);
+               mWindowManager.removeViewImmediate(mStatusBarWindow);
+               Settings.Global.putInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0);
+        }
     }
 
     /**
@@ -1389,6 +1494,8 @@ public class StatusBar extends SystemUI implements DemoMode,
 
     @Override
     public void updateNotificationViews() {
+        boolean hasUpperBar = Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0) == 1;
+        if (!hasUpperBar) return;
         // The function updateRowStates depends on both of these being non-null, so check them here.
         // We may be called before they are set from DeviceProvisionedController's callback.
         if (mStackScroller == null || mScrimController == null) return;
@@ -2886,7 +2993,11 @@ public class StatusBar extends SystemUI implements DemoMode,
                     }
                 });
         mRemoteInputManager.getController().addCallback(mStatusBarWindowManager);
+        mUpperBarIsAdd = Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0) == 1;
+        Log.d(TAG, "mUpperBarIsAdd = "+mUpperBarIsAdd);
         mStatusBarWindowManager.add(mStatusBarWindow, getStatusBarHeight());
+        if (!mUpperBarIsAdd)
+           mWindowManager.removeViewImmediate(mStatusBarWindow);
     }
 
     // called by makeStatusbar and also by PhoneStatusBarView
