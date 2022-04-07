@@ -197,6 +197,7 @@ private:
     bool preloadZip(Animation &animation);
     void findBootAnimationFile();
     bool findBootAnimationFileInternal(const std::vector<std::string>& files);
+    void checkVideoFile();
     bool preloadAnimation();
     EGLConfig getEglConfig(const EGLDisplay&);
     ui::Size limitSurfaceSize(int width, int height) const;

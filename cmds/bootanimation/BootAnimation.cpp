@@ -669,26 +669,6 @@ void BootAnimation::findBootAnimationFile() {
     bool encryptedAnimation = atoi(decrypt) != 0 ||
         !strcmp("trigger_restart_min_framework", decrypt);
 
-    //add for boot video
-    mVideoAnimation = false;
-    if (access(SYSTEM_BOOTVIDEO_FILE, R_OK) == 0){
-       mVideoFile = (char*)SYSTEM_BOOTVIDEO_FILE;
-    }
-    if (access(DATA_BOOTVIDEO_FILE, R_OK) == 0){
-       mVideoFile = (char*)DATA_BOOTVIDEO_FILE;
-    }
-    property_get("persist.sys.bootvideo.enable",decrypt, "false");
-    char value[PROPERTY_VALUE_MAX];
-    property_get("persist.sys.bootvideo.showtime", value, "-1");
-    ALOGD("findBootAnimationFile()-->bootvideo.enable=%s, showtime=%s", decrypt, value);
-    if(mVideoFile != NULL && !strcmp(decrypt, "true") &&(atoi(value)!=0)) {
-         mVideoAnimation = true;
-         ALOGD("mVideoAnimation = true");
-    }else{
-         ALOGD("bootvideo:No boot video animation,EXIT_VIDEO_NAME:%s,bootvideo.showtime:%s\n",decrypt,value);
-    }
-    //add end
-
     if (!mShuttingDown && encryptedAnimation) {
         static const std::vector<std::string> encryptedBootFiles = {
             PRODUCT_ENCRYPTED_BOOTANIMATION_FILE, SYSTEM_ENCRYPTED_BOOTANIMATION_FILE,
@@ -718,6 +698,28 @@ void BootAnimation::findBootAnimationFile() {
     } else {
         findBootAnimationFileInternal(bootFiles);
     }
+}
+
+void BootAnimation::checkVideoFile() {
+    // add for boot video
+    mVideoAnimation = false;
+    if (access(SYSTEM_BOOTVIDEO_FILE, R_OK) == 0) {
+        mVideoFile = (char*)SYSTEM_BOOTVIDEO_FILE;
+    }
+    if (access(DATA_BOOTVIDEO_FILE, R_OK) == 0) {
+        mVideoFile = (char*)DATA_BOOTVIDEO_FILE;
+    }
+    std::string bootVideoEnable = android::base::GetProperty("persist.sys.bootvideo.enable", "false");
+    std::string showTime = android::base::GetProperty("persist.sys.bootvideo.showtime", "-1");
+    ALOGD("checkVideoFile()-->bootvideo.enable=%s, showtime=%s", bootVideoEnable.c_str(), showTime.c_str());
+    if (mVideoFile != NULL && !strcmp(bootVideoEnable.c_str(), "true") && (atoi(showTime.c_str()) != 0)) {
+        mVideoAnimation = true;
+        ALOGD("mVideoAnimation = true");
+    } else {
+        ALOGD("bootvideo:No boot video animation,EXIT_VIDEO_NAME:%s,bootvideo.showtime:%s\n",
+        bootVideoEnable.c_str(), showTime.c_str());
+    }
+    // add end
 }
 
 GLuint compileShader(GLenum shaderType, const GLchar *source) {
@@ -793,6 +795,8 @@ bool BootAnimation::threadLoop() {
     //add for boot video function
     mStartbootanimaTime = 0;
     mBootVideoTime = -1;
+
+    checkVideoFile();
 
     if (mVideoAnimation){
         result = video();
