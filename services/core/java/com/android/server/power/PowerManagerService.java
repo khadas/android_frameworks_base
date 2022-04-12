@@ -532,6 +532,9 @@ public final class PowerManagerService extends SystemService
     // True if we are currently in VR Mode.
     private boolean mIsVrModeEnabled;
 
+    // True if never sleep
+    private boolean mNeverSleep = true;
+
     private final class ForegroundProfileObserver extends SynchronousUserSwitchObserver {
         @Override
         public void onUserSwitching(int newUserId) throws RemoteException {}
@@ -2081,6 +2084,11 @@ public final class PowerManagerService extends SystemService
 
     private long getScreenOffTimeoutLocked(long sleepTimeout) {
         long timeout = mScreenOffTimeoutSetting;
+        if (sleepTimeout < 0) {
+            mNeverSleep = true;
+        } else {
+            mNeverSleep = false;
+        }
         if (isMaximumScreenOffTimeoutFromDeviceAdminEnforcedLocked()) {
             timeout = Math.min(timeout, mMaximumScreenOffTimeoutFromDeviceAdmin);
         }
@@ -2158,6 +2166,7 @@ public final class PowerManagerService extends SystemService
     private boolean isBeingKeptAwakeLocked() {
         return mStayOn
                 || mProximityPositive
+                || mNeverSleep
                 || (mWakeLockSummary & WAKE_LOCK_STAY_AWAKE) != 0
                 || (mUserActivitySummary & (USER_ACTIVITY_SCREEN_BRIGHT
                         | USER_ACTIVITY_SCREEN_DIM)) != 0
@@ -2475,6 +2484,7 @@ public final class PowerManagerService extends SystemService
 
         if ((mWakeLockSummary & WAKE_LOCK_SCREEN_BRIGHT) != 0
                 || (mUserActivitySummary & USER_ACTIVITY_SCREEN_BRIGHT) != 0
+                || mNeverSleep
                 || !mBootCompleted
                 || mScreenBrightnessBoostInProgress) {
             return DisplayPowerRequest.POLICY_BRIGHT;
