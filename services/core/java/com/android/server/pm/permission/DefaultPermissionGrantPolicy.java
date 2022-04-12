@@ -825,6 +825,20 @@ public final class DefaultPermissionGrantPolicy {
                     STORAGE_PERMISSIONS, true, userId);
         }
 
+	//FileBrowser
+        String fileBrowser = "com.droidlogic.FileBrower";
+	PackageParser.Package filebrowserPackage = getSystemPackage(fileBrowser);
+	if (filebrowserPackage != null) {
+		 grantRuntimePermissions(filebrowserPackage, STORAGE_PERMISSIONS, userId);
+	}
+
+	//MoviePlayer
+        String moviePlayer = "com.droidlogic.videoplayer";
+	PackageParser.Package movieplayerPackage = getSystemPackage(moviePlayer);
+	if (movieplayerPackage != null) {
+		 grantRuntimePermissions(movieplayerPackage, STORAGE_PERMISSIONS, userId);
+	}
+
         // TextClassifier Service
         String textClassifierPackageName =
                 mContext.getPackageManager().getSystemTextClassifierPackageName();
