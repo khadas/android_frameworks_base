@@ -6303,6 +6303,9 @@ public final class Settings {
         private static final Validator ACCESSIBILITY_DISPLAY_DALTONIZER_ENABLED_VALIDATOR =
                 BOOLEAN_VALIDATOR;
 
+
+	public static final String ACCESSIBILITY_DISPLAY_COLOR_MATRIX ="accessibility_display_color_matrix";
+
         /**
          * Integer property that specifies the type of color space adjustment to
          * perform. Valid values are defined in AccessibilityManager and Settings arrays.xml:
