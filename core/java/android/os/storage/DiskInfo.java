@@ -27,6 +27,7 @@ import android.util.DebugUtils;
 import com.android.internal.util.IndentingPrintWriter;
 import com.android.internal.util.Preconditions;
 
+import android.util.Log;
 import java.io.CharArrayWriter;
 import java.util.Objects;
 
@@ -48,6 +49,7 @@ public class DiskInfo implements Parcelable {
     public static final int FLAG_DEFAULT_PRIMARY = 1 << 1;
     public static final int FLAG_SD = 1 << 2;
     public static final int FLAG_USB = 1 << 3;
+    public static final int FLAG_PCIE = 1 << 5;
 
     public final String id;
     public final int flags;
@@ -108,7 +110,13 @@ public class DiskInfo implements Parcelable {
             } else {
                 return res.getString(com.android.internal.R.string.storage_usb_drive);
             }
-        } else {
+        } else if ((flags & FLAG_PCIE) != 0) {
+            if (isInteresting(label)) {
+                return res.getString(com.android.internal.R.string.storage_pcie_drive_label, label);
+            } else {
+                return res.getString(com.android.internal.R.string.storage_pcie_drive);
+            }
+        }else {
             return null;
         }
     }
