@@ -118,7 +118,7 @@
 
     <!-- The default tiles to display in QuickSettings -->
     <string name="quick_settings_tiles_default" translatable="false">
-        wifi,bt,dnd,flashlight,rotation,battery,cell,airplane,cast
+        wifi,bt,cast
     </string>
 
     <!-- Tiles native to System UI. Order should match "quick_settings_tiles_default" -->
@@ -202,7 +202,7 @@
     <item name="recents_layout_unfocused_range_max" format="float" type="integer">2.5</item>
 
     <!-- Whether to enable KeyguardService or not -->
-    <bool name="config_enableKeyguardService">true</bool>
+    <bool name="config_enableKeyguardService">false</bool>
 
     <!-- The maximum count of notifications on Keyguard. The rest will be collapsed in an overflow
      card. -->
