@@ -231,6 +231,7 @@ java_library {
         "core/java/android/os/IProcessInfoService.aidl",
         "core/java/android/os/IProgressListener.aidl",
         "core/java/android/os/IPowerManager.aidl",
+	"core/java/android/os/IKhadasApiManager.aidl",
         "core/java/android/os/IRecoverySystem.aidl",
         "core/java/android/os/IRecoverySystemProgressListener.aidl",
         "core/java/android/os/IRemoteCallback.aidl",
