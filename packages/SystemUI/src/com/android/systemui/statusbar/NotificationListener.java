@@ -22,6 +22,7 @@ import static com.android.systemui.statusbar.phone.StatusBar.ENABLE_CHILD_NOTIFI
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.provider.Settings;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.service.notification.StatusBarNotification;
@@ -71,6 +72,9 @@ public class NotificationListener extends NotificationListenerWithPlugins {
     public void onNotificationPosted(final StatusBarNotification sbn,
             final RankingMap rankingMap) {
         if (DEBUG) Log.d(TAG, "onNotificationPosted: " + sbn);
+        boolean hasUpperBar = Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0) == 1;
+        if (!hasUpperBar) return;
+
         if (sbn != null && !onPluginNotificationPosted(sbn, rankingMap)) {
             mPresenter.getHandler().post(() -> {
                 processForRemoteInput(sbn.getNotification(), mContext);
