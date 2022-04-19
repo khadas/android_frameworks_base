@@ -247,7 +247,7 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
     }
     //wgh test
     char prop_value[PROPERTY_VALUE_MAX] = {0};
-    property_get("vendor.tvinput.buff_type", prop_value, "1");
+    property_get("vendor.tvinput.buff_type", prop_value, "0");
 
     connection.mStreamType = ((int)atoi(prop_value) == 1) ? TV_STREAM_TYPE_BUFFER_PRODUCER : TV_STREAM_TYPE_INDEPENDENT_VIDEO_SOURCE;
     // Clear the surface in the connection.
