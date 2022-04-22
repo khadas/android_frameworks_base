@@ -862,6 +862,10 @@ public class HdmiControlService extends SystemService {
     }
 
     public void onEarcSettingChanged(boolean on) {
+        if (!mEarcSupported) {
+            HdmiLogger.info("onEarcSettingChanged but earc not supported");
+            return;
+        }
         if (tv() != null) {
             tv().onEarcSettingChanged(on);
         } else if (audioSystem() != null) {
