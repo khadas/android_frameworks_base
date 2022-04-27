@@ -927,6 +927,8 @@ public class AudioSystem
     @UnsupportedAppUsage
     public static final int DEVICE_OUT_FM = 0x100000;
     /** @hide */
+    public static final int DEVICE_OUT_HDMI_1 = DEVICE_OUT_FM;
+    /** @hide */
     public static final int DEVICE_OUT_AUX_LINE = 0x200000;
     /** @hide */
     public static final int DEVICE_OUT_SPEAKER_SAFE = 0x400000;
@@ -942,6 +944,8 @@ public class AudioSystem
     public static final int DEVICE_OUT_HEARING_AID = 0x8000000;
     /** @hide */
     public static final int DEVICE_OUT_ECHO_CANCELLER = 0x10000000;
+    /** @hide */
+    public static final int DEVICE_OUT_SPDIF_1 = DEVICE_OUT_ECHO_CANCELLER;
     /** @hide */
     public static final int DEVICE_OUT_BLE_HEADSET = 0x20000000;
     /** @hide */

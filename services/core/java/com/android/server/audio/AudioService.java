@@ -2996,6 +2996,22 @@ public class AudioService extends IAudioService.Stub
                         0,
                         streamState,
                         0);
+                if (isTablet()) {
+                    sendMsg(mAudioHandler,
+                            MSG_SET_DEVICE_VOLUME,
+                            SENDMSG_QUEUE,
+                            AudioSystem.DEVICE_OUT_HDMI_1,
+                            0,
+                            streamState,
+                            0);
+                    sendMsg(mAudioHandler,
+                            MSG_SET_DEVICE_VOLUME,
+                            SENDMSG_QUEUE,
+                            AudioSystem.DEVICE_OUT_HDMI,
+                            0,
+                            streamState,
+                            0);
+                    }
             }
 
             int newIndex = mStreamStates[streamType].getIndex(device);
@@ -3907,6 +3923,22 @@ public class AudioService extends IAudioService.Stub
                     0,
                     streamState,
                     0);
+            if (isTablet()) {
+                sendMsg(mAudioHandler,
+                        MSG_SET_DEVICE_VOLUME,
+                        SENDMSG_QUEUE,
+                        AudioSystem.DEVICE_OUT_HDMI_1,
+                        0,
+                        streamState,
+                        0);
+                sendMsg(mAudioHandler,
+                        MSG_SET_DEVICE_VOLUME,
+                        SENDMSG_QUEUE,
+                        AudioSystem.DEVICE_OUT_HDMI,
+                        0,
+                        streamState,
+                        0);
+            }
         }
     }
 
@@ -4488,6 +4520,22 @@ public class AudioService extends IAudioService.Stub
                               0,
                               mStreamStates[streamType],
                               PERSIST_DELAY);
+                    if (isTablet()) {
+                        sendMsg(mAudioHandler,
+                                MSG_PERSIST_VOLUME,
+                                SENDMSG_QUEUE,
+                                AudioSystem.DEVICE_OUT_HDMI,
+                                0,
+                                mStreamStates[streamType],
+                                PERSIST_DELAY);
+                        sendMsg(mAudioHandler,
+                                MSG_PERSIST_VOLUME,
+                                SENDMSG_QUEUE,
+                                AudioSystem.DEVICE_OUT_HDMI_1,
+                                0,
+                                mStreamStates[streamType],
+                                PERSIST_DELAY);
+                        }
                     }
                 }
                 mStreamStates[streamType].mute(false);
@@ -7010,6 +7058,11 @@ public class AudioService extends IAudioService.Stub
                 index = 1;
             }
             AudioSystem.setStreamVolumeIndexAS(mStreamType, index, device);
+            if(mStreamType == AudioSystem.STREAM_MUSIC){
+                for (int i = 0;i<mIndexMap.size();i++){
+                    AudioSystem.setStreamVolumeIndexAS(mStreamType, index, mIndexMap.keyAt(i));
+                }
+            }
         }
 
         // must be called while synchronized VolumeStreamState.class
@@ -7028,6 +7081,11 @@ public class AudioService extends IAudioService.Stub
                 index = (getIndex(device) + 5)/10;
             }
             setStreamVolumeIndex(index, device);
+            if(mStreamType == AudioSystem.STREAM_MUSIC){
+                for (int i = 0;i<mIndexMap.size();i++){
+                    setStreamVolumeIndex(index, mIndexMap.keyAt(i));
+                }
+            }
         }
 
         public void applyAllVolumes() {
@@ -7093,12 +7151,10 @@ public class AudioService extends IAudioService.Stub
                         index = mIndexMax;
                     }
                     mIndexMap.put(device, index);
-                    if(isBox()){
-                       if(mStreamType == AudioSystem.STREAM_MUSIC){
-                          for (int i = 0;i<mIndexMap.size();i++){
-                             mIndexMap.put(mIndexMap.keyAt(i), index);
-                          }
-                       }
+                    if(mStreamType == AudioSystem.STREAM_MUSIC){
+                        for (int i = 0;i<mIndexMap.size();i++){
+                            mIndexMap.put(mIndexMap.keyAt(i), index);
+                        }
                     }
                     changed = oldIndex != index;
                     // Apply change to all streams using this one as alias if:

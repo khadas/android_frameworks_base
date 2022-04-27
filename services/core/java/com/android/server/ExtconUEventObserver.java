@@ -235,6 +235,11 @@ public abstract class ExtconUEventObserver extends UEventObserver {
         public String getStatePath() {
             return String.format(Locale.US, "/sys/class/extcon/%s/state", mName);
         }
+
+        /** The path to the state file */
+        public String getNamePath() {
+            return String.format(Locale.US, "/sys/class/extcon/%s/name", mName);
+        }
     }
 
     /** Does the {@code /sys/class/extcon/<name>} directory exist */
