@@ -113,6 +113,7 @@ public abstract class ExtconUEventObserver extends UEventObserver {
         public static final String EXTCON_VGA = "VGA";
         public static final String EXTCON_SPDIF_IN = "SPDIF-IN";
         public static final String EXTCON_SPDIF_OUT = "SPDIF-OUT";
+        public static final String EXTCON_DP = "DP";
         public static final String EXTCON_VIDEO_IN = "VIDEO-IN";
         public static final String EXTCON_VIDEO_OUT = "VIDEO-OUT";
 
@@ -138,6 +139,7 @@ public abstract class ExtconUEventObserver extends UEventObserver {
                 EXTCON_VGA,
                 EXTCON_SPDIF_IN,
                 EXTCON_SPDIF_OUT,
+                EXTCON_DP,
                 EXTCON_VIDEO_IN,
                 EXTCON_VIDEO_OUT,
                 EXTCON_DOCK,
@@ -266,6 +268,11 @@ public abstract class ExtconUEventObserver extends UEventObserver {
         /** The path to the state file */
         public String getStatePath() {
             return TextUtils.formatSimple("/sys/class/extcon/%s/state", mName);
+        }
+
+        /** The path to the device uevent */
+        public String getDeviceUeventPath() {
+            return TextUtils.formatSimple("/sys/class/extcon/%s/device/uevent", mName);
         }
     }
 

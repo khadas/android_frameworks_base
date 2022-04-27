@@ -44,20 +44,70 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
     @Nullable
     public S parseStateFromFile(ExtconInfo extconInfo) throws IOException {
         String statePath = extconInfo.getStatePath();
-        return parseState(
-                extconInfo,
-                FileUtils.readTextFile(new File(statePath), 0, null).trim());
+        String ueventPath = extconInfo.getDeviceUeventPath();
+        String state = FileUtils.readTextFile(new File(statePath), 0, null).trim();
+        String alias = getAliasName(ueventPath);
+        if (alias == null) {
+            return parseState(extconInfo, state);
+        } else {
+            int start = state.indexOf("=");
+            String aliasState = alias + state.substring(start, start + 2);
+            if (LOG) Slog.d(TAG, extconInfo.getName() + " state: " + aliasState);
+            return parseState(extconInfo, aliasState);
+        }
+    }
+
+    public String getAliasName(String path) {
+        try {
+            String uevent = FileUtils.readTextFile(new File(path), 0, null).trim();
+            if (uevent.contains("OF_ALIAS_0=")) {
+                int start = uevent.indexOf("OF_ALIAS_0=");
+                if (uevent.contains("OF_NAME=hdmirx-controller")) {
+                    return uevent.substring(start + 11, start + 18);
+                } else if (uevent.contains("OF_NAME=dp")) {
+                    return uevent.substring(start + 11, start + 14);
+                } else if (uevent.contains("OF_NAME=hdmi")) {
+                    return uevent.substring(start + 11, start + 16);
+                }
+            } else {
+                if (uevent.contains("OF_NAME=hdmirx-controller")) {
+                    return "hdmirx0";
+                } else if (uevent.contains("OF_NAME=dp")) {
+                    return "dp0";
+                } else if (uevent.contains("OF_NAME=hdmi")) {
+                    return "hdmi0";
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            Slog.e(TAG, "Could not get the alias name.", e);
+            return null;
+        }
     }
 
     @Override
     public void onUEvent(ExtconInfo extconInfo, UEvent event) {
         if (LOG) Slog.d(TAG, extconInfo.getName() + " UEVENT: " + event);
         String name = event.get("NAME");
-        S state = parseState(extconInfo, event.get("STATE"));
+        S state = null;
+
+        String status = event.get("STATE");
+        String ueventPath = extconInfo.getDeviceUeventPath();
+        String alias = getAliasName(ueventPath);
+        if (alias == null) {
+            state = parseState(extconInfo, event.get("STATE"));
+        } else {
+            int start = status.indexOf("=");
+            String aliasState = alias + status.substring(start, start + 2);
+            if (LOG) Slog.d(TAG, extconInfo.getName() + " state: " + aliasState);
+            state = parseState(extconInfo, aliasState);
+        }
+
         if (state != null) {
             updateState(extconInfo, name, state);
         }
     }
+
 
     /**
      * Subclasses of ExtconStateObserver should override this method update state for {@code
