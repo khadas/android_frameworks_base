@@ -655,7 +655,13 @@ public class AudioService extends IAudioService.Stub
             AudioSystem.DEVICE_OUT_HDMI_ARC,
             AudioSystem.DEVICE_OUT_HDMI_EARC
     ));
-
+    // Devices for which the volumes are being ajusted at the same time
+    Set<Integer> mSyncAjustVolumeDevices = new HashSet<>(Arrays.asList(
+        AudioSystem.DEVICE_OUT_HDMI,
+        AudioSystem.DEVICE_OUT_HDMI_1,
+        AudioSystem.DEVICE_OUT_SPDIF,
+        AudioSystem.DEVICE_OUT_SPDIF_1,
+        AudioSystem.DEVICE_OUT_SPEAKER));
     // Devices where the framework sends a full scale audio signal, and controls the volume of
     // the external audio system separately.
     Map<Integer, AbsoluteVolumeDeviceInfo> mAbsoluteVolumeDeviceInfoMap = new ArrayMap<>();
@@ -4430,6 +4436,17 @@ public class AudioService extends IAudioService.Stub
         }
     }
 
+    /**
+     * @hide
+     */
+    private boolean isTablet() {
+        String product = SystemProperties.get("ro.target.product","");
+        if(product.equals("tablet")){
+            return true;
+        }
+        return false;
+    }
+
     private class RmtSbmxFullVolDeathHandler implements IBinder.DeathRecipient {
         private IBinder mICallback; // To be notified of client's death
 
@@ -7734,7 +7751,14 @@ public class AudioService extends IAudioService.Stub
             } else {
                 index = (getIndex(device) + 5)/10;
             }
-            setStreamVolumeIndex(index, device);
+            if (isTablet() && isSyncAjustVolumeDevice(device) && mStreamType == AudioSystem.STREAM_MUSIC) {
+                for (Integer item : mSyncAjustVolumeDevices) {
+                    index = (getIndex(item) + 5)/10;
+                    setStreamVolumeIndex(index, item);
+                }
+            } else {
+                setStreamVolumeIndex(index, device);
+            }
         }
 
         public void applyAllVolumes() {
@@ -7777,19 +7801,40 @@ public class AudioService extends IAudioService.Stub
                     hasModifyAudioSettings);
         }
 
+        //save the volume of all the devices in mSyncAjustVolumeDevices
+        public void restoreSyncDevicesIndex(){
+            if(mStreamType == AudioSystem.STREAM_MUSIC){
+                for (Integer device : mSyncAjustVolumeDevices) {
+                    System.putIntForUser(mContentResolver,
+                          getSettingNameForDevice(device),
+                         (getIndex(device) + 5)/ 10,
+                          UserHandle.USER_CURRENT);
+                }
+            }
+        }
+
         public boolean setIndex(int index, int device, String caller,
                 boolean hasModifyAudioSettings) {
             boolean changed;
             int oldIndex;
+            int deltaIndex;
             synchronized (mSettingsLock) {
                 synchronized (VolumeStreamState.class) {
                     oldIndex = getIndex(device);
+                    deltaIndex = index - oldIndex;
+                    if (isTablet() && isSyncAjustVolumeDevice(device) && mStreamType == AudioSystem.STREAM_MUSIC) {
+                        int index_tmp;
+                        for (Integer item : mSyncAjustVolumeDevices) {
+                            index_tmp = getIndex(item) + deltaIndex;
+                            index_tmp = getValidIndex(index_tmp, hasModifyAudioSettings);
+                            mIndexMap.put(item, index_tmp);
+                        }
+                    }
                     index = getValidIndex(index, hasModifyAudioSettings);
                     if ((mStreamType == AudioSystem.STREAM_SYSTEM_ENFORCED) && mCameraSoundForced) {
                         index = mIndexMax;
                     }
                     mIndexMap.put(device, index);
-
                     changed = oldIndex != index;
                     // Apply change to all streams using this one as alias if:
                     // - the index actually changed OR
@@ -8226,6 +8271,8 @@ public class AudioService extends IAudioService.Stub
                         streamState.getSettingNameForDevice(device),
                         (streamState.getIndex(device) + 5)/ 10,
                         UserHandle.USER_CURRENT);
+                if(isTablet())
+                    streamState.restoreSyncDevicesIndex();
             }
         }
 
@@ -10134,6 +10181,7 @@ public class AudioService extends IAudioService.Stub
         pw.print("  mNotifAliasRing="); pw.println(mNotifAliasRing);
         pw.print("  mFixedVolumeDevices="); pw.println(dumpDeviceTypes(mFixedVolumeDevices));
         pw.print("  mFullVolumeDevices="); pw.println(dumpDeviceTypes(mFullVolumeDevices));
+        pw.print("  mSyncAjustVolumeDevices="); pw.println(dumpDeviceTypes(mSyncAjustVolumeDevices));
         pw.print("  mAbsoluteVolumeDevices.keySet()="); pw.println(dumpDeviceTypes(
                 mAbsoluteVolumeDeviceInfoMap.keySet()));
         pw.print("  mExtVolumeController="); pw.println(mExtVolumeController);
@@ -11941,6 +11989,14 @@ public class AudioService extends IAudioService.Stub
             return false;
         }
         return mFullVolumeDevices.contains(deviceType);
+    }
+
+    private boolean isSyncAjustVolumeDevice(int deviceType) {
+        if (deviceType == AudioSystem.DEVICE_OUT_REMOTE_SUBMIX
+                && mRecordMonitor.isLegacyRemoteSubmixActive()) {
+            return false;
+        }
+        return mSyncAjustVolumeDevices.contains(deviceType);
     }
 
     /**
