@@ -31,6 +31,10 @@ interface IEthernetManager
     IpConfiguration getConfiguration(String iface);
     void setConfiguration(String iface, in IpConfiguration config);
     boolean isAvailable(String iface);
+    String getIpAddress(String iface);
+    String getNetmask(String iface);
+    String getGateway(String iface);
+    String getDns(String iface);
     void addListener(in IEthernetServiceListener listener);
     void removeListener(in IEthernetServiceListener listener);
     void setIncludeTestInterfaces(boolean include);
