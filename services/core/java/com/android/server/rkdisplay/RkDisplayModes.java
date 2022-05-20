@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.Surface.OutOfResourcesException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.io.InputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -234,10 +235,10 @@ public class RkDisplayModes {
                 builder.append(info.width).append("x").append(info.height);
                 if (info.interlaceFlag == true) {
                     builder.append("i");
-                    builder.append(String.format("%.2f", info.refreshRate));
+                    builder.append(String.format(Locale.ENGLISH, "%.2f", info.refreshRate));
                 } else {
                     builder.append("p");
-                    builder.append(String.format("%.2f", info.refreshRate));
+                    builder.append(String.format(Locale.ENGLISH, "%.2f", info.refreshRate));
                 }
                 //builder.append("@");
                 builder.append("-").append(info.idx);
@@ -517,7 +518,7 @@ public class RkDisplayModes {
             builder.append("p");
 */
         builder.append("@");
-        builder.append(String.format("%.2f", info.refreshRate));
+        builder.append(String.format(Locale.ENGLISH, "%.2f", info.refreshRate));
         builder.append("-");
         builder.append(info.hsync_start);
         builder.append("-");
@@ -526,7 +527,7 @@ public class RkDisplayModes {
         builder.append(info.htotal);
         builder.append("-");
         builder.append(info.vsync_start)
-        .append("-").append(info.vsync_end).append("-").append(info.vtotal).append("-").append(String.format("%x", info.flags)).append("-").append(info.clock);
+        .append("-").append(info.vsync_end).append("-").append(info.vtotal).append("-").append(String.format(Locale.ENGLISH, "%x", info.flags)).append("-").append(info.clock);
 
         nativeSetMode(display, ifaceType, builder.toString());
     }
@@ -571,7 +572,7 @@ public class RkDisplayModes {
                 String vfresh;
                 boolean isSameVfresh = false;
 
-                vfresh = String.format("%.2f", info.refreshRate);
+                vfresh = String.format(Locale.ENGLISH, "%.2f", info.refreshRate);
                 if (h_vfresh.length == 2)
                     isSameVfresh = vfresh.equals(h_vfresh[1]);
 
@@ -589,10 +590,10 @@ public class RkDisplayModes {
                     builder.append(info.width).append("x").append(info.height);
                     if (info.interlaceFlag == true) {
                         builder.append("i");
-                        builder.append(String.format("%.2f", info.refreshRate));
+                        builder.append(String.format(Locale.ENGLISH, "%.2f", info.refreshRate));
                     } else {
                         builder.append("p");
-                        builder.append(String.format("%.2f", info.refreshRate));
+                        builder.append(String.format(Locale.ENGLISH, "%.2f", info.refreshRate));
                     }
                     builder.append("-").append(info.idx);
                     break;
