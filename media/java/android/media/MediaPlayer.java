@@ -32,6 +32,7 @@ import android.content.AttributionSource.ScopedParcelState;
 import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.SurfaceTexture;
 import android.media.SubtitleController.Anchor;
@@ -2219,6 +2220,9 @@ public class MediaPlayer extends PlayerBase
         if (!SystemProperties.get("ro.target.product", "").equals("box")) {
             return;
         }
+        if (mRkDisplayOutputManager == null) {
+            mRkDisplayOutputManager = new RkDisplayOutputManager();
+        }
         Log.d(TAG, "Mediaplayer recoverLastResolution()");
         String isAutoAdaptFrameRate = SystemProperties.get("persist.sys.adapt_framerate", "false");
         if (isAutoAdaptFrameRate.equals("false")) {
@@ -2231,14 +2235,18 @@ public class MediaPlayer extends PlayerBase
                 currentResolution = tmpResolution;
             }
             String[] displayResolution = mRkDisplayOutputManager.getModeList(0, curMainType);
-            for (String str : displayResolution) {
-                Log.d(TAG, "ROCKCHIP displayResolution: " + str);
-                if (str.equals(currentResolution)) {
-                    mRkDisplayOutputManager.setMode(0, curMainType, currentResolution);
-                    mRkDisplayOutputManager.saveConfig();
-                    SystemProperties.set("persist.sys.current_resolution", "");
-                    currentResolution = "";
+            if (displayResolution != null) {
+                for (String str : displayResolution) {
+                    Log.d(TAG, "ROCKCHIP displayResolution: " + str);
+                    if (str.equals(currentResolution)) {
+                        mRkDisplayOutputManager.setMode(0, curMainType, currentResolution);
+                        mRkDisplayOutputManager.saveConfig();
+                        SystemProperties.set("persist.sys.current_resolution", "");
+                        currentResolution = "";
+                    }
                 }
+            } else {
+                Log.d(TAG, "displayResolution == null, maybe no RkDisplayOutputManagerService");
             }
         }
     }
@@ -3776,6 +3784,9 @@ public class MediaPlayer extends PlayerBase
                 if (!SystemProperties.get("ro.target.product", "").equals("box")) {
                     return;
                 }
+                if (mRkDisplayOutputManager == null) {
+                    mRkDisplayOutputManager = new RkDisplayOutputManager();
+                }
                 Log.d(TAG, "ROCKCHIP MEDIA_FRAME_RATE msg.arg1 = " + msg.arg1 + ", msg.arg2 = " + msg.arg2 + ", msg.obj = " + msg.obj);
                 String isAutoAdaptFrameRate = SystemProperties.get("persist.sys.adapt_framerate", "false");
                 if (isAutoAdaptFrameRate.equals("false")) {
@@ -3784,8 +3795,13 @@ public class MediaPlayer extends PlayerBase
                 }
                 int curMainType = mRkDisplayOutputManager.getCurrentInterface(0);
                 String[] displayResolution = mRkDisplayOutputManager.getModeList(0, curMainType);
-                for (String str : displayResolution) {
-                    Log.d(TAG, "ROCKCHIP displayResolution: " + str);
+                if (displayResolution != null) {
+                    for (String str : displayResolution) {
+                        Log.d(TAG, "resolution = " + str);
+                    }
+                } else {
+                    Log.d(TAG, "displayResolution == null, maybe no RkDisplayOutputManagerService");
+                    return;
                 }
                 if (msg.arg1 == 0) {
                     recoverLastResolution();
@@ -3842,7 +3858,7 @@ public class MediaPlayer extends PlayerBase
     private int currentHeight = 0;
     private String currentResolution;
 
-    private RkDisplayOutputManager mRkDisplayOutputManager = new RkDisplayOutputManager();
+    private RkDisplayOutputManager mRkDisplayOutputManager = null;
 
     /*
      * Called from native code when an interesting event happens.  This method

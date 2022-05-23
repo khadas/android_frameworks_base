@@ -2130,7 +2130,7 @@ final public class MediaCodec {
     private static final int BUFFER_MODE_BLOCK = 1;
     private int mBufferMode = BUFFER_MODE_INVALID;
     private float frameRate = -1;
-    private RkDisplayOutputManager mRkDisplayOutputManager = new RkDisplayOutputManager();
+    private RkDisplayOutputManager mRkDisplayOutputManager = null;
     private String currentResolution;
 
     private void configure(
@@ -2310,6 +2310,9 @@ final public class MediaCodec {
         if (!SystemProperties.get("ro.target.product", "").equals("box")) {
             return;
         }
+        if (mRkDisplayOutputManager == null) {
+            mRkDisplayOutputManager = new RkDisplayOutputManager();
+        }
         if (getCodecInfo().isEncoder()) {
             return;
         }
@@ -2321,8 +2324,13 @@ final public class MediaCodec {
         }
         int curMainType = mRkDisplayOutputManager.getCurrentInterface(0);
         String[] displayResolution = mRkDisplayOutputManager.getModeList(0, curMainType);
-        for (String str : displayResolution) {
-            Log.d("MediaCodec", "ROCKCHIP displayResolution: " + str);
+        if (displayResolution != null) {
+            for (String str : displayResolution) {
+                Log.d("MediaCodec", "ROCKCHIP displayResolution: " + str);
+            }
+        } else {
+            Log.d("MediaCodec", "displayResolution == null, maybe no RkDisplayOutputManagerService");
+            return;
         }
         String testResolution = SystemProperties.get("persist.framerate", "");
         if (testResolution != null && !testResolution.equals("")){
@@ -2381,6 +2389,9 @@ final public class MediaCodec {
         if (!SystemProperties.get("ro.target.product", "").equals("box")) {
             return;
         }
+        if (mRkDisplayOutputManager == null) {
+            mRkDisplayOutputManager = new RkDisplayOutputManager();
+        }
         if (getCodecInfo().isEncoder()) {
             return;
         }
@@ -2393,17 +2404,21 @@ final public class MediaCodec {
             int curMainType = mRkDisplayOutputManager.getCurrentInterface(0);
             String[] displayResolution = mRkDisplayOutputManager.getModeList(0, curMainType);
             Log.d("MediaCodec", "ROCKCHIP prop current = " + SystemProperties.get("persist.sys.current_resolution", ""));
-            for (String str : displayResolution) {
-                Log.d("MediaCodec", "displayResolution: " + str);
-                if (str.equals(currentResolution)) {
-                    mRkDisplayOutputManager.setMode(0, curMainType, currentResolution);
-                    mRkDisplayOutputManager.saveConfig();
-                    frameRate = -1;
-                    Log.d("MediaCodec", "ROCKCHIP currentResolution = " + currentResolution);
-                    currentResolution = "";
-                    SystemProperties.set("persist.sys.current_resolution", "");
-                    break;
+            if (displayResolution != null) {
+                for (String str : displayResolution) {
+                    Log.d("MediaCodec", "displayResolution: " + str);
+                    if (str.equals(currentResolution)) {
+                        mRkDisplayOutputManager.setMode(0, curMainType, currentResolution);
+                        mRkDisplayOutputManager.saveConfig();
+                        frameRate = -1;
+                        Log.d("MediaCodec", "ROCKCHIP currentResolution = " + currentResolution);
+                        currentResolution = "";
+                        SystemProperties.set("persist.sys.current_resolution", "");
+                        break;
+                    }
                 }
+            } else {
+                Log.d("MediaCodec", "displayResolution == null, maybe no RkDisplayOutputManagerService");
             }
         }
     }
