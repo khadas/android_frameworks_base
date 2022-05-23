@@ -240,8 +240,6 @@ public class RkDisplayModes {
                     builder.append("p");
                     builder.append(String.format(Locale.ENGLISH, "%.2f", info.refreshRate));
                 }
-                //builder.append("@");
-                builder.append("-").append(info.idx);
 
                 boolean existingMode = false;
                 if (resolutions == null || IsResolutionNeedFilter(dpy)) {
@@ -484,7 +482,7 @@ public class RkDisplayModes {
         int ifaceType = ifacetotype(iface);
         String[] mode_str;
         int idx=0;
-        RkDisplayModes.RkPhysicalDisplayInfo info;
+        RkDisplayModes.RkPhysicalDisplayInfo info = null;
         Log.w(TAG, "setMode " + mode + " display " + display);
         if (mode.contains("Auto")) {
             nativeSetMode(display, ifaceType, mode);
@@ -494,29 +492,48 @@ public class RkDisplayModes {
             Log.e(TAG, "setMode split:  " + mval);
         }
 
-        if (mode_str.length != 2){
+        StringBuilder builder = new StringBuilder();
+        if (display == 0) {
+            for(int i = 0; i < mMainDisplayInfos.length; i++) {
+                builder.delete(0, builder.length());
+                builder.append(mMainDisplayInfos[i].width).append("x").append(mMainDisplayInfos[i].height);
+                if (mMainDisplayInfos[i].interlaceFlag == true) {
+                    builder.append("i");
+                    builder.append(String.format("%.2f", mMainDisplayInfos[i].refreshRate));
+                } else {
+                    builder.append("p");
+                    builder.append(String.format("%.2f", mMainDisplayInfos[i].refreshRate));
+                }
+                Log.d(TAG, "main mode = " + mode + ", builder = " + builder.toString());
+                if(mode.equals(builder.toString())) {
+                    info = mMainDisplayInfos[i];
+                    break;
+                }
+            }
+        } else {
+            for (int i = 0; i < mAuxDisplayInfos.length; i++) {
+                builder.delete(0, builder.length());
+                builder.append(mAuxDisplayInfos[i].width).append("x").append(mAuxDisplayInfos[i].height);
+                if (mAuxDisplayInfos[i].interlaceFlag == true) {
+                    builder.append("i");
+                    builder.append(String.format("%.2f", mAuxDisplayInfos[i].refreshRate));
+                } else {
+                    builder.append("p");
+                    builder.append(String.format("%.2f", mAuxDisplayInfos[i].refreshRate));
+                }
+                Log.d(TAG, "aux mode = " + mode + ", builder = " + builder.toString());
+                if (mode.equals(builder.toString())) {
+                    info = mAuxDisplayInfos[i];
+                    break;
+                }
+            }
+        }
+        if(info == null) {
             return;
         }
 
-        idx = Integer.parseInt(mode_str[1]);
-        if (mMainDisplayInfos!=null && idx >= mMainDisplayInfos.length && display==0)
-            idx=0;
-        else if (mAuxDisplayInfos!=null && idx >= mAuxDisplayInfos.length && display==1)
-            idx=0;
-
-        if (display == 0)
-            info = mMainDisplayInfos[idx];
-        else
-            info = mAuxDisplayInfos[idx];
-
-        StringBuilder builder = new StringBuilder();
+        builder.delete(0, builder.length());
         builder.append(info.width).append("x").append(info.height);
-/*
-        if (info.interlaceFlag == true)
-            builder.append("i");
-        else
-            builder.append("p");
-*/
         builder.append("@");
         builder.append(String.format(Locale.ENGLISH, "%.2f", info.refreshRate));
         builder.append("-");
@@ -595,7 +612,6 @@ public class RkDisplayModes {
                         builder.append("p");
                         builder.append(String.format(Locale.ENGLISH, "%.2f", info.refreshRate));
                     }
-                    builder.append("-").append(info.idx);
                     break;
                 }
             }
