@@ -695,4 +695,3 @@ int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env)
     return 0;
 }
 };
-

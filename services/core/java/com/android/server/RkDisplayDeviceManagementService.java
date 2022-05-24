@@ -71,11 +71,11 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
     private Context mContext;
 
     class DisplaydResponseCode {
-        public static final int InterfaceListResult        = 110;
-        public static final int ModeListResult            = 111;
-        public static final int CommandOkay                = 200;
+        public static final int InterfaceListResult     = 110;
+        public static final int ModeListResult          = 111;
+        public static final int CommandOkay             = 200;
         public static final int OperationFailed         = 400;
-        public static final int InterfaceChange            = 600;
+        public static final int InterfaceChange         = 600;
     }
 
     /**
@@ -267,4 +267,29 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
     public boolean setAiImageQualityLabMode(boolean enable) {
         return mdrmModes.setAiImageQualityLabMode(enable);
     }
+
+    public boolean setHDRVividEnabled(String mode) {
+        return mdrmModes.setHDRVividEnabled(mode);
+    }
+
+    public String getHDRVividStatus() {
+        return mdrmModes.getHDRVividStatus();
+    }
+
+    public String getHDRVividCurrentBrightness() {
+        return mdrmModes.getHDRVividCurrentBrightness();
+    }
+
+    public boolean setHDRVividMaxBrightness(String selectBrightness) {
+        return mdrmModes.setHDRVividMaxBrightness(selectBrightness);
+    }
+
+    public String getHDRVividCapacity() {
+        return mdrmModes.getHDRVividCapacity();
+    }
+
+    public boolean setHDRVividCapacity(String capacity) {
+        return mdrmModes.setHDRVividCapacity(capacity);
+    }
+
 }

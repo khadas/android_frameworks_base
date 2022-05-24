@@ -99,6 +99,7 @@ public class RkDisplayOutputManager {
 
     public final int HDR10 = 1;
     public final int DOLBY_VISION = 2;
+    public final int HLG = 4;
 
     private int m_main_iface[] = null;
     private int m_aux_iface[] = null;
@@ -863,6 +864,72 @@ public class RkDisplayOutputManager {
             ret = mService.setAiImageQualityLabMode(enable);
         } catch (Exception e) {
             Log.e(TAG, "Error setAiImageQualityLabMode :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public boolean setHDRVividEnabled(String mode) {
+        boolean ret;
+        try {
+            ret = mService.setHDRVividEnabled(mode);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setHDRVividEnabled :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public String getHDRVividStatus() {
+        String ret;
+        try {
+            ret = mService.getHDRVividStatus();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getHDRVividStatus :" + e);
+            return null;
+        }
+        return ret;
+    }
+
+    public String getHDRVividCurrentBrightness() {
+        String ret;
+        try {
+            ret = mService.getHDRVividCurrentBrightness();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getHDRVividCurrentBrightness :" + e);
+            return null;
+        }
+        return ret;
+    }
+
+    public boolean setHDRVividMaxBrightness(String selectBrightness) {
+        boolean ret;
+        try {
+            ret = mService.setHDRVividMaxBrightness(selectBrightness);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setHDRVividMaxBrightness :" + e);
+            return false;
+        }
+        return ret;
+    }
+
+    public String getHDRVividCapacity() {
+        String ret;
+        try {
+            ret = mService.getHDRVividCapacity();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getHDRVividCapacity :" + e);
+            return null;
+        }
+        return ret;
+    }
+
+    public boolean setHDRVividCapacity(String capacity) {
+        boolean ret;
+        try {
+            ret = mService.setHDRVividCapacity(capacity);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setHDRVividCapacity :" + e);
             return false;
         }
         return ret;

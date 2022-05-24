@@ -217,4 +217,43 @@ interface IRkDisplayDeviceManagementService
      * return: boolean 是否成功
     */
     boolean setAiImageQualityLabMode(boolean enabled);
+
+    /**
+     * 设置HDR Vivid模式
+     * mode: String 设置的模式，0为SDR适配模式，1为HDR10优化模式，2为自动模式
+     * return:boolean true为成功，false为失败
+    */
+    boolean setHDRVividEnabled(String mode);
+
+    /**
+     * 获取当前HDR Vivid的模式
+     * return: String 当前的HDR Vivid模式，0为SDR适配模式，1为HDR10优化模式，2为自动模式
+    */
+    String getHDRVividStatus();
+
+    /**
+     * 获取当前HDR Vivid的亮度
+     * return: String 当前的HDR Vivid亮度
+    */
+    String getHDRVividCurrentBrightness();
+
+    /**
+     * 设置HDR Vivid的亮度
+     * selectBrightness: String 需要设置的亮度值
+     * return: boolean true为成功，false为失败
+    */
+    boolean setHDRVividMaxBrightness(String selectBrightness);
+
+    /**
+     * 获取当前HDR Vivid支持能力
+     * return: String 当前HDR Vivid支持能力
+    */
+    String getHDRVividCapacity();
+
+    /**
+     * 设置HDR Vivid的支持能力
+     * capacity: String 需要设置的支持能力
+     * return: boolean true为成功，false为失败
+    */
+    boolean setHDRVividCapacity(String capacity);
 }
