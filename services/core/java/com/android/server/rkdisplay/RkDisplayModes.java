@@ -147,6 +147,13 @@ public class RkDisplayModes {
     private static final String PROP_SVEP_CONTRAST_OFFSET_RATIO = "persist.sys.svep.contrast_offset_ratio";
     private static final String PROP_HDR10_FORCE_DISABLE = "vendor.hwc.hdr_force_disable";
 
+    private static final String PROP_SYS_VIVID_HDR_MODE = "persist.sys.vivid.hdr_mode";
+    private static final String PROP_VIVID_HDR_MODE = "persist.vendor.vivid.hdr_mode";
+    private static final String PROP_SYS_VIVID_HDR_MAX_BRIGHTNESS = "persist.sys.vivid.max_brightness";
+    private static final String PROP_VIVID_HDR_MAX_BRIGHTNESS = "persist.vendor.vivid.max_brightness";
+    private static final String PROP_SYS_VIVID_HDR_CAPACITY = "persist.sys.vivid.hdr_capacity";
+    private static final String PROP_VIVID_HDR_CAPACITY = "persist.vendor.vivid.hdr_capacity";
+
     public RkDisplayModes(){
         mWhiteList = new ArrayList<>();
         //resolutions = new ArrayList<ResolutionParser.RkResolutionInfo>();
@@ -782,8 +789,7 @@ public class RkDisplayModes {
         return nativeSet3DLut(dpy, size, red, green, blue);
     }
 
-    public int setHue(int display, int degree)
-    {
+    public int setHue(int display, int degree) {
         return nativeSetHue(display, degree);
     }
 
@@ -827,7 +833,7 @@ public class RkDisplayModes {
 
     public int getResolutionSupported(int display, String resolution) {
         return nativeGetHdrResolutionSupported(display, resolution);
-}
+    }
 
     public boolean isDolbyVisionStatus() {
         Log.d(TAG, "isDolbyVisionStatus ===========  ");
@@ -927,6 +933,35 @@ public class RkDisplayModes {
 
     public int getAcmEnable() {
         return nativeGetAcmEnable();
+    }
+
+    public boolean setHDRVividEnabled(String mode) {
+        Log.d(TAG, "setHDRVividEnabled ===========  " + mode);
+        SystemProperties.set(PROP_SYS_VIVID_HDR_MODE, mode);
+        return nativeSetModeState(PROP_VIVID_HDR_MODE, mode) == 0 ? true : false;
+    }
+
+    public String getHDRVividStatus() {
+        return nativeGetModeState(PROP_VIVID_HDR_MODE);
+    }
+
+    public String getHDRVividCurrentBrightness() {
+        return nativeGetModeState(PROP_VIVID_HDR_MAX_BRIGHTNESS);
+    }
+
+    public boolean setHDRVividMaxBrightness(String selectBrightness) {
+        Log.d(TAG, "setHDRVividMaxBrightness ===========  " + selectBrightness);
+        SystemProperties.set(PROP_SYS_VIVID_HDR_MAX_BRIGHTNESS, selectBrightness);
+        return nativeSetModeState(PROP_VIVID_HDR_MAX_BRIGHTNESS, selectBrightness) == 0 ? true : false;
+    }
+
+    public String getHDRVividCapacity() {
+        return nativeGetModeState(PROP_VIVID_HDR_CAPACITY);
+    }
+
+    public boolean setHDRVividCapacity(String capacity) {
+        SystemProperties.set(PROP_SYS_VIVID_HDR_CAPACITY, capacity);
+        return nativeSetModeState(PROP_VIVID_HDR_CAPACITY, capacity) == 0 ? true : false;
     }
 
 }
