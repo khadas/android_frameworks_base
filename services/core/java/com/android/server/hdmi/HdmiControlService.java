@@ -579,6 +579,16 @@ public class HdmiControlService extends SystemService {
         }
         mBootComplete = true;
         onEarcStateChanged(isEarcOn());
+
+        mHandler.postDelayed(()->{
+            if (tv() != null) {
+                tv().onBootCompleted();
+            }
+        }, HdmiConfig.TIMEOUT_MS);
+    }
+
+    boolean isBootCompeted() {
+        return mBootComplete;
     }
 
     /**

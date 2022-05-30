@@ -731,6 +731,10 @@ abstract class HdmiCecLocalDevice {
         return false;
     }
 
+    protected void onBootCompleted() {
+
+    }
+
     @ServiceThreadOnly
     final void handleAddressAllocated(int logicalAddress, int reason) {
         assertRunOnServiceThread();

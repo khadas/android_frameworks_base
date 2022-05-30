@@ -96,6 +96,8 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     @GuardedBy("mLock")
     private boolean mSystemAudioMute = false;
 
+    private HdmiDeviceInfo mDelayedActiveSource;
+
     // Copy of mDeviceInfos to guarantee thread-safety.
     @GuardedBy("mLock")
     private List<HdmiDeviceInfo> mSafeAllDeviceInfos = Collections.emptyList();
@@ -431,6 +433,14 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         }
     }
 
+
+    protected void onBootCompleted() {
+        if (mDelayedActiveSource != null) {
+            HdmiLogger.debug("tv onBootCompleted");
+            mService.invokeInputChangeListener(mDelayedActiveSource);
+        }
+    }
+
     @ServiceThreadOnly
     void updateActiveInput(int path, boolean notifyInputChange) {
         assertRunOnServiceThread();
@@ -450,7 +460,11 @@ final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
                 }
             }
             HdmiLogger.info("updateActiveInput " + info);
-            mService.invokeInputChangeListener(info);
+            if (mService.isBootCompeted()) {
+                mService.invokeInputChangeListener(info);
+            } else {
+                mDelayedActiveSource = info;
+            }
         }
     }
 
