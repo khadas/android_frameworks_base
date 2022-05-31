@@ -5772,7 +5772,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private class HdmiVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
-        private static final String HDMI_EXIST = "HDMI=1";
+        private static final String HDMI = "HDMI_";
+        private static final String EXIST = "=1";
         private static final String NAME = "hdmi";
         private final ExtconInfo mHdmi = new ExtconInfo(NAME);
 
@@ -5803,13 +5804,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         public Boolean parseState(ExtconInfo extconIfno, String state) {
             // extcon event state changes from kernel4.9
             // new state will be like STATE=HDMI=1
-            return state.contains(HDMI_EXIST);
+            return state.contains(HDMI) && state.contains(EXIST);
         }
     }
 
 
     private class MultiHdmiVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
-        private static final String HDMI_EXIST = "HDMI=1";
+        private static final String HDMI = "HDMI_";
+        private static final String EXIST = "=1";
 
         private boolean init(String name) {
             ExtconInfo mHdmi = new ExtconInfo(name);
@@ -5840,13 +5842,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         public Boolean parseState(ExtconInfo extconIfno, String state) {
             // extcon event state changes from kernel4.9
             // new state will be like STATE=HDMI=1
-            return state.contains(HDMI_EXIST);
+            return state.contains(HDMI) && state.contains(EXIST);
         }
     }
 
 
     private class MultiDpVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
-        private static final String DP_EXIST = "DP=1";
+        private static final String DP = "DP_";
+        private static final String EXIST = "=1";
 
         private boolean init(String name) {
             ExtconInfo mDp= new ExtconInfo(name);
@@ -5877,7 +5880,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         public Boolean parseState(ExtconInfo extconIfno, String state) {
             // extcon event state changes from kernel4.9
             // new state will be like STATE=DP=1
-            return state.contains(DP_EXIST);
+            return state.contains(DP) && state.contains(EXIST);
         }
     }
 
