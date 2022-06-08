@@ -779,6 +779,9 @@ public class WindowManagerService extends IWindowManager.Stub
 
     private final DisplayHashController mDisplayHashController;
 
+    volatile float mMaximumObscuringOpacityForTouch =
+            InputManager.DEFAULT_MAXIMUM_OBSCURING_OPACITY_FOR_TOUCH;
+
     @VisibleForTesting
     final WindowContextListenerController mWindowContextListenerController =
             new WindowContextListenerController();
@@ -811,6 +814,8 @@ public class WindowManagerService extends IWindowManager.Stub
                 DEVELOPMENT_RENDER_SHADOWS_IN_COMPOSITOR);
         private final Uri mDisplaySettingsPathUri = Settings.Global.getUriFor(
                 DEVELOPMENT_WM_DISPLAY_SETTINGS_PATH);
+        private final Uri mMaximumObscuringOpacityForTouchUri = Settings.Global.getUriFor(
+                Settings.Global.MAXIMUM_OBSCURING_OPACITY_FOR_TOUCH);
 
         public SettingsObserver() {
             super(new Handler());
@@ -836,6 +841,8 @@ public class WindowManagerService extends IWindowManager.Stub
             resolver.registerContentObserver(mRenderShadowsInCompositorUri, false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(mDisplaySettingsPathUri, false, this,
+                    UserHandle.USER_ALL);
+            resolver.registerContentObserver(mMaximumObscuringOpacityForTouchUri, false, this,
                     UserHandle.USER_ALL);
         }
 
@@ -885,6 +892,11 @@ public class WindowManagerService extends IWindowManager.Stub
                 return;
             }
 
+            if (mMaximumObscuringOpacityForTouchUri.equals(uri)) {
+                updateMaximumObscuringOpacityForTouch();
+                return;
+            }
+
             @UpdateAnimationScaleMode
             final int mode;
             if (mWindowAnimationScaleUri.equals(uri)) {
@@ -904,6 +916,14 @@ public class WindowManagerService extends IWindowManager.Stub
         void loadSettings() {
             updateSystemUiSettings(false /* handleChange */);
             updatePointerLocation();
+            updateMaximumObscuringOpacityForTouch();
+        }
+
+        void updateMaximumObscuringOpacityForTouch() {
+            ContentResolver resolver = mContext.getContentResolver();
+            mMaximumObscuringOpacityForTouch = Settings.Global.getFloat(resolver,
+                    Settings.Global.MAXIMUM_OBSCURING_OPACITY_FOR_TOUCH,
+                    InputManager.DEFAULT_MAXIMUM_OBSCURING_OPACITY_FOR_TOUCH);
         }
 
         void updateSystemUiSettings(boolean handleChange) {
@@ -2666,6 +2686,10 @@ public class WindowManagerService extends IWindowManager.Stub
 
     void finishDrawingWindow(Session session, IWindow client,
             @Nullable SurfaceControl.Transaction postDrawTransaction) {
+        if (postDrawTransaction != null) {
+            postDrawTransaction.sanitize();
+        }
+
         final long origId = Binder.clearCallingIdentity();
         try {
             synchronized (mGlobalLock) {
@@ -3286,9 +3310,6 @@ public class WindowManagerService extends IWindowManager.Stub
     public void dismissKeyguard(IKeyguardDismissCallback callback, CharSequence message) {
         if (!checkCallingPermission(permission.CONTROL_KEYGUARD, "dismissKeyguard")) {
             throw new SecurityException("Requires CONTROL_KEYGUARD permission");
-        }
-        if (mAtmInternal.isDreaming()) {
-            mAtmService.mTaskSupervisor.wakeUp("dismissKeyguard");
         }
         synchronized (mGlobalLock) {
             mPolicy.dismissKeyguardLw(callback, message);
@@ -8418,7 +8439,8 @@ public class WindowManagerService extends IWindowManager.Stub
      */
     void grantInputChannel(Session session, int callingUid, int callingPid, int displayId,
                            SurfaceControl surface, IWindow window, IBinder hostInputToken,
-                           int flags, int privateFlags, int type, InputChannel outInputChannel) {
+                           int flags, int privateFlags, int type, IBinder focusGrantToken,
+                           InputChannel outInputChannel) {
         final InputApplicationHandle applicationHandle;
         final String name;
         final InputChannel clientChannel;
@@ -8426,7 +8448,7 @@ public class WindowManagerService extends IWindowManager.Stub
             EmbeddedWindowController.EmbeddedWindow win =
                     new EmbeddedWindowController.EmbeddedWindow(session, this, window,
                             mInputToWindowMap.get(hostInputToken), callingUid, callingPid, type,
-                            displayId);
+                            displayId, focusGrantToken);
             clientChannel = win.openInputChannel();
             mEmbeddedWindowController.add(clientChannel.getToken(), win);
             applicationHandle = win.getApplicationHandle();
@@ -8646,16 +8668,21 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
-    void grantEmbeddedWindowFocus(Session session, IBinder inputToken, boolean grantFocus) {
+    void grantEmbeddedWindowFocus(Session session, IBinder focusToken, boolean grantFocus) {
         synchronized (mGlobalLock) {
             final EmbeddedWindowController.EmbeddedWindow embeddedWindow =
-                    mEmbeddedWindowController.get(inputToken);
+                    mEmbeddedWindowController.getByFocusToken(focusToken);
             if (embeddedWindow == null) {
                 Slog.e(TAG, "Embedded window not found");
                 return;
             }
             if (embeddedWindow.mSession != session) {
                 Slog.e(TAG, "Window not in session:" + session);
+                return;
+            }
+            IBinder inputToken = embeddedWindow.getInputChannelToken();
+            if (inputToken == null) {
+                Slog.e(TAG, "Focus token found but input channel token not found");
                 return;
             }
             SurfaceControl.Transaction t = mTransactionFactory.get();
@@ -8687,7 +8714,7 @@ public class WindowManagerService extends IWindowManager.Stub
         }
     }
 
-    void grantEmbeddedWindowFocus(Session session, IWindow callingWindow, IBinder targetInputToken,
+    void grantEmbeddedWindowFocus(Session session, IWindow callingWindow, IBinder targetFocusToken,
                                   boolean grantFocus) {
         synchronized (mGlobalLock) {
             final WindowState hostWindow =
@@ -8701,7 +8728,7 @@ public class WindowManagerService extends IWindowManager.Stub
                 return;
             }
             final EmbeddedWindowController.EmbeddedWindow embeddedWindow =
-                    mEmbeddedWindowController.get(targetInputToken);
+                    mEmbeddedWindowController.getByFocusToken(targetFocusToken);
             if (embeddedWindow == null) {
                 Slog.e(TAG, "Embedded window not found");
                 return;
@@ -8712,7 +8739,7 @@ public class WindowManagerService extends IWindowManager.Stub
             }
             SurfaceControl.Transaction t = mTransactionFactory.get();
             if (grantFocus) {
-                t.requestFocusTransfer(targetInputToken, embeddedWindow.toString(),
+                t.requestFocusTransfer(embeddedWindow.getInputChannelToken(), embeddedWindow.toString(),
                         hostWindow.mInputChannel.getToken(),
                         hostWindow.getName(),
                         hostWindow.getDisplayId()).apply();
@@ -8721,7 +8748,7 @@ public class WindowManagerService extends IWindowManager.Stub
                         "reason=grantEmbeddedWindowFocus(true)");
             } else {
                 t.requestFocusTransfer(hostWindow.mInputChannel.getToken(), hostWindow.getName(),
-                        targetInputToken,
+                        embeddedWindow.getInputChannelToken(),
                         embeddedWindow.toString(),
                         hostWindow.getDisplayId()).apply();
                 EventLog.writeEvent(LOGTAG_INPUT_FOCUS,
