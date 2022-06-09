@@ -323,12 +323,16 @@ public class IpConfigStore {
                                 }
                                 // If the destination is a default IPv4 route, use the gateway
                                 // address unless already set.
-                                if (dest.getAddress() instanceof Inet4Address
-                                        && dest.getPrefixLength() == 0 && gatewayAddress == null) {
-                                    gatewayAddress = gateway;
+                                if (dest != null) {
+                                    if (dest.getAddress() instanceof Inet4Address
+                                            && dest.getPrefixLength() == 0 && gatewayAddress == null) {
+                                        gatewayAddress = gateway;
+                                    } else {
+                                        loge("Non-IPv4 default or duplicate route: "
+                                                + dest.getAddress());
+                                    }
                                 } else {
-                                    loge("Non-IPv4 default or duplicate route: "
-                                            + dest.getAddress());
+                                    gatewayAddress = gateway;
                                 }
                             }
                         } else if (key.equals(DNS_KEY)) {

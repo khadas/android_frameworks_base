@@ -24,6 +24,7 @@ import android.util.Log;
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
+import java.io.FileDescriptor;
 import java.io.IOException;
 
 public class DelayedDiskWrite {
@@ -65,10 +66,13 @@ public class DelayedDiskWrite {
 
     private void doWrite(String filePath, Writer w, boolean open) {
         DataOutputStream out = null;
+        FileOutputStream  file = null;
+        FileDescriptor fd =null;
         try {
             if (open) {
-                out = new DataOutputStream(new BufferedOutputStream(
-                        new FileOutputStream(filePath)));
+                file = new FileOutputStream(filePath);
+                fd = file.getFD();
+                out = new DataOutputStream(new BufferedOutputStream(file));
             }
             w.onWriteCalled(out);
         } catch (IOException e) {
@@ -76,6 +80,8 @@ public class DelayedDiskWrite {
         } finally {
             if (out != null) {
                 try {
+                    out.flush();
+                    fd.sync();
                     out.close();
                 } catch (Exception e) {}
             }
