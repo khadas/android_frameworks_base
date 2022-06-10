@@ -149,6 +149,21 @@ public class EthernetManager {
     }
 
     /**
+     * Indicates whether the interface is up.
+     *
+     * @param iface Ethernet interface name
+     * @hide
+     */
+    @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.R, trackingBug = 170729553)
+    public boolean isInterfaceup(String iface) {
+        try {
+            return mService.isInterfaceup(iface);
+        } catch (RemoteException e) {
+            throw e.rethrowFromSystemServer();
+        }
+    }
+
+    /**
      * @hide
      */
     @UnsupportedAppUsage
