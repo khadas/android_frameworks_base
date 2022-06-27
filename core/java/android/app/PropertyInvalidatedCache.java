@@ -545,7 +545,17 @@ public abstract class PropertyInvalidatedCache<Query, Result> {
                             nonce,
                             newValueString));
         }
-        SystemProperties.set(name, newValueString);
+        try {
+            SystemProperties.set(name, newValueString);
+        } catch (RuntimeException e) {
+          Log.d(TAG,
+                    String.format("invalidating cache [%s]: [%s] -> [%s]",
+                            name,
+                            nonce,
+                            newValueString));
+          Log.d(TAG, "the exception may come from suspend/resume, need to retry");
+          SystemProperties.set(name, newValueString);
+        }
         long invalidateCount = sInvalidates.getOrDefault(name, (long) 0);
         sInvalidates.put(name, ++invalidateCount);
     }
