@@ -998,6 +998,8 @@ public final class TvInputManager {
          * @param configs The new {@link TvStreamConfig}s.
          */
         public abstract void onStreamConfigChanged(TvStreamConfig[] configs);
+
+        public abstract void onPrivCmdToApp(@NonNull String action, @NonNull Bundle bundle);
     }
 
     /**
@@ -1886,6 +1888,16 @@ public final class TvInputManager {
                             final long identity = Binder.clearCallingIdentity();
                             try {
                                 executor.execute(() -> callback.onStreamConfigChanged(configs));
+                            } finally {
+                                Binder.restoreCallingIdentity(identity);
+                            }
+                }
+
+                @Override
+                public void onPrivCmdToApp(String action, Bundle bundle) {
+                            final long identity = Binder.clearCallingIdentity();
+                            try {
+                                executor.execute(() -> callback.onPrivCmdToApp(action, bundle));
                             } finally {
                                 Binder.restoreCallingIdentity(identity);
                             }
@@ -2936,6 +2948,14 @@ public final class TvInputManager {
         public void setStreamVolume(float volume) {
             try {
                 mInterface.setStreamVolume(volume);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public void sendAppPrivateCommand(@NonNull String action, @NonNull Bundle data) {
+            try {
+                mInterface.sendAppPrivateCommand(action, data);
             } catch (RemoteException e) {
                 throw new RuntimeException(e);
             }

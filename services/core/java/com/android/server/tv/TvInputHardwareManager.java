@@ -48,6 +48,7 @@ import android.media.tv.TvInputService.PriorityHintUseCaseType;
 import android.media.tv.TvStreamConfig;
 import android.media.tv.tunerresourcemanager.ResourceClientProfile;
 import android.media.tv.tunerresourcemanager.TunerResourceManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -254,6 +255,26 @@ class TvInputHardwareManager implements TvInputHal.Callback {
             if (runnable != null) {
                 runnable.run();
                 connection.setOnFirstFrameCapturedLocked(null);
+            }
+        }
+    }
+
+    @Override
+    public void onPrivCmdToApp(int deviceId, String action, Bundle data) {
+        synchronized (mLock) {
+            Connection connection = mConnections.get(deviceId);
+            if (connection == null) {
+                Slog.e(TAG, "onPrivCmdToApp: Cannot find a connection with "
+                        + deviceId);
+                return;
+            }
+            ITvInputHardwareCallback callback = connection.getCallbackLocked();
+            if (callback != null) {
+                try {
+                    callback.onPrivCmdToApp(action, data);
+                } catch (RemoteException e) {
+                    Slog.e(TAG, "error in onStreamConfigurationChanged", e);
+                }
             }
         }
     }
@@ -879,6 +900,10 @@ class TvInputHardwareManager implements TvInputHal.Callback {
                 }
                 mReleased = true;
             }
+        }
+
+        public void sendAppPrivateCommand(String action, Bundle data) {
+            mHal.sendAppPrivateCommand(action, data);
         }
 
         // A TvInputHardwareImpl object holds only one active session. Therefore, if a client

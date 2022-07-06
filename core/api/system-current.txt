@@ -5840,12 +5840,14 @@ package android.media.tv {
 
   public static final class TvInputManager.Hardware {
     method public void overrideAudioSink(int, String, int, int, int);
+    method public void sendAppPrivateCommand(@NonNull String, @NonNull android.os.Bundle);
     method public void setStreamVolume(float);
     method public boolean setSurface(android.view.Surface, android.media.tv.TvStreamConfig);
   }
 
   public abstract static class TvInputManager.HardwareCallback {
     ctor public TvInputManager.HardwareCallback();
+    method public abstract void onPrivCmdToApp(@NonNull String, @NonNull android.os.Bundle);
     method public abstract void onReleased();
     method public abstract void onStreamConfigChanged(android.media.tv.TvStreamConfig[]);
   }

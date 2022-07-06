@@ -4830,6 +4830,13 @@ public class Intent implements Parcelable, Cloneable {
     public static final String ACTION_PACKAGE_NEEDS_INTEGRITY_VERIFICATION =
             "android.intent.action.PACKAGE_NEEDS_INTEGRITY_VERIFICATION";
 
+    /**
+     * Broadcast Action: for hdmiin
+     * @hide
+     */
+    public static final String ACTION_HDMIIN_RK_PRIV_CMD =
+            "com.rk.hdmiin.privcmdtoapp";
+
 
     // ---------------------------------------------------------------------
     // ---------------------------------------------------------------------

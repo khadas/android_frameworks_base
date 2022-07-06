@@ -17,6 +17,7 @@
 package android.media.tv;
 
 import android.media.tv.TvStreamConfig;
+import android.os.Bundle;
 
 /**
  * @hide
@@ -24,4 +25,5 @@ import android.media.tv.TvStreamConfig;
 oneway interface ITvInputHardwareCallback {
     void onReleased();
     void onStreamConfigChanged(in TvStreamConfig[] configs);
+    void onPrivCmdToApp(String action, in Bundle bundle);
 }

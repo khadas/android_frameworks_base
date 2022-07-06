@@ -16,7 +16,7 @@
 
 #define LOG_TAG "TvInputHal"
 
-//#define LOG_NDEBUG 0
+#define LOG_NDEBUG 0
 
 #include "android_os_MessageQueue.h"
 #include "android_runtime/AndroidRuntime.h"
@@ -47,6 +47,7 @@ using ::android::hardware::tv::input::V1_0::TvInputEventType;
 using ::android::hardware::tv::input::V1_0::TvInputType;
 using ::android::hardware::tv::input::V1_0::TvStreamConfig;
 using ::android::hardware::tv::input::V1_0::PreviewRequest;
+using ::android::hardware::tv::input::V1_0::PrivAppCmdInfo;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::hidl_vec;
@@ -59,6 +60,7 @@ static struct {
     jmethodID deviceUnavailable;
     jmethodID streamConfigsChanged;
     jmethodID firstFrameCaptured;
+    jmethodID privCmdToApp;
 } gTvInputHalClassInfo;
 
 static struct {
@@ -116,6 +118,7 @@ public:
 
     static JTvInputHal* createInstance(JNIEnv* env, jobject thiz, const sp<Looper>& looper);
 
+    int privCmdFromApp(const PrivAppCmdInfo& cmdInfo);
     int addOrUpdateStream(int deviceId, int streamId, const sp<Surface>& surface);
     int removeStream(int deviceId, int streamId);
     const hidl_vec<TvStreamConfig> getStreamConfigs(int deviceId);
@@ -124,6 +127,7 @@ public:
     void onDeviceUnavailable(int deviceId);
     void onStreamConfigurationsChanged(int deviceId, int cableConnectionStatus);
     void onCaptured(int deviceId, int streamId, uint64_t buffId, int buffSeq, buffer_handle_t handle, bool succeeded);
+    void onPrivCmdToApp(int deviceId, const PrivAppCmdInfo& cmdInfo);
 
     std::vector<hardware::tv::input::V1_0::PreviewBuffer> mPreviewBuffer;
 private:
@@ -234,7 +238,18 @@ JTvInputHal* JTvInputHal::createInstance(JNIEnv* env, jobject thiz, const sp<Loo
     return new JTvInputHal(env, thiz, tvInput, looper);
 }
 
+int JTvInputHal::privCmdFromApp(const PrivAppCmdInfo& cmdInfo) {
+    if (mTvInput->privCmdFromApp(cmdInfo) != Result::OK) {
+        ALOGE("Couldn't %s", __FUNCTION__);
+        return BAD_VALUE;
+    }
+    ALOGD("%s end.", __FUNCTION__);
+    return NO_ERROR;
+}
+
 int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>& surface) {
+    ALOGW("%s deviceId=%d, streamId=%d", __FUNCTION__, deviceId, streamId);
+
     Mutex::Autolock autoLock(&mStreamLock);
     KeyedVector<int, Connection>& connections = mConnections.editValueFor(deviceId);
     if (connections.indexOfKey(streamId) < 0) {
@@ -401,6 +416,8 @@ const hidl_vec<TvStreamConfig> JTvInputHal::getStreamConfigs(int deviceId) {
 }
 
 void JTvInputHal::onDeviceAvailable(const TvInputDeviceInfo& info) {
+    ALOGW("onDeviceAvailable %d", info.deviceId);
+
     {
         Mutex::Autolock autoLock(&mLock);
         mConnections.add(info.deviceId, KeyedVector<int, Connection>());
@@ -445,6 +462,8 @@ void JTvInputHal::onDeviceAvailable(const TvInputDeviceInfo& info) {
 }
 
 void JTvInputHal::onDeviceUnavailable(int deviceId) {
+    ALOGW("onDeviceUnavailable deviceId=%d", deviceId);
+
     {
         Mutex::Autolock autoLock(&mLock);
         KeyedVector<int, Connection>& connections = mConnections.editValueFor(deviceId);
@@ -496,6 +515,26 @@ void JTvInputHal::onCaptured(int deviceId, int streamId, uint64_t buffId, int bu
     // }
 }
 
+void JTvInputHal::onPrivCmdToApp(int deviceId, const PrivAppCmdInfo& cmdInfo) {
+    JNIEnv* env = AndroidRuntime::getJNIEnv();
+
+    jclass bundleClass = env->FindClass("android/os/Bundle");
+    jmethodID initMID = env->GetMethodID(bundleClass, "<init>", "()V");
+    jobject jBundleObj = env->NewObject(bundleClass, initMID);
+
+    //TODO
+    /*jmethodID putObjectMID = env->GetMethodID(bundleClass, "putObject", "(Ljava/lang/String;Ljava/lang/Object;)V");
+    if (cmdInfo.data && !cmdInfo.data.empty()) {
+        for (int i=0; i<cmdInfo.data.size(); i++) {
+            env->CallVoidMethod(jBundleObj, putObjectMID, cmdInfo.data[i].key, cmdInfo.data[i].value);
+        }
+    }*/
+    //std::vector<hardware::tv::input::V1_0::PrivAppCmdBundle> cmdData;
+    //cmdData.clear();
+    env->CallVoidMethod(mThiz, gTvInputHalClassInfo.privCmdToApp, deviceId,
+            env->NewStringUTF(cmdInfo.action.c_str()), jBundleObj);
+}
+
 JTvInputHal::NotifyHandler::NotifyHandler(JTvInputHal* hal, const TvInputEvent& event) {
     mHal = hal;
     mEvent = event;
@@ -532,6 +571,11 @@ void JTvInputHal::NotifyHandler::handleMessage(const Message& message) {
                              mEvent.capture_result.buffSeq,
                              mEvent.capture_result.buffer,
                              false  /*failed*/ );
+        } break;
+        case TvInputEventType::PRIV_CMD_TO_APP:
+        {
+            mHal->onPrivCmdToApp(mEvent.deviceInfo.deviceId,
+                               mEvent.priv_app_cmd);
         } break;
         default:
             ALOGE("Unrecognizable event");
@@ -840,6 +884,53 @@ static jlong nativeOpen(JNIEnv* env, jobject thiz, jobject messageQueueObj) {
     return (jlong)JTvInputHal::createInstance(env, thiz, messageQueue->getLooper());
 }
 
+static int nativePrivCmdFromApp(JNIEnv* env, jclass clazz, jlong ptr, jstring action, jobject data) {
+    JTvInputHal* tvInputHal = (JTvInputHal*)ptr;
+    const char* maction = env->GetStringUTFChars(action, NULL);
+
+    jclass bundleClass = env->FindClass("android/os/Bundle");
+    jmethodID keySetMID = env->GetMethodID(bundleClass, "keySet", "()Ljava/util/Set;");
+    jobject ketSetObj = env->CallObjectMethod(data, keySetMID);
+    jmethodID bundleStrMID = env->GetMethodID(bundleClass, "getString", "(Ljava/lang/String;)Ljava/lang/String;");
+
+    jclass setClass = env->FindClass("java/util/Set");
+    jmethodID iteratorMID = env->GetMethodID(setClass, "iterator", "()Ljava/util/Iterator;");
+    jobject iteratorObj = env->CallObjectMethod(ketSetObj, iteratorMID);
+    jclass iteratorClass = env->FindClass("java/util/Iterator");
+    jmethodID hasNextMID = env->GetMethodID(iteratorClass, "hasNext", "()Z");
+    jmethodID nextMID = env->GetMethodID(iteratorClass, "next", "()Ljava/lang/Object;");
+
+    hardware::tv::input::V1_0::PrivAppCmdInfo cmdInfo;
+    std::vector<hardware::tv::input::V1_0::PrivAppCmdBundle> cmdData;
+    cmdData.clear();
+    while (env->CallBooleanMethod(iteratorObj, hasNextMID)) {
+        jstring keyJS = (jstring)env->CallObjectMethod(iteratorObj, nextMID);
+        const char *keyStr = env->GetStringUTFChars(keyJS, NULL);
+        jstring valueJS = (jstring)env->CallObjectMethod(data, bundleStrMID, keyJS);
+        const char *valueStr = env->GetStringUTFChars(valueJS, NULL);
+        hardware::tv::input::V1_0::PrivAppCmdBundle bundle;
+        bundle.key = keyStr;
+        bundle.value = valueStr;
+        cmdData.push_back(bundle);
+
+        env->ReleaseStringUTFChars(keyJS, keyStr);
+        env->DeleteLocalRef(keyJS);
+        env->ReleaseStringUTFChars(valueJS, valueStr);
+        env->DeleteLocalRef(valueJS);
+    }
+    env->DeleteLocalRef(bundleClass);
+    env->DeleteLocalRef(ketSetObj);
+    env->DeleteLocalRef(setClass);
+    env->DeleteLocalRef(iteratorObj);
+    env->DeleteLocalRef(iteratorClass);
+
+    cmdInfo.action = maction;
+    cmdInfo.data = cmdData;
+    tvInputHal->privCmdFromApp(cmdInfo);
+    env->ReleaseStringUTFChars(action, maction);
+    return 1;
+}
+
 static int nativeAddOrUpdateStream(JNIEnv* env, jclass clazz,
         jlong ptr, jint deviceId, jint streamId, jobject jsurface) {
     JTvInputHal* tvInputHal = (JTvInputHal*)ptr;
@@ -908,6 +999,9 @@ static const JNINativeMethod gTvInputHalMethods[] = {
             (void*) nativeGetStreamConfigs },
     { "nativeClose", "(J)V",
             (void*) nativeClose },
+    { "nativePrivCmdFromApp", "(JLjava/lang/String;Landroid/os/Bundle;)I",
+            (void*) nativePrivCmdFromApp },
+
 };
 
 #define FIND_CLASS(var, className) \
@@ -937,6 +1031,9 @@ int register_android_server_tv_TvInputHal(JNIEnv* env) {
     GET_METHOD_ID(
             gTvInputHalClassInfo.firstFrameCaptured, clazz,
             "firstFrameCapturedFromNative", "(II)V");
+    GET_METHOD_ID(
+                gTvInputHalClassInfo.privCmdToApp, clazz,
+                "privCmdToAppFromNative", "(ILjava/lang/String;Landroid/os/Bundle;)V");
 
     FIND_CLASS(gTvStreamConfigClassInfo.clazz, "android/media/tv/TvStreamConfig");
     gTvStreamConfigClassInfo.clazz = jclass(env->NewGlobalRef(gTvStreamConfigClassInfo.clazz));
