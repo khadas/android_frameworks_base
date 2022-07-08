@@ -1176,6 +1176,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private void goToSleep(long eventTime, int reason, int flags) {
+        final HdmiControl hdmiControl = getHdmiControl();
+        if (hdmiControl != null) {
+            Slog.d(TAG, "turn off tv if possible");
+            hdmiControl.turnOffTv();
+        }
+
         mRequestedOrGoingToSleep = true;
         mPowerManager.goToSleep(eventTime, reason, flags);
     }
@@ -1539,6 +1545,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (manager != null) {
                 client = manager.getPlaybackClient();
             }
+            if (client == null) {
+                return null;
+            }
             mHdmiControl = new HdmiControl(client);
         }
         return mHdmiControl;
@@ -1563,6 +1572,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     }
                 }
             });
+        }
+
+        public void turnOffTv() {
+            if (mClient == null) {
+                return;
+            }
+            mClient.sendStandby();
+        }
+
+        public void sendKeyEvent(int keyCode, boolean isPressed) {
+            if (mClient == null) {
+                return;
+            }
+            mClient.sendKeyEvent(keyCode, isPressed);
         }
     }
 
@@ -4042,6 +4065,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         if (!down) {
                             showPictureInPictureMenu(event);
                         }
+                        result &= ~ACTION_PASS_TO_USER;
+                    }
+                }
+                break;
+            }
+            case KeyEvent.KEYCODE_TV_INPUT: {
+                if (down) {
+                    final HdmiControl hdmiControl = getHdmiControl();
+                    if (hdmiControl != null) {
+                        Slog.i(TAG, "send tv_input key to tv");
+                        hdmiControl.sendKeyEvent(KeyEvent.KEYCODE_TV_INPUT, true);
+                        hdmiControl.sendKeyEvent(KeyEvent.KEYCODE_TV_INPUT, false);
                         result &= ~ACTION_PASS_TO_USER;
                     }
                 }

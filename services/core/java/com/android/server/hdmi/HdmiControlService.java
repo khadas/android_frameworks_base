@@ -3229,7 +3229,13 @@ public class HdmiControlService extends SystemService {
         }
         mPowerStatus = HdmiControlManager.POWER_STATUS_STANDBY;
         for (HdmiCecLocalDevice device : mCecController.getLocalDeviceList()) {
-            device.onStandby(mStandbyMessageReceived, standbyAction);
+            // playback standby is done in sendStandby method.
+            if (device.getType() == HdmiDeviceInfo.DEVICE_PLAYBACK
+                && (standbyAction == STANDBY_SCREEN_OFF)) {
+                HdmiLogger.debug("screen off standby is operated in sendStandby previously.");
+            } else {
+                device.onStandby(mStandbyMessageReceived, standbyAction);
+            }
         }
         mStandbyMessageReceived = false;
         mCecController.runOnIoThread(()->{

@@ -44,6 +44,8 @@ import java.util.Locale;
 public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
     private static final String TAG = "HdmiCecLocalDevicePlayback";
 
+    private static final String SYSTEM_PROP_INACTIVE_SOURCE = "persist.sys.hdmi.inactive_source";
+
     private static final boolean SET_MENU_LANGUAGE =
             HdmiProperties.set_menu_language().orElse(false);
     // System property indicating that the screen should remain off until an explicit user action
@@ -230,22 +232,17 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
         if (!mService.isControlEnabled()) {
             return;
         }
-        if (mIsActiveSource) {
+        // Make sure playback could call one touch play when it boots.
+        boolean wasActiveSource = mIsActiveSource;
+        if (mIsActiveSource && SystemProperties.getBoolean(SYSTEM_PROP_INACTIVE_SOURCE, true)) {
             mService.sendCecCommand(HdmiCecMessageBuilder.buildInactiveSource(
                     mAddress, mService.getPhysicalAddress()));
         }
-        // Cancel the feature of no sending <Standby> if it's in not active state.
-        // There are 2 reasons:
-        // 1.Tv might broadcast routing message which make playback into inactive state when tv
-        // receives <InActive Source> message.
-        // 2.The active state of playback might not be initiated in some scenarios. For example,
-        // playback hotplugs in tv's current active port and tv does not send routing message.
-        // boolean wasActiveSource = mIsActiveSource;
-        // Invalidate the internal active source record when goes to standby
-        // This set will also update mIsActiveSource
+
         mService.setActiveSource(Constants.ADDR_INVALID, Constants.INVALID_PHYSICAL_ADDRESS);
-        if (initiatedByCec || !mAutoTvOff /*|| !wasActiveSource*/) {
-            HdmiLogger.info("onStandby no send <Standby> with mAutoTvOff=" + mAutoTvOff);
+        if (initiatedByCec || !mAutoTvOff || !wasActiveSource) {
+            HdmiLogger.info("onStandby no send <Standby> with mAutoTvOff=" + mAutoTvOff
+                + " wasActiveSource=" + wasActiveSource);
             return;
         }
         switch (standbyAction) {
