@@ -2874,7 +2874,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             Log.d(TAG, "interceptKeyTi keyCode=" + keyCode + " down=" + down + " repeatCount="
                     + repeatCount + " keyguardOn=" + keyguardOn + " canceled=" + canceled);
         }
-
+		//add function key
+		if(keyCode == KeyEvent.KEYCODE_HOME){
+			if(SystemProperties.getInt("persist.sys.func.key.action", 3) != 3){
+				Intent intentkey = new Intent("com.customer.key");
+				intentkey.putExtra("code",keyCode);
+				mContext.sendBroadcast(intentkey);
+				return -1;
+			}
+		}
+		//add end
         //infrare simulate mouse
         boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
         if (isBox) {
