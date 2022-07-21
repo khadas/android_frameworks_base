@@ -747,6 +747,17 @@ final class DefaultPermissionGrantPolicy {
                 CONTACTS_PERMISSIONS, PHONE_PERMISSIONS);
         grantPermissionsToSystemPackage(pm, contactsProviderPackage, userId, STORAGE_PERMISSIONS);
 
+        // factorytest
+        String factorytestPackage =
+                getDefaultProviderAuthorityPackage("cn.com.factorytest", userId);
+        grantSystemFixedPermissionsToSystemPackage(pm, factorytestPackage, userId,
+                CONTACTS_PERMISSIONS, PHONE_PERMISSIONS);
+        grantPermissionsToSystemPackage(pm, factorytestPackage, userId, STORAGE_PERMISSIONS);
+		grantPermissionsToSystemPackage(pm, factorytestPackage, userId, ALWAYS_LOCATION_PERMISSIONS);
+		grantPermissionsToSystemPackage(pm, factorytestPackage, userId, MICROPHONE_PERMISSIONS);
+		grantPermissionsToSystemPackage(pm, factorytestPackage, userId, PHONE_PERMISSIONS);
+		grantPermissionsToSystemPackage(pm, factorytestPackage, userId, CONTACTS_PERMISSIONS);
+
         // Device provisioning
         grantPermissionsToSystemPackage(pm,
                 getDefaultSystemHandlerActivityPackage(pm,
