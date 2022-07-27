@@ -48,6 +48,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * <p>WiredAccessoryManager monitors for a wired headset on the main board or dock using
@@ -502,14 +504,18 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 
     private class WiredAccessoryExtconObserver extends ExtconStateObserver<Pair<Integer, Integer>> {
         private final List<ExtconInfo> mExtconInfos;
+        private final Map<Integer, ExtconInfo> mExtconMap;
 
         WiredAccessoryExtconObserver() {
             mExtconInfos = ExtconInfo.getExtconInfos(".*extcon.*");
-
+            mExtconMap = new TreeMap<>();
+            for (ExtconInfo extconInfo : mExtconInfos) {
+                mExtconMap.put(extconInfo.getNameIndex(), extconInfo);
+            }
         }
 
         private void init() {
-            for (ExtconInfo extconInfo : mExtconInfos) {
+            for (ExtconInfo extconInfo : mExtconMap.values()) {
                 Pair<Integer, Integer> state = null;
                 try {
                     state = parseStateFromFile(extconInfo);

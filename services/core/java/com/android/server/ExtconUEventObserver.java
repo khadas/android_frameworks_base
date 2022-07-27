@@ -240,6 +240,13 @@ public abstract class ExtconUEventObserver extends UEventObserver {
         public String getNamePath() {
             return String.format(Locale.US, "/sys/class/extcon/%s/name", mName);
         }
+
+        /** The index of the name */
+        public Integer getNameIndex() {
+            String str = mName.substring(6);
+            return Integer.parseInt(str);
+        }
+
     }
 
     /** Does the {@code /sys/class/extcon/<name>} directory exist */
