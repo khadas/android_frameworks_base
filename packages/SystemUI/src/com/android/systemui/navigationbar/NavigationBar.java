@@ -270,6 +270,7 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
     private boolean mShowOrientedHandleForImmersiveMode;
     private long mLastClickScreenshotTime = 0;
 
+    private long lastClickTime;
 
     @com.android.internal.annotations.VisibleForTesting
     public enum NavBarActionEvent implements UiEventLogger.UiEventEnum {
@@ -1305,12 +1306,17 @@ public class NavigationBar implements View.OnAttachStateChangeListener,
     }
 
     private void onRecentsClick(View v) {
-        if (LatencyTracker.isEnabled(mContext)) {
-            LatencyTracker.getInstance(mContext).onActionStart(
-                    LatencyTracker.ACTION_TOGGLE_RECENTS);
+        long currentClickTime =SystemClock.uptimeMillis();
+        if(currentClickTime-lastClickTime>500){
+            lastClickTime=currentClickTime;
+            if (LatencyTracker.isEnabled(mContext)) {
+                LatencyTracker.getInstance(mContext).onActionStart(
+                        LatencyTracker.ACTION_TOGGLE_RECENTS);
+            }
+            mStatusBarOptionalLazy.get().ifPresent(StatusBar::awakenDreams);
+            mCommandQueue.toggleRecentApps();
         }
-        mStatusBarOptionalLazy.get().ifPresent(StatusBar::awakenDreams);
-        mCommandQueue.toggleRecentApps();
+
     }
 
     private void onImeSwitcherClick(View v) {
