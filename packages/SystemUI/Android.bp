@@ -119,6 +119,8 @@ android_library {
         "dagger2",
         "jsr330",
         "lottie",
+        "rockchip.hardware.hdmi-V1.0-java",
+        "rockchip.hardware.hdmi-V1.0-java-shallow",
     ],
     manifest: "AndroidManifest.xml",
 
@@ -208,6 +210,8 @@ android_library {
         "dagger2",
         "jsr330",
         "WindowManager-Shell",
+        "rockchip.hardware.hdmi-V1.0-java",
+        "rockchip.hardware.hdmi-V1.0-java-shallow",
     ],
     libs: [
         "android.test.runner",
