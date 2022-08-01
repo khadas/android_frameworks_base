@@ -50,8 +50,6 @@ public class RkDisplayModes {
 
 
     private static RkDisplayModes.RkPhysicalDisplayInfo mDisplayInfos[];
-    private static RkDisplayModes.RkPhysicalDisplayInfo mMainDisplayInfos[];
-    private static RkDisplayModes.RkPhysicalDisplayInfo mAuxDisplayInfos[];
     private static List<String> mWhiteList;
     private static List<ResolutionParser.RkResolutionInfo> resolutions=null;
     private static ResolutionParser mParser=null;
@@ -221,10 +219,6 @@ public class RkDisplayModes {
         Log.e(TAG, "getModeList =========== dpy " + dpy);
         //readModeWhiteList(RESOLUTION_XML_PATH);
         mDisplayInfos = getDisplayConfigs(dpy);
-        if (dpy == 0)
-            mMainDisplayInfos = mDisplayInfos;
-        else
-            mAuxDisplayInfos = mDisplayInfos;
 
         if (mDisplayInfos != null) {
             modeList.add("Auto");
@@ -484,7 +478,7 @@ public class RkDisplayModes {
         int ifaceType = ifacetotype(iface);
         String[] mode_str;
         int idx=0;
-        RkDisplayModes.RkPhysicalDisplayInfo info;
+        RkDisplayModes.RkPhysicalDisplayInfo info = null;
         Log.w(TAG, "setMode " + mode + " display " + display);
         if (mode.contains("Auto")) {
             nativeSetMode(display, ifaceType, mode);
@@ -494,22 +488,38 @@ public class RkDisplayModes {
             Log.e(TAG, "setMode split:  " + mval);
         }
 
+        StringBuilder builder = new StringBuilder();
+        RkDisplayModes.RkPhysicalDisplayInfo mCurDisplayInfos[];
+        mCurDisplayInfos = getDisplayConfigs(display);
+
         if (mode_str.length != 2){
+            for(int i = 0; i < mCurDisplayInfos.length; i++) {
+                builder.delete(0, builder.length());
+                builder.append(mCurDisplayInfos[i].width).append("x").append(mCurDisplayInfos[i].height);
+                if(mCurDisplayInfos[i].interlaceFlag) {
+                    builder.append("i");
+                } else {
+                    builder.append("p");
+                }
+                builder.append(String.format(Locale.getDefault(), "%.2f", mCurDisplayInfos[i].refreshRate));
+                Log.i(TAG, "mCurMode = " + mode + ", builder = " + builder.toString());
+                if(mode.equals(builder.toString())) {
+                    info = mCurDisplayInfos[i];
+                }
+            }
+        } else {
+            idx = Integer.parseInt(mode_str[1]);
+            if (mCurDisplayInfos != null && idx >= mCurDisplayInfos.length) {
+                idx = 0;
+            }
+            info = mCurDisplayInfos[idx];
+        }
+
+        if(info == null) {
             return;
         }
 
-        idx = Integer.parseInt(mode_str[1]);
-        if (mMainDisplayInfos!=null && idx >= mMainDisplayInfos.length && display==0)
-            idx=0;
-        else if (mAuxDisplayInfos!=null && idx >= mAuxDisplayInfos.length && display==1)
-            idx=0;
-
-        if (display == 0)
-            info = mMainDisplayInfos[idx];
-        else
-            info = mAuxDisplayInfos[idx];
-
-        StringBuilder builder = new StringBuilder();
+        builder.delete(0, builder.length());
         builder.append(info.width).append("x").append(info.height);
 /*
         if (info.interlaceFlag == true)
