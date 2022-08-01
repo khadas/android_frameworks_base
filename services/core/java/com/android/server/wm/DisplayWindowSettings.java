@@ -28,6 +28,7 @@ import static com.android.server.wm.DisplayContent.FORCE_SCALING_MODE_DISABLED;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.WindowConfiguration;
+import android.os.SystemProperties;
 import android.provider.Settings;
 import android.view.Display;
 import android.view.DisplayInfo;
@@ -228,7 +229,9 @@ class DisplayWindowSettings {
             // Default display should show IME.
             return DISPLAY_IME_POLICY_LOCAL;
         }
-
+        if("vehicle".equals(SystemProperties.get("ro.target.product"))){
+            return DISPLAY_IME_POLICY_LOCAL;
+        }
         final DisplayInfo displayInfo = dc.getDisplayInfo();
         final SettingsProvider.SettingsEntry settings = mSettingsProvider.getSettings(displayInfo);
         return settings.mImePolicy != null ? settings.mImePolicy
