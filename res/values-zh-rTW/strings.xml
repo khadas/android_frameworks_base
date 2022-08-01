@@ -211,6 +211,8 @@
       <item quantity="other">要移除所選語言嗎？</item>
       <item quantity="one">要移除所選語言嗎？</item>
     </plurals>
+    <string name="khadas_settings_title">Khadas設定</string>
+    <string name="khadas_settings_summary">Khadas添加的設定選項</string>
     <string name="dlg_remove_locales_message" msgid="8110560091134252067">"使用介面的文字會切換成另一種語言。"</string>
     <string name="dlg_remove_locales_error_title" msgid="5875503658221562572">"無法移除所有語言"</string>
     <string name="dlg_remove_locales_error_message" msgid="6504279959974675302">"請保留至少一種偏好語言"</string>

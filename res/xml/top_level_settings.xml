@@ -20,6 +20,17 @@
     xmlns:settings="http://schemas.android.com/apk/res-auto"
     android:key="top_level_settings">
 
+   <com.android.settings.widget.HomepagePreference
+        android:key="top_level_khadas_settings"
+        android:title="@string/khadas_settings_title"
+        android:summary="@string/khadas_settings_summary"
+        android:icon="@drawable/ic_homepage_storage"
+        android:order="-130">
+        <intent
+            android:targetClass="com.khadas.ksettings.MainActivity"
+            android:targetPackage="com.khadas.ksettings"/>
+    </com.android.settings.widget.HomepagePreference>
+
     <com.android.settings.widget.HomepagePreference
         android:fragment="com.android.settings.network.NetworkDashboardFragment"
         android:icon="@drawable/ic_settings_wireless"

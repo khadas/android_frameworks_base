@@ -405,6 +405,8 @@
       <item quantity="other">已添加 <xliff:g id="COUNT">%1$d</xliff:g> 个指纹</item>
       <item quantity="one">已添加 1 个指纹</item>
     </plurals>
+    <string name="khadas_settings_title">Khadas设置</string>
+    <string name="khadas_settings_summary">Khadas添加的设置选项</string>
     <string name="security_settings_fingerprint_preference_summary_none" msgid="1044059475710838504"></string>
     <string name="security_settings_fingerprint_enroll_introduction_title" msgid="7931650601996313070">"设置指纹"</string>
     <string name="security_settings_fingerprint_enroll_consent_introduction_title" msgid="2278592030102282364">"允许使用指纹解锁功能"</string>

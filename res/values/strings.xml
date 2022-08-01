@@ -8183,6 +8183,9 @@
         <item quantity="other">Show %d hidden items</item>
     </plurals>
 
+    <string name="khadas_settings_title">Khadas settings</string>
+    <string name="khadas_settings_summary">Khadas add some settings</string>
+
     <!-- Title for setting tile leading to network and Internet settings [CHAR LIMIT=40]-->
     <string name="network_dashboard_title">Network &amp; internet</string>
     <!-- Summary for Network and Internet settings, explaining it contains mobile, wifi setting and data usage settings [CHAR LIMIT=NONE]-->
