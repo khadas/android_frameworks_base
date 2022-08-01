@@ -1185,7 +1185,7 @@ int32_t NativeInputManager::notifyDisplayIdChanged() REQUIRES(mLock) {
            physicalPortSize++;
         }
     }
-    ALOGV("physical port size=%d",physicalPortSize);
+    ALOGV("==physical port size=%d",physicalPortSize);
     if(physicalPortSize==1){
        ALOGV("physicalPort size =1,return display id %d",mDisplayId);
        return mDisplayId;
@@ -1198,6 +1198,11 @@ int32_t NativeInputManager::notifyDisplayIdChanged() REQUIRES(mLock) {
          viewports.push_back(v);
        }
     }
+
+    std::sort(viewports.begin(),viewports.end(),[](const DisplayViewport& a,const DisplayViewport& b){
+		                return a.displayId<b.displayId;
+		            });
+
     if(viewports.size()==0){
       return mDisplayId;
     }
@@ -1218,6 +1223,7 @@ int32_t NativeInputManager::notifyDisplayIdChanged() REQUIRES(mLock) {
 	  controller->setDisplayId(v.displayId);
 	  controller->setDisplayViewport(v);
 	  mDisplayId=v.displayId;
+	  ALOGV("change to viewport=%s",v.toString().c_str());
 	  break;
        }
 
