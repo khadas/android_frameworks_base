@@ -187,13 +187,12 @@ class AudioStream {
 				Log.w(TAG, "Track buffer="+m_out_buf_size+", set to 8192");
 				m_out_buf_size = 8192;
 			}
+			Log.d(TAG, "set media.audio.hdmiin 1");
+			SystemProperties.set("media.audio.hdmiin", "1");
 			m_out_trk = new AudioTrack(AudioManager.STREAM_MUSIC,frequence,
 				channelConfig,
 				audioEncoding, m_out_buf_size,
 				AudioTrack.MODE_STREAM);
-
-			Log.d(TAG, "set media.audio.hdmiin 1");
-			SystemProperties.set("media.audio.hdmiin", "1");
 			byte[] m_in_bytes;
 			int m_in_buf_size = AudioRecord.getMinBufferSize(frequence, channelConfig, audioEncoding);
 			Log.i(TAG, "out min: "+m_out_buf_size+", in min: "+m_in_buf_size);
