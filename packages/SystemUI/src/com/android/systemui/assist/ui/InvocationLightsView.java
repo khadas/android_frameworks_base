@@ -286,6 +286,8 @@ public class InvocationLightsView extends View
 
             NavigationBar navBar = controller.getDefaultNavigationBar();
             if (navBar == null) {
+                Log.w(TAG, "navBar is null, prefer to use default color.");
+                setColors(0xFF4185F4, 0xFF3AA853, 0xFFEA4234, 0xFFFBBC06);
                 return;
             }
 
