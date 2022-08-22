@@ -3157,6 +3157,8 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     }
 
     boolean allResumedActivitiesIdle() {
+        ActivityRecord focusedActivity = null;
+        int mode = 0;
         for (int displayNdx = getChildCount() - 1; displayNdx >= 0; --displayNdx) {
             // TODO(b/117135575): Check resumed activities on all visible root tasks.
             final DisplayContent display = getChildAt(displayNdx);
@@ -3172,14 +3174,28 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 continue;
             }
             final ActivityRecord resumedActivity = rootTask.getTopResumedActivity();
+            focusedActivity = rootTask.getResumedActivity();
             if (resumedActivity == null || !resumedActivity.idle) {
                 ProtoLog.d(WM_DEBUG_STATES, "allResumedActivitiesIdle: rootTask=%d %s "
                         + "not idle", rootTask.getRootTaskId(), resumedActivity);
                 return false;
             }
         }
-        // End power mode launch when idle.
-        mService.endLaunchPowerMode(ActivityTaskManagerService.POWER_MODE_REASON_START_ACTIVITY);
+        if (focusedActivity != null) {
+            try {
+                mode = AppGlobals.getPackageManager().getPackagePerformanceMode(
+                        focusedActivity.mActivityComponent.toString());
+            } catch (RemoteException e) {
+            }
+            Slog.v(TAG_TASKS, "getPackagePerformanceMode -- "
+                + focusedActivity.mActivityComponent.toString()
+                + " -- " + focusedActivity.packageName
+                + " -- mode=" + mode);
+        }
+        if (mode == 0) {
+            // End power mode launch when idle.
+            mService.endLaunchPowerMode(ActivityTaskManagerService.POWER_MODE_REASON_START_ACTIVITY);
+        }
         return true;
     }
 

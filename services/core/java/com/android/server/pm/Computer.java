@@ -593,6 +593,8 @@ public interface Computer extends PackageDataSnapshot {
             @NonNull ArraySet<String> permissionNames, @NonNull DumpState dumpState,
             boolean checkin);
 
+    void dumpPackagePerformanceMode(@NonNull PrintWriter pw, @NonNull DumpState dumpState);
+
     void dumpKeySet(@NonNull PrintWriter pw, @NonNull String packageName,
             @NonNull DumpState dumpState);
 

@@ -10119,6 +10119,24 @@ public abstract class PackageManager {
     }
 
     /**
+     * @return whether a given package should running with performance mode.
+     *
+     * @hide
+     */
+    public int getPackagePerformanceMode(@NonNull String packageName) {
+        throw new UnsupportedOperationException(
+            "getPackagePerformanceMode not implemented in subclass");
+    }
+
+    /**
+     * @hide
+     */
+    public void setPackagePerformanceMode(@NonNull String packageName) {
+        throw new UnsupportedOperationException(
+            "getPackagePerformanceMode not implemented in subclass");
+    }
+
+    /**
      * Notify to the rest of the system that a new device configuration has
      * been prepared and that it is time to refresh caches.
      *

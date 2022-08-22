@@ -347,6 +347,8 @@ class PackageManagerShellCommand extends ShellCommand {
                     return runBypassAllowedApexUpdateCheck();
                 case "set-silent-updates-policy":
                     return runSetSilentUpdatesPolicy();
+                case "add-performance-package":
+                    return runAddPerformancePkg();
                 default: {
                     Boolean domainVerificationResult =
                             mDomainVerificationShell.runCommand(this, cmd);
@@ -3264,6 +3266,22 @@ class PackageManagerShellCommand extends ShellCommand {
             return 0;
         } catch (Exception e) {
             pw.println(e.toString());
+            return 1;
+        }
+    }
+
+    private int runAddPerformancePkg() {
+        final PrintWriter err = getErrPrintWriter();
+        final String pkgName = getNextArg();
+        if (pkgName == null) {
+            err.println("Error: expected Package name");
+            return 1;
+        }
+        try {
+            mInterface.setPackagePerformanceMode(pkgName);
+            return 0;
+        } catch (Exception e) {
+            err.println(e.toString());
             return 1;
         }
     }

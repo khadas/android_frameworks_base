@@ -5376,6 +5376,33 @@ public class PackageManagerService implements PackageSender, TestUtilityService 
             updateComponentLabelIcon(componentName, null, null, userId);
         }
 
+        /**
+         * @hide
+         */
+        public int getPackagePerformanceMode(String pkgName) {
+            for (int i = 0; i < mSettings.mPerformancePackages.size(); i++) {
+                if (pkgName.toLowerCase().contains(mSettings.mPerformancePackages.get(i).name.toLowerCase())) {
+                    return mSettings.mPerformancePackages.get(i).mode;
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * @hide
+         */
+        public void setPackagePerformanceMode(String pkgName) {
+            for (int i = 0; i < mSettings.mPerformancePackages.size(); i++) {
+                if (pkgName.toLowerCase().contains(mSettings.mPerformancePackages.get(i).name.toLowerCase())) {
+                    Slog.w(TAG, "Already in performance mode: " + pkgName);
+                    return;
+                }
+            }
+            PackagePerformanceSetting app = new PackagePerformanceSetting(pkgName, 1 /* enable performance mode */);
+            mSettings.mPerformancePackages.add(app);
+            Slog.i(TAG, "Added in performance mode: " + pkgName);
+        }
+
         @Override
         public void sendDeviceCustomizationReadyBroadcast() {
             mContext.enforceCallingPermission(Manifest.permission.SEND_DEVICE_CUSTOMIZATION_READY,

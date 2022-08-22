@@ -256,6 +256,25 @@ public class ApplicationPackageManager extends PackageManager {
     }
 
     @Override
+    public int getPackagePerformanceMode(String pkgName) {
+        try {
+            return mPM.getPackagePerformanceMode(pkgName);
+        } catch (RemoteException e) {
+            Log.w(TAG, "Performance mode info not found.", e);
+        }
+        return 0;
+    }
+
+    @Override
+    public void setPackagePerformanceMode(String pkgName) {
+        try {
+            mPM.setPackagePerformanceMode(pkgName);
+        } catch (RemoteException e) {
+            Log.w(TAG, "Performance mode info not found.", e);
+        }
+    }
+
+    @Override
     public String[] currentToCanonicalPackageNames(String[] names) {
         try {
             return mPM.currentToCanonicalPackageNames(names);
