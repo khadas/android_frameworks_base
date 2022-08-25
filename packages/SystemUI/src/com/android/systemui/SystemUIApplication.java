@@ -125,7 +125,9 @@ public class SystemUIApplication extends Application implements
             service.removeAudioListener((IHdmiAudioCallback)mHdmiAudioCallback);
         } catch (RemoteException e) {
             e.printStackTrace();
-        }
+        } catch (Exception e) {
+            e.printStackTrace();
+	}
     }
     @Override
     public void onCreate() {
@@ -149,7 +151,9 @@ public class SystemUIApplication extends Application implements
             service.addAudioListener((IHdmiAudioCallback)mHdmiAudioCallback);
         } catch (RemoteException e) {
             e.printStackTrace();
-        }
+        } catch (Exception e) {
+            e.printStackTrace();
+	}
         // Set the application theme that is inherited by all services. Note that setting the
         // application theme in the manifest does only work for activities. Keep this in sync with
         // the theme set there.
