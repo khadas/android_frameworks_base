@@ -96,10 +96,12 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
         if (isTablet()) {
             String status = event.get("STATE");
             String newState = "";
-            if (status.contains("HDMI=") && name.contains(".hdmi")) {
+            if (status.contains("HDMI=") && name.contains(".hdmi") &&
+                null != mExtconHDMIStates.get(name)) {
                 newState = status.replaceAll("HDMI", mExtconHDMIStates.get(name));
                 state = parseState(extconInfo, newState);
-            } else if (status.contains("DP=") && name.contains(".dp")) {
+            } else if (status.contains("DP=") && name.contains(".dp") &&
+                       null != mExtconDPStates.get(name)) {
                 newState = status.replaceAll("DP", mExtconDPStates.get(name));
                 state = parseState(extconInfo, newState);
             } else {
