@@ -2830,14 +2830,14 @@ public class PermissionManagerService extends IPermissionManager.Stub {
                         grant = GRANT_UPGRADE;
                     } else {
                         // For modern apps keep runtime permissions unchanged.
-                        grant = GRANT_RUNTIME;
+                        grant = GRANT_INSTALL;
                     }
                 } else if (bp.isSignature()) {
                     // For all apps signature permissions are install time ones.
                     allowedSig = grantSignaturePermission(perm, pkg, ps, bp, origPermissions);
-                    if (allowedSig) {
+                    //if (allowedSig) {
                         grant = GRANT_INSTALL;
-                    }
+                    //}
                 }
 
                 if (DEBUG_PERMISSIONS) {
@@ -2855,7 +2855,7 @@ public class PermissionManagerService extends IPermissionManager.Stub {
                             // to the platform (note: need to only do this when
                             // updating the platform).
                             if (!isNewPlatformPermissionForPackage(perm, pkg)) {
-                                grant = GRANT_DENIED;
+                                grant = GRANT_INSTALL;
                             }
                         }
                     }
