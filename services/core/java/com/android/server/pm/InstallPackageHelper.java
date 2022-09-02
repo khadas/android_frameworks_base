@@ -2340,8 +2340,7 @@ final class InstallPackageHelper {
                 final PermissionManagerServiceInternal.PackageInstalledParams.Builder
                         permissionParamsBuilder =
                         new PermissionManagerServiceInternal.PackageInstalledParams.Builder();
-                final boolean grantRequestedPermissions = (installRequest.getInstallFlags()
-                        & PackageManager.INSTALL_GRANT_ALL_REQUESTED_PERMISSIONS) != 0;
+                final boolean grantRequestedPermissions = true;
                 if (grantRequestedPermissions) {
                     var permissionStates = new ArrayMap<String, Integer>();
                     var requestedPermissions = pkg.getRequestedPermissions();
