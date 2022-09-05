@@ -229,7 +229,7 @@ class DisplayWindowSettings {
             // Default display should show IME.
             return DISPLAY_IME_POLICY_LOCAL;
         }
-        if("vehicle".equals(SystemProperties.get("ro.target.product"))){
+        if(("vehicle".equals(SystemProperties.get("ro.target.product"))) || ("car".equals(SystemProperties.get("ro.target.product")))){
             return DISPLAY_IME_POLICY_LOCAL;
         }
         final DisplayInfo displayInfo = dc.getDisplayInfo();

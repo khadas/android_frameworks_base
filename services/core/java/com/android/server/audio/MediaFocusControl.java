@@ -901,7 +901,7 @@ public class MediaFocusControl implements PlayerFocusEnforcer {
                     + " sdk=" + sdk))
                 .printLog(TAG));
 
-        if ("vehicle".equals(SystemProperties.get("ro.target.product"))) {
+        if (("vehicle".equals(SystemProperties.get("ro.target.product"))) || ("car".equals(SystemProperties.get("ro.target.product")))) {
             focusChangeHint = AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK;
         }
 
