@@ -1589,7 +1589,9 @@ class StorageManagerService extends IStorageManager.Stub
 
             if(("box".equals(SystemProperties.get("ro.target.product","unknown"))
               ||"atv".equals(SystemProperties.get("ro.target.product","unknown"))
-              ||"tablet".equals(SystemProperties.get("ro.target.product","unknown")))
+              ||"tablet".equals(SystemProperties.get("ro.target.product","unknown"))
+	      ||"car".equals(SystemProperties.get("ro.target.product","unknown"))
+	      ||"vehicle".equals(SystemProperties.get("ro.target.product","unknown")))
               && "true".equals(SystemProperties.get("ro.vendor.udisk.visible"))){
                 Log.d(TAG,"-----for all public volume is visible-----");
                 vol.mountFlags |= VolumeInfo.MOUNT_FLAG_VISIBLE;
