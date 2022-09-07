@@ -449,7 +449,7 @@ public class HdmiSettings extends SettingsPreferenceFragment
                                 Message message = new Message();
                                 message.what = MSG_SHOW_CONFIRM_DIALOG;
                                 message.obj = control;
-                                mHandler.sendMessageDelayed(message, 300);
+                                mHandler.sendMessageDelayed(message, 2000);
                             }
                         } else {
                             Message message = new Message();
