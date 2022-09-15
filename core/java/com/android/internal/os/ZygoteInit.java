@@ -133,9 +133,28 @@ public class ZygoteInit {
      * server process.
      */
     private static ClassLoader sCachedSystemServerClassLoader = null;
+	
+	static void firstpreload(TimingsTraceLog bootTimingsTraceLog) {
+		// In some configurations, we avoid preloading resources and classes eagerly.
+        // In such cases, we will preload things prior to our first fork.
+		Log.d(TAG, "begin preload");
+		bootTimingsTraceLog.traceBegin("PreloadResources");
+        preloadResources();
+        bootTimingsTraceLog.traceEnd(); // PreloadResources
+		Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "PreloadAppProcessHALs");
+        nativePreloadAppProcessHALs();
+        Trace.traceEnd(Trace.TRACE_TAG_DALVIK);
+		Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "PreloadGraphicsDriver");
+        maybePreloadGraphicsDriver();
+        Trace.traceEnd(Trace.TRACE_TAG_DALVIK);
+		preloadSharedLibraries();
+        preloadTextResources();
+		// Ask the WebViewFactory to do any initialization that must run in the zygote process,
+        // for memory sharing purposes.
+        WebViewFactory.prepareWebViewInZygote();
+	}
 
     static void preload(TimingsTraceLog bootTimingsTraceLog) {
-        Log.d(TAG, "begin preload");
         bootTimingsTraceLog.traceBegin("BeginPreload");
         beginPreload();
         bootTimingsTraceLog.traceEnd(); // BeginPreload
@@ -145,20 +164,6 @@ public class ZygoteInit {
         bootTimingsTraceLog.traceBegin("CacheNonBootClasspathClassLoaders");
         cacheNonBootClasspathClassLoaders();
         bootTimingsTraceLog.traceEnd(); // CacheNonBootClasspathClassLoaders
-        bootTimingsTraceLog.traceBegin("PreloadResources");
-        preloadResources();
-        bootTimingsTraceLog.traceEnd(); // PreloadResources
-        Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "PreloadAppProcessHALs");
-        nativePreloadAppProcessHALs();
-        Trace.traceEnd(Trace.TRACE_TAG_DALVIK);
-        Trace.traceBegin(Trace.TRACE_TAG_DALVIK, "PreloadGraphicsDriver");
-        maybePreloadGraphicsDriver();
-        Trace.traceEnd(Trace.TRACE_TAG_DALVIK);
-        preloadSharedLibraries();
-        preloadTextResources();
-        // Ask the WebViewFactory to do any initialization that must run in the zygote process,
-        // for memory sharing purposes.
-        WebViewFactory.prepareWebViewInZygote();
         endPreload();
         warmUpJcaProviders();
         Log.d(TAG, "end preload");
@@ -917,7 +922,9 @@ public class ZygoteInit {
 
             // In some configurations, we avoid preloading resources and classes eagerly.
             // In such cases, we will preload things prior to our first fork.
-            if (!enableLazyPreload) {
+            firstpreload(bootTimingsTraceLog);
+			
+			if (!enableLazyPreload) {
                 bootTimingsTraceLog.traceBegin("ZygotePreload");
                 EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
                         SystemClock.uptimeMillis());
