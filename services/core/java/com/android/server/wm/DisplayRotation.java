@@ -1189,7 +1189,7 @@ public class DisplayRotation {
                 if (isAnyPortrait(preferredRotation)) {
                     return preferredRotation;
                 }
-                return mPortraitRotation;
+                return Surface.ROTATION_0;
 
             case ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE:
                 // Return landscape unless overridden.
