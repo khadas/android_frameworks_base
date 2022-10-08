@@ -18,6 +18,7 @@ cc_defaults {
         "-Werror",
         "-Wunused",
         "-Wunreachable-code",
+        "-Wno-format",
     ],
 
     shared_libs: [
