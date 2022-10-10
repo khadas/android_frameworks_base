@@ -218,6 +218,7 @@ import dalvik.system.VMRuntime;
 
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
@@ -2404,6 +2405,7 @@ public final class SystemServer implements Dumpable {
                     || mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
                 t.traceBegin("StartTvInputManager");
                 mSystemServiceManager.startService(TvInputManagerService.class);
+                writeHdmiRxEdid();
                 t.traceEnd();
             }
 
@@ -3079,6 +3081,26 @@ public final class SystemServer implements Dumpable {
         mSystemServiceManager.sealStartedServices();
 
         t.traceEnd(); // startApexServices
+    }
+
+    private void writeHdmiRxEdid() {
+        FileOutputStream file = null;
+        try{
+            String hdmiinVersion = SystemProperties.get("persist.sys.hdmirx.edid", "1");
+            Slog.v(TAG, "write hdmirx edid value " + hdmiinVersion);
+            file = new FileOutputStream("sys/class/hdmirx/hdmirx/edid");
+            file.write(hdmiinVersion.getBytes());
+            file.flush();
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally {
+            if (null != file) {
+                try{
+                    file.close();
+                } catch(Exception e1) {
+                }
+            }
+        }
     }
 
     private boolean deviceHasConfigString(@NonNull Context context, @StringRes int resId) {
