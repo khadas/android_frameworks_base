@@ -80,10 +80,12 @@ cc_library_static {
         "frameworks/native/libs/ui/include",
         "system/gatekeeper/include",
         "system/memory/libmeminfo/include",
+        "hardware/rockchip/libhardware_rockchip/include/",
     ],
 
     header_libs: [
         "bionic_libc_platform_headers",
+        "libhardware_rockchip_headers",
     ],
 }
 

@@ -17,6 +17,7 @@
 package android.media.tv;
 
 import android.media.tv.TvStreamConfig;
+import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Surface;
 
@@ -55,4 +56,6 @@ interface ITvInputHardware {
      */
     void overrideAudioSink(int audioType, String audioAddress, int samplingRate, int channelMask,
             int format);
+
+    void sendAppPrivateCommand(String action, in Bundle data);
 }
