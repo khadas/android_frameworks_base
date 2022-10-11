@@ -579,7 +579,6 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                 }
                 // The display is trusted since it is created by system.
                 mInfo.flags |= DisplayDeviceInfo.FLAG_TRUSTED;
-				mInfo.rotation = SystemProperties.getInt("persist.sys.hdmirotation", 0);
             }
             return mInfo;
         }
