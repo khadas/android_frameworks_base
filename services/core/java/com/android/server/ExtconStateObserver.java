@@ -19,12 +19,10 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.os.FileUtils;
 import android.util.Slog;
-import android.util.ArrayMap;
 import android.os.SystemProperties;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * A specialized ExtconUEventObserver that on receiving a {@link UEvent} calls {@link
@@ -36,8 +34,6 @@ import java.util.Map;
 public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
     private static final String TAG = "ExtconStateObserver";
     private static final boolean LOG = false;
-    private final Map<String, String> mExtconHDMIStates = new ArrayMap<String, String>();
-    private final Map<String, String> mExtconDPStates = new ArrayMap<String, String>();
 
     /**
      * Parses the current state from the state file for {@code extconInfo}.
@@ -50,28 +46,16 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
     public S parseStateFromFile(ExtconInfo extconInfo) throws IOException {
         String statePath = extconInfo.getStatePath();
         if (isTablet()) {
-            String namePath = extconInfo.getNamePath();
+            String ueventPath = extconInfo.getDeviceUeventPath();
             String state = FileUtils.readTextFile(new File(statePath), 0, null).trim();
-            String name = FileUtils.readTextFile(new File(namePath), 0, null).trim();
-            String status = "";
-            if (state.contains("HDMI=") && name.contains(".hdmi")) {
-                status = mExtconHDMIStates.get(name);
-                if (status == null) {
-                    status = state.replaceAll("HDMI", ("HDMI_"+mExtconHDMIStates.size()).toString());
-                    mExtconHDMIStates.put(name, ("HDMI_"+mExtconHDMIStates.size()).toString());
-                }
-                return parseState(extconInfo, status);
-            } else if (state.contains("DP=") && name.contains(".dp")) {
-                status = mExtconDPStates.get(name);
-                if (status == null) {
-                    status = state.replaceAll("DP", ("DP_"+mExtconDPStates.size()).toString());
-                    mExtconDPStates.put(name, ("DP_"+mExtconDPStates.size()).toString());
-                }
-                return parseState(extconInfo, status);
+            String alias = getAliasName(ueventPath);
+            if (alias == null) {
+                return parseState(extconInfo, state);
             } else {
-                return parseState(
-                        extconInfo,
-                        FileUtils.readTextFile(new File(statePath), 0, null).trim());
+                int start = state.indexOf("=");
+                String aliasState = alias + state.substring(start, start + 2);
+                if (LOG) Slog.d(TAG, extconInfo.getName() + " state: " + aliasState);
+                return parseState(extconInfo, aliasState);
             }
         } else {
             return parseState(
@@ -88,6 +72,24 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
         return false;
     }
 
+    public String getAliasName(String path) {
+        try {
+            String uevent = FileUtils.readTextFile(new File(path), 0, null).trim();
+            if (uevent.contains("OF_ALIAS_0=")) {
+                int start = uevent.indexOf("OF_ALIAS_0=");
+                if (uevent.contains("OF_NAME=hdmi")) {
+                    return uevent.substring(start + 11, start + 16);
+                } else if (uevent.contains("OF_NAME=dp")) {
+                    return uevent.substring(start + 11, start + 14);
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            Slog.e(TAG, "Could not get the alias name.", e);
+            return null;
+        }
+    }
+
     @Override
     public void onUEvent(ExtconInfo extconInfo, UEvent event) {
         if (LOG) Slog.d(TAG, extconInfo.getName() + " UEVENT: " + event);
@@ -95,17 +97,15 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
         S state = null;
         if (isTablet()) {
             String status = event.get("STATE");
-            String newState = "";
-            if (status.contains("HDMI=") && name.contains(".hdmi") &&
-                null != mExtconHDMIStates.get(name)) {
-                newState = status.replaceAll("HDMI", mExtconHDMIStates.get(name));
-                state = parseState(extconInfo, newState);
-            } else if (status.contains("DP=") && name.contains(".dp") &&
-                       null != mExtconDPStates.get(name)) {
-                newState = status.replaceAll("DP", mExtconDPStates.get(name));
-                state = parseState(extconInfo, newState);
-            } else {
+            String ueventPath = extconInfo.getDeviceUeventPath();
+            String alias = getAliasName(ueventPath);
+            if (alias == null) {
                 state = parseState(extconInfo, event.get("STATE"));
+            } else {
+                int start = status.indexOf("=");
+                String aliasState = alias + status.substring(start, start + 2);
+                if (LOG) Slog.d(TAG, extconInfo.getName() + " state: " + aliasState);
+                state = parseState(extconInfo, aliasState);
             }
         } else {
             state = parseState(extconInfo, event.get("STATE"));

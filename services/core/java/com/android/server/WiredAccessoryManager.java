@@ -48,8 +48,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * <p>WiredAccessoryManager monitors for a wired headset on the main board or dock using
@@ -504,18 +502,13 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
 
     private class WiredAccessoryExtconObserver extends ExtconStateObserver<Pair<Integer, Integer>> {
         private final List<ExtconInfo> mExtconInfos;
-        private final Map<Integer, ExtconInfo> mExtconMap;
 
         WiredAccessoryExtconObserver() {
             mExtconInfos = ExtconInfo.getExtconInfos(".*extcon.*");
-            mExtconMap = new TreeMap<>();
-            for (ExtconInfo extconInfo : mExtconInfos) {
-                mExtconMap.put(extconInfo.getNameIndex(), extconInfo);
-            }
         }
 
         private void init() {
-            for (ExtconInfo extconInfo : mExtconMap.values()) {
+            for (ExtconInfo extconInfo : mExtconInfos) {
                 Pair<Integer, Integer> state = null;
                 try {
                     state = parseStateFromFile(extconInfo);
@@ -545,15 +538,13 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             // extcon event state changes from kernel4.9
             // new state will be like STATE=MICROPHONE=1\nHEADPHONE=0
             if (isTablet()) {
-                updateBit(maskAndState, BIT_HDMI_AUDIO, status, "HDMI_0");
-                updateBit(maskAndState, BIT_HDMI_AUDIO_1, status, "HDMI_1");
-                updateBit(maskAndState, BIT_DP_AUDIO, status, "DP_0");
-                updateBit(maskAndState, BIT_DP_AUDIO_1, status, "DP_1");
-            } else {
-                updateBit(maskAndState, BIT_HDMI_AUDIO, status, "HDMI");
-                updateBit(maskAndState, BIT_DP_AUDIO, status, "DP");
+                updateBit(maskAndState, BIT_HDMI_AUDIO, status, "hdmi0");
+                updateBit(maskAndState, BIT_HDMI_AUDIO_1, status, "hdmi1");
+                updateBit(maskAndState, BIT_DP_AUDIO, status, "dp0");
+                updateBit(maskAndState, BIT_DP_AUDIO_1, status, "dp1");
             }
-
+            updateBit(maskAndState, BIT_HDMI_AUDIO, status, "HDMI");
+            updateBit(maskAndState, BIT_DP_AUDIO, status, "DP");
             updateBit(maskAndState, BIT_HEADSET_NO_MIC, status, "HEADPHONE");
             updateBit(maskAndState, BIT_HEADSET, status, "MICROPHONE");
             updateBit(maskAndState, BIT_LINEOUT, status, "LINE-OUT");

@@ -5850,7 +5850,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
 
     private class MultiHdmiVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
-        private static final String HDMI = "HDMI_";
+        private static final String HDMI = "hdmi";
         private static final String EXIST = "=1";
         private static final String HDMI_EXIST = "HDMI=1";
 
@@ -5889,7 +5889,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
 
     private class MultiDpVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
-        private static final String DP = "DP_";
+        private static final String DP = "dp";
         private static final String EXIST = "=1";
         private static final String DP_EXIST = "DP=1";
 
