@@ -129,6 +129,15 @@ public class Watchdog implements Dumpable {
         "media.transcoding", // Media transcoding service
         "com.android.bluetooth",  // Bluetooth service
         "/apex/com.android.os.statsd/bin/statsd",  // Stats daemon
+        /* Amlogic related native processes */
+        "/vendor/bin/systemcontrol",
+        "/vendor/bin/tvserver",
+        "/vendor/bin/hw/android.hardware.tv.cec@1.0-service",
+        "/vendor/bin/hw/android.hardware.tv.input@1.0-service",
+        "/vendor/bin/hw/android.hardware.graphics.composer@2.4-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.graphics.allocator@4.0-service",
+        "com.droidlogic.dtvkit.inputsource",
+        "/vendor/bin/hw/dtvkitserver"
     };
 
     public static final List<String> HAL_INTERFACES_OF_INTEREST = Arrays.asList(
