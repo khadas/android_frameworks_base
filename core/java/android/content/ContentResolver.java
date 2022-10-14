@@ -757,7 +757,7 @@ public abstract class ContentResolver implements ContentInterface {
      * before we decide it must be hung.
      * @hide
      */
-    public static final int CONTENT_PROVIDER_PUBLISH_TIMEOUT_MILLIS = 10 * 1000;
+    public static final int CONTENT_PROVIDER_PUBLISH_TIMEOUT_MILLIS = 20 * 1000;
 
     /**
      * How long we wait for an provider to be published. Should be longer than
@@ -768,7 +768,7 @@ public abstract class ContentResolver implements ContentInterface {
             CONTENT_PROVIDER_PUBLISH_TIMEOUT_MILLIS + 10 * 1000;
 
     // Timeout given a ContentProvider that has already been started and connected to.
-    private static final int CONTENT_PROVIDER_TIMEOUT_MILLIS = 3 * 1000;
+    private static final int CONTENT_PROVIDER_TIMEOUT_MILLIS = 6 * 1000;
 
     // Should be >= {@link #CONTENT_PROVIDER_WAIT_TIMEOUT_MILLIS}, because that's how
     // long ActivityManagerService is giving a content provider to get published if a new process
