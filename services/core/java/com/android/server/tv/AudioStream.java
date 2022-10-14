@@ -91,6 +91,10 @@ class AudioStream {
 		}
 
 		isRecording = false;
+
+		if (record == null)
+			return;
+
 		try {
 			// wait thread finish
 			record.join(300);

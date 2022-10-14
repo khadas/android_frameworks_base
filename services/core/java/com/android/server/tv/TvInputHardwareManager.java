@@ -274,6 +274,9 @@ class TvInputHardwareManager implements TvInputHal.Callback {
     @Override
     public void onPrivCmdToApp(int deviceId, String action, Bundle data) {
         synchronized (mLock) {
+            if (action.equals("hdmiinout")) {
+                EnableHDMIInAudio(false);
+            }
             Connection connection = mConnections.get(deviceId);
             if (connection == null) {
                 Slog.e(TAG, "onPrivCmdToApp: Cannot find a connection with "
