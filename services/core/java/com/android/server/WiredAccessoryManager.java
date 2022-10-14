@@ -67,9 +67,10 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
     private static final int BIT_DP_AUDIO = (1 << 6);
     private static final int BIT_HDMI_AUDIO_1 = (1 << 7);
     private static final int BIT_DP_AUDIO_1 = (1 << 8);
+    private static final int BIT_HDMIIN_AUDIO = (1 << 9);
     private static final int SUPPORTED_HEADSETS = (BIT_HEADSET | BIT_HEADSET_NO_MIC |
             BIT_USB_HEADSET_ANLG | BIT_USB_HEADSET_DGTL | BIT_HDMI_AUDIO | BIT_LINEOUT |
-            BIT_DP_AUDIO | BIT_HDMI_AUDIO_1 | BIT_DP_AUDIO_1);
+            BIT_DP_AUDIO | BIT_HDMI_AUDIO_1 | BIT_DP_AUDIO_1 | BIT_HDMIIN_AUDIO);
 
     private static final String NAME_H2W = "h2w";
     private static final String NAME_USB_AUDIO = "usb_audio";
@@ -313,6 +314,9 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             } else if (headset == BIT_DP_AUDIO_1) {
                 Slog.d(TAG, "dp_1 plug");
                 outDevice = AudioManager.DEVICE_OUT_SPDIF_1;
+            } else if (headset == BIT_HDMIIN_AUDIO) {
+                Slog.d(TAG, "hdmiin_0 plug");
+                inDevice = AudioManager.DEVICE_IN_HDMI;
             } else {
                 Slog.e(TAG, "setDeviceState() invalid headset type: " + headset);
                 return;
@@ -543,6 +547,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 updateBit(maskAndState, BIT_DP_AUDIO, status, "dp0");
                 updateBit(maskAndState, BIT_DP_AUDIO_1, status, "dp1");
             }
+            updateBit(maskAndState, BIT_HDMIIN_AUDIO, status, "VIDEO-IN");
             updateBit(maskAndState, BIT_HDMI_AUDIO, status, "HDMI");
             updateBit(maskAndState, BIT_DP_AUDIO, status, "DP");
             updateBit(maskAndState, BIT_HEADSET_NO_MIC, status, "HEADPHONE");
