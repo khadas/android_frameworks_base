@@ -1310,6 +1310,7 @@ public class AudioDeviceInventory {
                 connType = AudioRoutesInfo.MAIN_HEADPHONES;
                 break;
             case AudioSystem.DEVICE_OUT_HDMI:
+            case AudioSystem.DEVICE_OUT_HDMI_1:
             case AudioSystem.DEVICE_OUT_HDMI_ARC:
             case AudioSystem.DEVICE_OUT_HDMI_EARC:
                 connType = AudioRoutesInfo.MAIN_HDMI;
