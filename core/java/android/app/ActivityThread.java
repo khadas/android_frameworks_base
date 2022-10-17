@@ -283,6 +283,10 @@ public final class ActivityThread extends ClientTransactionHandler
     private static final boolean DEBUG_PROVIDER = false;
     public static final boolean DEBUG_ORDER = false;
     private static final long MIN_TIME_BETWEEN_GCS = 5*1000;
+
+    private static final long SLOW_DISPATCH_THRESHOLD_MS = 2000;
+    private static final long SLOW_DELIVERY_THRESHOLD_MS = 2000;
+
     /**
      * The delay to release the provider when it has no more references. It reduces the number of
      * transactions for acquiring and releasing provider if the client accesses the provider
@@ -8219,6 +8223,9 @@ public final class ActivityThread extends ClientTransactionHandler
         Process.setArgV0("<pre-initialized>");
 
         Looper.prepareMainLooper();
+        // Print the busy mesasges on app's main thread.
+        Looper.getMainLooper().setSlowLogThresholdMs(
+                      SLOW_DISPATCH_THRESHOLD_MS, SLOW_DELIVERY_THRESHOLD_MS);
 
         // Find the value for {@link #PROC_START_SEQ_IDENT} if provided on the command line.
         // It will be in the format "seq=114"
