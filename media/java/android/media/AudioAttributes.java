@@ -1162,6 +1162,8 @@ public final class AudioAttributes implements Parcelable {
                 case MediaRecorder.AudioSource.VOICE_COMMUNICATION:
                 case MediaRecorder.AudioSource.UNPROCESSED:
                 case MediaRecorder.AudioSource.VOICE_PERFORMANCE:
+                case MediaRecorder.AudioSource.HDMIIN:
+                case MediaRecorder.AudioSource.HDMIIN_1:
                     mSource = preset;
                     break;
                 default:

@@ -23147,6 +23147,8 @@ package android.media {
   public final class MediaRecorder.AudioSource {
     field public static final int CAMCORDER = 5; // 0x5
     field public static final int DEFAULT = 0; // 0x0
+    field public static final int HDMIIN = 11; // 0xb
+    field public static final int HDMIIN_1 = 12; // 0xc
     field public static final int MIC = 1; // 0x1
     field @RequiresPermission(android.Manifest.permission.CAPTURE_AUDIO_OUTPUT) public static final int REMOTE_SUBMIX = 8; // 0x8
     field public static final int UNPROCESSED = 9; // 0x9

@@ -361,6 +361,12 @@ public class MediaRecorder implements AudioRouting,
          */
         public static final int VOICE_PERFORMANCE = 10;
 
+        /** hdmirx0 */
+        public static final int HDMIIN = 11;
+
+        /** hdmirx1 */
+        public static final int HDMIIN_1 = 12;
+
         /**
          * Source for an echo canceller to capture the reference signal to be cancelled.
          * <p>
@@ -418,6 +424,8 @@ public class MediaRecorder implements AudioRouting,
         AudioSource.VOICE_COMMUNICATION,
         AudioSource.UNPROCESSED,
         AudioSource.VOICE_PERFORMANCE,
+        AudioSource.HDMIIN,
+        AudioSource.HDMIIN_1,
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Source {}
@@ -435,6 +443,8 @@ public class MediaRecorder implements AudioRouting,
         AudioSource.REMOTE_SUBMIX,
         AudioSource.UNPROCESSED,
         AudioSource.VOICE_PERFORMANCE,
+        AudioSource.HDMIIN,
+        AudioSource.HDMIIN_1,
         AudioSource.ECHO_REFERENCE,
         AudioSource.RADIO_TUNER,
         AudioSource.HOTWORD,
@@ -461,6 +471,8 @@ public class MediaRecorder implements AudioRouting,
         //case REMOTE_SUBMIX:  considered "system" as it requires system permissions
         case AudioSource.UNPROCESSED:
         case AudioSource.VOICE_PERFORMANCE:
+        case AudioSource.HDMIIN:
+        case AudioSource.HDMIIN_1:
             return false;
         default:
             return true;
@@ -484,6 +496,8 @@ public class MediaRecorder implements AudioRouting,
             case AudioSource.REMOTE_SUBMIX:
             case AudioSource.UNPROCESSED:
             case AudioSource.VOICE_PERFORMANCE:
+            case AudioSource.HDMIIN:
+            case AudioSource.HDMIIN_1:
             case AudioSource.ECHO_REFERENCE:
             case AudioSource.RADIO_TUNER:
             case AudioSource.HOTWORD:
@@ -520,6 +534,10 @@ public class MediaRecorder implements AudioRouting,
             return "ECHO_REFERENCE";
         case AudioSource.VOICE_PERFORMANCE:
             return "VOICE_PERFORMANCE";
+        case AudioSource.HDMIIN:
+            return "HDMIIN";
+        case AudioSource.HDMIIN_1:
+            return "HDMIIN_1";
         case AudioSource.RADIO_TUNER:
             return "RADIO_TUNER";
         case AudioSource.HOTWORD:
@@ -721,7 +739,7 @@ public class MediaRecorder implements AudioRouting,
      * @see android.media.MediaRecorder.AudioSource
      */
     public static final int getAudioSourceMax() {
-        return AudioSource.VOICE_PERFORMANCE;
+        return AudioSource.HDMIIN_1;
     }
 
     /**

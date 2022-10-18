@@ -1095,6 +1095,8 @@ public class AudioSystem
     /** @hide */
     public static final int DEVICE_IN_SPDIF = DEVICE_BIT_IN | 0x10000;
     /** @hide */
+    public static final int DEVICE_IN_HDMI_1 = DEVICE_IN_SPDIF;
+    /** @hide */
     @UnsupportedAppUsage
     public static final int DEVICE_IN_BLUETOOTH_A2DP = DEVICE_BIT_IN | 0x20000;
     /** @hide */

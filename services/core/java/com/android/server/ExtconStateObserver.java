@@ -77,10 +77,12 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
             String uevent = FileUtils.readTextFile(new File(path), 0, null).trim();
             if (uevent.contains("OF_ALIAS_0=")) {
                 int start = uevent.indexOf("OF_ALIAS_0=");
-                if (uevent.contains("OF_NAME=hdmi")) {
-                    return uevent.substring(start + 11, start + 16);
+                if (uevent.contains("OF_NAME=hdmirx-controller")) {
+                    return uevent.substring(start + 11, start + 18);
                 } else if (uevent.contains("OF_NAME=dp")) {
                     return uevent.substring(start + 11, start + 14);
+                } else if (uevent.contains("OF_NAME=hdmi")) {
+                    return uevent.substring(start + 11, start + 16);
                 }
             }
             return null;

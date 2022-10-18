@@ -5417,6 +5417,11 @@ public class AudioManager {
     public static final int DEVICE_IN_HDMI =
                                     AudioSystem.DEVICE_IN_HDMI;
     /** @hide
+     * The audio input device code for another HDMI
+     */
+    public static final int DEVICE_IN_HDMI_1 =
+                                    AudioSystem.DEVICE_IN_HDMI_1;
+    /** @hide
      * The audio input device code for HDMI ARC
      */
     public static final int DEVICE_IN_HDMI_ARC =

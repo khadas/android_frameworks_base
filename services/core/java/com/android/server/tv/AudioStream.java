@@ -197,7 +197,7 @@ class AudioStream {
 			byte[] m_in_bytes;
 			int m_in_buf_size = AudioRecord.getMinBufferSize(frequence, channelConfig, audioEncoding);
 			Log.i(TAG, "out min: "+m_out_buf_size+", in min: "+m_in_buf_size);
-			m_in_rec = new AudioRecord(MediaRecorder.AudioSource.CAMCORDER, frequence, channelConfig,
+			m_in_rec = new AudioRecord(MediaRecorder.AudioSource.HDMIIN, frequence, channelConfig,
 				AudioFormat.ENCODING_PCM_16BIT, m_in_buf_size);
 			m_in_bytes = new byte[m_in_buf_size];
 			m_in_rec.startRecording();
