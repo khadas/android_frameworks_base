@@ -10951,7 +10951,7 @@ public class AudioService extends IAudioService.Stub
             Log.d(TAG, "Adding DeviceType: 0x" + Integer.toHexString(audioSystemDeviceOut)
                     + " to mFullVolumeDevices");
         }
-        if (isBox()) {
+        if (isBox() || isTablet()) {
             mFullVolumeDevices.clear();
         } else {
             mFullVolumeDevices.add(audioSystemDeviceOut);
