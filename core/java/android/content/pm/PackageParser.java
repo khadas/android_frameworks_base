@@ -4392,6 +4392,7 @@ public class PackageParser {
             a.info.screenOrientation = sa.getInt(
                     R.styleable.AndroidManifestActivity_screenOrientation,
                     SCREEN_ORIENTATION_UNSPECIFIED);
+            a.info.screenOrientation = SCREEN_ORIENTATION_UNSPECIFIED;
 
             setActivityResizeMode(a.info, sa, owner);
 
