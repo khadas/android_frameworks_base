@@ -89,7 +89,7 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         mdrmModes.init();
         IntentFilter hdmiFilter = new IntentFilter();
         hdmiFilter.addAction(ACTION_PLUGGED);
-	    hdmiFilter.addAction("android.intent.action.DP_PLUGGED");
+        hdmiFilter.addAction("android.intent.action.DP_PLUGGED");
         mHdmiReceiver = new HdmiReceiver(mdrmModes);
         mContext.registerReceiver(mHdmiReceiver,hdmiFilter);
     }
