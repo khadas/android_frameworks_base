@@ -163,6 +163,7 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 import dagger.Lazy;
+import android.os.SystemClock;
 
 /**
  * Contains logic for a navigation bar view.
@@ -273,6 +274,7 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     private boolean mImeVisible;
     private final Rect mSamplingBounds = new Rect();
 
+    private long lastClickTime;
     /**
      * When quickswitching between apps of different orientations, we draw a secondary home handle
      * in the position of the first app's orientation. This rect represents the region of that
@@ -1278,12 +1280,16 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     }
 
     private void onRecentsClick(View v) {
-        if (LatencyTracker.isEnabled(mContext)) {
-            LatencyTracker.getInstance(mContext).onActionStart(
-                    LatencyTracker.ACTION_TOGGLE_RECENTS);
-        }
-        mCentralSurfacesOptionalLazy.get().ifPresent(CentralSurfaces::awakenDreams);
-        mCommandQueue.toggleRecentApps();
+        long currentClickTime = SystemClock.uptimeMillis();
+        if (currentClickTime - lastClickTime > 500){
+            lastClickTime = currentClickTime;
+            if (LatencyTracker.isEnabled(mContext)) {
+                LatencyTracker.getInstance(mContext).onActionStart(
+                        LatencyTracker.ACTION_TOGGLE_RECENTS);
+            }
+            mCentralSurfacesOptionalLazy.get().ifPresent(CentralSurfaces::awakenDreams);
+            mCommandQueue.toggleRecentApps();
+         }
     }
 
     private void onImeSwitcherClick(View v) {
