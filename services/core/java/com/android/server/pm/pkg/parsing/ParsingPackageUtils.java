@@ -239,6 +239,8 @@ public class ParsingPackageUtils {
     public static final int PARSE_IGNORE_OVERLAY_REQUIRED_SYSTEM_PROPERTY = 1 << 7;
     public static final int PARSE_FRAMEWORK_RES_SPLITS = 1 << 8;
     public static final int PARSE_APK_IN_APEX = 1 << 9;
+    public static final int PARSE_IS_PREINSTALL = 1<<10;//need same as PackageParser
+    public static final int PARSE_IS_PREBUNDLED_DIR = 1<<11;//need same as PackageParser
 
     public static final int PARSE_CHATTY = 1 << 31;
 

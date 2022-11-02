@@ -377,6 +377,8 @@ public class PackageManagerService implements PackageSender, TestUtilityService 
     static final int SCAN_AS_ODM = 1 << 22;
     static final int SCAN_AS_APK_IN_APEX = 1 << 23;
     static final int SCAN_DROP_CACHE = 1 << 24;
+    static final int SCAN_AS_PREINSTALL = 1<<25;
+    static final int SCAN_AS_PREBUNDLED_DIR = 1<<26;
 
     @IntDef(flag = true, prefix = { "SCAN_" }, value = {
             SCAN_NO_DEX,
@@ -521,6 +523,12 @@ public class PackageManagerService implements PackageSender, TestUtilityService 
     static final String PACKAGE_SCHEME = "package";
 
     private static final String COMPANION_PACKAGE_NAME = "com.android.companiondevicemanager";
+
+    public static final String BUNDLED_PERSIST_DIR = "/odm/bundled_persist-app";
+
+    public static final String BUNDLED_UNINSTALL_GONE_DIR = "/odm/bundled_uninstall_gone-app";
+
+    public static final String DELETE_APK_FILE = "/cache/recovery/last_deleteApkFile.dat";
 
     // Compilation reasons.
     public static final int REASON_FIRST_BOOT = 0;

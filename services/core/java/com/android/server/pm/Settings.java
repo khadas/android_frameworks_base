@@ -143,11 +143,14 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -159,6 +162,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -375,6 +379,9 @@ public final class Settings implements Watchable, Snappable {
     private final File mBackupStoppedPackagesFilename;
     /** The top level directory in configfs for sdcardfs to push the package->uid,userId mappings */
     private final File mKernelMappingFilename;
+    private final File mPrebundledPackagesFilename;
+
+    private final HashSet<String> mPrebundledPackages = new HashSet<String>();
 
     /** Map from package name to settings */
     @Watched
@@ -607,6 +614,7 @@ public final class Settings implements Watchable, Snappable {
         mBackupStoppedPackagesFilename = null;
         mKernelMappingFilename = null;
         mDomainVerificationManager = null;
+        mPrebundledPackagesFilename = null;
 
         registerObservers();
         Watchable.verifyWatchedAttributes(this, mObserver);
@@ -655,6 +663,7 @@ public final class Settings implements Watchable, Snappable {
         mBackupSettingsFilename = new File(mSystemDir, "packages-backup.xml");
         mPackageListFilename = new File(mSystemDir, "packages.list");
         FileUtils.setPermissions(mPackageListFilename, 0640, SYSTEM_UID, PACKAGE_INFO_GID);
+        mPrebundledPackagesFilename = new File(mSystemDir, "prebundled-packages.list");
 
         File packagePerformanceInfoFile = new File("/odm/etc/package_performance.xml");
         if (!mSettingsFilename.exists()) {
@@ -737,6 +746,7 @@ public final class Settings implements Watchable, Snappable {
         mStoppedPackagesFilename = null;
         mBackupStoppedPackagesFilename = null;
         mKernelMappingFilename = null;
+        mPrebundledPackagesFilename = null;//r.mPrebundledPackagesFilename?
 
         mDomainVerificationManager = r.mDomainVerificationManager;
 
@@ -2594,6 +2604,60 @@ public final class Settings implements Watchable, Snappable {
         if (DEBUG_KERNEL) Slog.d(TAG, "Writing " + userId + " to " + removeUserIdFile
                 .getAbsolutePath());
         writeIntToFile(removeUserIdFile, userId);
+    }
+
+    void writePrebundledPackagesLPr() {
+        if (null == mPrebundledPackagesFilename) {
+            Slog.e(PackageManagerService.TAG, "writePrebundledPackagesLPr but mPrebundledPackagesFilename is null");
+            return;
+        }
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(
+                    new BufferedWriter(new FileWriter(mPrebundledPackagesFilename, false)));
+            for (String packageName : mPrebundledPackages) {
+                writer.println(packageName);
+            }
+        } catch (IOException e) {
+            Slog.e(PackageManagerService.TAG, "Unable to write prebundled package list", e);
+        } finally {
+            if (writer != null) {
+                writer.close();
+            }
+        }
+    }
+
+   void readPrebundledPackagesLPr() {
+        if (null == mPrebundledPackagesFilename || !mPrebundledPackagesFilename.exists()) {
+            return;
+        }
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(mPrebundledPackagesFilename));
+            String packageName = reader.readLine();
+            while (packageName != null) {
+                if (!TextUtils.isEmpty(packageName)) {
+                    mPrebundledPackages.add(packageName);
+                }
+                packageName = reader.readLine();
+            }
+        } catch (IOException e) {
+            Slog.e(PackageManagerService.TAG, "Unable to read prebundled package list", e);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {}
+            }
+        }
+    }
+
+    void markPrebundledPackageInstalledLPr(String packageName) {
+        mPrebundledPackages.add(packageName);
+    }
+
+    boolean wasPrebundledPackageInstalledLPr(String packageName) {
+        return mPrebundledPackages.contains(packageName);
     }
 
     void writeKernelMappingLPr() {

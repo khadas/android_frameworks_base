@@ -19,6 +19,7 @@ package com.android.server.pm;
 import static android.content.pm.PackageManager.INSTALL_FAILED_INVALID_APK;
 import static android.content.pm.PackageManager.INSTALL_FAILED_PROCESS_NOT_DEFINED;
 import static android.content.pm.PackageManager.INSTALL_PARSE_FAILED_NO_CERTIFICATES;
+import static android.content.pm.parsing.ApkLiteParseUtils.isApkFile;
 import static android.os.Trace.TRACE_TAG_PACKAGE_MANAGER;
 
 import static com.android.server.pm.PackageManagerService.DEBUG_ABI_SELECTION;
@@ -275,12 +276,28 @@ final class ScanPackageUtils {
         final boolean isUpdatedSystemApp = pkgSetting.getPkgState().isUpdatedSystemApp();
 
         final File appLib32InstallDir = getAppLib32InstallDir();
+        String forcePrimaryCpuAbi = "";
+        final File codeFile = new File(parsedPackage.getPath());
+        if ((!isApkFile(codeFile))
+            && ((scanFlags & PackageManagerService.SCAN_AS_PREBUNDLED_DIR) != 0
+                || (scanFlags & PackageManagerService.SCAN_AS_PREINSTALL) != 0)) {
+            File libDir64 = new File(codeFile, "lib/arm64");
+            File libDir32 = new File(codeFile, "lib/arm");
+            if (null != libDir64 && libDir64.exists()) {
+                Slog.v(TAG, " libDir64=" + libDir64 + ", "+libDir64.getAbsolutePath());
+                forcePrimaryCpuAbi = "arm64-v8a";
+                parsedPackage.setPrimaryCpuAbi(forcePrimaryCpuAbi);
+            } else if (null != libDir32 && libDir32.exists()) {
+                forcePrimaryCpuAbi = "armeabi-v7a";
+                parsedPackage.setPrimaryCpuAbi(forcePrimaryCpuAbi);
+            }
+        }
         if ((scanFlags & SCAN_NEW_INSTALL) == 0) {
-            if (needToDeriveAbi) {
+            if (needToDeriveAbi && (scanFlags & PackageManagerService.SCAN_AS_PREBUNDLED_DIR) == 0) {
                 Trace.traceBegin(TRACE_TAG_PACKAGE_MANAGER, "derivePackageAbi");
                 final Pair<PackageAbiHelper.Abis, PackageAbiHelper.NativeLibraryPaths> derivedAbi =
                         packageAbiHelper.derivePackageAbi(parsedPackage, isUpdatedSystemApp,
-                                cpuAbiOverride, appLib32InstallDir);
+                                cpuAbiOverride, appLib32InstallDir, forcePrimaryCpuAbi);
                 derivedAbi.first.applyTo(parsedPackage);
                 derivedAbi.second.applyTo(parsedPackage);
                 Trace.traceEnd(TRACE_TAG_PACKAGE_MANAGER);
@@ -307,6 +324,9 @@ final class ScanPackageUtils {
                 // package setting.
                 parsedPackage.setPrimaryCpuAbi(primaryCpuAbiFromSettings)
                         .setSecondaryCpuAbi(secondaryCpuAbiFromSettings);
+                if (!"".equals(forcePrimaryCpuAbi)) {
+                    parsedPackage.setPrimaryCpuAbi(forcePrimaryCpuAbi);
+                }
 
                 final PackageAbiHelper.NativeLibraryPaths nativeLibraryPaths =
                         packageAbiHelper.deriveNativeLibraryPaths(parsedPackage,
@@ -330,6 +350,9 @@ final class ScanPackageUtils {
                         .setSecondaryCpuAbi(pkgSetting.getSecondaryCpuAbi());
             }
 
+            if (!"".equals(forcePrimaryCpuAbi)) {
+                parsedPackage.setPrimaryCpuAbi(forcePrimaryCpuAbi);
+            }
             // Set native library paths again. For moves, the path will be updated based on the
             // ABIs we've determined above. For non-moves, the path will be updated based on the
             // ABIs we determined during compilation, but the path will depend on the final

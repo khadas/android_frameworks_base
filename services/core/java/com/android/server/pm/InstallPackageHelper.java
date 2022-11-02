@@ -30,12 +30,15 @@ import static android.content.pm.PackageManager.INSTALL_FAILED_INVALID_INSTALL_L
 import static android.content.pm.PackageManager.INSTALL_FAILED_PACKAGE_CHANGED;
 import static android.content.pm.PackageManager.INSTALL_FAILED_SESSION_INVALID;
 import static android.content.pm.PackageManager.INSTALL_FAILED_TEST_ONLY;
+import static android.content.pm.PackageManager.INSTALL_FAILED_UNINSTALLED_PREBUNDLE;
 import static android.content.pm.PackageManager.INSTALL_FAILED_UID_CHANGED;
 import static android.content.pm.PackageManager.INSTALL_FAILED_UPDATE_INCOMPATIBLE;
 import static android.content.pm.PackageManager.INSTALL_REASON_DEVICE_RESTORE;
 import static android.content.pm.PackageManager.INSTALL_REASON_DEVICE_SETUP;
 import static android.content.pm.PackageManager.INSTALL_SUCCEEDED;
 import static android.content.pm.PackageManager.UNINSTALL_REASON_UNKNOWN;
+import static android.content.pm.PackageParser.isDeleteApk;
+import static android.content.pm.PackageParser.readDeleteFile;
 import static android.content.pm.SigningDetails.SignatureSchemeVersion.SIGNING_BLOCK_V4;
 import static android.content.pm.parsing.ApkLiteParseUtils.isApkFile;
 import static android.os.PowerExemptionManager.REASON_PACKAGE_REPLACED;
@@ -107,6 +110,9 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageInfoLite;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageParser;
+import android.content.pm.PackageParser.PackageParserException;
+import android.content.pm.PackageParser.SigningDetails.SignatureSchemeVersion;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.content.pm.SharedLibraryInfo;
@@ -172,8 +178,10 @@ import com.android.server.utils.WatchedLongSparseArray;
 
 import dalvik.system.VMRuntime;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.security.DigestException;
 import java.security.DigestInputStream;
@@ -1490,7 +1498,7 @@ final class InstallPackageHelper {
                 final Pair<PackageAbiHelper.Abis, PackageAbiHelper.NativeLibraryPaths>
                         derivedAbi = mPackageAbiHelper.derivePackageAbi(parsedPackage,
                         isUpdatedSystemAppFromExistingSetting || isUpdatedSystemAppInferred,
-                        abiOverride, ScanPackageUtils.getAppLib32InstallDir());
+                        abiOverride, ScanPackageUtils.getAppLib32InstallDir(),null);
                 derivedAbi.first.applyTo(parsedPackage);
                 derivedAbi.second.applyTo(parsedPackage);
             } catch (PackageManagerException pme) {
@@ -3410,6 +3418,22 @@ final class InstallPackageHelper {
             Log.d(TAG, "Scanning app dir " + scanDir + " scanFlags=" + scanFlags
                     + " flags=0x" + Integer.toHexString(parseFlags));
         }
+
+        ArrayList<String> list = new ArrayList<String>();
+        boolean isPrebundled = (parseFlags & ParsingPackageUtils.PARSE_IS_PREBUNDLED_DIR) != 0;
+        if (isPrebundled) {
+            synchronized (mPm.mPackages) {
+                mPm.mSettings.readPrebundledPackagesLPr();
+            }
+        }
+
+        if (scanDir.getAbsolutePath().contains(mPm.BUNDLED_UNINSTALL_GONE_DIR)) {
+            if (!readDeleteFile(list)) {
+                Log.e(TAG, "read data failed");
+                return;
+            }
+        }
+
         ParallelPackageParser parallelPackageParser =
                 new ParallelPackageParser(packageParser, executorService, frameworkSplits);
 
@@ -3426,6 +3450,15 @@ final class InstallPackageHelper {
                 final PackageCacher cacher = new PackageCacher(mPm.getCacheDir());
                 Log.w(TAG, "Dropping cache of " + file.getAbsolutePath());
                 cacher.cleanCachedResult(file);
+            }
+            if (file.getAbsolutePath().contains(mPm.BUNDLED_UNINSTALL_GONE_DIR)) {
+                if (list != null && list.size() > 0) {
+                    final boolean isdeleteApk = isDeleteApk(file,parseFlags,list);
+                    if (isdeleteApk) {
+                        // Ignore deleted bundled apps
+                        continue;
+                    }
+               }
             }
             parallelPackageParser.submit(file, parseFlags);
             fileCount++;
@@ -3448,6 +3481,17 @@ final class InstallPackageHelper {
                 try {
                     addForInitLI(parseResult.parsedPackage, parseFlags, scanFlags,
                             null);
+                    if (isPrebundled) {
+                        final PackageParser.Package pkg;
+                        try {
+                            pkg = new PackageParser().parsePackage(parseResult.scanFile, parseFlags);
+                            synchronized (mPm.mPackages) {
+                                mPm.mSettings.markPrebundledPackageInstalledLPr(pkg.packageName);
+                            }
+                        } catch (PackageParserException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 } catch (PackageManagerException e) {
                     errorCode = e.error;
                     errorMsg = "Failed to scan " + parseResult.scanFile + ": " + e.getMessage();
@@ -3473,6 +3517,11 @@ final class InstallPackageHelper {
                 logCriticalInfo(Log.WARN,
                         "Deleting invalid package at " + parseResult.scanFile);
                 mRemovePackageHelper.removeCodePathLI(parseResult.scanFile);
+            }
+        }
+        if (isPrebundled) {
+            synchronized (mPm.mPackages) {
+                mPm.mSettings.writePrebundledPackagesLPr();
             }
         }
     }
@@ -3779,6 +3828,32 @@ final class InstallPackageHelper {
             @ParsingPackageUtils.ParseFlags int parseFlags,
             @PackageManagerService.ScanFlags int scanFlags,
             @Nullable UserHandle user) throws PackageManagerException {
+        if ((parseFlags & ParsingPackageUtils.PARSE_IS_PREBUNDLED_DIR) != 0) {
+            synchronized (mPm.mPackages) {
+                PackageSetting existingSettings = mPm.mSettings.getPackageLPr(parsedPackage.getPackageName());
+                if (mPm.mSettings.wasPrebundledPackageInstalledLPr(parsedPackage.getPackageName()) &&
+                        existingSettings == null) {
+                    // The prebundled app was installed at some point in time, but now it is
+                    // gone.  Assume that the user uninstalled it intentionally: do not reinstall.
+                    throw new PackageManagerException(INSTALL_FAILED_UNINSTALLED_PREBUNDLE,
+                            "skip reinstall for " + parsedPackage.getPackageName());
+                } else if (existingSettings != null
+                        && existingSettings.getVersionCode() >= parsedPackage.getTargetSdkVersion()) {
+                    String alreadyInstallPath = existingSettings.getPathString();
+                    if (null == alreadyInstallPath) {//maybe never enter this codes
+                        Slog.e(TAG, parsedPackage.getPackageName() + " already installed at " + alreadyInstallPath);
+                        return null;
+                    } else if (!alreadyInstallPath.contains(Environment.getPrebundledUninstallBackDirectory().getPath())
+                        && !alreadyInstallPath.contains(Environment.getPrebundledUninstallGoneDirectory().getPath())) {
+                        // This app is installed in a location that is not the prebundled location
+                        // and has a higher (or same) version as the prebundled one.  Skip
+                        // installing the prebundled version.
+                        Slog.d(TAG, parsedPackage.getPackageName() + " already installed at " + alreadyInstallPath);
+                        return null; // return null so we still mark package as installed
+                    }
+                }
+            }
+        }
         final boolean scanSystemPartition =
                 (parseFlags & ParsingPackageUtils.PARSE_IS_SYSTEM_DIR) != 0;
         final ScanRequest initialScanRequest = prepareInitialScanRequest(parsedPackage, parseFlags,
@@ -3897,6 +3972,7 @@ final class InstallPackageHelper {
         // in verified partition, or can be verified on access (when apk verity is enabled). In both
         // cases, only data in Signing Block is verified instead of the whole file.
         final boolean skipVerify = scanSystemPartition
+                || ((parseFlags & ParsingPackageUtils.PARSE_IS_PREBUNDLED_DIR) != 0)
                 || (forceCollect && canSkipForcedPackageVerification(parsedPackage));
         ScanPackageUtils.collectCertificatesLI(pkgSetting, parsedPackage,
                 mPm.getSettingsVersionForPackage(parsedPackage), forceCollect, skipVerify,
@@ -4246,7 +4322,8 @@ final class InstallPackageHelper {
         if ((scanFlags & SCAN_AS_SYSTEM) != 0) {
             // We are scanning a system overlay. This can be the first scan of the
             // system/vendor/oem partition, or an update to the system overlay.
-            if ((parseFlags & ParsingPackageUtils.PARSE_IS_SYSTEM_DIR) == 0) {
+            if ((parseFlags & ParsingPackageUtils.PARSE_IS_SYSTEM_DIR) == 0
+                    && (parseFlags & ParsingPackageUtils.PARSE_IS_PREBUNDLED_DIR) == 0) {
                 // This must be an update to a system overlay. Immutable overlays cannot be
                 // upgraded.
                 if (!mPm.isOverlayMutable(pkg.getPackageName())) {

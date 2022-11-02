@@ -190,6 +190,7 @@ final class InitAppsHelper {
         mApexManager.scanApexPackagesTraced(packageParser, mExecutorService);
 
         scanSystemDirs(packageParser, mExecutorService);
+        preinstallThirdPartyAPK(packageParser,mExecutorService,mScanFlags);
         // Parse overlay configuration files to set default enable state, mutability, and
         // priority of system overlays.
         final ArrayMap<String, File> apkInApexPreInstalledPaths = new ArrayMap<>();
@@ -354,6 +355,35 @@ final class InitAppsHelper {
                 stubSystemApps.add(pkg.getPackageName());
             }
         }
+    }
+
+    public void preinstallThirdPartyAPK(PackageParser2 packageParser, ExecutorService executorService,int scanFlags){
+        preinstallPrebundledpersist(packageParser,executorService,scanFlags);
+        preinstallPrebundledUninstallBack(packageParser,executorService,scanFlags);
+        preinstallPrebundledUninstallGone(packageParser,executorService,scanFlags);
+    }
+
+    private void preinstallPrebundledpersist(PackageParser2 packageParser, ExecutorService executorService,int scanFlags){
+        scanDirTracedLI(new File(mPm.BUNDLED_PERSIST_DIR),null,
+                    mPm.getDefParseFlags() | ParsingPackageUtils.PARSE_IS_SYSTEM_DIR
+                    | ParsingPackageUtils.PARSE_IS_PREINSTALL,
+                    scanFlags | mPm.SCAN_AS_PREINSTALL
+                    | SCAN_AS_SYSTEM,
+                    packageParser, executorService);
+    }
+
+    private void preinstallPrebundledUninstallBack(PackageParser2 packageParser, ExecutorService executorService,int scanFlags){
+        scanDirTracedLI(Environment.getPrebundledUninstallBackDirectory(),null,
+                    mPm.getDefParseFlags() | ParsingPackageUtils.PARSE_IS_PREBUNDLED_DIR,
+                    scanFlags | mPm.SCAN_AS_PREBUNDLED_DIR,
+                    packageParser, executorService);
+    }
+
+    private void preinstallPrebundledUninstallGone(PackageParser2 packageParser, ExecutorService executorService,int scanFlags){
+        scanDirTracedLI(Environment.getPrebundledUninstallGoneDirectory(),null,
+                    mPm.getDefParseFlags() | ParsingPackageUtils.PARSE_IS_PREBUNDLED_DIR,
+                    scanFlags | mPm.SCAN_AS_PREBUNDLED_DIR,
+                    packageParser, executorService);
     }
 
     @GuardedBy({"mPm.mInstallLock", "mPm.mLock"})

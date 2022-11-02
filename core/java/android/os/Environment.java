@@ -65,6 +65,8 @@ public class Environment {
     private static final String ENV_PRODUCT_ROOT = "PRODUCT_ROOT";
     private static final String ENV_SYSTEM_EXT_ROOT = "SYSTEM_EXT_ROOT";
     private static final String ENV_APEX_ROOT = "APEX_ROOT";
+    private static final String ENV_PREBUNDLED_UNINSTALL_BACK_ROOT = "PREBUNDLED_UNINSTALL_BACK_ROOT";
+    private static final String ENV_PREBUNDLED_UNINSTALL_GONE_ROOT = "PREBUNDLED_UNINSTALL_GONE_ROOT";
 
     /** {@hide} */
     public static final String DIR_ANDROID = "Android";
@@ -109,6 +111,10 @@ public class Environment {
             "/system_ext");
     private static final File DIR_APEX_ROOT = getDirectory(ENV_APEX_ROOT,
             "/apex");
+    private static final File DIR_PREBUNDLED_UNINSTALL_BACK_ROOT = getDirectory(
+            ENV_PREBUNDLED_UNINSTALL_BACK_ROOT, "/odm/bundled_uninstall_back-app");
+    private static final File DIR_PREBUNDLED_UNINSTALL_GONE_ROOT = getDirectory(
+            ENV_PREBUNDLED_UNINSTALL_GONE_ROOT, "/odm/bundled_uninstall_gone-app");
 
     /**
      * Scoped Storage is on by default. However, it is not strictly enforced and there are multiple
@@ -1522,6 +1528,22 @@ public class Environment {
             }
         }
         return cur;
+    }
+
+    /**
+     * Return the root directory for "prebundled" apps.  These apps will be installed directly
+     * from this partition but will not be marked as system apps and will hence be uninstallable.
+     * @hide
+     */
+    public static File getPrebundledUninstallBackDirectory() {
+        return DIR_PREBUNDLED_UNINSTALL_BACK_ROOT;
+    }
+
+    /**
+     * @hide
+     */
+    public static File getPrebundledUninstallGoneDirectory() {
+        return DIR_PREBUNDLED_UNINSTALL_GONE_ROOT;
     }
 
     /**

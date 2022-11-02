@@ -69,6 +69,11 @@ import com.android.server.wm.ActivityTaskManagerInternal;
 
 import dalvik.system.VMRuntime;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.FileWriter;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -470,6 +475,38 @@ final class DeletePackageHelper {
             if (DEBUG_REMOVE) Slog.d(TAG, "Removing non-system package: " + ps.getPackageName());
             deleteInstalledPackageLIF(ps, deleteCodeAndResources, flags, allUserHandles,
                     outInfo, writeSettings);
+            if (ps.getPathString().contains(mPm.BUNDLED_UNINSTALL_GONE_DIR)) {
+                File deleteApkFile = new File(mPm.DELETE_APK_FILE);
+                if(!deleteApkFile.exists()) {
+                    try {
+                        deleteApkFile.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Slog.w (TAG,"create file failed: " + mPm.DELETE_APK_FILE);
+                        return;
+                    }
+                }
+                BufferedWriter fileWriter  = null;
+                try {
+                    fileWriter = new BufferedWriter(new FileWriter(deleteApkFile,true));
+                    fileWriter.append(ps.getPackageName());
+                    fileWriter.newLine();
+                    fileWriter.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Slog.w(TAG,"write file failed: " + mPm.DELETE_APK_FILE);
+                } finally {
+                    if (fileWriter != null) {
+                        try {
+                            fileWriter.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            return;
+                        }
+                        fileWriter = null;
+                    }
+                }
+            }
         }
 
         // If the package removed had SUSPEND_APPS, unset any restrictions that might have been in
