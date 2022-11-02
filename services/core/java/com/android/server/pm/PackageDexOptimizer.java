@@ -50,6 +50,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.SharedLibraryInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.dex.ArtManager;
 import android.content.pm.dex.DexMetadataHelper;
 import android.os.FileUtils;
@@ -482,6 +483,30 @@ public class PackageDexOptimizer {
                 + " dexoptFlags=" + printDexoptFlags(dexoptFlags)
                 + " targetFilter=" + compilerFilter + " oatDir=" + oatDir
                 + " classLoaderContext=" + classLoaderContext);
+
+        if (pkg.getPackageName().contains("com.android.compatibility.common.deviceinfo") ||
+                (pkg.getPackageName().contains("com.google.android") &&
+                 pkg.getPackageName().contains("gts")) ||
+                 pkg.getPackageName().contains("android.media.cts") ||
+                 pkg.getPackageName().contains("android.cts.verifier") ||
+                 pkg.getPackageName().contains("android.mediastress.cts") ||
+                 pkg.getPackageName().contains("android.security.cts")) {
+            // maybe  endsWith(".cts") ?
+            SystemProperties.set("cts_gts.status", "true");
+        }
+
+        if (pkg.getPackageName().equals("android.security.cts") &&
+            "atv".equals(SystemProperties.get("ro.target.product","unknown")) &&
+            "true".equals(SystemProperties.get("cts_gts.status", "false"))) {
+            // disable com.google.android.apps.mediashell
+            try {
+                Log.d("xzj", "----start android.security.cts,disable com.google.android.apps.mediashell---");
+                mInstaller.getContext().getPackageManager().setApplicationEnabledSetting(
+                        "com.google.android.apps.mediashell",
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        0);
+            } catch(Exception e) {}
+        }
 
         try {
             long startTime = System.currentTimeMillis();
