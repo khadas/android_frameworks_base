@@ -61,6 +61,9 @@ int register_android_server_FaceService(JNIEnv* env);
 int register_android_server_GpuService(JNIEnv* env);
 int register_android_server_stats_pull_StatsPullAtomService(JNIEnv* env);
 int register_android_server_sensor_SensorService(JavaVM* vm, JNIEnv* env);
+int register_android_server_companion_virtual_InputController(JNIEnv* env);
+int register_android_server_app_GameManagerService(JNIEnv* env);
+int register_com_android_server_wm_TaskFpsCallbackController(JNIEnv* env);
 int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env);
 };
 
@@ -115,6 +118,9 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void* /* reserved */)
     register_android_server_GpuService(env);
     register_android_server_stats_pull_StatsPullAtomService(env);
     register_android_server_sensor_SensorService(vm, env);
+    register_android_server_companion_virtual_InputController(env);
+    register_android_server_app_GameManagerService(env);
+    register_com_android_server_wm_TaskFpsCallbackController(env);
     register_com_android_server_rkdisplay_RkDisplayModes(env);
     return JNI_VERSION_1_4;
 }
