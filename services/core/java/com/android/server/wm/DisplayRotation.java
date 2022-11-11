@@ -311,6 +311,13 @@ public class DisplayRotation {
         }
         mDemoRotationLock = SystemProperties.getBoolean("persist.demo.rotationlock", false);
 
+        if("true".equals(SystemProperties.get("ro.vendor.hdmirotationlock"))){
+            Slog.d(TAG,"force set hdmi rotation-----");
+            int rotation=Integer.valueOf(SystemProperties.get("ro.surface_flinger.primary_display_orientation","ORIENTATION_0").split("_")[1])/90;
+            mDemoHdmiRotation=(4-rotation)%4;
+            mDemoHdmiRotationLock=true;
+         }
+
         // It's physically impossible to rotate the car's screen.
         final boolean isCar = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_AUTOMOTIVE);
