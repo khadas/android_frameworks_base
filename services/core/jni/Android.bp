@@ -190,6 +190,7 @@ cc_defaults {
         "android.system.suspend-V1-ndk",
         "rockchip.hardware.outputmanager@1.0",
         "service.incremental",
+        "rockchip.hardware.tv.input@1.0",
     ],
 
     static_libs: [
