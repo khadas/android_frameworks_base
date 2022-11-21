@@ -125,6 +125,8 @@ android_library {
         "jsr330",
         "lottie",
         "LowLightDreamLib",
+        "rockchip.hardware.hdmi-V1.0-java",
+        "rockchip.hardware.hdmi-V1.0-java-shallow",
     ],
     manifest: "AndroidManifest.xml",
 
@@ -229,6 +231,8 @@ android_library {
         "jsr330",
         "WindowManager-Shell",
         "LowLightDreamLib",
+        "rockchip.hardware.hdmi-V1.0-java",
+        "rockchip.hardware.hdmi-V1.0-java-shallow",
     ],
     libs: [
         "android.test.runner",

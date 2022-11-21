@@ -46,6 +46,7 @@ import com.android.systemui.dagger.GlobalRootComponent;
 import com.android.systemui.dagger.SysUIComponent;
 import com.android.systemui.dump.DumpManager;
 import com.android.systemui.util.NotificationChannels;
+import com.android.systemui.AudioStream;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -54,6 +55,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javax.inject.Provider;
+import rockchip.hardware.hdmi.V1_0.IHdmi;
+import rockchip.hardware.hdmi.V1_0.IHdmiAudioCallback;
+import android.os.RemoteException;
+import android.os.SystemProperties;
+import android.content.ComponentName;
+
 
 /**
  * Application class for SystemUI.
@@ -81,6 +88,47 @@ public class SystemUIApplication extends Application implements
     private SysUIComponent mSysUIComponent;
     private SystemUIInitializer mInitializer;
 
+    class HdmiAudioCallback extends IHdmiAudioCallback.Stub{
+        Context mContext;
+        AudioStream mAudioStream;
+        public static final String HDMIIN_AUDIO_PACKAGE_NAME = "com.rockchip.rkhdmiinaudio";
+        public static final String HDMIIN_AUDIO_CLS_NAME = "com.rockchip.rkhdmiinaudio.HdmiInAudioService";
+        private void startHdmiAudioService() {
+            Log.v(TAG, "startHdmiAudioService");
+            SystemProperties.set("vendor.hdmiin.audiorate", "48KHZ");
+            Intent intent = new Intent();
+            ComponentName cn = new ComponentName(HDMIIN_AUDIO_PACKAGE_NAME, HDMIIN_AUDIO_CLS_NAME);
+            intent.setComponent(cn);
+            mContext.startForegroundService(intent);
+        }
+
+        private void stopHdmiAudioService() {
+            Log.v(TAG, "stopHdmiAudioService");
+            Intent intent = new Intent();
+            ComponentName cn = new ComponentName(HDMIIN_AUDIO_PACKAGE_NAME, HDMIIN_AUDIO_CLS_NAME);
+            intent.setComponent(cn);
+            mContext.stopService(intent);
+        }
+        public  HdmiAudioCallback(Context context){
+            mContext = context;
+            mAudioStream = new AudioStream(getApplicationContext());
+        }
+
+        public void onConnect(String cameraId) throws RemoteException {
+            Log.e(TAG,"onConnect"+cameraId);
+            //startHdmiAudioService();
+            mAudioStream.start(6);
+        }
+
+
+        public void onDisconnect(String cameraId) throws RemoteException {
+            Log.e(TAG,"onDisconnect"+cameraId);
+            //stopHdmiAudioService();
+            mAudioStream.stop();
+        }
+    }
+    HdmiAudioCallback mHdmiAudioCallback;
+
     public SystemUIApplication() {
         super();
         Log.v(TAG, "SystemUIApplication constructed.");
@@ -92,6 +140,19 @@ public class SystemUIApplication extends Application implements
         return mInitializer.getRootComponent();
     }
 
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        try {
+            IHdmi service = IHdmi.getService(true);
+            mHdmiAudioCallback = new HdmiAudioCallback(getApplicationContext());
+            service.removeAudioListener((IHdmiAudioCallback)mHdmiAudioCallback);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     @Override
     public void onCreate() {
         super.onCreate();
@@ -105,6 +166,16 @@ public class SystemUIApplication extends Application implements
         mSysUIComponent = mInitializer.getSysUIComponent();
         mBootCompleteCache = mSysUIComponent.provideBootCacheImpl();
         log.traceEnd();
+        try {
+            IHdmi service = IHdmi.getService(true);
+            mHdmiAudioCallback = new HdmiAudioCallback(getApplicationContext());
+            service.addAudioListener((IHdmiAudioCallback)mHdmiAudioCallback);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         // Enable Looper trace points.
         // This allows us to see Handler callbacks on traces.
