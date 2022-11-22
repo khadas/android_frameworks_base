@@ -516,7 +516,9 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                     ExtconInfo.EXTCON_HEADPHONE,
                     ExtconInfo.EXTCON_MICROPHONE,
                     ExtconInfo.EXTCON_HDMI,
+                    ExtconInfo.EXTCON_DP,
                     ExtconInfo.EXTCON_LINE_OUT,
+                    ExtconInfo.EXTCON_VIDEO_IN,
             });
         }
 
@@ -557,7 +559,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
                 updateBit(maskAndState, BIT_HEADSET, status, ExtconInfo.EXTCON_MICROPHONE);
             }
             if (extconInfo.hasCableType(ExtconInfo.EXTCON_HDMI)) {
-                updateBit(maskAndState, BIT_HDMI_AUDIO, status, ExtconInfo.EXTCON_HDMI);
+                //updateBit(maskAndState, BIT_HDMI_AUDIO, status, ExtconInfo.EXTCON_HDMI);
             }
             if (extconInfo.hasCableType(ExtconInfo.EXTCON_LINE_OUT)) {
                 updateBit(maskAndState, BIT_LINEOUT, status, ExtconInfo.EXTCON_LINE_OUT);
