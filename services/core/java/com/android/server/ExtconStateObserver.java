@@ -84,6 +84,14 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
                 } else if (uevent.contains("OF_NAME=hdmi")) {
                     return uevent.substring(start + 11, start + 16);
                 }
+            } else {
+                if (uevent.contains("OF_NAME=hdmirx-controller")) {
+                    return "hdmirx0";
+                } else if (uevent.contains("OF_NAME=dp")) {
+                    return "dp0";
+                } else if (uevent.contains("OF_NAME=hdmi")) {
+                    return "hdmi0";
+                }
             }
             return null;
         } catch (Exception e) {
