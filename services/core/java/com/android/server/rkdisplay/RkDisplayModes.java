@@ -711,12 +711,55 @@ public class RkDisplayModes {
         int builtIn = nativeGetBuiltIn(dpy);
         RkDisplayModes.RkColorCapacityInfo mCurColorInfos;
 
+        String currentResolution = getCurMode(dpy);
+        if (currentResolution != null && currentResolution.equals("Auto")) {
+            currentResolution = getModeList(dpy).get(1);
+        }
+
         Log.e(TAG, "getSupportCorlorList =========== dpy " + dpy);
         mCurColorInfos = nativeGetCorlorModeConfigs(dpy);
         if (mCurColorInfos != null)
-            return mCurColorInfos.getCorlorModeList(builtIn);
+            return filterCorlorList(mCurColorInfos.getCorlorModeList(builtIn), currentResolution);
 
         return null;
+    }
+
+    private List<String> filterCorlorList(List<String> supportColorInfos, String currentResolution) {
+        int width = 0, height = 0;
+        float refreshRate = 0f;
+        try {
+            width = Integer.parseInt(currentResolution.split("x")[0]);
+            if (currentResolution.contains("p")) {
+                height = Integer.parseInt(currentResolution.split("x")[1].split("p")[0]);
+                refreshRate = Float.parseFloat(currentResolution.split("p")[1].split("-")[0]);
+            } else {
+                height = Integer.parseInt(currentResolution.split("x")[1].split("i")[0]);
+                refreshRate = Float.parseFloat(currentResolution.split("i")[1].split("-")[0]);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Log.i(TAG, "width = " + width + ", height = " + height + ", refreshRate = " + refreshRate + "\ncolorInfos = " + supportColorInfos.toString());
+        List<String> colorList = new ArrayList<>();
+        for (String str : supportColorInfos) {
+            if ((width < 3840 || height < 2160)
+            && (str.equals(STR_YCBCR420 + "-" + STR_DEPTH_8BIT) || str.equals(STR_YCBCR420 + "-" + STR_DEPTH_10BIT))) {
+                continue;
+            }
+            if (refreshRate < 49.00f && (str.equals(STR_YCBCR420 + "-" + STR_DEPTH_8BIT)
+            || str.equals(STR_YCBCR420 + "-" + STR_DEPTH_10BIT))) {
+                continue;
+            }
+            if (str.equals(STR_YCBCR422 + "-" + STR_DEPTH_8BIT)) {
+                continue;
+            }
+            if (str.equals(STR_YCBCR422 + "-" + STR_DEPTH_10BIT)) {
+                colorList.add(STR_YCBCR422);
+                continue;
+            }
+            colorList.add(str);
+        }
+        return colorList;
     }
 
     public String getCurColorMode(int dpy) {
@@ -742,11 +785,19 @@ public class RkDisplayModes {
         String mColorMode = readColorFormatFromNode();
         if (mColorMode != null)
             mCurColorMode = mColorMode;
+
+        if (mColorMode != null && (mColorMode.equals(STR_YCBCR422 + "-" + STR_DEPTH_8BIT)
+                || mColorMode.equals(STR_YCBCR422 + "-" + STR_DEPTH_10BIT))) {
+            mCurColorMode = STR_YCBCR422;
+        }
+
         if (mCurColorMode == null)
            mCurColorMode = "RGB-8bit";
+
         if (mCurColorMode.equals("")) {
             mCurColorMode = "Auto";
         }
+
         Log.d(TAG, "getCurColorMode ===========  " + mCurColorMode);
         return mCurColorMode;
     }
@@ -801,6 +852,9 @@ public class RkDisplayModes {
 
     public int setColorMode(int display, String format)
     {
+        if (format != null && format.equals(STR_YCBCR422)) {
+            format = STR_YCBCR422 + "-" + STR_DEPTH_10BIT;
+        }
         return nativeSetColorMode(display, format);
     }
 
