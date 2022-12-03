@@ -1620,7 +1620,8 @@ class StorageManagerService extends IStorageManager.Stub
                 vol.mountFlags |= VolumeInfo.MOUNT_FLAG_VISIBLE_FOR_WRITE;
             }
 
-            if ("true".equals(SystemProperties.get("ro.vendor.udisk.visible"))) {
+            if ("false".equals(SystemProperties.get("cts_gts.status", "false")) &&
+                "true".equals(SystemProperties.get("ro.vendor.udisk.visible"))) {
                 Log.d(TAG,"-----for all public volume is visible-----");
                 vol.mountFlags |= VolumeInfo.MOUNT_FLAG_VISIBLE_FOR_WRITE;
             }
