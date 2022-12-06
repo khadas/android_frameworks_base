@@ -4469,7 +4469,14 @@ public final class PowerManagerService extends SystemService
         if (reason == null) {
             reason = "";
         }
-        SystemProperties.set("sys.powerctl", "shutdown," + reason);
+        /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+        /* Change-Id: Ie4c11813678459f3b04e5950f0393e07b58d28e5 */
+        if ("on".equals(SystemProperties.get("persist.vendor.vadwake"))) {
+            lowLevelReboot("ffv_reboot");
+        } else {
+            SystemProperties.set("sys.powerctl", "shutdown," + reason);
+        }
+        /*[Amlogic end]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
     }
 
     /**
