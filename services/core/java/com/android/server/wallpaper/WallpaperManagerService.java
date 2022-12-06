@@ -667,7 +667,7 @@ public class WallpaperManagerService extends IWallpaperManager.Stub
 
             // scale if the crop height winds up not matching the recommended metrics
             needScale = (wallpaper.height != cropHint.height());
-
+            needScale = false;
             if (DEBUG) {
                 Slog.v(TAG, "crop: w=" + cropHint.width() + " h=" + cropHint.height());
                 Slog.v(TAG, "dims: w=" + wallpaper.width + " h=" + wallpaper.height);
