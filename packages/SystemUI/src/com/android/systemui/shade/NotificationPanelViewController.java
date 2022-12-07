@@ -231,6 +231,9 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+import android.app.KeyguardManager;
+import android.content.Context;
+
 @CentralSurfacesComponent.CentralSurfacesScope
 public final class NotificationPanelViewController extends PanelViewController {
 
@@ -2417,8 +2420,12 @@ public final class NotificationPanelViewController extends PanelViewController {
         height = Math.min(Math.max(height, mQsMinExpansionHeight), mQsMaxExpansionHeight);
         mQsFullyExpanded = height == mQsMaxExpansionHeight && mQsMaxExpansionHeight != 0;
         boolean qsAnimatingAway = !mQsAnimatorExpand && mAnimatingQS;
+
+        KeyguardManager mKeyguardManager = (KeyguardManager) mView.getContext().getSystemService(Context.KEYGUARD_SERVICE);
+        boolean flag = mKeyguardManager.inKeyguardRestrictedInputMode();
+
         if (height > mQsMinExpansionHeight && !mQsExpanded && !mStackScrollerOverscrolling
-                && !mDozing && !qsAnimatingAway) {
+                && !mDozing && !qsAnimatingAway && !flag) {
             setQsExpanded(true);
         } else if (height <= mQsMinExpansionHeight && mQsExpanded) {
             setQsExpanded(false);
