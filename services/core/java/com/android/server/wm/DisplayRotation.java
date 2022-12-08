@@ -88,6 +88,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayDeque;
 import java.util.Set;
+import android.provider.Settings.SettingNotFoundException;
 
 /**
  * Defines the mapping between orientation and rotation of a display.
@@ -490,6 +491,22 @@ public class DisplayRotation {
      *         THE SCREEN.
      */
     boolean updateRotationUnchecked(boolean forceUpdate) {
+     try{
+             int screenchange = Settings.System.getInt(mContext.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION);
+             String value = SystemProperties.get("persist.sys.user_rotation");
+			 //Slog.w(TAG_WM, "hlm value: " + value);
+             if(screenchange == 0 && (value.equals("false")||value.equals(""))){
+				if(true){
+					//Slog.w(TAG_WM, "hlm screenchange22: " + screenchange);
+					return true;
+				}
+             }
+     }
+     catch (SettingNotFoundException e){
+             // TODO Auto-generated catch block
+             e.printStackTrace();
+     }
+
         final int displayId = mDisplayContent.getDisplayId();
         if (!forceUpdate) {
             if (mDeferredRotationPauseCount > 0) {
