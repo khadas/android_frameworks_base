@@ -256,6 +256,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import android.provider.Settings.SettingNotFoundException;
 
 /**
  * Utility class for keeping track of the WindowStates and other pertinent contents of a
@@ -2654,8 +2655,23 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
     @ScreenOrientation
     @Override
     int getOrientation() {
-        mLastOrientationSource = null;
-        if (!handlesOrientationChangeFromDescendant()) {
+     try{
+             int screenchange = Settings.System.getInt(mWmService.mContext.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION);
+			 //Slog.w(TAG_WM, "hlm screenchange: " + screenchange);
+             if(screenchange == 0){
+				if(true){
+					//Slog.w(TAG_WM, "hlm screenchange00: " + screenchange);
+					return ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+				}
+             }
+     }
+     catch (SettingNotFoundException e){
+             // TODO Auto-generated catch block
+             e.printStackTrace();
+     }
+
+	mLastOrientationSource = null;
+	if (!handlesOrientationChangeFromDescendant()) {
             // Return SCREEN_ORIENTATION_UNSPECIFIED so that Display respect sensor rotation
             ProtoLog.v(WM_DEBUG_ORIENTATION,
                     "Display id=%d is ignoring all orientation requests, return %d",

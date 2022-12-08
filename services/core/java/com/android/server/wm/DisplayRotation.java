@@ -75,6 +75,7 @@ import com.android.server.statusbar.StatusBarManagerInternal;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import android.provider.Settings.SettingNotFoundException;
 
 /**
  * Defines the mapping between orientation and rotation of a display.
@@ -422,7 +423,22 @@ public class DisplayRotation {
      *         THE SCREEN.
      */
     boolean updateRotationUnchecked(boolean forceUpdate) {
-        final boolean useShellTransitions =
+     try{
+             int screenchange = Settings.System.getInt(mContext.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION);
+			 //Slog.w(TAG_WM, "hlm screenchange11: " + screenchange);
+             if(screenchange == 0){
+				if(true){
+					//Slog.w(TAG_WM, "hlm screenchange22: " + screenchange);
+					return true;
+				}
+             }
+     }
+     catch (SettingNotFoundException e){
+             // TODO Auto-generated catch block
+             e.printStackTrace();
+     }
+
+	final boolean useShellTransitions =
                 mDisplayContent.mTransitionController.isShellTransitionsEnabled();
 
         final int displayId = mDisplayContent.getDisplayId();
