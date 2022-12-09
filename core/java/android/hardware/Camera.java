@@ -572,6 +572,13 @@ public class Camera {
     }
 
     /**
+     **@hide
+     **/
+     public final boolean isReleased() {
+       return (mNativeContext == 0);
+    }
+
+    /**
      * Unlocks the camera to allow another process to access it.
      * Normally, the camera is locked to the process with an active Camera
      * object until {@link #release()} is called.  To allow rapid handoff
