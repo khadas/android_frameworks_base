@@ -356,6 +356,13 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
                 mBatteryPercentView = null;
             }
         }
+		//add to control battery UI
+		if(android.os.SystemProperties.getInt("persist.sys.show.battery",0) == 1){
+			mBatteryIconView.setVisibility(android.view.View.VISIBLE);
+		}else{
+			mBatteryIconView.setVisibility(android.view.View.GONE);
+		}
+		//add end
     }
 
     private Drawable getUnknownStateDrawable() {
