@@ -1082,11 +1082,19 @@ public class FullScreenMagnificationGestureHandler extends MagnificationGestureH
         }
 
         public void register() {
-            mContext.registerReceiver(this, new IntentFilter(Intent.ACTION_SCREEN_OFF));
+            try{
+                mContext.registerReceiver(this, new IntentFilter(Intent.ACTION_SCREEN_OFF));
+            }catch(Exception e){
+                e.printStackTrace();
+            }
         }
 
         public void unregister() {
-            mContext.unregisterReceiver(this);
+            try{
+                mContext.unregisterReceiver(this);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
         }
 
         @Override
