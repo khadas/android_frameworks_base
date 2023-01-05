@@ -992,6 +992,8 @@ public class AudioSystem
     /** @hide */
     public static final int DEVICE_OUT_HDMI = DEVICE_OUT_AUX_DIGITAL;
     /** @hide */
+    public static final int DEVICE_OUT_HDMI_1 = 0x401;
+    /** @hide */
     @UnsupportedAppUsage
     public static final int DEVICE_OUT_ANLG_DOCK_HEADSET = 0x800;
     /** @hide */
@@ -1018,10 +1020,10 @@ public class AudioSystem
     /** @hide */
     public static final int DEVICE_OUT_SPDIF = 0x80000;
     /** @hide */
+    public static final int DEVICE_OUT_SPDIF_1 = 0x80001;
+    /** @hide */
     @UnsupportedAppUsage
     public static final int DEVICE_OUT_FM = 0x100000;
-    /** @hide */
-    public static final int DEVICE_OUT_HDMI_1 = DEVICE_OUT_FM;
     /** @hide */
     public static final int DEVICE_OUT_AUX_LINE = 0x200000;
     /** @hide */
@@ -1038,8 +1040,6 @@ public class AudioSystem
     public static final int DEVICE_OUT_HEARING_AID = 0x8000000;
     /** @hide */
     public static final int DEVICE_OUT_ECHO_CANCELLER = 0x10000000;
-    /** @hide */
-    public static final int DEVICE_OUT_SPDIF_1 = DEVICE_OUT_ECHO_CANCELLER;
     /** @hide */
     public static final int DEVICE_OUT_BLE_HEADSET = 0x20000000;
     /** @hide */
@@ -1085,6 +1085,7 @@ public class AudioSystem
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_HDMI);
+        DEVICE_OUT_ALL_SET.add(DEVICE_OUT_HDMI_1);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_ANLG_DOCK_HEADSET);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_DGTL_DOCK_HEADSET);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_USB_ACCESSORY);
@@ -1095,6 +1096,7 @@ public class AudioSystem
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_HDMI_ARC);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_HDMI_EARC);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_SPDIF);
+        DEVICE_OUT_ALL_SET.add(DEVICE_OUT_SPDIF_1);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_FM);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_AUX_LINE);
         DEVICE_OUT_ALL_SET.add(DEVICE_OUT_SPEAKER_SAFE);
@@ -1162,6 +1164,8 @@ public class AudioSystem
     /** @hide */
     public static final int DEVICE_IN_HDMI = DEVICE_IN_AUX_DIGITAL;
     /** @hide */
+    public static final int DEVICE_IN_HDMI_1 = DEVICE_BIT_IN | 0x21;
+    /** @hide */
     @UnsupportedAppUsage
     public static final int DEVICE_IN_VOICE_CALL = DEVICE_BIT_IN | 0x40;
     /** @hide */
@@ -1192,8 +1196,6 @@ public class AudioSystem
     public static final int DEVICE_IN_LINE = DEVICE_BIT_IN | 0x8000;
     /** @hide */
     public static final int DEVICE_IN_SPDIF = DEVICE_BIT_IN | 0x10000;
-    /** @hide */
-    public static final int DEVICE_IN_HDMI_1 = DEVICE_IN_SPDIF;
     /** @hide */
     @UnsupportedAppUsage
     public static final int DEVICE_IN_BLUETOOTH_A2DP = DEVICE_BIT_IN | 0x20000;
@@ -1235,6 +1237,7 @@ public class AudioSystem
         DEVICE_IN_ALL_SET.add(DEVICE_IN_BLUETOOTH_SCO_HEADSET);
         DEVICE_IN_ALL_SET.add(DEVICE_IN_WIRED_HEADSET);
         DEVICE_IN_ALL_SET.add(DEVICE_IN_HDMI);
+        DEVICE_IN_ALL_SET.add(DEVICE_IN_HDMI_1);
         DEVICE_IN_ALL_SET.add(DEVICE_IN_TELEPHONY_RX);
         DEVICE_IN_ALL_SET.add(DEVICE_IN_BACK_MIC);
         DEVICE_IN_ALL_SET.add(DEVICE_IN_REMOTE_SUBMIX);
@@ -1302,6 +1305,7 @@ public class AudioSystem
     /** @hide */ public static final String DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER_NAME = "bt_a2dp_spk";
     /** @hide */ public static final String DEVICE_OUT_AUX_DIGITAL_NAME = "aux_digital";
     /** @hide */ public static final String DEVICE_OUT_HDMI_NAME = "hdmi";
+    /** @hide */ public static final String DEVICE_OUT_HDMI1_NAME = "hdmi1";
     /** @hide */ public static final String DEVICE_OUT_ANLG_DOCK_HEADSET_NAME = "analog_dock";
     /** @hide */ public static final String DEVICE_OUT_DGTL_DOCK_HEADSET_NAME = "digital_dock";
     /** @hide */ public static final String DEVICE_OUT_USB_ACCESSORY_NAME = "usb_accessory";
@@ -1312,6 +1316,7 @@ public class AudioSystem
     /** @hide */ public static final String DEVICE_OUT_HDMI_ARC_NAME = "hdmi_arc";
     /** @hide */ public static final String DEVICE_OUT_HDMI_EARC_NAME = "hdmi_earc";
     /** @hide */ public static final String DEVICE_OUT_SPDIF_NAME = "spdif";
+    /** @hide */ public static final String DEVICE_OUT_SPDIF1_NAME = "spdif1";
     /** @hide */ public static final String DEVICE_OUT_FM_NAME = "fm_transmitter";
     /** @hide */ public static final String DEVICE_OUT_AUX_LINE_NAME = "aux_line";
     /** @hide */ public static final String DEVICE_OUT_SPEAKER_SAFE_NAME = "speaker_safe";
@@ -1331,6 +1336,7 @@ public class AudioSystem
     /** @hide */ public static final String DEVICE_IN_BLUETOOTH_SCO_HEADSET_NAME = "bt_sco_hs";
     /** @hide */ public static final String DEVICE_IN_WIRED_HEADSET_NAME = "headset";
     /** @hide */ public static final String DEVICE_IN_AUX_DIGITAL_NAME = "aux_digital";
+    /** @hide */ public static final String DEVICE_IN_HDMI1_NAME = "hdmiin1";
     /** @hide */ public static final String DEVICE_IN_TELEPHONY_RX_NAME = "telephony_rx";
     /** @hide */ public static final String DEVICE_IN_BACK_MIC_NAME = "back_mic";
     /** @hide */ public static final String DEVICE_IN_REMOTE_SUBMIX_NAME = "remote_submix";
@@ -1381,6 +1387,8 @@ public class AudioSystem
             return DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER_NAME;
         case DEVICE_OUT_HDMI:
             return DEVICE_OUT_HDMI_NAME;
+        case DEVICE_OUT_HDMI_1:
+            return DEVICE_OUT_HDMI1_NAME;
         case DEVICE_OUT_ANLG_DOCK_HEADSET:
             return DEVICE_OUT_ANLG_DOCK_HEADSET_NAME;
         case DEVICE_OUT_DGTL_DOCK_HEADSET:
@@ -1401,6 +1409,8 @@ public class AudioSystem
             return DEVICE_OUT_HDMI_EARC_NAME;
         case DEVICE_OUT_SPDIF:
             return DEVICE_OUT_SPDIF_NAME;
+        case DEVICE_OUT_SPDIF_1:
+            return DEVICE_OUT_SPDIF1_NAME;
         case DEVICE_OUT_FM:
             return DEVICE_OUT_FM_NAME;
         case DEVICE_OUT_AUX_LINE:

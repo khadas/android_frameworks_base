@@ -741,9 +741,17 @@ public class AidlConversion {
                 aidl.type = AudioDeviceType.IN_DEVICE;
                 aidl.connection = AudioDeviceDescription.CONNECTION_HDMI;
                 break;
+            case AudioSystem.DEVICE_IN_HDMI_1:
+                aidl.type = AudioDeviceType.IN_DEVICE;
+                aidl.connection = "VX_ROCKCHIP_HDMI0";
+                break;
             case AudioSystem.DEVICE_OUT_HDMI:
                 aidl.type = AudioDeviceType.OUT_DEVICE;
                 aidl.connection = AudioDeviceDescription.CONNECTION_HDMI;
+                break;
+            case AudioSystem.DEVICE_OUT_HDMI_1:
+                aidl.type = AudioDeviceType.OUT_DEVICE;
+                aidl.connection = "VX_ROCKCHIP_HDMI0";
                 break;
             case AudioSystem.DEVICE_IN_REMOTE_SUBMIX:
                 aidl.type = AudioDeviceType.IN_SUBMIX;
@@ -804,6 +812,10 @@ public class AidlConversion {
             case AudioSystem.DEVICE_OUT_SPDIF:
                 aidl.type = AudioDeviceType.OUT_DEVICE;
                 aidl.connection = AudioDeviceDescription.CONNECTION_SPDIF;
+                break;
+            case AudioSystem.DEVICE_OUT_SPDIF_1:
+                aidl.type = AudioDeviceType.OUT_DEVICE;
+                aidl.connection = "VX_ROCKCHIP_SPDIF0";
                 break;
             case AudioSystem.DEVICE_IN_BLUETOOTH_A2DP:
                 aidl.type = AudioDeviceType.IN_DEVICE;
