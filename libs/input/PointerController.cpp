@@ -193,20 +193,6 @@ void PointerController::setPresentation(Presentation presentation) {
     }
 }
 
-void PointerController::setDisplayId(int32_t id) {
-    std::scoped_lock lock(getLock());
-    mCursorController.setDisplayId(id);
-    
-}
-
-
-int32_t PointerController::getDisplayId() {
-    std::scoped_lock lock(getLock());
-    return mCursorController.getDisplayId();
-
-}
-
-
 void PointerController::setSpots(const PointerCoords* spotCoords, const uint32_t* spotIdToIndex,
                                  BitSet32 spotIdBits, int32_t displayId) {
     std::scoped_lock lock(getLock());
