@@ -79,6 +79,9 @@
 -keep,allowoptimization,allowaccessmodification class com.android.server.broadcastradio.hal1.Tuner { *; }
 -keep,allowoptimization,allowaccessmodification class com.android.server.broadcastradio.hal1.TunerCallback { *; }
 -keep,allowoptimization,allowaccessmodification class com.android.server.location.gnss.GnssConfiguration$HalInterfaceVersion { *; }
+-keep,allowoptimization,allowaccessmodification class com.android.server.rkdisplay.RkDisplayModes$RkPhysicalDisplayInfo { *; }
+-keep,allowoptimization,allowaccessmodification class com.android.server.rkdisplay.RkDisplayModes$RkColorCapacityInfo { *; }
+-keep,allowoptimization,allowaccessmodification class com.android.server.rkdisplay.RkDisplayModes$RkConnectorInfo { *; }
 -keep,allowoptimization,allowaccessmodification class com.android.server.location.gnss.GnssPowerStats { *; }
 -keep,allowoptimization,allowaccessmodification class com.android.server.location.gnss.hal.GnssNative { *; }
 -keep,allowoptimization,allowaccessmodification class com.android.server.pm.PackageManagerShellCommandDataLoader { *; }
