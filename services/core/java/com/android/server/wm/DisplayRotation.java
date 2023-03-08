@@ -425,8 +425,9 @@ public class DisplayRotation {
     boolean updateRotationUnchecked(boolean forceUpdate) {
      try{
              int screenchange = Settings.System.getInt(mContext.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION);
-			 //Slog.w(TAG_WM, "hlm screenchange11: " + screenchange);
-             if(screenchange == 0){
+             String value = SystemProperties.get("persist.sys.user_rotation");
+			 //Slog.w(TAG_WM, "hlm value: " + value);
+             if(screenchange == 0 && (value.equals("false")||value.equals(""))){
 				if(true){
 					//Slog.w(TAG_WM, "hlm screenchange22: " + screenchange);
 					return true;

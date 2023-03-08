@@ -257,6 +257,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import android.provider.Settings.SettingNotFoundException;
+import android.os.SystemProperties;
 
 /**
  * Utility class for keeping track of the WindowStates and other pertinent contents of a
@@ -2657,8 +2658,9 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
     int getOrientation() {
      try{
              int screenchange = Settings.System.getInt(mWmService.mContext.getContentResolver(), Settings.System.ACCELEROMETER_ROTATION);
-			 //Slog.w(TAG_WM, "hlm screenchange: " + screenchange);
-             if(screenchange == 0){
+             String value = SystemProperties.get("persist.sys.user_rotation");
+			 //Slog.w(TAG_WM, "hlm value: " + value);
+             if(screenchange == 0 && (value.equals("false")||value.equals(""))){
 				if(true){
 					//Slog.w(TAG_WM, "hlm screenchange00: " + screenchange);
 					return ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
