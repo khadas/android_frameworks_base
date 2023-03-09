@@ -66,6 +66,9 @@ int register_android_server_app_GameManagerService(JNIEnv* env);
 int register_com_android_server_wm_TaskFpsCallbackController(JNIEnv* env);
 int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env);
 int register_com_android_server_audio_RkAudioSetting(JNIEnv* env);
+ //-----rk-code-----
+int register_com_android_server_RKBoxManagementService(JNIEnv* env);
+ //-----------------
 };
 
 using namespace android;
@@ -124,5 +127,8 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void* /* reserved */)
     register_com_android_server_wm_TaskFpsCallbackController(env);
     register_com_android_server_rkdisplay_RkDisplayModes(env);
     register_com_android_server_audio_RkAudioSetting(env);
+    //-----rk-code-----
+    register_com_android_server_RKBoxManagementService(env);
+    //-----------------
     return JNI_VERSION_1_4;
 }

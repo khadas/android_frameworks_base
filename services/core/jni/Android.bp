@@ -70,6 +70,8 @@ cc_library_static {
         "com_android_server_wm_TaskFpsCallbackController.cpp",
         "com_android_server_rkdisplay_RkDisplayModes.cpp",
         "com_android_server_audio_RkAudioSetting.cpp",
+        "rkbox/rklog.cpp",
+        "com_android_server_RKBoxService.cpp",
         "onload.cpp",
         ":lib_cachedAppOptimizer_native",
         ":lib_gameManagerService_native",
