@@ -1562,6 +1562,16 @@ public final class SystemServer implements Dumpable {
             mSystemServiceManager.startService(DropBoxManagerService.class);
             t.traceEnd();
 
+            //-----rk-code-------
+            t.traceBegin("StartRKBoxService");
+            try {
+                ServiceManager.addService("rkbox_management", new RKBoxManagementService(context));
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting RKBoxManagement Service", e);
+            }
+            t.traceEnd();
+            //------------------
+
             // Grants default permissions and defines roles
             t.traceBegin("StartRoleManagerService");
             LocalManagerRegistry.addManager(RoleServicePlatformHelper.class,

@@ -74,6 +74,8 @@ cc_library_static {
         "com_android_server_pm_PackageManagerShellCommandDataLoader.cpp",
         "com_android_server_sensor_SensorService.cpp",
         "com_android_server_wm_TaskFpsCallbackController.cpp",
+        "rkbox/rklog.cpp",
+        "com_android_server_RKBoxService.cpp",
         "onload.cpp",
         ":lib_cachedAppOptimizer_native",
         ":lib_gameManagerService_native",
