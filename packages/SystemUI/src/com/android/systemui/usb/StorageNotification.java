@@ -367,9 +367,6 @@ public class StorageNotification extends SystemUI {
                     .addAction(new Action(R.drawable.ic_folder_24dp,
                             mContext.getString(R.string.ext_media_browse_action),
                             browseIntent))
-                    .addAction(new Action(R.drawable.ic_eject_24dp,
-                            mContext.getString(R.string.ext_media_unmount_action),
-                            buildUnmountPendingIntent(vol)))
                     .setContentIntent(browseIntent)
                     .setCategory(Notification.CATEGORY_SYSTEM);
             // Non-adoptable disks can't be snoozed.
