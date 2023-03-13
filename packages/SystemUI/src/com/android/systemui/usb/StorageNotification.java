@@ -358,23 +358,6 @@ public class StorageNotification extends SystemUI {
             return null;
         }
 
-        if (disk.isAdoptable() && !rec.isInited()) {
-            final CharSequence title = disk.getDescription();
-            final CharSequence text = mContext.getString(
-                    R.string.ext_media_new_notification_message, disk.getDescription());
-
-            final PendingIntent initIntent = buildInitPendingIntent(vol);
-            return buildNotificationBuilder(vol, title, text)
-                    .addAction(new Action(R.drawable.ic_settings_24dp,
-                            mContext.getString(R.string.ext_media_init_action), initIntent))
-                    .addAction(new Action(R.drawable.ic_eject_24dp,
-                            mContext.getString(R.string.ext_media_unmount_action),
-                            buildUnmountPendingIntent(vol)))
-                    .setContentIntent(initIntent)
-                    .setDeleteIntent(buildSnoozeIntent(vol.getFsUuid()))
-                    .build();
-
-        } else {
             final CharSequence title = disk.getDescription();
             final CharSequence text = mContext.getString(
                     R.string.ext_media_ready_notification_message, disk.getDescription());
@@ -395,7 +378,6 @@ public class StorageNotification extends SystemUI {
             }
 
             return builder.build();
-        }
     }
 
     private Notification onVolumeFormatting(VolumeInfo vol) {
