@@ -19,7 +19,6 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.os.FileUtils;
 import android.util.Slog;
-import android.os.SystemProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,31 +44,17 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
     @Nullable
     public S parseStateFromFile(ExtconInfo extconInfo) throws IOException {
         String statePath = extconInfo.getStatePath();
-        if (isTablet()) {
-            String ueventPath = extconInfo.getDeviceUeventPath();
-            String state = FileUtils.readTextFile(new File(statePath), 0, null).trim();
-            String alias = getAliasName(ueventPath);
-            if (alias == null) {
-                return parseState(extconInfo, state);
-            } else {
-                int start = state.indexOf("=");
-                String aliasState = alias + state.substring(start, start + 2);
-                if (LOG) Slog.d(TAG, extconInfo.getName() + " state: " + aliasState);
-                return parseState(extconInfo, aliasState);
-            }
+        String ueventPath = extconInfo.getDeviceUeventPath();
+        String state = FileUtils.readTextFile(new File(statePath), 0, null).trim();
+        String alias = getAliasName(ueventPath);
+        if (alias == null) {
+            return parseState(extconInfo, state);
         } else {
-            return parseState(
-                extconInfo,
-                FileUtils.readTextFile(new File(statePath), 0, null).trim());
+            int start = state.indexOf("=");
+            String aliasState = alias + state.substring(start, start + 2);
+            if (LOG) Slog.d(TAG, extconInfo.getName() + " state: " + aliasState);
+            return parseState(extconInfo, aliasState);
         }
-    }
-
-    public boolean isTablet() {
-        String product = SystemProperties.get("ro.target.product","");
-        if(product.equals("tablet")){
-            return true;
-        }
-        return false;
     }
 
     public String getAliasName(String path) {
@@ -105,21 +90,19 @@ public abstract class ExtconStateObserver<S> extends ExtconUEventObserver {
         if (LOG) Slog.d(TAG, extconInfo.getName() + " UEVENT: " + event);
         String name = event.get("NAME");
         S state = null;
-        if (isTablet()) {
-            String status = event.get("STATE");
-            String ueventPath = extconInfo.getDeviceUeventPath();
-            String alias = getAliasName(ueventPath);
-            if (alias == null) {
-                state = parseState(extconInfo, event.get("STATE"));
-            } else {
-                int start = status.indexOf("=");
-                String aliasState = alias + status.substring(start, start + 2);
-                if (LOG) Slog.d(TAG, extconInfo.getName() + " state: " + aliasState);
-                state = parseState(extconInfo, aliasState);
-            }
-        } else {
+
+        String status = event.get("STATE");
+        String ueventPath = extconInfo.getDeviceUeventPath();
+        String alias = getAliasName(ueventPath);
+        if (alias == null) {
             state = parseState(extconInfo, event.get("STATE"));
+        } else {
+            int start = status.indexOf("=");
+            String aliasState = alias + status.substring(start, start + 2);
+            if (LOG) Slog.d(TAG, extconInfo.getName() + " state: " + aliasState);
+            state = parseState(extconInfo, aliasState);
         }
+
         if (state != null) {
             updateState(extconInfo, name, state);
         }

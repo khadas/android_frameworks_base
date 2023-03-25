@@ -564,15 +564,14 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             if (extconInfo.hasCableType(ExtconInfo.EXTCON_LINE_OUT)) {
                 updateBit(maskAndState, BIT_LINEOUT, status, ExtconInfo.EXTCON_LINE_OUT);
             }
-            if (isTablet()) {
-                updateBit(maskAndState, BIT_HDMI_AUDIO, status, "hdmi0");
-                updateBit(maskAndState, BIT_HDMI_AUDIO_1, status, "hdmi1");
-                updateBit(maskAndState, BIT_DP_AUDIO, status, "dp0");
-                updateBit(maskAndState, BIT_DP_AUDIO_1, status, "dp1");
-                updateBit(maskAndState, BIT_HDMIIN_AUDIO, status, "hdmirx0");
-                updateBit(maskAndState, BIT_HDMIIN_AUDIO_1, status, "hdmirx1");
-                //updateBit(maskAndState, BIT_HDMIIN_AUDIO, status, "VIDEO-IN");
-            }
+
+            updateBit(maskAndState, BIT_HDMI_AUDIO,     status, "hdmi0");
+            updateBit(maskAndState, BIT_HDMI_AUDIO_1,   status, "hdmi1");
+            updateBit(maskAndState, BIT_DP_AUDIO,       status, "dp0");
+            updateBit(maskAndState, BIT_DP_AUDIO_1,     status, "dp1");
+            updateBit(maskAndState, BIT_HDMIIN_AUDIO,   status, "hdmirx0");
+            updateBit(maskAndState, BIT_HDMIIN_AUDIO_1, status, "hdmirx1");
+
             if (LOG) Slog.v(TAG, "mask " + maskAndState[0] + " state " + maskAndState[1]);
             return Pair.create(maskAndState[0], maskAndState[1]);
         }

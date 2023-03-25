@@ -4451,17 +4451,6 @@ public class AudioService extends IAudioService.Stub
         return false;
     }
 
-    /**
-     * @hide
-     */
-    private boolean isBox() {
-        String product = SystemProperties.get("ro.target.product","");
-        if(product.equals("box") /*|| product.equals("atv")*/){
-            return true;
-        }
-        return false;
-    }
-
     private class RmtSbmxFullVolDeathHandler implements IBinder.DeathRecipient {
         private IBinder mICallback; // To be notified of client's death
 
@@ -7052,7 +7041,7 @@ public class AudioService extends IAudioService.Stub
                         state == CONNECTION_STATE_CONNECTED ? "connected" : "disconnected")
                 .record();
 
-        if (isBox() && (attributes.getInternalType() == AudioSystem.DEVICE_OUT_AUX_DIGITAL) && (state == CONNECTION_STATE_CONNECTED)) {
+        if ((attributes.getInternalType() == AudioSystem.DEVICE_OUT_AUX_DIGITAL) && (state == CONNECTION_STATE_CONNECTED)) {
             updataFormatForEdid();
         }
 
