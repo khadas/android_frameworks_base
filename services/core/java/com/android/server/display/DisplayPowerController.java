@@ -583,7 +583,9 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
         mSkipScreenOnBrightnessRamp = resources.getBoolean(
                 com.android.internal.R.bool.config_skipScreenOnBrightnessRamp);
 
-        mHbmController = createHbmControllerLocked();
+        float minBrightness = pm.getBrightnessConstraint(
+                PowerManager.BRIGHTNESS_CONSTRAINT_TYPE_MINIMUM);
+        mHbmController = createHbmControllerLocked(minBrightness, -1);
 
         mBrightnessThrottler = createBrightnessThrottlerLocked();
 
@@ -1940,7 +1942,7 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
         mHandler.post(mOnBrightnessChangeRunnable);
     }
 
-    private HighBrightnessModeController createHbmControllerLocked() {
+    private HighBrightnessModeController createHbmControllerLocked(float minBrightness, float maxBrightness) {
         final DisplayDevice device = mLogicalDisplay.getPrimaryDisplayDeviceLocked();
         final DisplayDeviceConfig ddConfig = device.getDisplayDeviceConfig();
         final IBinder displayToken =
@@ -1951,7 +1953,8 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
                 ddConfig != null ? ddConfig.getHighBrightnessModeData() : null;
         final DisplayDeviceInfo info = device.getDisplayDeviceInfoLocked();
         return new HighBrightnessModeController(mHandler, info.width, info.height, displayToken,
-                displayUniqueId, PowerManager.BRIGHTNESS_MIN, PowerManager.BRIGHTNESS_MAX, hbmData,
+                displayUniqueId, minBrightness > 0 ? minBrightness : PowerManager.BRIGHTNESS_MIN,
+                maxBrightness > 0 ? maxBrightness : PowerManager.BRIGHTNESS_MAX, hbmData,
                 new HighBrightnessModeController.HdrBrightnessDeviceConfig() {
                     @Override
                     public float getHdrBrightnessFromSdr(float sdrBrightness) {
