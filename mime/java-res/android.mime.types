@@ -120,9 +120,10 @@
 ?video/mp4 m4v f4v mp4v mpeg4
 ?video/mp2p mpeg
 ?video/mp2t m2ts mts
-?video/mp2ts ts
+?video/mp2ts ts tp trp
 ?video/vnd.youtube.yt yt
 ?video/x-webex wrf
+?video/mpg vob
 
 # Optional additions that should not override any previous mapping.
 
