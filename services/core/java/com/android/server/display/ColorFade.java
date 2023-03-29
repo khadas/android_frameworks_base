@@ -399,6 +399,11 @@ final class ColorFade {
             destroySurface();
             mPrepared = false;
         }
+
+        if (mEglContext != null && mEglDisplay != EGL14.EGL_NO_DISPLAY) {
+            EGL14.eglDestroyContext(mEglDisplay, mEglContext);
+            mEglContext = null;
+        }
     }
 
     /**
