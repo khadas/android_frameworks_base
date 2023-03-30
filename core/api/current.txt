@@ -20504,6 +20504,13 @@ package android.media {
     method public void onRoutingChanged(android.media.AudioRouting);
   }
 
+  public class AudioStream implements java.io.Closeable {
+    ctor public AudioStream(@NonNull android.content.Context);
+    method public void close();
+    method public boolean start();
+    method public void stop();
+  }
+
   public final class AudioTimestamp {
     ctor public AudioTimestamp();
     field public static final int TIMEBASE_BOOTTIME = 1; // 0x1

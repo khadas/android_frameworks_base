@@ -47,7 +47,6 @@ import com.android.systemui.dagger.SysUIComponent;
 import com.android.systemui.dump.DumpManager;
 import com.android.systemui.statusbar.policy.ConfigurationController;
 import com.android.systemui.util.NotificationChannels;
-import com.android.systemui.AudioStream;
 
 import java.util.Comparator;
 import java.util.Map;
@@ -59,6 +58,7 @@ import rockchip.hardware.hdmi.V1_0.IHdmiAudioCallback;
 import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.content.ComponentName;
+import android.media.AudioStream;
 
 
 /**
@@ -116,7 +116,7 @@ public class SystemUIApplication extends Application implements
         public void onConnect(String cameraId) throws RemoteException {
             Log.e(TAG,"onConnect"+cameraId);
             //startHdmiAudioService();
-            mAudioStream.start(6);
+            mAudioStream.start();
         }
 
 

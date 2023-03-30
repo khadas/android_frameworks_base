@@ -40,6 +40,7 @@ import android.media.AudioPatch;
 import android.media.AudioPort;
 import android.media.AudioPortConfig;
 import android.media.AudioSystem;
+import android.media.AudioStream;
 import android.media.tv.ITvInputHardware;
 import android.media.tv.ITvInputHardwareCallback;
 import android.media.tv.TvInputHardwareInfo;
@@ -181,9 +182,9 @@ class TvInputHardwareManager implements TvInputHal.Callback {
 
     private void EnableHDMIInAudio(boolean enable)
     {
-        Slog.i(TAG, "EnableHDMIInAudio "+enable);
+        Slog.i(TAG, "EnableHDMIInAudio " + enable);
         if (enable) {
-            mAudioStream.start(6);
+            mAudioStream.start();
         } else {
             mAudioStream.stop();
         }
