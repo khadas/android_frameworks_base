@@ -192,6 +192,7 @@ class TvInputHardwareManager implements TvInputHal.Callback {
 
     @Override
     public void onDeviceUnavailable(int deviceId) {
+        Slog.w(TAG, "onDeviceUnavailable deviceId=" + deviceId);
         synchronized (mLock) {
             Connection connection = mConnections.get(deviceId);
             if (connection == null) {
@@ -960,16 +961,19 @@ class TvInputHardwareManager implements TvInputHal.Callback {
                 if (mReleased) {
                     throw new IllegalStateException("Device already released.");
                 }
-
+                Slog.w(TAG, "setSurface " + surface + ", config=" + config);
                 int result = TvInputHal.SUCCESS;
                 if (surface == null) {
                     // The value of config is ignored when surface == null.
                     if (mActiveConfig != null) {
+                        Slog.w(TAG, "setSurface null and start removestream " + mActiveConfig);
                         result = mHal.removeStream(mInfo.getDeviceId(), mActiveConfig);
+                        Slog.w(TAG, "setSurface null and end removestream " + mActiveConfig);
                         EnableHDMIInAudio(false);
                         mActiveConfig = null;
                     } else {
                         // We already have no active stream.
+                        Slog.w(TAG, "setSurface null and remove no active stream");
                         return true;
                     }
                 } else {
@@ -979,14 +983,18 @@ class TvInputHardwareManager implements TvInputHal.Callback {
                     }
                     // Remove stream only if we have an existing active configuration.
                     if (mActiveConfig != null && !config.equals(mActiveConfig)) {
+                        Slog.w(TAG, "setSurface and start removestream " + mActiveConfig);
                         result = mHal.removeStream(mInfo.getDeviceId(), mActiveConfig);
+                        Slog.w(TAG, "setSurface and end removestream result=" + result);
                         if (result != TvInputHal.SUCCESS) {
                             mActiveConfig = null;
                         }
                     }
                     // Proceed only if all previous operations succeeded.
                     if (result == TvInputHal.SUCCESS) {
+                        Slog.w(TAG, "setSurface and start addOrUpdateStream" + config);
                         result = mHal.addOrUpdateStream(mInfo.getDeviceId(), surface, config);
+                        Slog.w(TAG, "setSurface and end addOrUpdateStream result: " + result);
                         if (result == TvInputHal.SUCCESS) {
                             EnableHDMIInAudio(true);
                             mActiveConfig = config;
@@ -994,6 +1002,7 @@ class TvInputHardwareManager implements TvInputHal.Callback {
                     }
                 }
                 updateAudioConfigLocked();
+                Slog.w(TAG, "setSurface updateAudioConfigLocked finish");
                 return result == TvInputHal.SUCCESS;
             }
         }

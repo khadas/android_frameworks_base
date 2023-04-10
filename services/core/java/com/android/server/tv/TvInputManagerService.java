@@ -126,7 +126,7 @@ import java.util.regex.Pattern;
 
 /** This class provides a system service that manages television inputs. */
 public final class TvInputManagerService extends SystemService {
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private static final String TAG = "TvInputManagerService";
     private static final String DVB_DIRECTORY = "/dev/dvb";
     private static final int APP_TAG_SELF = TunedInfo.APP_TAG_SELF;
