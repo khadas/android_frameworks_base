@@ -182,6 +182,7 @@ private:
 
         // Only valid when mStreamType == TV_STREAM_TYPE_INDEPENDENT_VIDEO_SOURCE
         sp<NativeHandle> mSourceHandle;
+        sp<NativeHandle> mCancelSourceHandle = NULL;
         // Only valid when mStreamType == TV_STREAM_TYPE_BUFFER_PRODUCER
         sp<BufferProducerThread> mThread;
     };
@@ -277,8 +278,15 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
     if (connection.mSurface != NULL) {
         if (connection.mStreamType == TV_STREAM_TYPE_INDEPENDENT_VIDEO_SOURCE) {
             if (Surface::isValid(connection.mSurface)) {
-                ALOGW("%s setSidebandStream NULL because connection.mSurface invalid", __FUNCTION__);
-                connection.mSurface->setSidebandStream(NULL);
+                if (connection.mCancelSourceHandle != NULL) {
+                    ALOGW("%s setSidebandStream cacnelBuffer", __FUNCTION__);
+                    connection.mSurface->setSidebandStream(connection.mCancelSourceHandle);
+                    connection.mCancelSourceHandle.clear();
+                    connection.mCancelSourceHandle = NULL;
+                } else {
+                    ALOGW("%s setSidebandStream NULL because connection.mSurface invalid", __FUNCTION__);
+                    connection.mSurface->setSidebandStream(NULL);
+                }
             }
         }
         connection.mSurface.clear();
@@ -358,12 +366,18 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
 
         result = Result::UNKNOWN;
         const native_handle_t* sidebandStream;
+        const native_handle_t* sidebandCancelStream = nullptr;
         mTvInput->openStream_ext(deviceId, streamId, connection.mStreamType,
-                [&result, &sidebandStream](Result res, const native_handle_t* handle) {
+                [&result, &sidebandStream, &sidebandCancelStream](Result res, const native_handle_t* handle, const native_handle_t* cancelHandle) {
                     result = res;
                     if (res == Result::OK) {
                         if (handle) {
                             sidebandStream = native_handle_clone(handle);
+                            ALOGW("receiver sidebandStream handle = %p", handle);
+                        }
+                        if (cancelHandle) {
+                            sidebandCancelStream = native_handle_clone(cancelHandle);
+                            ALOGW("receiver sidebandCancelStream handle = %p", cancelHandle);
                         }
                         result = Result::OK;
                     }
@@ -374,6 +388,9 @@ int JTvInputHal::addOrUpdateStream(int deviceId, int streamId, const sp<Surface>
             return UNKNOWN_ERROR;
         } else if (bSidebandFlow) {
             connection.mSourceHandle = NativeHandle::create((native_handle_t*)sidebandStream, true);
+            if (sidebandCancelStream) {
+                connection.mCancelSourceHandle = NativeHandle::create((native_handle_t*)sidebandCancelStream, true);
+            }
         }
     }
     connection.mSurface = surface;
@@ -403,8 +420,13 @@ int JTvInputHal::removeStream(int deviceId, int streamId) {
     }
     if (Surface::isValid(connection.mSurface)) {
         if (connection.mStreamType == TV_STREAM_TYPE_INDEPENDENT_VIDEO_SOURCE) {
-            ALOGW("%s setSidebandStream NULL because connection.mSurface invalid", __FUNCTION__);
-            connection.mSurface->setSidebandStream(NULL);
+            if (connection.mCancelSourceHandle != NULL) {
+                ALOGW("%s setSidebandStream cacnelBuffer", __FUNCTION__);
+                connection.mSurface->setSidebandStream(connection.mCancelSourceHandle);
+            } else {
+                ALOGW("%s setSidebandStream NULL because connection.mSurface invalid", __FUNCTION__);
+                connection.mSurface->setSidebandStream(NULL);
+            }
         }
     }
     ALOGW("%s start mTvInput->closeStream deviceId=%d, streamId=%d", __FUNCTION__, deviceId, streamId);
@@ -423,6 +445,10 @@ int JTvInputHal::removeStream(int deviceId, int streamId) {
     connection.mSurface = NULL;
     if (connection.mSourceHandle != NULL) {
         connection.mSourceHandle.clear();
+    }
+    if (connection.mCancelSourceHandle != NULL) {
+        connection.mCancelSourceHandle.clear();
+        connection.mCancelSourceHandle = NULL;
     }
     ALOGD("%s end.", __FUNCTION__);
     return NO_ERROR;
