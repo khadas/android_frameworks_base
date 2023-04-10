@@ -81,6 +81,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.text.TextUtils;
@@ -1107,8 +1108,15 @@ public final class TvInputManagerService extends SystemService {
                 synchronized (mLock) {
                     UserState userState = getOrCreateUserStateLocked(resolvedUserId);
                     List<TvInputInfo> inputList = new ArrayList<>();
+                    boolean isCtsTest = SystemProperties.getBoolean("cts_gts.status", false);
                     for (TvInputState state : userState.inputMap.values()) {
-                        inputList.add(state.info);
+                        if (isCtsTest && null != state.info
+                                && state.info.toString().contains("pkg=com.example.partnersupportsampletvinput,")) {
+                            Slog.v(TAG, "skip " + state.info);
+                        } else {
+                            inputList.add(state.info);
+                            //Slog.v(TAG, "add " + state.info);
+                        }
                     }
                     return inputList;
                 }
