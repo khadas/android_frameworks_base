@@ -161,17 +161,15 @@ class ScreenRotationAnimation {
             originalWidth = displayInfo.logicalWidth;
             originalHeight = displayInfo.logicalHeight;
         }
-/*         if (realOriginalRotation == Surface.ROTATION_90
+        if (realOriginalRotation == Surface.ROTATION_90
                 || realOriginalRotation == Surface.ROTATION_270) {
             mWidth = originalHeight;
             mHeight = originalWidth;
         } else {
             mWidth = originalWidth;
             mHeight = originalHeight;
-        } */
+        }
 
-        mWidth = originalWidth;
-        mHeight = originalHeight;
         mOriginalRotation = originalRotation;
         // If the delta is not zero, the rotation of display may not change, but we still want to
         // apply rotation animation because there should be a top app shown as rotated. So the

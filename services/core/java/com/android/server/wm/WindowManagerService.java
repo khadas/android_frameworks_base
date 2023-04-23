@@ -5568,6 +5568,47 @@ public class WindowManagerService extends IWindowManager.Stub
         if (mDisplayFrozen || displayContent.getDisplayRotation().isRotatingSeamlessly()) {
             return;
         }
+
+        if (!displayContent.isReady() || !mPolicy.isScreenOn() || !displayContent.okToAnimate()) {
+            // No need to freeze the screen before the display is ready,  if the screen is off,
+            // or we can't currently animate.
+            return;
+        }
+
+        ProtoLog.d(WM_DEBUG_ORIENTATION,
+                            "startFreezingDisplayLocked: exitAnim=%d enterAnim=%d called by %s",
+                            exitAnim, enterAnim, Debug.getCallers(8));
+        mScreenFrozenLock.acquire();
+
+        mDisplayFrozen = true;
+        mDisplayFreezeTime = SystemClock.elapsedRealtime();
+        mLastFinishedFreezeSource = null;
+
+        // {@link mDisplayFrozen} prevents us from freezing on multiple displays at the same time.
+        // As a result, we only track the display that has initially froze the screen.
+        mFrozenDisplayId = displayContent.getDisplayId();
+
+        mInputManagerCallback.freezeInputDispatchingLw();
+
+        if (displayContent.mAppTransition.isTransitionSet()) {
+            displayContent.mAppTransition.freeze();
+        }
+
+        if (PROFILE_ORIENTATION) {
+            File file = new File("/data/system/frozen");
+            Debug.startMethodTracing(file.toString(), 8 * 1024 * 1024);
+        }
+
+        mLatencyTracker.onActionStart(ACTION_ROTATE_SCREEN);
+        mExitAnimId = exitAnim;
+        mEnterAnimId = enterAnim;
+
+        displayContent.updateDisplayInfo();
+        final int originalRotation = overrideOriginalRotation != ROTATION_UNDEFINED
+                ? overrideOriginalRotation
+                : displayContent.getDisplayInfo().rotation;
+        displayContent.setRotationAnimation(new ScreenRotationAnimation(displayContent,
+                originalRotation));
     }
 
     void stopFreezingDisplayLocked() {
