@@ -3273,6 +3273,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_VOLUME_MUTE:
+                handleVolumeKeyInArc(event);
                 if (mUseTvRouting || mHandleVolumeKeysInWM) {
                     // On TVs or when the configuration is enabled, volume keys never
                     // go to the foreground app.
@@ -4833,6 +4834,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // pre-condition: event.getKeyCode() is one of KeyEvent.KEYCODE_VOLUME_UP,
     //                                   KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_MUTE
     private void dispatchDirectAudioEvent(KeyEvent event) {
+        Slog.d(TAG, "dispatchDirectAudioEvent " + event);
         // When System Audio Mode is off, volume keys received by AVR can be either consumed by AVR
         // or forwarded to the TV. It's up to Amplifier manufacturer’s implementation.
         HdmiControlManager hdmiControlManager = getHdmiControlManager();
@@ -4852,6 +4854,31 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         } catch (Exception e) {
             Log.e(TAG, "Error dispatching volume key in handleVolumeKey for event:"
                     + event, e);
+        }
+    }
+
+    private static final int OSD_NAME_VOLUME_KEY = 3;
+    private void handleVolumeKeyInArc(KeyEvent event) {
+        Slog.d(TAG, "handleVolumeKeyInArc " + event);
+        if (event.getAction() != KeyEvent.ACTION_DOWN
+                ||(event.getKeyCode() != KeyEvent.KEYCODE_VOLUME_UP
+                && event.getKeyCode() != KeyEvent.KEYCODE_VOLUME_DOWN
+                && event.getKeyCode() != KeyEvent.KEYCODE_VOLUME_MUTE)) {
+            return;
+        }
+        HdmiControlManager hdmiControl = getHdmiControlManager();
+        if (hdmiControl != null
+                && hdmiControl.getTvClient() != null
+                && hdmiControl.getSystemAudioMode()
+                && (hdmiControl.getHdmiCecVolumeControlEnabled()
+                == (HdmiControlManager.VOLUME_CONTROL_ENABLED))) {
+            // Show volume ui when tv is working with an audio system device.
+            Slog.d(TAG, "send volume keyevent for arc :" + event);
+            Intent intent = new Intent(HdmiControlManager.ACTION_OSD_MESSAGE);
+            intent.putExtra(HdmiControlManager.EXTRA_MESSAGE_ID, OSD_NAME_VOLUME_KEY);
+            intent.putExtra(HdmiControlManager.EXTRA_MESSAGE_EXTRA_PARAM1, event.getKeyCode());
+            mContext.sendBroadcastAsUser(intent, UserHandle.ALL,
+                    "android.permission.HDMI_CEC");
         }
     }
 
