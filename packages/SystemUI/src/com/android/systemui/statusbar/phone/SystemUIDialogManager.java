@@ -81,7 +81,7 @@ public class SystemUIDialogManager implements Dumpable {
         }
 
         if (wasHidingAffordances != shouldHideAffordance()) {
-            updateDialogListeners();
+            // updateDialogListeners();
         }
     }
 
