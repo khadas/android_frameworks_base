@@ -1277,6 +1277,20 @@ static void isolateAppData(JNIEnv* env, const std::vector<std::string>& merged_d
     auto volPath = StringPrintf("%s/%s", externalPrivateMountPath, ent->d_name);
     auto cePath = StringPrintf("%s/user", volPath.c_str());
     auto dePath = StringPrintf("%s/user_de", volPath.c_str());
+    if (access(volPath.c_str(), F_OK) != 0) {
+        ALOGW("volPath: Can't access vold profile directory :%s", volPath.c_str());
+        continue;
+    }
+
+    if (access(cePath.c_str(), F_OK) != 0) {
+        ALOGW("cePath: Can't access vold profile directory :%s", cePath.c_str());
+        continue;
+    }
+
+    if (access(dePath.c_str(), F_OK) != 0) {
+        ALOGW("dePath: Can't access vold profile directory :%s", dePath.c_str());
+        continue;
+    }
     // Wait until dir user is created.
     WaitUntilDirReady(cePath.c_str(), fail_fn);
     MountAppDataTmpFs(cePath.c_str(), fail_fn);
@@ -1388,6 +1402,19 @@ static void isolateAppData(JNIEnv* env, const std::vector<std::string>& merged_d
     auto volPath = StringPrintf("%s/%s", externalPrivateMountPath, ent->d_name);
     auto cePath = StringPrintf("%s/user", volPath.c_str());
     auto dePath = StringPrintf("%s/user_de", volPath.c_str());
+    if (access(volPath.c_str(), F_OK) != 0) {
+        ALOGW("volPath_1: Can't access vold profile directory :%s", volPath.c_str());
+        continue;
+    }
+    if (access(cePath.c_str(), F_OK) != 0) {
+        ALOGW("cePath_1: Can't access vold profile directory :%s", cePath.c_str());
+        continue;
+    }
+
+    if (access(dePath.c_str(), F_OK) != 0) {
+        ALOGW("dePath_1: Can't access vold profile directory :%s", dePath.c_str());
+        continue;
+    }
 
     relabelSubdirs(cePath.c_str(), dataFileContext, fail_fn);
     relabelDir(cePath.c_str(), dataUserdirContext, fail_fn);
