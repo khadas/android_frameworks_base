@@ -316,6 +316,9 @@ public class NavigationBarController implements
         NavigationBar navBar = mNavigationBarFactory.create(context);
 
         mNavigationBars.put(displayId, navBar);
+		//add to control NavigationBar
+		mDisplayId = displayId;
+		//add end
 
         View navigationBarView = navBar.createView(savedState);
         navigationBarView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
@@ -334,6 +337,13 @@ public class NavigationBarController implements
             }
         });
     }
+
+	//add to control NavigationBar
+	private int mDisplayId;
+	public void removeNavigationBarView(){
+        removeNavigationBar(mDisplayId);
+    }
+	//add end
 
     void removeNavigationBar(int displayId) {
         NavigationBar navBar = mNavigationBars.get(displayId);
