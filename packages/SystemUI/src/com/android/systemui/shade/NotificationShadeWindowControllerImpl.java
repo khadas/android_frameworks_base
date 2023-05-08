@@ -274,6 +274,15 @@ public class NotificationShadeWindowControllerImpl implements NotificationShadeW
     }
 
     @Override
+    public void Notification_control(boolean visible) {
+        if (visible) {
+            mNotificationShadeView.setVisibility(View.INVISIBLE);
+        } else {
+            mNotificationShadeView.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
     public void setNotificationShadeView(ViewGroup view) {
         mNotificationShadeView = view;
     }
@@ -413,6 +422,11 @@ public class NotificationShadeWindowControllerImpl implements NotificationShadeW
             visible = true;
             mLogger.d("Visibility forced to be true");
         }
+		//add to control NavigationBar
+		if(android.os.SystemProperties.getInt("persist.sys.show_upper_bar",1) == 0){
+			return;
+		}
+		//add end
         if (mNotificationShadeView != null) {
             if (visible) {
                 mNotificationShadeView.setVisibility(View.VISIBLE);

@@ -248,6 +248,16 @@ public class StatusBarWindowController {
         }
     }
 
+	//add to control NavigationBar
+	public void status_bar_control(boolean visible) {
+		if (visible) {
+			mStatusBarWindowView.setVisibility(android.view.View.VISIBLE);
+		} else {
+			mStatusBarWindowView.setVisibility(android.view.View.GONE);
+		}
+    }
+	//add end
+
     /** Set force status bar visible. */
     public void setForceStatusBarVisible(boolean forceStatusBarVisible) {
         mCurrentState.mForceStatusBarVisible = forceStatusBarVisible;

@@ -278,6 +278,9 @@ import dagger.Lazy;
 @SysUISingleton
 public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
 
+	//add to control NavigationBar
+	RegisterStatusBarResult result = null;
+	//add end
     private static final String BANNER_ACTION_CANCEL =
             "com.android.systemui.statusbar.banner_action_cancel";
     private static final String BANNER_ACTION_SETUP =
@@ -1234,8 +1237,12 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
         mStatusBarTouchableRegionManager.setup(this, mNotificationShadeWindowView);
         mNotificationPanelViewController.setHeadsUpManager(mHeadsUpManager);
 
-        createNavigationBar(result);
-
+		//add to control NavigationBar
+        //createNavigationBar(result);
+		if(SystemProperties.getInt("persist.sys.show_bottom_bar",1) == 1){
+			createNavigationBar(result);
+		}
+		//add end
         if (ENABLE_LOCKSCREEN_WALLPAPER && mWallpaperSupported) {
             mLockscreenWallpaper = mLockscreenWallpaperLazy.get();
         }
@@ -1496,6 +1503,12 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
+		//add to control NavigationBar
+		filter.addAction("com.android.show_upper_bar");
+        filter.addAction("com.android.hide_upper_bar");
+		filter.addAction("com.android.show_bottom_bar");
+        filter.addAction("com.android.hide_bottom_bar");
+		//add end
         mBroadcastDispatcher.registerReceiver(mBroadcastReceiver, filter, null, UserHandle.ALL);
     }
 
@@ -2320,6 +2333,12 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
         makeStatusBarView(result);
         mNotificationShadeWindowController.attach();
         mStatusBarWindowController.attach();
+		//add to control NavigationBar
+		if(SystemProperties.getInt("persist.sys.show_upper_bar",1) == 0){
+			mNotificationShadeWindowController.Notification_control(false);
+			mStatusBarWindowController.status_bar_control(false);
+		}
+		//add end
     }
 
     // called by makeStatusbar and also by PhoneStatusBarView
@@ -2590,6 +2609,29 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
                 }
                 finishBarAnimations();
                 resetUserExpandedStates();
+            } else if("com.android.show_upper_bar".equals(action)){
+				if(SystemProperties.getInt("persist.sys.show_upper_bar",1) == 0){
+					mNotificationShadeWindowController.Notification_control(true);
+					mStatusBarWindowController.status_bar_control(true);
+					SystemProperties.set("persist.sys.show_upper_bar","1");
+				}
+			}else if("com.android.hide_upper_bar".equals(action)){
+				if(SystemProperties.getInt("persist.sys.show_upper_bar",1) == 1){
+					mNotificationShadeWindowController.Notification_control(false);
+					mStatusBarWindowController.status_bar_control(false);
+					SystemProperties.set("persist.sys.show_upper_bar","0");
+				}
+			}else if("com.android.show_bottom_bar".equals(action)){
+				NavigationBarView mNavigationBarView = mNavigationBarController.getDefaultNavigationBarView();
+                if (mNavigationBarView != null) return;
+                createNavigationBar(result);
+				SystemProperties.set("persist.sys.show_bottom_bar","1");
+			}else if("com.android.hide_bottom_bar".equals(action)){
+				NavigationBarView mNavigationBarView = mNavigationBarController.getDefaultNavigationBarView();
+				if (mNavigationBarView == null) return;
+                mNavigationBarController.removeNavigationBarView();
+				SystemProperties.set("persist.sys.show_bottom_bar","0");
+			//add end
             }
             Trace.endSection();
         }
