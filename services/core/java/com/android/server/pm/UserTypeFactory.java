@@ -48,6 +48,9 @@ import android.os.Bundle;
 import android.os.UserManager;
 import android.util.ArrayMap;
 import android.util.Slog;
+// -----rk-code-----//
+import android.os.SystemProperties;
+// -----------------//
 
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.util.XmlUtils;
@@ -332,7 +335,12 @@ public final class UserTypeFactory {
 
     private static List<DefaultCrossProfileIntentFilter>
             getDefaultManagedCrossProfileIntentFilter() {
-        return DefaultCrossProfileIntentFiltersUtils.getDefaultManagedProfileFilters();
+        // -----rk-code-----//
+        if (("car".equals(SystemProperties.get("ro.target.product"))))
+            return DefaultCrossProfileIntentFiltersUtils.getDefaultManagedProfileFiltersAAOS();
+        else
+        // -----------------//
+            return DefaultCrossProfileIntentFiltersUtils.getDefaultManagedProfileFilters();
     }
 
     private static List<DefaultCrossProfileIntentFilter> getDefaultCloneCrossProfileIntentFilter() {
