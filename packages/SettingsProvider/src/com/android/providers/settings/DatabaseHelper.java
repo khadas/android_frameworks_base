@@ -2321,7 +2321,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
             //loadSetting(stmt, Settings.Secure.ADB_ENABLED, 0);
 
             if ("box".equals(SystemProperties.get("ro.target.product")))
-                 loadStringSetting(stmt, Settings.Secure.DISPLAY_DENSITY_FORCED,R.string.def_display_density);
+                 loadSetting(stmt, Settings.Secure.DISPLAY_DENSITY_FORCED,SystemProperties.get("ro.sf.lcd_density"));
             // Allow mock locations default, based on build
             loadSetting(stmt, Settings.Secure.ALLOW_MOCK_LOCATION,
                     "1".equals(SystemProperties.get("ro.allow.mock.location")) ? 1 : 0);
