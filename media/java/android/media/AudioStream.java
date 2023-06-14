@@ -20,6 +20,7 @@ import android.annotation.NonNull;
 
 import android.media.AudioTrack;
 import android.media.AudioManager;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -45,12 +46,15 @@ public class AudioStream implements Closeable {
     private boolean mIsStartup = false;
     private Thread record;
     private Context mContext;
+    private final AudioManager mAudioManager;
+    private AudioDeviceInfo mPreferredDevice = null;
 
     public AudioStream(@NonNull Context context) {
         if (context == null) {
             throw new IllegalArgumentException("Illegal null Context argument");
         }
         mContext = context;
+        mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
     }
 
     public boolean start() {
@@ -174,16 +178,23 @@ public class AudioStream implements Closeable {
             byte[] m_in_bytes;
             int m_in_buf_size = AudioRecord.getMinBufferSize(frequence, channelConfig, audioEncoding);
             Log.i(TAG, "out min: " + m_out_buf_size + ", in min: " + m_in_buf_size);
+            AudioDeviceInfo[] deviceList = mAudioManager.getDevices(AudioManager.GET_DEVICES_INPUTS);
+            for (AudioDeviceInfo device : deviceList) {
+                if (device.getInternalType() == AudioManager.DEVICE_IN_HDMI) {
+                    Log.d(TAG, "find hdmiin");
+                    mPreferredDevice = device;
+                }
+            }
             m_in_rec = new AudioRecord.Builder()
                             .setAudioFormat(new AudioFormat.Builder()
                                     .setSampleRate(frequence)
                                     .setChannelMask(channelConfig)
                                     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                                     .build())
-                            .setSessionId(97)
-                            .setAudioSource(MediaRecorder.AudioSource.CAMCORDER)
+                            .setAudioSource(MediaRecorder.AudioSource.DEFAULT)
                             .setBufferSizeInBytes(m_in_buf_size)
                             .build();
+            m_in_rec.setPreferredDevice(mPreferredDevice);
             m_in_bytes = new byte[m_in_buf_size];
 
             if (m_in_rec != null && m_in_rec.getState() != AudioRecord.STATE_UNINITIALIZED) {
