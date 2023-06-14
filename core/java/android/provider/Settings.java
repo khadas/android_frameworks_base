@@ -8411,9 +8411,9 @@ public final class Settings {
                 if (gpsEnabled && networkEnabled) {
                     return LOCATION_MODE_HIGH_ACCURACY;
                 } else if (gpsEnabled) {
-                    return LOCATION_MODE_SENSORS_ONLY;
+                    return LOCATION_MODE_HIGH_ACCURACY;
                 } else if (networkEnabled) {
-                    return LOCATION_MODE_BATTERY_SAVING;
+                    return LOCATION_MODE_HIGH_ACCURACY;
                 } else {
                     return LOCATION_MODE_OFF;
                 }
