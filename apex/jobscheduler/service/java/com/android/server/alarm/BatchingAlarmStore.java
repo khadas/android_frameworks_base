@@ -20,6 +20,9 @@ import static com.android.server.alarm.AlarmManagerService.DEBUG_BATCH;
 import static com.android.server.alarm.AlarmManagerService.clampPositive;
 import static com.android.server.alarm.AlarmManagerService.dumpAlarmList;
 import static com.android.server.alarm.AlarmManagerService.isTimeTickAlarm;
+import static com.android.server.alarm.AlarmManagerService.mLastWakeup;
+import static com.android.server.alarm.AlarmManagerService.FLAG_WHITELIST;
+import static com.android.server.alarm.AlarmManagerService.WAKEUP_INTERVAL;
 
 import android.app.AlarmManager;
 import android.util.IndentingPrintWriter;
@@ -136,9 +139,23 @@ public class BatchingAlarmStore implements AlarmStore {
 
     @Override
     public long getNextWakeupDeliveryTime() {
+        ArrayList<Batch> waitWakeupAlarmBatchesWhitelist = new ArrayList<>();
         for (Batch b : mAlarmBatches) {
-            if (b.hasWakeups()) {
-                return b.mStart;
+            if (b.hasWakeups() && b.mStart > mLastWakeup && (b.mFlags & FLAG_WHITELIST) != 0) {
+                waitWakeupAlarmBatchesWhitelist.add(b);
+            }
+        }
+        for (Batch b : mAlarmBatches) {
+            if (b.hasWakeups() && b.mStart > mLastWakeup) {
+                if (b.mStart > mLastWakeup + WAKEUP_INTERVAL) {
+                    return b.mStart;
+                }
+                for (Batch waitBatch : waitWakeupAlarmBatchesWhitelist) {
+                    if (waitBatch.mStart < mLastWakeup + WAKEUP_INTERVAL) {
+                        return waitBatch.mStart;
+                    }
+                }
+                return mLastWakeup + WAKEUP_INTERVAL;
             }
         }
         return 0;
@@ -237,7 +254,8 @@ public class BatchingAlarmStore implements AlarmStore {
     }
 
     private void insertAndBatchAlarm(Alarm alarm) {
-        final int whichBatch = ((alarm.flags & AlarmManager.FLAG_STANDALONE) != 0) ? -1
+        final int whichBatch = ((alarm.flags & AlarmManager.FLAG_STANDALONE) != 0
+                || (alarm.flags & FLAG_WHITELIST) != 0) ? -1
                 : attemptCoalesce(alarm.getWhenElapsed(), alarm.getMaxWhenElapsed());
 
         if (whichBatch < 0) {
@@ -266,7 +284,8 @@ public class BatchingAlarmStore implements AlarmStore {
         final int n = mAlarmBatches.size();
         for (int i = 0; i < n; i++) {
             Batch b = mAlarmBatches.get(i);
-            if ((b.mFlags & AlarmManager.FLAG_STANDALONE) == 0 && b.canHold(whenElapsed, maxWhen)) {
+            if ((b.mFlags & AlarmManager.FLAG_STANDALONE) == 0 && (b.mFlags & FLAG_WHITELIST) == 0
+                    && b.canHold(whenElapsed, maxWhen)) {
                 return i;
             }
         }
@@ -310,12 +329,13 @@ public class BatchingAlarmStore implements AlarmStore {
             if (DEBUG_BATCH) {
                 Slog.v(TAG, "Adding " + alarm + " to " + this);
             }
-            if (alarm.getWhenElapsed() > mStart) {
+            if (alarm.getWhenElapsed() < mStart && (mEnd - mStart) < WAKEUP_INTERVAL) {
                 mStart = alarm.getWhenElapsed();
                 newStart = true;
             }
-            if (alarm.getMaxWhenElapsed() < mEnd) {
+            if (alarm.getMaxWhenElapsed() > mEnd && (mEnd - mStart) < WAKEUP_INTERVAL) {
                 mEnd = alarm.getMaxWhenElapsed();
+                newStart = true;
             }
             mFlags |= alarm.flags;
 

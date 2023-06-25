@@ -48,6 +48,12 @@ prebuilt_etc {
     src: "hiddenapi-package-whitelist.xml",
 }
 
+prebuilt_etc {
+    name: "wakeup-alarmalign-whitelist.xml",
+    sub_dir: "sysconfig",
+    src: "wakeup-alarmalign-whitelist.xml",
+}
+
 // Privapp permission whitelist files
 
 prebuilt_etc {
