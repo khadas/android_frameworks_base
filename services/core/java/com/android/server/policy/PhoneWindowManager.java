@@ -3780,6 +3780,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     }
                 }
             }
+        //-----------------------rk code----------
+        } else if (ExtconUEventObserver.extconExists() &&
+                       ExtconUEventObserver.ExtconInfo.getHdmiExtconInfos("extcon.*").size() != 0) {
+            ArrayList list = (ArrayList) ExtconUEventObserver.ExtconInfo.getHdmiExtconInfos("extcon.*");
+            for (int i = 0; i < list.size(); i++) {
+                MultiHdmiVideoExtconUEventObserver observer = new MultiHdmiVideoExtconUEventObserver();
+                ExtconUEventObserver.ExtconInfo info = (ExtconUEventObserver.ExtconInfo) list.get(i);
+                plugged=observer.init(info.getName());
+                mDefaultDisplayPolicy.addHdmiPluggedState(info.getName(), plugged);
+                mDefaultDisplayPolicy.setMultiHdmiPlugged(plugged, true, info);
+            }
+        //----------------------------------------
         } else {
             final List<ExtconUEventObserver.ExtconInfo> extcons =
                     ExtconUEventObserver.ExtconInfo.getExtconInfoForTypes(
@@ -3789,16 +3801,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 HdmiVideoExtconUEventObserver observer = new HdmiVideoExtconUEventObserver();
                 plugged = observer.init(extcons.get(0));
                 mHDMIObserver = observer;
-            } else if (ExtconUEventObserver.extconExists() &&
-                       ExtconUEventObserver.ExtconInfo.getHdmiExtconInfos("extcon.*").size() != 0) {
-                ArrayList list = (ArrayList) ExtconUEventObserver.ExtconInfo.getHdmiExtconInfos("extcon.*");
-                for (int i = 0; i < list.size(); i++) {
-                    MultiHdmiVideoExtconUEventObserver observer = new MultiHdmiVideoExtconUEventObserver();
-                    ExtconUEventObserver.ExtconInfo info = (ExtconUEventObserver.ExtconInfo) list.get(i);
-                    plugged=observer.init(info.getName());
-                    mDefaultDisplayPolicy.addHdmiPluggedState(info.getName(), plugged);
-                    mDefaultDisplayPolicy.setMultiHdmiPlugged(plugged, true, info);
-                }
             } else if (localLOGV) {
                 Slog.v(TAG, "Not observing HDMI plug state because HDMI was not found.");
             }
@@ -6162,8 +6164,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    //-----------------------rk code----------
     private class MultiHdmiVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
         private static final String HDMI_EXIST = "HDMI=1";
+        private static final String NAME = "hdmi";
+        private static final String EXIST = "=1";
 
         private boolean init(String name) {
             ExtconInfo mHdmi = new ExtconInfo(name);
@@ -6189,14 +6194,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         @Override
         public Boolean parseState(ExtconInfo extconIfno, String state) {
-            // extcon event state changes from kernel4.9
-            // new state will be like STATE=HDMI=1
-            return state.contains(HDMI_EXIST);
+            // state: HDMI=1 or state: hdmi*=1
+            return (state.contains(NAME) && state.contains(EXIST))
+                || state.contains(HDMI_EXIST);
         }
     }
 
     private class MultiDpVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
         private static final String DP_EXIST = "DP=1";
+        private static final String NAME = "dp";
+        private static final String EXIST = "=1";
 
         private boolean init(String name) {
             ExtconInfo mDp= new ExtconInfo(name);
@@ -6225,10 +6232,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         @Override
         public Boolean parseState(ExtconInfo extconIfno, String state) {
-            // extcon event state changes from kernel4.9
-            // new state will be like STATE=DP=1
-            return state.contains(DP_EXIST);
+            // state: DP=1 or state: dp*=1
+            return (state.contains(NAME) && state.contains(EXIST))
+                || state.contains(DP_EXIST);
         }
     }
+    //----------------------------------------
 
 }
