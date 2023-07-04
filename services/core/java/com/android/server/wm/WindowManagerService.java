@@ -364,6 +364,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.LinkedHashMap;
+import java.util.ListIterator;
+import java.util.Iterator;
+import java.lang.String;
+import java.util.Collection;
 
 /** {@hide} */
 public class WindowManagerService extends IWindowManager.Stub
@@ -1404,6 +1409,49 @@ public class WindowManagerService extends IWindowManager.Stub
         return false;
     }
 
+    //dump window info;
+    private void dumpWindowInfo() {
+        synchronized(mWindowMap) {
+            Collection<WindowState> wms = mWindowMap.values();
+            Slog.w(TAG_WM, "[dumpWindowInfo] mWindowMap size:" + mWindowMap.size());
+
+            Iterator<WindowState> iterator = wms.iterator();
+            while (iterator.hasNext()) {
+                WindowState wm = iterator.next();
+                Slog.w(TAG_WM, "[dumpWindowInfo] type:" + wm.mAttrs.type + ",title:" + wm.mAttrs.getTitle().toString() + ", getParentWindow:" + wm.getParentWindow() + ",isChildWindow:" + wm.isChildWindow() + ", isOnScreen:" +wm.isOnScreen());
+
+                if (getFocusedWindowLocked() != null) {
+                    Slog.w(TAG_WM, "[dumpWindowInfo] focus title:" + getFocusedWindowLocked().mAttrs.getTitle().toString() + ",type:" + getFocusedWindowLocked().mAttrs.type);
+                }
+            }
+        }
+    }
+
+
+    //mWindowMap is from bottom to top window map, so we need to get from last value .
+    //TYPE_BASE_APPLICATION is default apk window,and add subtitle view to this window.
+    //this interface fix some focus window exit, while video still play scene.
+    private WindowState getTopApplicationWindowLocked() {
+        synchronized(mWindowMap) {
+            Map<IBinder, WindowState> linkedHashMap = new LinkedHashMap<IBinder, WindowState>();
+            linkedHashMap.putAll(mWindowMap);
+            ListIterator<Map.Entry<IBinder, WindowState>> i = new ArrayList<Map.Entry<IBinder, WindowState>>(linkedHashMap.entrySet()).listIterator(linkedHashMap.size());
+            //get last window---top window
+            while (i.hasPrevious()) {
+                WindowState wm = i.previous().getValue();
+                Slog.w(TAG_WM, "[getTopApplicationWindowLocked] type:" + wm.mAttrs.type + ",title:" + wm.mAttrs.getTitle().toString() + ", getParentWindow:" + wm.getParentWindow() + ",isChildWindow:" + wm.isChildWindow() + ", isOnScreen:" +wm.isOnScreen());
+                //only TYPE_BASE_APPLICATION cannot get top window for subtitle ,need isOnScreen true
+                if (wm.mAttrs.type == WindowManager.LayoutParams.TYPE_BASE_APPLICATION && wm.isOnScreen()) {
+                    Slog.w(TAG_WM, "[getTopApplicationWindowLocked] get base application window!");
+                    linkedHashMap.clear();
+                    return wm;
+                }
+            }
+            linkedHashMap.clear();
+        }
+        Slog.w(TAG_WM, "[getTopApplicationWindowLocked] not get base application window, get focus window");
+        return getFocusedWindowLocked();
+    }
     public int addWindow(Session session, IWindow client, LayoutParams attrs, int viewVisibility,
             int displayId, int requestUserId, @InsetsType int requestedVisibleTypes,
             InputChannel outInputChannel, InsetsState outInsetsState,
@@ -1423,6 +1471,22 @@ public class WindowManagerService extends IWindowManager.Stub
         final int callingUid = Binder.getCallingUid();
         final int callingPid = Binder.getCallingPid();
         final long origId = Binder.clearCallingIdentity();
+
+        final String SUBTITLE_WIN_TITLE = "Fallback-system-overlay-subtitle";
+        String attrsTitle = attrs.getTitle().toString();
+        Slog.w(TAG_WM, "[addWindow] title:" + attrsTitle);
+        if (SUBTITLE_WIN_TITLE.equals(attrsTitle)) {
+            Slog.w(TAG_WM, "[addWindow] get Focus Window!");
+            //dumpWindowInfo();   //for debug
+            WindowState windowState = getTopApplicationWindowLocked();//getFocusedWindowLocked();
+            if (windowState != null) {
+                Slog.w(TAG_WM, "[addWindow] add subtitle window token!");
+                //type TYPE_APPLICATION_MEDIA_OVERLAY subtitle window  show video layer
+                attrs.type =  WindowManager.LayoutParams.TYPE_APPLICATION_MEDIA_OVERLAY;
+                attrs.token = windowState.mClient.asBinder();
+            }
+        }
+
         final int type = attrs.type;
 
         synchronized (mGlobalLock) {
