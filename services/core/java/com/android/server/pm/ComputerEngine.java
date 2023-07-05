@@ -344,6 +344,10 @@ public class ComputerEngine implements Computer {
             mSettings.dumpPackagesLPr(pw, packageName, permissionNames, dumpState, checkin);
         }
 
+	public void dumpPackagePerformanceMode(PrintWriter pw, DumpState dumpState) {
+            mSettings.dumpPackagePerformanceMode(pw, dumpState);
+        }
+
         public void dumpKeySet(PrintWriter pw, String packageName, DumpState dumpState) {
             mSettings.getKeySetManagerService().dumpLPr(pw, packageName, dumpState);
         }
@@ -5782,6 +5786,11 @@ public class ComputerEngine implements Computer {
             @NonNull ArraySet<String> permissionNames, @NonNull DumpState dumpState,
             boolean checkin) {
         mSettings.dumpPackages(pw, packageName, permissionNames, dumpState, checkin);
+    }
+
+    @Override
+    public void dumpPackagePerformanceMode(@NonNull PrintWriter pw, @NonNull DumpState dumpState) {
+        mSettings.dumpPackagePerformanceMode(pw, dumpState);
     }
 
     @Override

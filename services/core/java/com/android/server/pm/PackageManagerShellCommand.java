@@ -358,6 +358,8 @@ class PackageManagerShellCommand extends ShellCommand {
                     return runWaitForHandler(/* forBackgroundHandler= */ false);
                 case "wait-for-background-handler":
                     return runWaitForHandler(/* forBackgroundHandler= */ true);
+                case "add-performance-package":
+                    return runAddPerformancePkg();
                 default: {
                     if (ART_SERVICE_COMMANDS.contains(cmd)) {
                         if (DexOptHelper.useArtService()) {
@@ -3636,6 +3638,22 @@ class PackageManagerShellCommand extends ShellCommand {
         } else {
             pw.println("Timeout. PackageManager handlers are still busy.");
             return -1;
+        }
+    }
+
+    private int runAddPerformancePkg() {
+        final PrintWriter err = getErrPrintWriter();
+        final String pkgName = getNextArg();
+        if (pkgName == null) {
+            err.println("Error: expected Package name");
+            return 1;
+        }
+        try {
+            mInterface.setPackagePerformanceMode(pkgName);
+            return 0;
+        } catch (Exception e) {
+            err.println(e.toString());
+            return 1;
         }
     }
 

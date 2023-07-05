@@ -266,6 +266,8 @@ final class DumpHelper {
                 }
             } else if ("protected-broadcasts".equals(cmd)) {
                 dumpState.setDump(DumpState.DUMP_PROTECTED_BROADCASTS);
+            } else if ("perf".equals(cmd)) {
+                dumpState.setDump(DumpState.DUMP_PERF_MODE);
             }
         }
 
@@ -502,6 +504,10 @@ final class DumpHelper {
                     }
                 }
             });
+        }
+
+	if (dumpState.isDumping(DumpState.DUMP_PERF_MODE) && packageName == null) {
+            snapshot.dumpPackagePerformanceMode(pw, dumpState);
         }
 
         if (!checkin

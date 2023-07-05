@@ -75,6 +75,9 @@ interface IPackageManager {
     int getPackageUid(String packageName, long flags, int userId);
     int[] getPackageGids(String packageName, long flags, int userId);
 
+    int getPackagePerformanceMode(String packageName);
+    void setPackagePerformanceMode(String packageName);
+
     @UnsupportedAppUsage
     String[] currentToCanonicalPackageNames(in String[] names);
     @UnsupportedAppUsage

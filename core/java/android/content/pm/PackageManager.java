@@ -5409,6 +5409,24 @@ public abstract class PackageManager {
     }
 
     /**
+     * @return whether a given package should running with performance mode.
+     *
+     * @hide
+     */
+    public int getPackagePerformanceMode(@NonNull String packageName) {
+        throw new UnsupportedOperationException(
+            "getPackagePerformanceMode not implemented in subclass");
+    }
+
+    /**
+     * @hide
+     */
+    public void setPackagePerformanceMode(@NonNull String packageName) {
+        throw new UnsupportedOperationException(
+            "getPackagePerformanceMode not implemented in subclass");
+    }
+
+    /**
      * Map from the current package names in use on the device to whatever
      * the current canonical name of that package is.
      * @param packageNames Array of current names to be mapped.
