@@ -2227,6 +2227,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Intent.EXTRA_DOCK_STATE_UNDOCKED));
         }
 
+        // register for screenshot broadcasts
+        filter = new IntentFilter("android.intent.action.SCREENSHOT");
+        mContext.registerReceiver(mScreenshotReceiver, filter);
+
         // register for multiuser-relevant broadcasts
         filter = new IntentFilter(Intent.ACTION_USER_SWITCHED);
         mContext.registerReceiver(mMultiuserReceiver, filter);
@@ -4911,6 +4915,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         startActivityAsUser(voiceIntent, UserHandle.CURRENT_OR_SELF);
         mBroadcastWakeLock.release();
     }
+
+    BroadcastReceiver mScreenshotReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            interceptScreenshotChord(
+                    TAKE_SCREENSHOT_FULLSCREEN, getScreenshotChordLongPressDelay());
+        }
+    };
 
     BroadcastReceiver mDockReceiver = new BroadcastReceiver() {
         @Override

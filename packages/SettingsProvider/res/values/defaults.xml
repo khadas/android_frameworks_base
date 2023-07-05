@@ -321,4 +321,7 @@
 
     <!-- Whether vibrate icon is shown in the status bar by default. -->
     <integer name="def_statusBarVibrateIconEnabled">0</integer>
+
+    <!-- should show the screenshot button default -->
+    <integer name="def_screenshot_button_show">0</integer>
 </resources>

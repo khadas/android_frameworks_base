@@ -58,9 +58,12 @@ import android.annotation.NonNull;
 import android.app.ActivityTaskManager;
 import android.app.IActivityTaskManager;
 import android.app.StatusBarManager;
+import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
 import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -72,7 +75,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.SystemClock;
+import android.os.SystemProperties;
+import android.os.UserHandle;
 import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.telecom.TelecomManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -188,6 +195,7 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     /** Allow some time inbetween the long press for back and recents. */
     private static final int LOCK_TO_APP_GESTURE_TOLERANCE = 200;
     private static final long AUTODIM_TIMEOUT_MS = 2250;
+    private static final long SCREENSHOT_TIME_INTERVAL = 3000;
 
     private final Context mContext;
     private final Bundle mSavedState;
@@ -229,6 +237,9 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
 
     private int mNavigationIconHints = 0;
     private @TransitionMode int mTransitionMode;
+    // @Rockchip add screenshot
+    private ContentObserver mScreenshotShowObserver;
+    // @end
     private boolean mLongPressHomeEnabled;
 
     private int mDisabledFlags1;
@@ -284,6 +295,8 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     private boolean mImeVisible;
     private final Rect mSamplingBounds = new Rect();
     private final Binder mInsetsSourceOwner = new Binder();
+    private long mLastClickScreenshotTime = 0;
+    private ContentResolver mContentResolver;
 
     /**
      * When quickswitching between apps of different orientations, we draw a secondary home handle
@@ -704,6 +717,22 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         // start firing, since the latter is source of truth
         parseCurrentSysuiState();
         mCommandQueue.addCallback(this);
+
+        // @Rockchip add screenshot
+        mContentResolver = mContext.getContentResolver();
+        mScreenshotShowObserver = new ContentObserver(mContext.getMainThreadHandler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                boolean isShow = Settings.System.getInt(mContext.getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 0) == 1;
+                ButtonDispatcher screenshotButton = mView.getScreenshotButton();
+                screenshotButton.setVisibility(isShow ? View.VISIBLE : View.GONE);
+            }
+        };
+        mContentResolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.SCREENSHOT_BUTTON_SHOW), true,
+                mScreenshotShowObserver, UserHandle.USER_ALL);
+        // @end
+
         mHomeButtonLongPressDurationMs = Optional.of(mDeviceConfigProxy.getLong(
                 DeviceConfig.NAMESPACE_SYSTEMUI,
                 HOME_BUTTON_LONG_PRESS_DURATION_MS,
@@ -736,6 +765,12 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         mWindowManager.removeViewImmediate(mView.getRootView());
         mNavigationModeController.removeListener(mModeChangedListener);
         mEdgeBackGestureHandler.setStateChangeCallback(null);
+
+        // @Rockchip add screenshot
+        if (null != mScreenshotShowObserver) {
+            mContentResolver.unregisterContentObserver(mScreenshotShowObserver);
+        }
+        // @end
 
         mNavBarHelper.removeNavTaskStateUpdater(mNavbarTaskbarStateUpdater);
         mNotificationShadeDepthController.removeListener(mDepthListener);
@@ -1306,6 +1341,31 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         accessibilityButton.setOnLongClickListener(this::onAccessibilityLongClick);
         updateAccessibilityStateFlags();
 
+        ButtonDispatcher screenshotButton = mView.getScreenshotButton();
+        screenshotButton.setOnClickListener(this:: screenshotClick);
+        boolean isShow=Settings.System.getInt(mContext.getContentResolver(), Settings.System.SCREENSHOT_BUTTON_SHOW, 0) == 1;
+        if(isShow){
+            screenshotButton.setVisibility(View.VISIBLE);
+        }else{
+            screenshotButton.setVisibility(View.GONE);
+        }
+
+        ButtonDispatcher volumeAddButton=mView.getVolumeAddButton();
+        ButtonDispatcher volumeSubButton=mView.getVolumeSubButton();
+        //boolean isShowVolumeButton = "true".equals(SystemProperties.get("ro.rk.systembar.voiceicon","true"));
+        boolean isShowVolumeButton = true;
+        if(isShowVolumeButton){
+            volumeAddButton.setVisibility(View.VISIBLE);
+            volumeSubButton.setVisibility(View.VISIBLE);
+        }else{
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
+        if (mContext.getResources().getConfiguration().smallestScreenWidthDp < 400) {
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
+
         ButtonDispatcher imeSwitcherButton = mView.getImeSwitchButton();
         imeSwitcherButton.setOnClickListener(this::onImeSwitcherClick);
 
@@ -1504,6 +1564,16 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
                 display != null ? display.getDisplayId() : mDisplayTracker.getDefaultDisplayId());
     }
 
+    private void screenshotClick(View v) {
+        long nowTime = SystemClock.elapsedRealtime();
+        if (nowTime - mLastClickScreenshotTime < SCREENSHOT_TIME_INTERVAL) {
+            return;
+        }
+        Intent intent=new Intent("android.intent.action.SCREENSHOT");
+        mContext.sendBroadcast(intent);
+        mLastClickScreenshotTime = nowTime;
+    }
+
     private boolean onAccessibilityLongClick(View v) {
         final Intent intent = new Intent(AccessibilityManager.ACTION_CHOOSE_ACCESSIBILITY_BUTTON);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -1528,9 +1598,9 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         int a11yFlags = mNavBarHelper.getA11yButtonState();
         boolean clickable = (a11yFlags & SYSUI_STATE_A11Y_BUTTON_CLICKABLE) != 0;
         boolean longClickable = (a11yFlags & SYSUI_STATE_A11Y_BUTTON_LONG_CLICKABLE) != 0;
-
         mSysUiFlagsContainer.setFlag(SYSUI_STATE_A11Y_BUTTON_CLICKABLE, clickable)
                 .setFlag(SYSUI_STATE_A11Y_BUTTON_LONG_CLICKABLE, longClickable)
+
                 .setFlag(SYSUI_STATE_NAV_BAR_HIDDEN, !isNavBarWindowVisible())
                 .setFlag(SYSUI_STATE_IME_SHOWING,
                         (mNavigationIconHints & NAVIGATION_HINT_BACK_ALT) != 0)
@@ -1835,6 +1905,12 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
                 useNearestRegion);
         updateButtonLocation(
                 region, touchRegionCache, mView.getAccessibilityButton(), inScreenSpace,
+                useNearestRegion);
+        updateButtonLocation(region, touchRegionCache, mView.getVolumeAddButton(), inScreenSpace,
+                useNearestRegion);
+        updateButtonLocation(region, touchRegionCache, mView.getVolumeSubButton(), inScreenSpace,
+                useNearestRegion);
+        updateButtonLocation(region, touchRegionCache, mView.getScreenshotButton(), inScreenSpace,
                 useNearestRegion);
         if (includeFloatingButtons && mView.getFloatingRotationButton().isVisible()) {
             // Note: this button is floating so the nearest region doesn't apply
