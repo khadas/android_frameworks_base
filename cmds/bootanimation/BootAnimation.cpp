@@ -1274,6 +1274,8 @@ status_t BootAnimation::readyToRun() {
 
     mMaxWidth = android::base::GetIntProperty("ro.surface_flinger.max_graphics_width", 0);
     mMaxHeight = android::base::GetIntProperty("ro.surface_flinger.max_graphics_height", 0);
+    mInitWidth = android::base::GetIntProperty("ro.bootanimation_optimal_display_width", 1920);
+    mInitHeight = android::base::GetIntProperty("ro.bootanimation_optimal_display_height", 1080);
     ui::Size resolution = displayMode.resolution;
     resolution = limitSurfaceSize(resolution.width, resolution.height);
     // create the native surface
@@ -1318,8 +1320,8 @@ status_t BootAnimation::readyToRun() {
     mDisplay = display;
     mContext = context;
     mSurface = surface;
-    mInitWidth = mWidth = w;
-    mInitHeight = mHeight = h;
+    mWidth = w;
+    mHeight = h;
     mFlingerSurfaceControl = control;
     mFlingerSurface = s;
     mTargetInset = -1;
