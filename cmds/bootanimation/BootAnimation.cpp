@@ -548,7 +548,7 @@ bool BootAnimation::bootVideo() {
     err = SurfaceComposerClient::getActiveDisplayMode(displayToken, &displayMode);
     if (err != NO_ERROR) {
         fprintf(stderr, "ERROR: unable to get active display mode\n");
-        return;
+        return false;
     }
 
     mMaxWidth = android::base::GetIntProperty("ro.surface_flinger.max_graphics_width", 0);
@@ -1537,6 +1537,9 @@ bool BootAnimation::threadLoop() {
 
     // We have no bootanimation file, so we use the stock android logo
     // animation.
+    SLOGD("BootAnimation::threadLoop");
+    property_set(BOOT_VIDEO_RUNNING_STATUS_PROP_NAME, "1");
+
     if (mZipFileName.isEmpty()) {
         ALOGD("No animation file");
         result = android();
