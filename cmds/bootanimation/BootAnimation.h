@@ -35,6 +35,11 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 
+#include <sys/poll.h>
+#include <linux/input.h>
+#include <binder/IServiceManager.h>
+#include <media/mediaplayer.h>
+
 namespace android {
 
 class Surface;
@@ -168,6 +173,37 @@ private:
         BootAnimation* mBootAnimation;
     };
 
+    class BootVideoListener: public MediaPlayerListener {
+    public:
+        bool isPlayCompleted;
+        BootVideoListener();
+        ~BootVideoListener();
+        virtual void notify(int msg, int ext1, int ext2, const Parcel *obj);
+    };
+
+    class InputReaderThread : public Thread {
+    public:
+        InputReaderThread(BootAnimation* bootAnimation);
+        virtual ~InputReaderThread();
+        int close_device(const char *device);
+    private:
+        virtual status_t    readyToRun();
+        virtual bool        threadLoop();
+        bool                doThreadLoop();
+        int open_device(const char *device);
+        int scan_dir(const char *dirname);
+        int read_notify(const char *dirname, int nfd);
+
+        int mInotifyFd;
+
+        // Epoll FD list size hint.
+        //static const int EPOLL_SIZE_HINT = 8;
+        //struct pollfd mEpollFd[EPOLL_SIZE_HINT];
+        int mLastKeyCode;
+        int mLastKeyValue;
+        BootAnimation* mBootAnimation;
+    };
+
     // Display event handling
     class DisplayEventCallback;
     std::unique_ptr<DisplayEventReceiver> mDisplayEventReceiver;
@@ -211,6 +247,17 @@ private:
 
     void handleViewport(nsecs_t timestep);
     void initDynamicColors();
+
+    bool bootVideo();
+    void bootVideoSetVolume(int status);
+    bool bootVideoVolumeUI(sp<BootVideoListener> listener);
+
+    sp<InputReaderThread> mInputReaderThread = nullptr;
+    sp<MediaPlayer> mMediaPlayer;
+    int mVol;
+    int mConfig;
+    //true:mute, unmute:false
+    bool mMute;
 
     sp<SurfaceComposerClient>       mSession;
     AssetManager mAssets;
