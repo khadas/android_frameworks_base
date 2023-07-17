@@ -21,6 +21,8 @@ import static android.Manifest.permission.CONTROL_REMOTE_APP_TRANSITION_ANIMATIO
 import static android.Manifest.permission.START_TASKS_FROM_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.view.Display.INVALID_DISPLAY;
 
 import android.annotation.IntDef;
@@ -318,6 +320,20 @@ public class ActivityOptions extends ComponentOptions {
             "android:activity.applyActivityFlagsForBubbles";
 
     /**
+     * Indicates to apply {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK} to the launching shortcut.
+     * @hide
+     */
+    private static final String KEY_APPLY_MULTIPLE_TASK_FLAG_FOR_SHORTCUT =
+            "android:activity.applyMultipleTaskFlagForShortcut";
+
+    /**
+     * Indicates to apply {@link Intent#FLAG_ACTIVITY_NO_USER_ACTION} to the launching shortcut.
+     * @hide
+     */
+    private static final String KEY_APPLY_NO_USER_ACTION_FLAG_FOR_SHORTCUT =
+            "android:activity.applyNoUserActionFlagForShortcut";
+
+    /**
      * For Activity transitions, the calling Activity's TransitionListener used to
      * notify the called Activity when the shared element and the exit transitions
      * complete.
@@ -449,6 +465,8 @@ public class ActivityOptions extends ComponentOptions {
     private boolean mLockTaskMode = false;
     private boolean mDisallowEnterPictureInPictureWhileLaunching;
     private boolean mApplyActivityFlagsForBubbles;
+    private boolean mApplyMultipleTaskFlagForShortcut;
+    private boolean mApplyNoUserActionFlagForShortcut;
     private boolean mTaskAlwaysOnTop;
     private boolean mTaskOverlay;
     private boolean mTaskOverlayCanResume;
@@ -1246,6 +1264,10 @@ public class ActivityOptions extends ComponentOptions {
                 KEY_DISALLOW_ENTER_PICTURE_IN_PICTURE_WHILE_LAUNCHING, false);
         mApplyActivityFlagsForBubbles = opts.getBoolean(
                 KEY_APPLY_ACTIVITY_FLAGS_FOR_BUBBLES, false);
+        mApplyMultipleTaskFlagForShortcut = opts.getBoolean(
+                KEY_APPLY_MULTIPLE_TASK_FLAG_FOR_SHORTCUT, false);
+        mApplyNoUserActionFlagForShortcut = opts.getBoolean(
+                KEY_APPLY_NO_USER_ACTION_FLAG_FOR_SHORTCUT, false);
         if (opts.containsKey(KEY_ANIM_SPECS)) {
             Parcelable[] specs = opts.getParcelableArray(KEY_ANIM_SPECS);
             mAnimSpecs = new AppTransitionAnimationSpec[specs.length];
@@ -1707,7 +1729,9 @@ public class ActivityOptions extends ComponentOptions {
      * @hide
      */
     public int getPendingIntentLaunchFlags() {
-        return mPendingIntentLaunchFlags;
+        // b/243794108: Ignore all flags except the new task flag, to be reconsidered in b/254490217
+        return mPendingIntentLaunchFlags &
+                (FLAG_ACTIVITY_NEW_TASK | FLAG_RECEIVER_FOREGROUND);
     }
 
     /**
@@ -1813,6 +1837,26 @@ public class ActivityOptions extends ComponentOptions {
     /**  @hide */
     public boolean isApplyActivityFlagsForBubbles() {
         return mApplyActivityFlagsForBubbles;
+    }
+
+    /** @hide */
+    public void setApplyMultipleTaskFlagForShortcut(boolean apply) {
+        mApplyMultipleTaskFlagForShortcut = apply;
+    }
+
+    /** @hide */
+    public boolean isApplyMultipleTaskFlagForShortcut() {
+        return mApplyMultipleTaskFlagForShortcut;
+    }
+
+    /** @hide */
+    public void setApplyNoUserActionFlagForShortcut(boolean apply) {
+        mApplyNoUserActionFlagForShortcut = apply;
+    }
+
+    /** @hide */
+    public boolean isApplyNoUserActionFlagForShortcut() {
+        return mApplyNoUserActionFlagForShortcut;
     }
 
     /**
@@ -2142,6 +2186,13 @@ public class ActivityOptions extends ComponentOptions {
         }
         if (mApplyActivityFlagsForBubbles) {
             b.putBoolean(KEY_APPLY_ACTIVITY_FLAGS_FOR_BUBBLES, mApplyActivityFlagsForBubbles);
+        }
+        if (mApplyMultipleTaskFlagForShortcut) {
+            b.putBoolean(KEY_APPLY_MULTIPLE_TASK_FLAG_FOR_SHORTCUT,
+                    mApplyMultipleTaskFlagForShortcut);
+        }
+        if (mApplyNoUserActionFlagForShortcut) {
+            b.putBoolean(KEY_APPLY_NO_USER_ACTION_FLAG_FOR_SHORTCUT, true);
         }
         if (mAnimSpecs != null) {
             b.putParcelableArray(KEY_ANIM_SPECS, mAnimSpecs);

@@ -150,9 +150,6 @@ constructor(
                 pendingScrimReadyCallback = onReady
             }
         } else if (isFolded && !isFoldHandled && alwaysOnEnabled && isDozing) {
-            // Screen turning on for the first time after folding and we are already dozing
-            // We should play the folding to AOD animation
-
             setAnimationState(playing = true)
             centralSurfaces.notificationPanelViewController.prepareFoldToAodAnimation()
 
@@ -167,6 +164,13 @@ constructor(
         } else {
             // No animation, call ready callback immediately
             onReady.run()
+        }
+
+        if (isFolded) {
+            // Any time the screen turns on, this state needs to be reset if the device has been
+            // folded. Reaching this line implies AOD has been shown in one way or another,
+            // if enabled
+            isFoldHandled = true
         }
     }
 
@@ -186,7 +190,10 @@ constructor(
             cancelAnimation?.run()
 
             // Post starting the animation to the next frame to avoid junk due to inset changes
-            cancelAnimation = mainExecutor.executeDelayed(startAnimationRunnable, /* delayMillis= */ 0)
+            cancelAnimation = mainExecutor.executeDelayed(
+                startAnimationRunnable,
+                /* delayMillis= */ 0
+            )
             shouldPlayAnimation = false
         }
     }

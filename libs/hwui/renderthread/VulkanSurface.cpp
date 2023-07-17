@@ -63,6 +63,18 @@ static SkMatrix GetPreTransformMatrix(SkISize windowSize, int transform) {
     return SkMatrix::I();
 }
 
+static SkM44 GetPixelSnapMatrix(SkISize windowSize, int transform) {
+    // Small (~1/16th) nudge to ensure that pixel-aligned non-AA'd draws fill the
+    // desired fragment
+    static const SkScalar kOffset = 0.063f;
+    SkMatrix preRotation = GetPreTransformMatrix(windowSize, transform);
+    SkMatrix invert;
+    LOG_ALWAYS_FATAL_IF(!preRotation.invert(&invert));
+    return SkM44::Translate(kOffset, kOffset)
+            .postConcat(SkM44(preRotation))
+            .preConcat(SkM44(invert));
+}
+
 static bool ConnectAndSetWindowDefaults(ANativeWindow* window) {
     ATRACE_CALL();
 
@@ -178,6 +190,8 @@ bool VulkanSurface::InitializeWindowInfoStruct(ANativeWindow* window, ColorMode 
 
     outWindowInfo->preTransform =
             GetPreTransformMatrix(outWindowInfo->size, outWindowInfo->transform);
+    outWindowInfo->pixelSnapMatrix =
+            GetPixelSnapMatrix(outWindowInfo->size, outWindowInfo->transform);
 
     err = window->query(window, NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS, &query_value);
     if (err != 0 || query_value < 0) {
@@ -354,6 +368,14 @@ void VulkanSurface::releaseBuffers() {
     }
 }
 
+void VulkanSurface::invalidateBuffers() {
+    for (uint32_t i = 0; i < mWindowInfo.bufferCount; i++) {
+        VulkanSurface::NativeBufferInfo& bufferInfo = mNativeBuffers[i];
+        bufferInfo.hasValidContents = false;
+        bufferInfo.lastPresentedCount = 0;
+    }
+}
+
 VulkanSurface::NativeBufferInfo* VulkanSurface::dequeueNativeBuffer() {
     // Set the mCurrentBufferInfo to invalid in case of error and only reset it to the correct
     // value at the end of the function if everything dequeued correctly.
@@ -386,6 +408,10 @@ VulkanSurface::NativeBufferInfo* VulkanSurface::dequeueNativeBuffer() {
             // new NativeBufferInfo storage will be populated lazily as we dequeue each new buffer.
             mWindowInfo.actualSize = actualSize;
             releaseBuffers();
+        } else {
+            // A change in transform means we need to repaint the entire buffer area as the damage
+            // rects have just moved about.
+            invalidateBuffers();
         }
 
         if (transformHint != mWindowInfo.transform) {
@@ -406,6 +432,7 @@ VulkanSurface::NativeBufferInfo* VulkanSurface::dequeueNativeBuffer() {
         }
 
         mWindowInfo.preTransform = GetPreTransformMatrix(mWindowInfo.size, mWindowInfo.transform);
+        mWindowInfo.pixelSnapMatrix = GetPixelSnapMatrix(mWindowInfo.size, mWindowInfo.transform);
     }
 
     uint32_t idx;
