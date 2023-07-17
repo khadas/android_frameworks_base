@@ -246,6 +246,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
+
 /**
  * WindowManagerPolicy implementation for the Android phone UI.  This
  * introduces a new method suffix, Lp, for an internal lock of the
@@ -1019,6 +1023,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private static final int POWER_KEY_SUSPEND  = 0;
+    private static final int POWER_KEY_SHUTDOWN = 1;
+    private static final int POWER_KEY_FORCE_SUSPEND = 2;
+
     private void powerPress(long eventTime, int count, boolean beganFromNonInteractive) {
         // SideFPS still needs to know about suppressed power buttons, in case it needs to block
         // an auth attempt.
@@ -1036,6 +1044,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         Slog.d(TAG, "powerPress: eventTime=" + eventTime + " interactive=" + interactive
                 + " count=" + count + " beganFromNonInteractive=" + beganFromNonInteractive
                 + " mShortPressOnPowerBehavior=" + mShortPressOnPowerBehavior);
+        
+        final int definedPowerKey = SystemProperties.getInt("persist.sys.power.key.action", POWER_KEY_SUSPEND);
+        final boolean ddrWindow = SystemProperties.getBoolean("ro.first.boot.ddr.window", false);
+        Slog.d(TAG, "definedPowerKey=" + definedPowerKey + ",ddrWindow=" + ddrWindow);
+        if (definedPowerKey == POWER_KEY_SHUTDOWN || ddrWindow) {
+            mPowerManager.shutdown(false, "userrequested", false);
+            Slog.i(TAG, "shutdown here");
+            return;
+        }
+        if (definedPowerKey == POWER_KEY_FORCE_SUSPEND) {
+            mPowerManager.forceSuspend();
+            Slog.i(TAG, "forceSuspend");
+            return;
+        }
 
         if (count == 2) {
             powerMultiPressAction(eventTime, interactive, mDoublePressOnPowerBehavior);
