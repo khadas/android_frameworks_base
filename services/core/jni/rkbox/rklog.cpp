@@ -61,14 +61,15 @@ enum {
     DROPBOX_SYSTEM_SERVER_ANR = 2,
     DROPBOX_SYSTEM_SERVER_LOWMEM = 3,
     DROPBOX_SYSTEM_SERVER_WATCHDOG = 4,
-    DROPBOX_SYSTEM_RESTART = 5,
-    DROPBOX_SYSTEM_APP_CRASH = 6,
-    DROPBOX_SYSTEM_APP_ANR = 7,
-    DROPBOX_SYSTEM_SERVER_WTF = 8,
-    DROPBOX_SYSTEM_APP_WTF = 9,
-    DROPBOX_DATA_APP_ANR = 10,
-    DROPBOX_DATA_APP_CRASH =11,
-    DROPBOX_DATA_APP_WTF = 12,
+    DROPBOX_SYSTEM_BOOT = 5,
+    DROPBOX_SYSTEM_RESTART = 6,
+    DROPBOX_SYSTEM_APP_CRASH = 7,
+    DROPBOX_SYSTEM_APP_ANR = 8,
+    DROPBOX_SYSTEM_SERVER_WTF = 9,
+    DROPBOX_SYSTEM_APP_WTF = 10,
+    DROPBOX_DATA_APP_ANR = 11,
+    DROPBOX_DATA_APP_CRASH =12,
+    DROPBOX_DATA_APP_WTF = 13,
     DROPBOX_MAX_ENTRY,
 };
 
@@ -80,6 +81,7 @@ const char *dropboxName[DROPBOX_MAX_ENTRY] = {
     "system_server_anr",
     "system_server_lowmem",
     "system_server_watchdog",
+    "SYSTEM_BOOT",
     "SYSTEM_RESTART",
     "system_app_crash",
     "system_app_anr",
@@ -374,15 +376,6 @@ static void *rklog_monitor_thread(void *arg) {
     if (cpusets_enabled())
         set_cpuset_policy(0, SP_BACKGROUND);
 
-    //it's a system boot if rklog service is first start
-    property_get("sys.rklog.system_boot", prop, "0");
-    if (!strcmp(prop, "0")) {
-        int uptime = (int)get_uptime();
-        ALOGD("Booting up system, trigger a SYSTEM_BOOT bugreport,time is [%d]\n",uptime);
-        property_set("sys.rklog.system_boot", "1");
-        trig_bugreport("SYSTEM_BOOT", uptime);
-    }
-
     while (!stop_thread) {
          int poll_res = epoll_wait(epoll_fd, pending_evs, MAX_EPOLL_EVENTS, -1);
          if (poll_res <= 0) {
@@ -435,6 +428,9 @@ static void *rklog_monitor_thread(void *arg) {
          }
     }
 
+    //actually there is no need to release the resources because we want the rklog_monitor thread
+    //always running. If system_server is crash(android will be restarted), then the resources of
+    //rklog_monitor thread will be released automatically.
     rklog_clr_data();
     return NULL;
 }
@@ -466,7 +462,7 @@ int start_rklog(void)
         ALOGE("Can't add watch for %s. and the errno = %s.\n", DROBOX_PATH, strerror(errno));
         return -1;
     }
-    tombstone_wd = inotify_add_watch(inotify_fd, TOMBSTONE_PATH, IN_CLOSE_WRITE);
+    tombstone_wd = inotify_add_watch(inotify_fd, TOMBSTONE_PATH, IN_CREATE);
     if (tombstone_wd < 0) {
         ALOGE("Can't add watch for %s. and the errno = %s.\n", TOMBSTONE_PATH, strerror(errno));
         return -1;
