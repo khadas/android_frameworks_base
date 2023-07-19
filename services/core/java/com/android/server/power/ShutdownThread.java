@@ -63,7 +63,7 @@ import java.nio.charset.StandardCharsets;
 
 public final class ShutdownThread extends Thread {
     // constants
-    private static final boolean DEBUG = false;
+    private static boolean DEBUG = false;
     private static final String TAG = "ShutdownThread";
     private static final int ACTION_DONE_POLL_WAIT_MS = 500;
     private static final int RADIOS_STATE_POLL_SLEEP_MS = 100;
@@ -159,10 +159,10 @@ public final class ShutdownThread extends Thread {
         // ShutdownThread is called from many places, so best to verify here that the context passed
         // in is themed.
         context.assertRuntimeOverlayThemable();
-
         // ensure that only one thread is trying to power down.
         // any additional calls are just returned
-        synchronized (sIsStartedGuard) {
+        DEBUG = Log.isLoggable(TAG, Log.DEBUG);
+	synchronized (sIsStartedGuard) {
             if (sIsStarted) {
                 if (DEBUG) {
                     Log.d(TAG, "Request to shutdown already running, returning.");
@@ -184,7 +184,7 @@ public final class ShutdownThread extends Thread {
                         : com.android.internal.R.string.shutdown_confirm);
 
         if (DEBUG) {
-            Log.d(TAG, "Notifying thread to start shutdown longPressBehavior=" + longPressBehavior);
+            Log.d(TAG, "Notifying thread to start shutdown longPressBehavior=" + longPressBehavior + " confirm=" + confirm,new Throwable());
         }
 
         if (confirm) {
