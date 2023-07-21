@@ -43,6 +43,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.ResultReceiver;
 import android.os.ShellCallback;
@@ -297,6 +298,33 @@ public final class PinnerService extends SystemService {
      * Handler for on start pinning message
      */
     private void handlePinOnStart() {
+        // Pin files or not
+        try {
+            ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
+            mAm.getMemoryInfo(memInfo);
+            int memory_to_pin = SystemProperties.getInt("persist.pinner_service.mem", 2048);
+            long totalMemory = memInfo.totalMem;
+            Slog.i(TAG, "Current memory is " + totalMemory);
+            Slog.i(TAG, "persist.pinner_service.mem is " + memory_to_pin + "MB");
+            if (totalMemory < memory_to_pin * 1024L * 1024) {
+                Slog.w(TAG, "Just pin core file due memory is low: persist.pinner_service.mem=" + memory_to_pin);
+                String corePin = Process.is64Bit() ?
+                    "/system/framework/arm64/boot-framework.vdex":
+                    "/system/framework/arm/boot-framework.vdex";
+                PinnedFile pf = pinFile(corePin,
+                                        Integer.MAX_VALUE,
+                                        /*attemptPinIntrospection=*/false);
+                if (pf == null) {
+                    Slog.e(TAG, "Failed to pin file = " + corePin);
+                }
+                synchronized (this) {
+                    mPinnedFiles.add(pf);
+                }
+                return;
+            }
+        } catch (Exception e) {
+            Slog.e(TAG, "Failed to get meminfo from device.");
+        }
         // Files to pin come from the overlay and can be specified per-device config
         String[] filesToPin = mContext.getResources().getStringArray(
             com.android.internal.R.array.config_defaultPinnerServiceFiles);
