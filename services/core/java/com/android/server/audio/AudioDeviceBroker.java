@@ -1662,7 +1662,18 @@ public class AudioDeviceBroker {
             Log.v(TAG, "onSetForceUse(useCase<" + useCase + ">, config<" + config + ">, fromA2dp<"
                     + fromA2dp + ">, eventSource<" + eventSource + ">)");
         }
-        mAudioSystem.setForceUse(useCase, config);
+        /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+        /* Change-Id: Id7204729e7ed599af85fb820a417a699626606b0 */
+        /* 0: Auto  1: Semi-Auto  2: Manual (refer to: audio_output_strategy enum in Engine.cpp) */
+        if (useCase == AudioSystem.FOR_MEDIA){
+            int audioOutputMode = android.os.SystemProperties.getInt("persist.vendor.media.audio.output.strategy", 0);
+            if (audioOutputMode == 0) {
+                mAudioSystem.setForceUse(useCase, config);
+            }
+        } else {
+            mAudioSystem.setForceUse(useCase, config);
+        }
+        /*[Amlogic end]-----------------------------------------------------------*/
     }
 
     private void onSendBecomingNoisyIntent() {

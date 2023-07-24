@@ -1605,7 +1605,14 @@ public class AudioSystem
     /** @hide */ public static final int FORCE_ENCODED_SURROUND_NEVER = 13;
     /** @hide */ public static final int FORCE_ENCODED_SURROUND_ALWAYS = 14;
     /** @hide */ public static final int FORCE_ENCODED_SURROUND_MANUAL = 15;
-    /** @hide */ public static final int NUM_FORCE_CONFIG = 16;
+    /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+    /* Change-Id: Id7204729e7ed599af85fb820a417a699626606b0 */
+    /** @hide */ public static final int FORCE_HDMI_ARC = 16;
+    /** @hide */ public static final int FORCE_SPDIF = 17;
+    /** @hide */ public static final int FORCE_HDMI_OUT = 18;
+    /** @hide */ public static final int FORCE_SPEAKER_SPDIF = 19;
+    /** @hide */ public static final int NUM_FORCE_CONFIG = 20;
+    /*[Amlogic end]-----------------------------------------------------------*/
     /** @hide */ public static final int FORCE_DEFAULT = FORCE_NONE;
 
     /** @hide */
@@ -1627,6 +1634,13 @@ public class AudioSystem
             case FORCE_ENCODED_SURROUND_NEVER: return "FORCE_ENCODED_SURROUND_NEVER";
             case FORCE_ENCODED_SURROUND_ALWAYS: return "FORCE_ENCODED_SURROUND_ALWAYS";
             case FORCE_ENCODED_SURROUND_MANUAL: return "FORCE_ENCODED_SURROUND_MANUAL";
+            /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+            /* Change-Id: Id7204729e7ed599af85fb820a417a699626606b0 */
+            case FORCE_HDMI_ARC: return "FORCE_HDMI_ARC";
+            case FORCE_SPDIF: return "FORCE_SPDIF";
+            case FORCE_HDMI_OUT: return "FORCE_HDMI_OUT";
+            case FORCE_SPEAKER_SPDIF: return "FORCE_SPEAKER_SPDIF";
+            /*[Amlogic end]-----------------------------------------------------------*/
             default: return "unknown config (" + config + ")" ;
         }
     }

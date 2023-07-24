@@ -270,10 +270,14 @@ public class AudioService extends IAudioService.Stub
     protected static final boolean DEBUG_AP = false;
 
     /** Debug volumes */
-    protected static final boolean DEBUG_VOL = false;
+    /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+    /* Change-Id: I1daf9254471f374fd4b6d6e972a64d7d5351bf22 */
+    /* enable the volume debug log */
+    protected static final boolean DEBUG_VOL = true;
 
     /** debug calls to devices APIs */
-    protected static final boolean DEBUG_DEVICES = false;
+    protected static final boolean DEBUG_DEVICES = true;
+    /*[Amlogic end]-----------------------------------------------------------*/
 
     /** Debug communication route */
     protected static final boolean DEBUG_COMM_RTE = false;
@@ -7151,10 +7155,29 @@ public class AudioService extends IAudioService.Stub
             // selection if not the speaker.
             //  - HDMI-CEC system audio mode only output: give priority to available item in order.
 
-            if (deviceSet.contains(AudioSystem.DEVICE_OUT_DGTL_DOCK_HEADSET)) {
+            /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+            /* Change-Id: Id7204729e7ed599af85fb820a417a699626606b0 */
+            for (int deviceType : deviceSet) {
+                if (AudioSystem.DEVICE_OUT_ALL_A2DP_SET.contains(deviceType)) {
+                    return deviceType;
+                }
+            }
+            for (int deviceType : deviceSet) {
+                if (AudioSystem.DEVICE_OUT_ALL_SCO_SET.contains(deviceType)) {
+                    return deviceType;
+                }
+            }
+            for (int deviceType : deviceSet) {
+                if (AudioSystem.DEVICE_OUT_ALL_USB_SET.contains(deviceType)) {
+                    return deviceType;
+                }
+            }
+            if (deviceSet.contains(AudioSystem.DEVICE_OUT_WIRED_HEADPHONE)) {
+                return AudioSystem.DEVICE_OUT_WIRED_HEADPHONE;
+            } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_WIRED_HEADSET)) {
+                return AudioSystem.DEVICE_OUT_WIRED_HEADSET;
+            } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_DGTL_DOCK_HEADSET)) {
                 return AudioSystem.DEVICE_OUT_DGTL_DOCK_HEADSET;
-            } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_SPEAKER)) {
-                return AudioSystem.DEVICE_OUT_SPEAKER;
             } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_SPEAKER_SAFE)) {
                 // Note: DEVICE_OUT_SPEAKER_SAFE not present in getDeviceSetForStreamDirect
                 return AudioSystem.DEVICE_OUT_SPEAKER_SAFE;
@@ -7162,6 +7185,11 @@ public class AudioService extends IAudioService.Stub
                 return AudioSystem.DEVICE_OUT_HDMI_ARC;
             } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_HDMI_EARC)) {
                 return AudioSystem.DEVICE_OUT_HDMI_EARC;
+            } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_HDMI)) {
+                return AudioSystem.DEVICE_OUT_HDMI;
+            } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_SPEAKER)) {
+                return AudioSystem.DEVICE_OUT_SPEAKER;
+            /*[Amlogic end]-----------------------------------------------------------*/
             } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_AUX_LINE)) {
                 return AudioSystem.DEVICE_OUT_AUX_LINE;
             } else if (deviceSet.contains(AudioSystem.DEVICE_OUT_SPDIF)) {
@@ -11008,10 +11036,18 @@ public class AudioService extends IAudioService.Stub
                 }
                 if (mHdmiSystemAudioSupported != on) {
                     mHdmiSystemAudioSupported = on;
-                    final int config = on ? AudioSystem.FORCE_HDMI_SYSTEM_AUDIO_ENFORCED :
-                        AudioSystem.FORCE_NONE;
-                    mDeviceBroker.setForceUse_Async(AudioSystem.FOR_HDMI_SYSTEM_AUDIO, config,
-                            "setHdmiSystemAudioSupported");
+                    /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                    /* Change-Id: Id7204729e7ed599af85fb820a417a699626606b0 */
+                    /* 1. Drop the FORCE_HDMI_SYSTEM_AUDIO_ENFORCED.
+                     * 2. Set force use ARC output when arc connected. Use only in Auto mode strategy. (refer to: audio_output_strategy enum in Engine.cpp)
+                     * 3. Do not set forceuse NONE, for example, we are now connected ARC, Speaker has a higher priority
+                     *    than Spdif, we set forceuse Spdif, then unplug ARC, this will result in output by Speaker. */
+                    final int config = on ? AudioSystem.FORCE_HDMI_ARC : AudioSystem.FORCE_NONE;
+                    if (on) {
+                        mDeviceBroker.setForceUse_Async(AudioSystem.FOR_MEDIA, config,
+                                "setHdmiSystemAudioSupported");
+                    }
+                    /*[Amlogic end]-----------------------------------------------------------*/
                 }
                 // TODO(b/185386781): Update AudioManager API to use device list.
                 // So far, this value appears to be advisory for debug log.

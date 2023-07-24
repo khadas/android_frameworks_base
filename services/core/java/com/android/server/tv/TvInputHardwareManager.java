@@ -862,7 +862,13 @@ class TvInputHardwareManager implements TvInputHal.Callback {
 
             @Override
             public void onAudioPatchListUpdate(AudioPatch[] patchList) {
-                // No-op
+                /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                /* Change-Id: Id7204729e7ed599af85fb820a417a699626606b0 */
+                /* we need recreate dev->dev patch while output device changed. */
+                synchronized (mImplLock) {
+                    updateAudioConfigLocked();
+                }
+                /*[Amlogic end]-----------------------------------------------------------*/
             }
 
             @Override

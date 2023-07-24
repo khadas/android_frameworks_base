@@ -748,8 +748,12 @@ public class AudioDeviceInventory {
     /*package*/ void onSetWiredDeviceConnectionState(
                             AudioDeviceInventory.WiredDeviceConnectionState wdcs) {
         int type = wdcs.mAttributes.getInternalType();
-
-        AudioService.sDeviceLogger.enqueue(new AudioServiceEvents.WiredDevConnectEvent(wdcs));
+        /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+        /* Change-Id: Ib6b9f86c8bd2b3bcd567423a553ac94964436001 */
+        AudioServiceEvents.WiredDevConnectEvent wdce = new AudioServiceEvents.WiredDevConnectEvent(wdcs);
+        Slog.d("AudioService", wdce.eventToString());
+        AudioService.sDeviceLogger.enqueue(wdce);
+        /*[Amlogic end]-----------------------------------------------------------*/
 
         MediaMetrics.Item mmi = new MediaMetrics.Item(mMetricsId
                 + "onSetWiredDeviceConnectionState")

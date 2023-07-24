@@ -573,6 +573,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     Intent mVrHeadsetHomeIntent;
     boolean mPendingMetaAction;
     boolean mPendingCapsLockToggle;
+    /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+    /* SWPL-85412 I3fc15b491ea1414027cdc6baca89a38bf566b58d */
+    boolean mBlueKeyLongPressed = false;
+    /*[Amlogic end]-----------------------------------------------------------*/
 
     // support for activating the lock screen while the screen is on
     private HashSet<Integer> mAllowLockscreenWhenOnDisplays = new HashSet<>();
@@ -3314,6 +3318,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     logKeyboardSystemsEvent(event, KeyboardLogEvent.ALL_APPS);
                 }
                 return true;
+            /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+            /* SWPL-85412 I3fc15b491ea1414027cdc6baca89a38bf566b58d */
+            case KeyEvent.KEYCODE_PROG_BLUE:
+                if (repeatCount == 3) {
+                    mBlueKeyLongPressed = true;
+                }
+                if (down && mBlueKeyLongPressed) {
+                    Intent intent = new Intent();
+                    String packageName = "com.droidlogic.tv.settings";
+                    String className = "com.droidlogic.tv.settings.QuickSettingActivity";
+                    intent.setClassName(packageName, className);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                    mBlueKeyLongPressed = false;
+                    return true;
+                }
+                return false;
+            /*[Amlogic end]-----------------------------------------------------------*/
             case KeyEvent.KEYCODE_NOTIFICATION:
                 if (!down) {
                     toggleNotificationPanel();
