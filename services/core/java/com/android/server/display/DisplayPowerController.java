@@ -2711,7 +2711,8 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
      * @return True if the display state is ready to update
      */
     private boolean readyToUpdateDisplayState() {
-        return mDisplayId == Display.DEFAULT_DISPLAY || mBootCompleted;
+        //return mDisplayId == Display.DEFAULT_DISPLAY || mBootCompleted;
+	return true;
     }
 
     public void dump(final PrintWriter pw) {
