@@ -16,7 +16,7 @@
 
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Skeleton string format for displaying the time in 12-hour format. -->
-    <string name="clock_12hr_format">hm</string>
+    <string name="clock_12hr_format">ahm</string>
 
     <!-- Skeleton string format for displaying the time in 24-hour format. -->
     <string name="clock_24hr_format">Hm</string>
