@@ -271,6 +271,8 @@ static unsigned int gen_tombstone_hash(char *path)
             if (max_check_bt-- <= 0)
                 break;
             char *pos = strchr(buf, '/');
+            if (pos == NULL)
+                continue;
             while (*pos)
                 hash += (hash << 5) + (*pos++);
         }
