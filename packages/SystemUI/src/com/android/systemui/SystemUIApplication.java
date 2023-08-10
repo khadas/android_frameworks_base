@@ -49,6 +49,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javax.inject.Provider;
+import rockchip.hardware.hdmi.V1_0.IHdmi;
+import rockchip.hardware.hdmi.V1_0.IHdmiAudioCallback;
+import android.os.RemoteException;
+import android.media.AudioStream;
 
 /**
  * Application class for SystemUI.
@@ -60,7 +64,6 @@ public class SystemUIApplication extends Application implements
     private static final boolean DEBUG = false;
 
     private BootCompleteCacheImpl mBootCompleteCache;
-
     /**
      * Hold a reference on the stuff we start.
      */
@@ -69,6 +72,34 @@ public class SystemUIApplication extends Application implements
     private SystemUIAppComponentFactoryBase.ContextAvailableCallback mContextAvailableCallback;
     private SysUIComponent mSysUIComponent;
     private SystemUIInitializer mInitializer;
+
+    class HdmiAudioCallback extends IHdmiAudioCallback.Stub{
+        Context mContext;
+        AudioStream mAudioStream;
+        private void startHdmiAudioService(String cameraId) {
+            Log.d(TAG, "startHdmiAudioService cameraId:"+cameraId);
+            mAudioStream.start();
+        }
+
+        private void stopHdmiAudioService(String cameraId) {
+            Log.d(TAG, "stopHdmiAudioService cameraId:"+cameraId);
+            mAudioStream.stop();
+        }
+        public  HdmiAudioCallback(Context context){
+            mContext = context;
+            mAudioStream = new AudioStream(getApplicationContext());
+        }
+
+        public void onConnect(String cameraId) throws RemoteException {
+            startHdmiAudioService(cameraId);
+        }
+
+
+        public void onDisconnect(String cameraId) throws RemoteException {
+            stopHdmiAudioService(cameraId);
+        }
+    }
+    HdmiAudioCallback mHdmiAudioCallback;
 
     public SystemUIApplication() {
         super();
@@ -81,6 +112,18 @@ public class SystemUIApplication extends Application implements
         return mInitializer.getRootComponent();
     }
 
+    @Override
+    public void onTerminate() {
+        super.onTerminate();
+        try {
+            IHdmi service = IHdmi.getService(true);
+            service.removeAudioListener((IHdmiAudioCallback)mHdmiAudioCallback);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     @Override
     public void onCreate() {
         super.onCreate();
@@ -99,6 +142,15 @@ public class SystemUIApplication extends Application implements
         // This allows us to see Handler callbacks on traces.
         Looper.getMainLooper().setTraceTag(Trace.TRACE_TAG_APP);
 
+        try {
+            IHdmi service = IHdmi.getService(true);
+            mHdmiAudioCallback = new HdmiAudioCallback(getApplicationContext());
+            service.addAudioListener((IHdmiAudioCallback)mHdmiAudioCallback);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         // Set the application theme that is inherited by all services. Note that setting the
         // application theme in the manifest does only work for activities. Keep this in sync with
         // the theme set there.

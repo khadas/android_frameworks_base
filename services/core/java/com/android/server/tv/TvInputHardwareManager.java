@@ -40,6 +40,7 @@ import android.media.AudioPatch;
 import android.media.AudioPort;
 import android.media.AudioPortConfig;
 import android.media.AudioSystem;
+import android.media.AudioStream;
 import android.media.tv.ITvInputHardware;
 import android.media.tv.ITvInputHardwareCallback;
 import android.media.tv.TvInputHardwareInfo;
@@ -98,6 +99,7 @@ class TvInputHardwareManager implements TvInputHal.Callback {
     private final Map<String, TvInputInfo> mInputMap = new ArrayMap<>();
 
     private final AudioManager mAudioManager;
+    private final AudioStream mAudioStream;
     private final IHdmiHotplugEventListener mHdmiHotplugEventListener =
             new HdmiHotplugEventListener();
     private final IHdmiDeviceEventListener mHdmiDeviceEventListener = new HdmiDeviceEventListener();
@@ -126,6 +128,7 @@ class TvInputHardwareManager implements TvInputHal.Callback {
         mContext = context;
         mListener = listener;
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        mAudioStream = new AudioStream(context);
         mHal.init();
     }
 
@@ -868,6 +871,7 @@ class TvInputHardwareManager implements TvInputHal.Callback {
             @Override
             public void onServiceDied() {
                 synchronized (mImplLock) {
+                    mAudioStream.stop();
                     mAudioSource = null;
                     mAudioSink.clear();
                     if (mAudioPatch != null) {
@@ -960,6 +964,7 @@ class TvInputHardwareManager implements TvInputHal.Callback {
                     // The value of config is ignored when surface == null.
                     if (mActiveConfig != null) {
                         result = mHal.removeStream(mInfo.getDeviceId(), mActiveConfig);
+                        mAudioStream.stop();
                         mActiveConfig = null;
                     } else {
                         // We already have no active stream.
@@ -981,6 +986,7 @@ class TvInputHardwareManager implements TvInputHal.Callback {
                     if (result == TvInputHal.SUCCESS) {
                         result = mHal.addOrUpdateStream(mInfo.getDeviceId(), surface, config);
                         if (result == TvInputHal.SUCCESS) {
+                            mAudioStream.start();
                             mActiveConfig = config;
                         }
                     }

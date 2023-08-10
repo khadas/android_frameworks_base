@@ -200,6 +200,7 @@ android_library {
         "lottie",
         "LowLightDreamLib",
         "motion_tool_lib",
+        "rockchip.hardware.hdmi-V1.0-java",
     ],
     manifest: "AndroidManifest.xml",
 
@@ -410,6 +411,7 @@ android_library {
         "androidx.test.ext.junit",
         "androidx.test.ext.truth",
         "kotlin-test",
+        "rockchip.hardware.hdmi-V1.0-java",
     ],
     libs: [
         "android.test.runner",
