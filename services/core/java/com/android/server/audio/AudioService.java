@@ -320,6 +320,11 @@ public class AudioService extends IAudioService.Stub
     private boolean mNotifAliasRing = false;
 
     /**
+     * whether use android aosp volume ui in volume control.
+     */
+    private boolean mUseAnroidVolumeUi;
+
+    /**
      * Test method to temporarily override whether STREAM_NOTIFICATION is aliased to STREAM_RING,
      * volumes will be updated in case of a change.
      * @param alias if true, STREAM_NOTIFICATION is aliased to STREAM_RING
@@ -1067,6 +1072,9 @@ public class AudioService extends IAudioService.Stub
         mUseVolumeGroupAliases = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_handleVolumeAliasesUsingVolumeGroups);
 
+        mUseAnroidVolumeUi = mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_cecUseAndroidVolumeBar);
+
         // Initialize volume
         // Priority 1 - Android Property
         // Priority 2 - Audio Policy Service
@@ -1468,6 +1476,23 @@ public class AudioService extends IAudioService.Stub
                 }
                 mHdmiPlaybackClient = mHdmiManager.getPlaybackClient();
                 mHdmiAudioSystemClient = mHdmiManager.getAudioSystemClient();
+
+                if (mHdmiPlaybackClient != null) {
+                    mAxelInstalled = isPackageInstalled(PACKAGE_AXEL);
+
+                    mHdmiFullVolumeEnabled = mContext.getResources().getBoolean(
+                        com.android.internal.R.bool.config_cec_hdmiFullVolume);
+                    mPassthroughMode = mContext.getResources().getInteger(
+                        com.android.internal.R.integer.config_cec_passthroughMode);
+                    mShowPassthroughWarningAlways = mContext.getResources().getBoolean(
+                        com.android.internal.R.bool.config_cec_showPassthroughWarningAlways);
+
+                    if (mAxelInstalled) {
+                        Slog.d(TAG, "Axel apk is installed with passthrough mode:" + mPassthroughMode);
+                        // Don't do any customization when AXEL apk exists for Google demands.
+                        mPassthroughMode = PASSTHROUGH_MODE_ORIGINAL;
+                    }
+                }
             }
         }
 
@@ -2038,8 +2063,8 @@ public class AudioService extends IAudioService.Stub
             if (isPlatformTelevision()) {
                 synchronized (mHdmiClientLock) {
                     if (mHdmiManager != null && mHdmiPlaybackClient != null) {
-                        updateHdmiCecSinkLocked(
-                                mFullVolumeDevices.contains(AudioSystem.DEVICE_OUT_HDMI));
+                        //updateHdmiCecSinkLocked(
+                        //        mFullVolumeDevices.contains(AudioSystem.DEVICE_OUT_HDMI));
                     }
                 }
             }
@@ -2049,8 +2074,8 @@ public class AudioService extends IAudioService.Stub
             if (isPlatformTelevision()) {
                 synchronized (mHdmiClientLock) {
                     if (mHdmiManager != null) {
-                        updateHdmiCecSinkLocked(
-                                mFullVolumeDevices.contains(AudioSystem.DEVICE_OUT_HDMI));
+                        //updateHdmiCecSinkLocked(
+                        //        mFullVolumeDevices.contains(AudioSystem.DEVICE_OUT_HDMI));
                     }
                 }
             }
@@ -3630,16 +3655,30 @@ public class AudioService extends IAudioService.Stub
             synchronized (mHdmiClientLock) {
                 if (mHdmiManager != null) {
                     // At most one of mHdmiPlaybackClient and mHdmiTvClient should be non-null
-                    HdmiClient fullVolumeHdmiClient = mHdmiPlaybackClient;
+                    HdmiClient hdmiClient = mHdmiPlaybackClient;
                     if (mHdmiTvClient != null) {
-                        fullVolumeHdmiClient = mHdmiTvClient;
+                        hdmiClient = mHdmiTvClient;
                     }
 
-                    if (fullVolumeHdmiClient != null
+                    boolean playbackDeviceConditions = mHdmiPlaybackClient != null
+                            && isFullVolumeDevice(device);
+                    boolean tvConditions = mHdmiTvClient != null
+                            && mHdmiSystemAudioSupported
+                            && !isAbsoluteVolumeDevice(device)
+                            && !isA2dpAbsoluteVolumeDevice(device);
+
+                    // For cec compatibility's concern, some earc audio receivers could not
+                    // set system audio control but of which the earc function works well.
+                    tvConditions |= isFullVolumeDevice(device);
+
+                    if (DEBUG_VOL) {
+                        Log.d(TAG, "adjustSreamVolume playbackDeviceConditions="
+                            + playbackDeviceConditions + " tvConditions=" + tvConditions);
+                    }
+
+                    if ((playbackDeviceConditions || tvConditions)
                             && mHdmiCecVolumeControlEnabled
-                            && streamTypeAlias == AudioSystem.STREAM_MUSIC
-                            // vol change on a full volume device
-                            && isFullVolumeDevice(device)) {
+                            && streamTypeAlias == AudioSystem.STREAM_MUSIC) {
                         int keyCode = KeyEvent.KEYCODE_UNKNOWN;
                         switch (direction) {
                             case AudioManager.ADJUST_RAISE:
@@ -3663,14 +3702,14 @@ public class AudioService extends IAudioService.Stub
                             try {
                                 switch (keyEventMode) {
                                     case AudioDeviceVolumeManager.ADJUST_MODE_NORMAL:
-                                        fullVolumeHdmiClient.sendVolumeKeyEvent(keyCode, true);
-                                        fullVolumeHdmiClient.sendVolumeKeyEvent(keyCode, false);
+                                        hdmiClient.sendVolumeKeyEvent(keyCode, true);
+                                        hdmiClient.sendVolumeKeyEvent(keyCode, false);
                                         break;
                                     case AudioDeviceVolumeManager.ADJUST_MODE_START:
-                                        fullVolumeHdmiClient.sendVolumeKeyEvent(keyCode, true);
+                                        hdmiClient.sendVolumeKeyEvent(keyCode, true);
                                         break;
                                     case AudioDeviceVolumeManager.ADJUST_MODE_END:
-                                        fullVolumeHdmiClient.sendVolumeKeyEvent(keyCode, false);
+                                        hdmiClient.sendVolumeKeyEvent(keyCode, false);
                                         break;
                                     default:
                                         Log.e(TAG, "Invalid keyEventMode " + keyEventMode);
@@ -3679,6 +3718,11 @@ public class AudioService extends IAudioService.Stub
                                 Binder.restoreCallingIdentity(ident);
                             }
                         }
+                    }
+
+                    if (mHdmiPlaybackClient != null
+                        && (streamTypeAlias == AudioSystem.STREAM_MUSIC)) {
+                        showPassthroughWarning();
                     }
 
                     if (streamTypeAlias == AudioSystem.STREAM_MUSIC
@@ -4765,7 +4809,9 @@ public class AudioService extends IAudioService.Stub
     {
         streamType = mStreamVolumeAlias[streamType];
 
-        if (streamType == AudioSystem.STREAM_MUSIC && isFullVolumeDevice(device)) {
+        if (streamType == AudioSystem.STREAM_MUSIC && (isFullVolumeDevice(device)
+            // If connected with avb device, the volume ui used could be different and confusing.
+            || (isAbsoluteVolumeDevice(device) && !mUseAnroidVolumeUi))) {
             flags &= ~AudioManager.FLAG_SHOW_UI;
         }
         mVolumeController.postVolumeChanged(streamType, flags);
@@ -10945,9 +10991,15 @@ public class AudioService extends IAudioService.Stub
     //==========================================================================================
 
     @GuardedBy("mHdmiClientLock")
-    private void updateHdmiCecSinkLocked(boolean hdmiCecSink) {
-        if (!hasDeviceVolumeBehavior(AudioSystem.DEVICE_OUT_HDMI)) {
-            if (hdmiCecSink) {
+    private void updateHdmiCecSinkLocked(boolean hdmiCecSink, boolean updateStates) {
+        if (mHdmiPlaybackClient == null) {
+            return;
+        }
+        mHdmiCecSink = hdmiCecSink;
+
+        // When the volume behaviour is full, it still relies on the cec status to do volume control.
+        if (!hasDeviceVolumeBehavior(AudioSystem.DEVICE_OUT_HDMI) || isHdmiBehaviourFull()) {
+            if (hdmiCecSink && mHdmiCecVolumeControlEnabled) {
                 if (DEBUG_VOL) {
                     Log.d(TAG, "CEC sink: setting HDMI as full vol device");
                 }
@@ -10966,8 +11018,11 @@ public class AudioService extends IAudioService.Stub
                         AudioManager.DEVICE_VOLUME_BEHAVIOR_VARIABLE,
                         "AudioService.updateHdmiCecSinkLocked()");
             }
-            postUpdateVolumeStatesForAudioDevice(AudioSystem.DEVICE_OUT_HDMI,
-                    "HdmiPlaybackClient.DisplayStatusCallback");
+            // Always reset volume to max for reference products.
+            if (mAxelInstalled || (updateStates && mHdmiFullVolumeEnabled)) {
+                postUpdateVolumeStatesForAudioDevice(AudioSystem.DEVICE_OUT_HDMI,
+                        "HdmiPlaybackClient.DisplayStatusCallback");
+            }
         }
     }
 
@@ -10978,7 +11033,10 @@ public class AudioService extends IAudioService.Stub
             synchronized (mHdmiClientLock) {
                 if (mHdmiManager == null) return;
                 boolean cecEnabled = isCecEnabled == HdmiControlManager.HDMI_CEC_CONTROL_ENABLED;
+                Slog.d(TAG, "onStatusChange cecEnabled:" + cecEnabled + " available:" + isCecAvailable);
                 updateHdmiCecSinkLocked(cecEnabled ? isCecAvailable : false);
+                sDeviceLogger.enqueue(new EventLogger.StringEvent(
+                        "Hdmi cec enabled:" + cecEnabled + " available:" + isCecAvailable));
             }
         }
     };
@@ -10991,9 +11049,125 @@ public class AudioService extends IAudioService.Stub
                 if (mHdmiManager == null) return;
                 mHdmiCecVolumeControlEnabled =
                         hdmiCecVolumeControl == HdmiControlManager.VOLUME_CONTROL_ENABLED;
+                Slog.d(TAG, "onHdmiCecVolumeControlFeature enabled:" + mHdmiCecVolumeControlEnabled);
+                // The volume control switch should influence the hdmi device status, or else
+                // if it's disabled and hdmi is a full device, adjusting volume is unavailable.
+                updateHdmiCecSinkLocked(mHdmiCecSink, false);
+                sDeviceLogger.enqueue(new EventLogger.StringEvent(
+                        "Hdmi cec volume control:" + mHdmiCecVolumeControlEnabled));
             }
         }
     };
+
+    /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+    // Gms axel apk which means the system supports ultrared remote control of TV.
+    private static final String PACKAGE_AXEL = "com.google.android.tv.axel";
+    // Used to call audio hal to check whether the audio mode is passthrough.
+    private static final String PARA_VOLUME_PASSTHROUGH = "hal_param_hal_control_vol_en";
+    private static final String HAL_IN_VOLUME_PASSTHROUGH = "hal_param_hal_control_vol_en=0";
+
+    // android original solution
+    private static final int PASSTHROUGH_MODE_ORIGINAL = 0;
+    // Abort local adjusting and show warning when it's audio passthrough decoding
+    private static final int PASSTHROUGH_MODE_ADD_WARNING = 1;
+    // Only send cec volume keys when it's audio passthrough decoding
+    private static final int PASSTHROUGH_MODE_ACCORD_WITH_DECODING = 2;
+
+    // If true then use the original volume control android solution.
+    private boolean mAxelInstalled;
+
+    // If true both the local box and TV's cec route is available.
+    private boolean mHdmiCecSink;
+
+    // If true the volume of HDMI_OUT will be reset to max when it's full device.
+    private boolean mHdmiFullVolumeEnabled;
+
+    // Current passthrough solution
+    private int mPassthroughMode;
+
+    // Last recorded passthrough state.
+    private boolean mLastPassthroughDecoding;
+
+    private Handler mHandler = new Handler();
+
+    // Has the warning already been showing.
+    private boolean mShowingPassthroughHint;
+    // Whether the configuration allows always showing the passthrough warning.
+    private boolean mShowPassthroughWarningAlways;
+    // Only show the passthrough warning once after boot.
+    private boolean mBootShowWarning;
+
+    // Whether the dolby audio data is transmitted to sink device for decoding.
+    private boolean isPassthroughDecoding() {
+        mLastPassthroughDecoding = HAL_IN_VOLUME_PASSTHROUGH
+                .equals(AudioSystem.getParameters(PARA_VOLUME_PASSTHROUGH));
+        return mLastPassthroughDecoding;
+    }
+
+    private boolean checkPassthroughMode(int deviceType) {
+        if (mHdmiPlaybackClient != null) {
+            if (mPassthroughMode == PASSTHROUGH_MODE_ADD_WARNING) {
+                return mFullVolumeDevices.contains(deviceType)
+                        || isPassthroughDecoding();
+            } else if (mPassthroughMode == PASSTHROUGH_MODE_ACCORD_WITH_DECODING) {
+                return isPassthroughDecoding();
+            }
+        }
+        return mFullVolumeDevices.contains(deviceType);
+    }
+
+    private void showPassthroughWarning() {
+        if (mPassthroughMode == PASSTHROUGH_MODE_ORIGINAL
+            || !isPassthroughDecoding()) {
+            // Not in passthrough decoding scenario
+            return;
+        }
+        if (!mShowPassthroughWarningAlways && mBootShowWarning) {
+            // Don't show warning everytime.
+            return;
+        }
+        if (mShowingPassthroughHint) {
+            Slog.d(TAG, "Audio passthrough warning is showing.");
+            return;
+        }
+        mShowingPassthroughHint = true;
+        mHandler.post(()->{
+            Toast toast = Toast.makeText(mContext,
+                com.android.internal.R.string.volume_control_hint,
+                Toast.LENGTH_LONG);
+            toast.addCallback(new Toast.Callback() {
+                public void onToastHidden() {
+                    mShowingPassthroughHint = false;
+                }
+            });
+            toast.show();
+        });
+
+        mBootShowWarning = true;
+    }
+
+    private boolean isPackageInstalled(String packageName) {
+        PackageManager packageManager = mContext.getPackageManager();
+        try {
+            packageManager.getPackageInfo(packageName, 0);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    private void updateHdmiCecSinkLocked(boolean hdmiCecSink) {
+        updateHdmiCecSinkLocked(hdmiCecSink, true);
+    }
+
+    private boolean isHdmiBehaviourFull() {
+        return retrieveStoredDeviceVolumeBehavior(AudioSystem.DEVICE_OUT_HDMI)
+                    == AudioManager.DEVICE_VOLUME_BEHAVIOR_FULL;
+    }
+
+    /*[Amlogic end]-----------------------------------------------------------*/
+
 
     private final Object mHdmiClientLock = new Object();
 
@@ -11296,6 +11470,7 @@ public class AudioService extends IAudioService.Stub
         pw.print("  adjust-only absolute volume devices="); pw.println(dumpDeviceTypes(
                 getAbsoluteVolumeDevicesWithBehavior(
                         AudioManager.DEVICE_VOLUME_BEHAVIOR_ABSOLUTE_ADJUST_ONLY)));
+        pw.print("  mUseAnroidVolumeUi="); pw.println(mUseAnroidVolumeUi);
         pw.print("  mExtVolumeController="); pw.println(mExtVolumeController);
         pw.print("  mHdmiAudioSystemClient="); pw.println(mHdmiAudioSystemClient);
         pw.print("  mHdmiPlaybackClient="); pw.println(mHdmiPlaybackClient);
@@ -11304,6 +11479,13 @@ public class AudioService extends IAudioService.Stub
         synchronized (mHdmiClientLock) {
             pw.print("  mHdmiCecVolumeControlEnabled="); pw.println(mHdmiCecVolumeControlEnabled);
         }
+        pw.print("  mAxelInstalled="); pw.println(mAxelInstalled);
+        pw.print("  mHdmiFullVolumeEnabled="); pw.println(mHdmiFullVolumeEnabled);
+        pw.print("  mPassthroughMode="); pw.println(mPassthroughMode);
+        pw.print("  mLastPassthroughDecoding="); pw.println(mLastPassthroughDecoding);
+        pw.print("  mShowPassthroughWarningAlways="); pw.println(mShowPassthroughWarningAlways);
+        pw.print("  mBootShowWarning="); pw.println(mBootShowWarning);
+
         pw.print("  mIsCallScreeningModeSupported="); pw.println(mIsCallScreeningModeSupported);
         pw.print("  mic mute FromSwitch=" + mMicMuteFromSwitch
                         + " FromRestrictions=" + mMicMuteFromRestrictions
@@ -13388,7 +13570,8 @@ public class AudioService extends IAudioService.Stub
                 && mRecordMonitor.isLegacyRemoteSubmixActive()) {
             return false;
         }
-        return mFullVolumeDevices.contains(deviceType);
+
+        return checkPassthroughMode(deviceType);
     }
 
     /**
