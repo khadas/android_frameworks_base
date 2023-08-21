@@ -161,9 +161,29 @@ class AppWarnings {
      */
     public void showDeprecatedTargetDialogIfNeeded(ActivityRecord r) {
         if (r.info.applicationInfo.targetSdkVersion < Build.VERSION.MIN_SUPPORTED_TARGET_SDK_INT) {
+            //-----------------------rk code----------
+            String packageName = r.info.applicationInfo.packageName;
+            if (isWhiteList(packageName)) {
+                Slog.w(TAG, "skip showDeprecatedTargetDialog with " + packageName);
+                return;
+            }
+            //----------------------------------------
             mUiHandler.showDeprecatedTargetDialog(r);
         }
     }
+
+    //-----------------------rk code----------
+    private boolean isWhiteList(String name) {
+        if ("com.cghs.stresstest".equals(name)
+                || "com.DeviceTest".equals(name)
+                || "android.rk.RockVideoPlayer".equals(name)
+                || "com.android.rk".equals(name)
+                || "com.rockchip.devicetest".equals(name)) {
+            return true;
+        }
+        return false;
+    }
+    //----------------------------------------
 
     /**
      * Shows the "deprecated abi" warning, if necessary. This can only happen is the device
