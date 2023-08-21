@@ -76,6 +76,7 @@ cc_library_static {
         "com_android_server_wm_TaskFpsCallbackController.cpp",
         "rkbox/rklog.cpp",
         "com_android_server_RKBoxService.cpp",
+        "com_android_server_rkdisplay_RkDisplayModes.cpp",
         "onload.cpp",
         ":lib_cachedAppOptimizer_native",
         ":lib_gameManagerService_native",
@@ -203,6 +204,7 @@ cc_defaults {
         "android.system.suspend.control.internal-cpp",
         "android.system.suspend-V1-ndk",
         "server_configurable_flags",
+        "rockchip.hardware.outputmanager@1.0",
         "service.incremental",
     ],
 

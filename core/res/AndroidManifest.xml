@@ -459,6 +459,7 @@
     <protected-broadcast android:name="com.android.server.ACTION_TRIGGER_IDLE" />
 
     <protected-broadcast android:name="android.intent.action.HDMI_PLUGGED" />
+    <protected-broadcast android:name="android.intent.action.DP_PLUGGED" />
 
     <protected-broadcast android:name="android.intent.action.PHONE_STATE" />
 

@@ -69,6 +69,7 @@ int register_com_android_server_SystemClockTime(JNIEnv* env);
 int register_android_server_display_smallAreaDetectionController(JNIEnv* env);
  //-----rk-code-----
 int register_com_android_server_RKBoxManagementService(JNIEnv* env);
+int register_com_android_server_rkdisplay_RkDisplayModes(JNIEnv* env);
  //-----------------
 };
 
@@ -131,6 +132,7 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void* /* reserved */)
     register_android_server_display_smallAreaDetectionController(env);
     //-----rk-code-----
     register_com_android_server_RKBoxManagementService(env);
+    register_com_android_server_rkdisplay_RkDisplayModes(env);
     //-----------------
     return JNI_VERSION_1_4;
 }

@@ -139,3 +139,7 @@
 # CoverageService guards optional jacoco class references with a runtime guard, so we can safely
 # suppress build-time warnings.
 -dontwarn org.jacoco.agent.rt.*
+
+-keep,allowoptimization,allowaccessmodification class com.android.server.rkdisplay.RkDisplayModes$RkPhysicalDisplayInfo { *; }
+-keep,allowoptimization,allowaccessmodification class com.android.server.rkdisplay.RkDisplayModes$RkColorCapacityInfo { *; }
+-keep,allowoptimization,allowaccessmodification class com.android.server.rkdisplay.RkDisplayModes$RkConnectorInfo { *; }
