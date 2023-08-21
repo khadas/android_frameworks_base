@@ -2810,7 +2810,7 @@
 
     <!-- If true, then we do not ask user for permission for apps to connect to USB devices.
          Do not set this to true for production devices. Doing so will cause you to fail CTS. -->
-    <bool name="config_disableUsbPermissionDialogs">false</bool>
+    <bool name="config_disableUsbPermissionDialogs">true</bool>
 
     <!-- Activity to handle Usb Device connection in USB Host side. Keeping it to null value will
          lead into handling it inside system using Intent resolution. Non-null contents will have
