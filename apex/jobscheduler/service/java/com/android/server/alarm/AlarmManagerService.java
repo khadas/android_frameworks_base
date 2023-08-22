@@ -3976,7 +3976,7 @@ public class AlarmManagerService extends SystemService {
         if (mAlarmStore.size() > 0) {
             final long firstWakeup = mAlarmStore.getNextWakeupDeliveryTime();
             final long first = mAlarmStore.getNextDeliveryTime();
-            if (firstWakeup != 0 && firstWakeup != mNextWakeup) {
+            if (firstWakeup != 0) {
                 mNextWakeup = firstWakeup;
                 mNextWakeUpSetAt = nowElapsed;
                 setLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup);
@@ -3990,7 +3990,7 @@ public class AlarmManagerService extends SystemService {
                 nextNonWakeup = mNextNonWakeupDeliveryTime;
             }
         }
-        if (nextNonWakeup != 0 && nextNonWakeup != mNextNonWakeup) {
+        if (nextNonWakeup != 0) {
             mNextNonWakeup = nextNonWakeup;
             mNextNonWakeUpSetAt = nowElapsed;
             setLocked(ELAPSED_REALTIME, nextNonWakeup);
