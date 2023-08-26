@@ -55,9 +55,8 @@ public interface PackageAbiHelper {
      * If {@code extractLibs} is true, native libraries are extracted from the app if required.
      */
     Pair<Abis, NativeLibraryPaths> derivePackageAbi(AndroidPackage pkg, boolean isSystemApp,
-            boolean isUpdatedSystemApp, String cpuAbiOverride, File appLib32InstallDir)
+            boolean isUpdatedSystemApp, String cpuAbiOverride, File appLib32InstallDir, String forcePrimaryCpuAbi)
             throws PackageManagerException;
-
     /**
      * Calculates adjusted ABIs for a set of packages belonging to a shared user so that they all
      * match. i.e, so that all packages can be run inside a single process if required.

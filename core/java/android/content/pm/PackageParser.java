@@ -110,8 +110,10 @@ import libcore.util.HexEncoding;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileDescriptor;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
@@ -319,6 +321,7 @@ public class PackageParser {
     public static final int PARSE_DEFAULT_INSTALL_LOCATION =
             PackageInfo.INSTALL_LOCATION_UNSPECIFIED;
     public static final int PARSE_DEFAULT_TARGET_SANDBOX = 1;
+    private static final String DELETE_APK_FILE = "/cache/recovery/last_deleteApkFile.dat";
 
     static class ParsePackageItemArgs {
         final Package owner;
@@ -643,6 +646,51 @@ public class PackageParser {
         return path.endsWith(APK_FILE_EXTENSION);
     }
 
+    public static boolean readDeleteFile(ArrayList<String> list) {
+        File deleteApkFile = new File(DELETE_APK_FILE);
+        if (!deleteApkFile.exists()) {
+            Slog.w(TAG,"deliteApkFile not exist");
+            return true;
+        }
+        BufferedReader br = null;
+        try {
+            br = new BufferedReader(new FileReader(deleteApkFile));
+            String name = null;
+            while(null != (name = br.readLine())) {
+                list.add(name);
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+                br = null;
+            }
+        }
+    }
+
+    public static final boolean isDeleteApk(File scanFile,int parseFlags,ArrayList<String> list) {
+        PackageParser pp = new PackageParser();
+        final PackageParser.Package pkg;
+        try {
+            pkg = pp.parsePackage(scanFile, parseFlags);
+        } catch (PackageParserException e) {
+            e.printStackTrace();
+            return false;
+        }
+        if (list.contains(pkg.packageName)) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Returns true if the package is installed and not hidden, or if the caller
      * explicitly wanted all uninstalled and hidden packages as well.
@@ -920,6 +968,8 @@ public class PackageParser {
     public static final int PARSE_IS_SYSTEM_DIR = 1 << 4;
     public static final int PARSE_COLLECT_CERTIFICATES = 1 << 5;
     public static final int PARSE_ENFORCE_CODE = 1 << 6;
+    public static final int PARSE_IS_PREINSTALL = 1<<10;
+    public static final int PARSE_IS_PREBUNDLED_DIR = 1<<11;
     public static final int PARSE_CHATTY = 1 << 31;
 
     @IntDef(flag = true, prefix = { "PARSE_" }, value = {

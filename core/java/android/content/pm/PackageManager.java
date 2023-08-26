@@ -2345,6 +2345,14 @@ public abstract class PackageManager {
     public static final int INSTALL_ACTIVATION_FAILED = -128;
 
     /**
+     * Used for prebundles
+     * Installation failed for a prebundled app because the user previously uninstalled it
+     * and we don't want to bring it back
+     * @hide
+     */
+    public static final int INSTALL_FAILED_UNINSTALLED_PREBUNDLE = -403;
+
+    /**
      * Installation failed return code: requesting user pre-approval is currently unavailable.
      *
      * @hide

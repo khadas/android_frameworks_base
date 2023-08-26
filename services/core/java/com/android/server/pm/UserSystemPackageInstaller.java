@@ -225,6 +225,10 @@ class UserSystemPackageInstaller {
                 if (packageState.getPkg() == null || !packageState.isSystem()) {
                     return;
                 }
+                //-----------rk-code-------------
+                if (null != packageState.getPathString() && packageState.getPathString().startsWith("/odm/bundled_")) {
+                    return;
+                }
                 boolean install = (userAllowlist == null
                                 || userAllowlist.contains(packageState.getPackageName()))
                         && !packageState.getTransientState().isHiddenUntilInstalled();
