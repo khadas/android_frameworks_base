@@ -9518,6 +9518,10 @@ public class AudioService extends IAudioService.Stub
 
     /*package*/ void setAvrcpAbsoluteVolumeSupported(boolean support) {
         mAvrcpAbsVolSupported = support;
+        /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+        /* Change-Id: I367f68902fee0a73fb5db64ead6171e3a6e1aeed */
+        AudioSystem.setParameters("hal_param_bt_avrcp_supported=" + (support ? "1":"0"));
+        /*[Amlogic end]-----------------------------------------------------------*/
         sendMsg(mAudioHandler, MSG_SET_DEVICE_VOLUME, SENDMSG_QUEUE,
                     AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP, 0,
                     mStreamStates[AudioSystem.STREAM_MUSIC], 0);

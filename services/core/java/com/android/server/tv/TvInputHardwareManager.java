@@ -1020,14 +1020,11 @@ class TvInputHardwareManager implements TvInputHal.Callback {
                 }
                 // NOTE: we only change the source gain in MODE_JOINT here.
                 if (sourceGain != null) {
-                    int steps = (sourceGain.maxValue() - sourceGain.minValue())
-                            / sourceGain.stepValue();
-                    int gainValue = sourceGain.minValue();
-                    if (volume < 1.0f) {
-                        gainValue += sourceGain.stepValue() * (int) (volume * steps + 0.5);
-                    } else {
-                        gainValue = sourceGain.maxValue();
-                    }
+                    /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                    /* Change-Id: I4926a755eaabea820d480f79572bbcdd80afa6b1 */
+                    int gainValue = (int)(100 * AudioSystem.getStreamVolumeDB(AudioManager.STREAM_MUSIC,
+                            (int)(volume * mCurrentMaxIndex), mAudioSink.get(0).type()));
+                    /*[Amlogic end]-----------------------------------------------------------*/
                     // size of gain values is 1 in MODE_JOINT
                     int[] gainValues = new int[] { gainValue };
                     sourceGainConfig = sourceGain.buildConfig(AudioGain.MODE_JOINT,
