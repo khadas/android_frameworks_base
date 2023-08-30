@@ -27,7 +27,7 @@
     <bool name="config_quickSettingsMediaLandscapeCollapsed">false</bool>
 
     <!-- Nav bar button default ordering/layout -->
-    <string name="config_navBarLayout" translatable="false">left;back,home,recent;right</string>
+    <string name="config_navBarLayout" translatable="false">left;volume_sub,back,home,recent,volume_add;right</string>
 
     <!-- orientation of the dead zone when touches have recently occurred elsewhere on screen -->
     <integer name="navigation_bar_deadzone_orientation">0</integer>

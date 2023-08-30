@@ -1290,6 +1290,22 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         accessibilityButton.setOnLongClickListener(this::onAccessibilityLongClick);
         updateAccessibilityStateFlags();
 
+        ButtonDispatcher volumeAddButton=mView.getVolumeAddButton();
+        ButtonDispatcher volumeSubButton=mView.getVolumeSubButton();
+        //boolean isShowVolumeButton = "true".equals(SystemProperties.get("ro.rk.systembar.voiceicon","true"));
+        boolean isShowVolumeButton = true;
+        if(isShowVolumeButton){
+            volumeAddButton.setVisibility(View.VISIBLE);
+            volumeSubButton.setVisibility(View.VISIBLE);
+        }else{
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
+        if (mContext.getResources().getConfiguration().smallestScreenWidthDp < 400) {
+            volumeAddButton.setVisibility(View.GONE);
+            volumeSubButton.setVisibility(View.GONE);
+        }
+
         ButtonDispatcher imeSwitcherButton = mView.getImeSwitchButton();
         imeSwitcherButton.setOnClickListener(this::onImeSwitcherClick);
 

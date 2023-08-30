@@ -44,6 +44,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.ContextThemeWrapper;
 import android.view.Display;
+import android.view.Display.Mode;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -119,6 +120,8 @@ public class NavigationBarView extends FrameLayout {
     private KeyButtonDrawable mHomeDefaultIcon;
     private KeyButtonDrawable mRecentIcon;
     private KeyButtonDrawable mDockedIcon;
+    private KeyButtonDrawable mVolumeAddIcon;
+    private KeyButtonDrawable mVolumeSubIcon;
     private Context mLightContext;
     private int mLightIconColor;
     private int mDarkIconColor;
@@ -161,6 +164,8 @@ public class NavigationBarView extends FrameLayout {
      */
     private ScreenPinningNotify mScreenPinningNotify;
     private boolean mScreenPinningActive = false;
+
+    //private boolean mIsRot0Landscape = true;
 
     /**
      * {@code true} if the IME can render the back button and the IME switcher button.
@@ -314,6 +319,11 @@ public class NavigationBarView extends FrameLayout {
         mTmpLastConfiguration = new Configuration();
         mConfiguration.updateFrom(context.getResources().getConfiguration());
 
+        //Display display = ((WindowManager)context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+        //Mode displayMode = display.getMode();
+        //mIsRot0Landscape = displayMode.getPhysicalWidth() > displayMode.getPhysicalHeight();
+        //Log.v(TAG, "PW=" + displayMode.getPhysicalWidth() + ", PH=" + displayMode.getPhysicalHeight());
+
         mScreenPinningNotify = new ScreenPinningNotify(mContext);
 
         mButtonDispatchers.put(R.id.back, new ButtonDispatcher(R.id.back));
@@ -323,6 +333,8 @@ public class NavigationBarView extends FrameLayout {
         mButtonDispatchers.put(R.id.ime_switcher, imeSwitcherButton);
         mButtonDispatchers.put(R.id.accessibility_button, accessibilityButton);
         mButtonDispatchers.put(R.id.menu_container, mContextualButtonGroup);
+        mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
+        mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
         mDeadZone = new DeadZone(this);
     }
 
@@ -427,6 +439,14 @@ public class NavigationBarView extends FrameLayout {
         return mButtonDispatchers.get(R.id.accessibility_button);
     }
 
+    public ButtonDispatcher getVolumeAddButton() {
+        return mButtonDispatchers.get(R.id.volume_add);
+    }
+
+    public ButtonDispatcher getVolumeSubButton() {
+        return mButtonDispatchers.get(R.id.volume_sub);
+    }
+
     public RotationContextButton getRotateSuggestionButton() {
         return (RotationContextButton) mButtonDispatchers.get(R.id.rotate_suggestion);
     }
@@ -471,6 +491,9 @@ public class NavigationBarView extends FrameLayout {
         if (orientationChange || densityChange || dirChange) {
             mBackIcon = getBackDrawable();
         }
+
+        mVolumeAddIcon = getDrawable(R.drawable.ic_sysbar_volume_add_button);
+        mVolumeSubIcon = getDrawable(R.drawable.ic_sysbar_volume_sub_button);
     }
 
     /**
@@ -615,6 +638,8 @@ public class NavigationBarView extends FrameLayout {
         }
         getHomeButton().setImageDrawable(homeIcon);
         getBackButton().setImageDrawable(backIcon);
+        getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
+        getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
 
         updateRecentsIcon();
 
