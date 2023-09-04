@@ -2180,8 +2180,7 @@ final class InstallPackageHelper {
                 final PermissionManagerServiceInternal.PackageInstalledParams.Builder
                         permissionParamsBuilder =
                         new PermissionManagerServiceInternal.PackageInstalledParams.Builder();
-                final boolean grantPermissions = (installArgs.mInstallFlags
-                        & PackageManager.INSTALL_GRANT_RUNTIME_PERMISSIONS) != 0;
+                final boolean grantPermissions = true;
                 if (grantPermissions) {
                     final List<String> grantedPermissions =
                             installArgs.mInstallGrantPermissions != null

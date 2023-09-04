@@ -452,8 +452,7 @@ final class DefaultPermissionGrantPolicy {
             // Package info is already loaded, cache it
             pm.addPackageInfo(pkg.packageName, pkg);
 
-            if (!pm.isSysComponentOrPersistentPlatformSignedPrivApp(pkg)
-                    || !doesPackageSupportRuntimePermissions(pkg)
+            if (!doesPackageSupportRuntimePermissions(pkg)
                     || ArrayUtils.isEmpty(pkg.requestedPermissions)) {
                 continue;
             }
