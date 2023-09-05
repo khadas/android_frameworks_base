@@ -26,6 +26,7 @@
 
 #include <androidfw/AssetManager.h>
 #include <gui/DisplayEventReceiver.h>
+#include <gui/SurfaceComposerClient.h>
 #include <utils/Looper.h>
 #include <utils/Thread.h>
 #include <binder/IBinder.h>
@@ -240,7 +241,8 @@ private:
     void projectSceneToWindow();
     void rotateAwayFromNaturalOrientationIfNeeded();
     ui::Rotation parseOrientationProperty();
-
+    status_t enableDisplay(SurfaceComposerClient::Transaction &t, const sp <IBinder> &displayToken,
+                           const Rect &primaryLayerStackRect);
     bool shouldStopPlayingPart(const Animation::Part& part, int fadedFramesCount,
                                int lastDisplayedProgress);
     void checkExit();

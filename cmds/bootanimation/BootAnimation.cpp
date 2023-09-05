@@ -1210,6 +1210,19 @@ ui::Size BootAnimation::limitSurfaceSize(int width, int height) const {
     return limited;
 }
 
+status_t BootAnimation::enableDisplay(SurfaceComposerClient::Transaction &t,
+                                          const sp<IBinder> &displayToken, const Rect &primaryLayerStackRect){
+    DisplayMode displayMode;
+    const status_t error = SurfaceComposerClient::getActiveDisplayMode(displayToken, &displayMode);
+    if (error != NO_ERROR)
+        return error;
+    SurfaceComposerClient::setDisplayPowerMode(displayToken, 2);
+    Rect displayRect(displayMode.resolution.getWidth(), displayMode.resolution.getHeight());
+    t.setDisplayProjection(displayToken, ui::ROTATION_0, primaryLayerStackRect, displayRect);
+    t.setDisplayLayerStack(displayToken, ui::DEFAULT_LAYER_STACK);
+    return OK;
+}
+
 status_t BootAnimation::readyToRun() {
     mAssets.addDefaultAssets();
 
@@ -1294,6 +1307,20 @@ status_t BootAnimation::readyToRun() {
             }
         }
         t.setLayerStack(control, ui::DEFAULT_LAYER_STACK);
+    }  else {
+        // In the case of multi-display, enable the othres display as default
+        if (ids.size() > 1) {
+            int index = 0;
+            for (auto id: ids) {
+                if (index > 0) {
+                    ALOGD("boot animation enable display : %" PRIu64 "", id.value);
+                    Rect layerStackRect(resolution.getWidth(), resolution.getHeight());
+                    enableDisplay(t, SurfaceComposerClient::getPhysicalDisplayToken(id), layerStackRect);
+                }
+                index ++;
+            }
+            t.setLayerStack(control, ui::DEFAULT_LAYER_STACK);
+        }
     }
 
     t.setLayer(control, 0x40000000)
