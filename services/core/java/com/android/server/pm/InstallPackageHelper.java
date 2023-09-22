@@ -3946,6 +3946,7 @@ final class InstallPackageHelper {
 
         final Pair<ScanResult, Boolean> scanResultPair = scanSystemPackageLI(
                 parsedPackage, parseFlags, scanFlags, user);
+        if (null == scanResultPair) return null;
         final ScanResult scanResult = scanResultPair.first;
         boolean shouldHideSystemApp = scanResultPair.second;
         final InstallRequest installRequest = new InstallRequest(
@@ -4191,7 +4192,7 @@ final class InstallPackageHelper {
                         // This app is installed in a location that is not the prebundled location
                         // and has a higher (or same) version as the prebundled one.  Skip
                         // installing the prebundled version.
-                        Slog.d(TAG, parsedPackage.getPackageName() + " already installed at " + alreadyInstallPath);
+                        Slog.d(TAG, parsedPackage.getPackageName() + " already installed at " + alreadyInstallPath + ", this app may be upgraed online.");
                         return null; // return null so we still mark package as installed
                     }
                 }
