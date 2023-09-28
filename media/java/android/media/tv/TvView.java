@@ -77,7 +77,9 @@ import java.util.Queue;
  */
 public class TvView extends ViewGroup {
     private static final String TAG = "TvView";
-    private static final boolean DEBUG = false;
+    //-----------------------rk code----------
+    private static final boolean DEBUG = true;
+    //----------------------------------------
 
     private static final int ZORDER_MEDIA = 0;
     private static final int ZORDER_MEDIA_OVERLAY = 1;
@@ -134,12 +136,22 @@ public class TvView extends ViewGroup {
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
+            //-----------------------rk code----------
+            if (DEBUG) {
+                Log.d(TAG, "surfaceCreated(holder=" + holder + ")");
+            }
+            //----------------------------------------
             mSurface = holder.getSurface();
             setSessionSurface(mSurface);
         }
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
+            //-----------------------rk code----------
+            if (DEBUG) {
+                Log.d(TAG, "surfaceDestroyed(holder=" + holder + ")");
+            }
+            //----------------------------------------
             mSurface = null;
             mSurfaceChanged = false;
             setSessionSurface(null);
@@ -357,6 +369,9 @@ public class TvView extends ViewGroup {
             }
         }
         if (mSessionCallback != null && TextUtils.equals(mSessionCallback.mInputId, inputId)) {
+            //-----------------------rk code----------
+            if (DEBUG) Log.d(TAG, "tune(" + channelUri + ") mSession=" + mSession);
+            //----------------------------------------
             if (mSession != null) {
                 mSession.tune(channelUri, params);
             } else {
@@ -378,10 +393,16 @@ public class TvView extends ViewGroup {
             // is obsolete and should ignore it.
             mSessionCallback = new MySessionCallback(inputId, channelUri, params);
             if (mTvInputManager != null) {
+                //-----------------------rk code----------
+                if (DEBUG) Log.d(TAG, "tune(" + channelUri + ") createSession inputId=" + inputId);
+                //----------------------------------------
                 mTvInputManager.createSession(
                         inputId, mTvAppAttributionSource, mSessionCallback, mHandler);
             }
         }
+        //-----------------------rk code----------
+        if (DEBUG) Log.w(TAG, "tune(" + channelUri + ") finish");
+        //----------------------------------------
     }
 
     /**
@@ -397,6 +418,9 @@ public class TvView extends ViewGroup {
             }
         }
         resetInternal();
+        //-----------------------rk code----------
+        if (DEBUG) Log.d(TAG, "reset() finish");
+        //----------------------------------------
     }
 
     private void resetInternal() {
@@ -407,6 +431,9 @@ public class TvView extends ViewGroup {
             removeSessionOverlayView();
             mUseRequestedSurfaceLayout = false;
             mSession.release();
+            //-----------------------rk code----------
+            if (DEBUG) Log.d(TAG, "resetInternal finish mSession.release()");
+            //----------------------------------------
             mSession = null;
             resetSurfaceView();
         }
@@ -827,12 +854,22 @@ public class TvView extends ViewGroup {
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
         createSessionOverlayView();
+        //-----------------------rk code----------
+        if (DEBUG) {
+            Log.d(TAG, "onAttachedToWindow");
+        }
+        //----------------------------------------
     }
 
     @Override
     protected void onDetachedFromWindow() {
         removeSessionOverlayView();
         super.onDetachedFromWindow();
+        //-----------------------rk code----------
+        if (DEBUG) {
+            Log.d(TAG, "onDetachedFromWindow");
+        }
+        //----------------------------------------
     }
 
     @Override
@@ -908,6 +945,9 @@ public class TvView extends ViewGroup {
     }
 
     private void resetSurfaceView() {
+        //-----------------------rk code----------
+        if (DEBUG) Log.d(TAG, "resetSurfaceView() start");
+        //----------------------------------------
         if (mSurfaceView != null) {
             mSurfaceView.getHolder().removeCallback(mSurfaceHolderCallback);
             removeView(mSurfaceView);
@@ -928,12 +968,18 @@ public class TvView extends ViewGroup {
             mSurfaceView.setZOrderOnTop(true);
         }
         addView(mSurfaceView);
+        //-----------------------rk code----------
+        if (DEBUG) Log.d(TAG, "resetSurfaceView() finish");
+        //----------------------------------------
     }
 
     private void setSessionSurface(Surface surface) {
         if (mSession == null) {
             return;
         }
+        //-----------------------rk code----------
+        if (DEBUG) Log.d(TAG, "setSessionSurface(surface=" + surface + ")");
+        //----------------------------------------
         mSession.setSurface(surface);
     }
 

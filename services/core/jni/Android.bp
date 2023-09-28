@@ -89,10 +89,16 @@ cc_library_static {
         "frameworks/native/libs/ui/include",
         "system/gatekeeper/include",
         "system/memory/libmeminfo/include",
+        //-----------------------rk code----------
+        "hardware/rockchip/libhardware_rockchip/include/",
+        //----------------------------------------
     ],
 
     header_libs: [
         "bionic_libc_platform_headers",
+        //-----------------------rk code----------
+        "libhardware_rockchip_headers",
+        //----------------------------------------
     ],
 }
 
@@ -206,6 +212,10 @@ cc_defaults {
         "server_configurable_flags",
         "rockchip.hardware.outputmanager@1.0",
         "service.incremental",
+        //-----------------------rk code----------
+        "rockchip.hardware.tv.input-V1-ndk",
+        "rockchip.hardware.tv.input@1.0",
+        //----------------------------------------
     ],
 
     static_libs: [

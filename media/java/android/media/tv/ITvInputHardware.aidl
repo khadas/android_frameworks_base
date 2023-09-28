@@ -20,6 +20,10 @@ import android.media.tv.TvStreamConfig;
 import android.view.KeyEvent;
 import android.view.Surface;
 
+//-----------------------rk code----------
+import android.os.Bundle;
+//----------------------------------------
+
 /**
  * TvInputService representing a physical port should connect to HAL through this interface.
  * Framework will take care of communication among system services including TvInputManagerService,
@@ -55,4 +59,8 @@ interface ITvInputHardware {
      */
     void overrideAudioSink(int audioType, String audioAddress, int samplingRate, int channelMask,
             int format);
+
+    //-----------------------rk code----------
+    void sendAppPrivateCommand(String action, in Bundle data);
+    //----------------------------------------
 }

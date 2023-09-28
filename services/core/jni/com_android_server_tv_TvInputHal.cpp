@@ -16,7 +16,9 @@
 
 #define LOG_TAG "TvInputHal"
 
-//#define LOG_NDEBUG 0
+//-----------------------rk code----------
+#define LOG_NDEBUG 0
+//----------------------------------------
 
 #include "tvinput/JTvInputHal.h"
 
@@ -96,6 +98,56 @@ static void nativeClose(JNIEnv* env, jclass clazz, jlong ptr) {
     delete tvInputHal;
 }
 
+//-----------------------rk code----------
+static int nativePrivCmdFromApp(JNIEnv* env, jclass clazz,
+        jlong ptr, jstring action, jobject data) {
+    JTvInputHal* tvInputHal = (JTvInputHal*)ptr;
+    const char* maction = env->GetStringUTFChars(action, NULL);
+
+    jclass bundleClass = env->FindClass("android/os/Bundle");
+    jmethodID keySetMID = env->GetMethodID(bundleClass, "keySet", "()Ljava/util/Set;");
+    jobject ketSetObj = env->CallObjectMethod(data, keySetMID);
+    jmethodID bundleStrMID = env->GetMethodID(bundleClass, "getString", "(Ljava/lang/String;)Ljava/lang/String;");
+
+    jclass setClass = env->FindClass("java/util/Set");
+    jmethodID iteratorMID = env->GetMethodID(setClass, "iterator", "()Ljava/util/Iterator;");
+    jobject iteratorObj = env->CallObjectMethod(ketSetObj, iteratorMID);
+    jclass iteratorClass = env->FindClass("java/util/Iterator");
+    jmethodID hasNextMID = env->GetMethodID(iteratorClass, "hasNext", "()Z");
+    jmethodID nextMID = env->GetMethodID(iteratorClass, "next", "()Ljava/lang/Object;");
+
+    AidlRkTvPrivAppCmdInfo cmdInfo;
+    std::vector<AidlRkTvPrivAppCmdBundle> cmdData;
+    cmdData.clear();
+    while (env->CallBooleanMethod(iteratorObj, hasNextMID)) {
+        jstring keyJS = (jstring)env->CallObjectMethod(iteratorObj, nextMID);
+        const char *keyStr = env->GetStringUTFChars(keyJS, NULL);
+        jstring valueJS = (jstring)env->CallObjectMethod(data, bundleStrMID, keyJS);
+        const char *valueStr = env->GetStringUTFChars(valueJS, NULL);
+        AidlRkTvPrivAppCmdBundle bundle;
+        bundle.key = keyStr;
+        bundle.value = valueStr;
+        cmdData.push_back(bundle);
+
+        env->ReleaseStringUTFChars(keyJS, keyStr);
+        env->DeleteLocalRef(keyJS);
+        env->ReleaseStringUTFChars(valueJS, valueStr);
+        env->DeleteLocalRef(valueJS);
+    }
+    env->DeleteLocalRef(bundleClass);
+    env->DeleteLocalRef(ketSetObj);
+    env->DeleteLocalRef(setClass);
+    env->DeleteLocalRef(iteratorObj);
+    env->DeleteLocalRef(iteratorClass);
+
+    cmdInfo.action = maction;
+    cmdInfo.data = cmdData;
+    tvInputHal->privCmdFromApp(cmdInfo);
+    env->ReleaseStringUTFChars(action, maction);
+    return 1;
+}
+//----------------------------------------
+
 static const JNINativeMethod gTvInputHalMethods[] = {
         /* name, signature, funcPtr */
         {"nativeOpen", "(Landroid/os/MessageQueue;)J", (void*)nativeOpen},
@@ -105,6 +157,11 @@ static const JNINativeMethod gTvInputHalMethods[] = {
          (void*)nativeGetStreamConfigs},
         {"nativeSetTvMessageEnabled", "(JIIIZ)I", (void*)nativeSetTvMessageEnabled},
         {"nativeClose", "(J)V", (void*)nativeClose},
+
+        //-----------------------rk code----------
+        { "nativePrivCmdFromApp", "(JLjava/lang/String;Landroid/os/Bundle;)I",
+         (void*) nativePrivCmdFromApp },
+        //----------------------------------------
 };
 
 #define FIND_CLASS(var, className) \

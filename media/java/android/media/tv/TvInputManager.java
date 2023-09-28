@@ -3846,6 +3846,16 @@ public final class TvInputManager {
             }
         }
 
+        //-----------------------rk code----------
+        public void sendAppPrivateCommand(@NonNull String action, @NonNull Bundle data) {
+            try {
+                mInterface.sendAppPrivateCommand(action, data);
+            } catch (RemoteException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        //----------------------------------------
+
         /** @removed */
         @SystemApi
         public boolean dispatchKeyEventToHdmi(KeyEvent event) {

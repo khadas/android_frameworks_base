@@ -32,7 +32,9 @@ import android.view.Surface;
  * Provides access to the low-level TV input hardware abstraction layer.
  */
 final class TvInputHal implements Handler.Callback {
-    private final static boolean DEBUG = false;
+    //-----------------------rk code----------
+    private final static boolean DEBUG = true;
+    //----------------------------------------
     private final static String TAG = TvInputHal.class.getSimpleName();
 
     public final static int SUCCESS = 0;
@@ -58,7 +60,6 @@ final class TvInputHal implements Handler.Callback {
     }
 
     private native long nativeOpen(MessageQueue queue);
-
     private static native int nativeAddOrUpdateStream(long ptr, int deviceId, int streamId,
             Surface surface);
     private static native int nativeRemoveStream(long ptr, int deviceId, int streamId);
@@ -67,6 +68,9 @@ final class TvInputHal implements Handler.Callback {
     private static native void nativeClose(long ptr);
     private static native int nativeSetTvMessageEnabled(long ptr, int deviceId, int streamId,
             int type, boolean enabled);
+    //-----------------------rk code----------
+    private static native int nativePrivCmdFromApp(long ptr, String action, Bundle data);
+    //----------------------------------------
 
     private final Object mLock = new Object();
     private long mPtr = 0;
@@ -86,15 +90,33 @@ final class TvInputHal implements Handler.Callback {
         }
     }
 
+    //-----------------------rk code----------
+    public int sendAppPrivateCommand(String action, Bundle data) {
+        synchronized (mLock) {
+            if (mPtr == 0 || null == data) {
+                return ERROR_NO_INIT;
+            }
+            if (nativePrivCmdFromApp(mPtr, action, data) == 1) {
+                return SUCCESS;
+            }
+            return ERROR_UNKNOWN;
+        }
+    }
+    //----------------------------------------
+
     public int addOrUpdateStream(int deviceId, Surface surface, TvStreamConfig streamConfig) {
         synchronized (mLock) {
             if (mPtr == 0) {
                 return ERROR_NO_INIT;
             }
             int generation = mStreamConfigGenerations.get(deviceId, 0);
-            if (generation != streamConfig.getGeneration()) {
+            //-----------------------rk code----------
+            Slog.w(TAG, "generation=" + generation);
+            Slog.w(TAG, "streamConfig.getGeneration()=" + streamConfig.getGeneration());
+            /*if (generation != streamConfig.getGeneration()) {
                 return ERROR_STALE_CONFIG;
-            }
+            }*/
+            //----------------------------------------
             if (nativeAddOrUpdateStream(mPtr, deviceId, streamConfig.getStreamId(), surface) == 0) {
                 return SUCCESS;
             } else {
@@ -128,9 +150,13 @@ final class TvInputHal implements Handler.Callback {
                 return ERROR_NO_INIT;
             }
             int generation = mStreamConfigGenerations.get(deviceId, 0);
-            if (generation != streamConfig.getGeneration()) {
+            Slog.w(TAG, "removeStream-->generation=" + generation);
+            Slog.w(TAG, "removeStream-->streamConfig.getGeneration()=" + streamConfig.getGeneration());
+            //-----------------------rk code----------
+            /*if (generation != streamConfig.getGeneration()) {
                 return ERROR_STALE_CONFIG;
-            }
+            }*/
+            //----------------------------------------
             if (nativeRemoveStream(mPtr, deviceId, streamConfig.getStreamId()) == 0) {
                 return SUCCESS;
             } else {
@@ -149,6 +175,9 @@ final class TvInputHal implements Handler.Callback {
 
     private void retrieveStreamConfigsLocked(int deviceId) {
         int generation = mStreamConfigGenerations.get(deviceId, 0) + 1;
+        //-----------------------rk code----------
+        Slog.w(TAG, "retrieveStreamConfigsLocked-->deviceId = " + deviceId + ", generation=" + generation);
+        //----------------------------------------
         mStreamConfigs.put(deviceId, nativeGetStreamConfigs(mPtr, deviceId, generation));
         mStreamConfigGenerations.put(deviceId, generation);
     }

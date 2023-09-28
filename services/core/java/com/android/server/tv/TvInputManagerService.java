@@ -126,6 +126,10 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//-----------------------rk code----------
+import android.os.SystemProperties;
+//----------------------------------------
+
 /** This class provides a system service that manages television inputs. */
 public final class TvInputManagerService extends SystemService {
     private static final boolean DEBUG = false;
@@ -1110,8 +1114,19 @@ public final class TvInputManagerService extends SystemService {
                 synchronized (mLock) {
                     UserState userState = getOrCreateUserStateLocked(resolvedUserId);
                     List<TvInputInfo> inputList = new ArrayList<>();
+                    //-----------------------rk code----------
+                    boolean isCtsTest = SystemProperties.getBoolean("cts_gts.status", false);
+                    //----------------------------------------
                     for (TvInputState state : userState.inputMap.values()) {
-                        inputList.add(state.info);
+                        //-----------------------rk code----------
+                        if (isCtsTest && null != state.info
+                                && state.info.toString().contains("pkg=com.example.partnersupportsampletvinput,")) {
+                            Slog.v(TAG, "skip " + state.info);
+                        } else {
+                            inputList.add(state.info);
+                            //Slog.v(TAG, "add " + state.info);
+                        }
+                        //----------------------------------------
                     }
                     return inputList;
                 }
@@ -4165,6 +4180,11 @@ public final class TvInputManagerService extends SystemService {
                         if (!sessionState.isRecordingSession
                                 && sessionState.hardwareSessionToken != null) {
                             sessionState.session.notifyTvMessage(type, data);
+                        //-----------------------rk code----------
+                        } else if (null != inputId && inputId.startsWith("com.example.partnersupportsampletvinput/.SampleTvInputService/")) {
+                            Slog.w(TAG, "onTvMessage " + type+", " + data);
+                            sessionState.session.notifyTvMessage(type, data);
+                        //----------------------------------------
                         }
                     } catch (RemoteException e) {
                         Slog.e(TAG, "error in onTvMessage", e);
