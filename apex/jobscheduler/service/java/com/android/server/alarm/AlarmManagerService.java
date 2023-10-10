@@ -113,6 +113,7 @@ import android.os.ServiceManager;
 import android.os.ShellCallback;
 import android.os.ShellCommand;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.ThreadLocalWorkSource;
 import android.os.Trace;
 import android.os.UserHandle;
@@ -158,6 +159,7 @@ import com.android.server.EventLogTags;
 import com.android.server.LocalServices;
 import com.android.server.SystemClockTime;
 import com.android.server.SystemClockTime.TimeConfidence;
+import com.android.server.SystemConfig;
 import com.android.server.SystemService;
 import com.android.server.SystemServiceManager;
 import com.android.server.SystemTimeZone;
@@ -202,6 +204,7 @@ public class AlarmManagerService extends SystemService {
     private static final int ELAPSED_REALTIME_WAKEUP_MASK = 1 << ELAPSED_REALTIME_WAKEUP;
     private static final int REMOVAL_HISTORY_SIZE_PER_UID = 10;
     static final int TIME_CHANGED_MASK = 1 << 16;
+    static final int FLAG_WHITELIST = 1 << 7;
     static final int IS_WAKEUP_MASK = RTC_WAKEUP_MASK | ELAPSED_REALTIME_WAKEUP_MASK;
 
     static final String TAG = "AlarmManager";
@@ -216,6 +219,7 @@ public class AlarmManagerService extends SystemService {
     static final boolean DEBUG_TARE = localLOGV || false;
     static final boolean RECORD_ALARMS_IN_HISTORY = true;
     static final boolean RECORD_DEVICE_IDLE_ALARMS = false;
+    static final String LAZYBATCHING_PROPERTY = "persist.sys.lazy_batching";
 
     static final int TICK_HISTORY_DEPTH = 10;
     static final long INDEFINITE_DELAY = 365 * INTERVAL_DAY;
@@ -291,8 +295,9 @@ public class AlarmManagerService extends SystemService {
     private long mNextNonWakeup;
     private long mNextWakeUpSetAt;
     private long mNextNonWakeUpSetAt;
-    private long mLastWakeup;
+    static long mLastWakeup;
     private long mLastTrigger;
+    static long WAKEUP_INTERVAL;
 
     private long mLastTickSet;
     private long mLastTickReceived;
@@ -693,6 +698,8 @@ public class AlarmManagerService extends SystemService {
         @VisibleForTesting
         static final String KEY_MAX_INTERVAL = "max_interval";
         @VisibleForTesting
+        static final String KEY_WAKEUP_INTERVAL = "wakeup_interval";
+        @VisibleForTesting
         static final String KEY_MIN_WINDOW = "min_window";
         @VisibleForTesting
         static final String KEY_ALLOW_WHILE_IDLE_WHITELIST_DURATION
@@ -717,6 +724,9 @@ public class AlarmManagerService extends SystemService {
                 KEY_PREFIX_STANDBY_QUOTA + "restricted";
         private static final String KEY_APP_STANDBY_RESTRICTED_WINDOW =
                 "app_standby_restricted_window";
+
+        @VisibleForTesting
+        static final String KEY_LAZY_BATCHING = "lazy_batching";
 
         private static final String KEY_TIME_TICK_ALLOWED_WHILE_IDLE =
                 "time_tick_allowed_while_idle";
@@ -754,6 +764,7 @@ public class AlarmManagerService extends SystemService {
         private static final long DEFAULT_MIN_FUTURITY = 5 * 1000;
         private static final long DEFAULT_MIN_INTERVAL = 60 * 1000;
         private static final long DEFAULT_MAX_INTERVAL = 365 * INTERVAL_DAY;
+        private static final long DEFAULT_WAKEUP_INTERVAL = 10 * 60 * 1000;
         private static final long DEFAULT_MIN_WINDOW = 10 * 60 * 1000;
         private static final long DEFAULT_ALLOW_WHILE_IDLE_WHITELIST_DURATION = 10 * 1000;
         private static final long DEFAULT_LISTENER_TIMEOUT = 5 * 1000;
@@ -772,6 +783,7 @@ public class AlarmManagerService extends SystemService {
         private static final int DEFAULT_APP_STANDBY_RESTRICTED_QUOTA = 1;
         private static final long DEFAULT_APP_STANDBY_RESTRICTED_WINDOW = INTERVAL_DAY;
 
+        private final boolean DEFAULT_LAZY_BATCHING = SystemProperties.getBoolean(LAZYBATCHING_PROPERTY, true);
         private static final boolean DEFAULT_TIME_TICK_ALLOWED_WHILE_IDLE = true;
 
         /**
@@ -822,6 +834,7 @@ public class AlarmManagerService extends SystemService {
         public int APP_STANDBY_RESTRICTED_QUOTA = DEFAULT_APP_STANDBY_RESTRICTED_QUOTA;
         public long APP_STANDBY_RESTRICTED_WINDOW = DEFAULT_APP_STANDBY_RESTRICTED_WINDOW;
 
+        public boolean LAZY_BATCHING = DEFAULT_LAZY_BATCHING;
         public boolean TIME_TICK_ALLOWED_WHILE_IDLE = DEFAULT_TIME_TICK_ALLOWED_WHILE_IDLE;
 
         public int ALLOW_WHILE_IDLE_QUOTA = DEFAULT_ALLOW_WHILE_IDLE_QUOTA;
@@ -967,6 +980,10 @@ public class AlarmManagerService extends SystemService {
                             MAX_INTERVAL = properties.getLong(
                                     KEY_MAX_INTERVAL, DEFAULT_MAX_INTERVAL);
                             break;
+                        case KEY_WAKEUP_INTERVAL:
+                            WAKEUP_INTERVAL = properties.getLong(
+                                    KEY_WAKEUP_INTERVAL, DEFAULT_WAKEUP_INTERVAL);
+                            break;
                         case KEY_ALLOW_WHILE_IDLE_QUOTA:
                             ALLOW_WHILE_IDLE_QUOTA = properties.getInt(KEY_ALLOW_WHILE_IDLE_QUOTA,
                                     DEFAULT_ALLOW_WHILE_IDLE_QUOTA);
@@ -1037,6 +1054,14 @@ public class AlarmManagerService extends SystemService {
                         case KEY_APP_STANDBY_WINDOW:
                         case KEY_APP_STANDBY_RESTRICTED_WINDOW:
                             updateStandbyWindowsLocked();
+                            break;
+                        case KEY_LAZY_BATCHING:
+                            final boolean oldLazyBatching = LAZY_BATCHING;
+                            LAZY_BATCHING = properties.getBoolean(
+                                    KEY_LAZY_BATCHING, DEFAULT_LAZY_BATCHING);
+                            if (oldLazyBatching != LAZY_BATCHING) {
+                                migrateAlarmsToNewStoreLocked();
+                            }
                             break;
                         case KEY_TIME_TICK_ALLOWED_WHILE_IDLE:
                             TIME_TICK_ALLOWED_WHILE_IDLE = properties.getBoolean(
@@ -1159,6 +1184,15 @@ public class AlarmManagerService extends SystemService {
             }
         }
 
+        private void migrateAlarmsToNewStoreLocked() {
+            final AlarmStore newStore = LAZY_BATCHING ? new LazyAlarmStore()
+                    : new BatchingAlarmStore();
+            final ArrayList<Alarm> allAlarms = mAlarmStore.remove((unused) -> true);
+            newStore.addAll(allAlarms);
+            mAlarmStore = newStore;
+            mAlarmStore.setAlarmClockRemovalListener(mAlarmClockUpdater);
+        }
+
         private void updateDeviceIdleFuzzBoundaries() {
             final DeviceConfig.Properties properties = DeviceConfig.getProperties(
                     DeviceConfig.NAMESPACE_ALARM_MANAGER,
@@ -1244,6 +1278,11 @@ public class AlarmManagerService extends SystemService {
             TimeUtils.formatDuration(MAX_INTERVAL, pw);
             pw.println();
 
+            pw.print(KEY_WAKEUP_INTERVAL);
+            pw.print("=");
+            TimeUtils.formatDuration(WAKEUP_INTERVAL, pw);
+            pw.println();
+
             pw.print(KEY_MIN_WINDOW);
             pw.print("=");
             TimeUtils.formatDuration(MIN_WINDOW, pw);
@@ -1294,6 +1333,9 @@ public class AlarmManagerService extends SystemService {
             pw.print(KEY_APP_STANDBY_RESTRICTED_WINDOW);
             pw.print("=");
             TimeUtils.formatDuration(APP_STANDBY_RESTRICTED_WINDOW, pw);
+            pw.println();
+
+            pw.print(KEY_LAZY_BATCHING, LAZY_BATCHING);
             pw.println();
 
             pw.print(KEY_TIME_TICK_ALLOWED_WHILE_IDLE, TIME_TICK_ALLOWED_WHILE_IDLE);
@@ -1456,6 +1498,9 @@ public class AlarmManagerService extends SystemService {
         super(context);
         mInjector = injector;
         mEconomyManagerInternal = LocalServices.getService(EconomyManagerInternal.class);
+        if (SystemConfig.getInstance().getWakeupAalarmalignWwhitelist() != null) {
+            Slog.d(TAG, "mWakeupWhiteList=" + SystemConfig.getInstance().getWakeupAalarmalignWwhitelist());
+        }
     }
 
     public AlarmManagerService(Context context) {
@@ -1943,8 +1988,10 @@ public class AlarmManagerService extends SystemService {
         synchronized (mLock) {
             mHandler = new AlarmHandler();
             mConstants = new Constants(mHandler);
+            WAKEUP_INTERVAL = mConstants.DEFAULT_WAKEUP_INTERVAL;
 
-            mAlarmStore = new LazyAlarmStore();
+            mAlarmStore = mConstants.LAZY_BATCHING ? new LazyAlarmStore()
+                    : new BatchingAlarmStore();
             mAlarmStore.setAlarmClockRemovalListener(mAlarmClockUpdater);
 
             mAppWakeupHistory = new AppWakeupHistory(Constants.DEFAULT_APP_STANDBY_WINDOW);
@@ -2379,6 +2426,12 @@ public class AlarmManagerService extends SystemService {
             String listenerTag, int flags, WorkSource workSource,
             AlarmManager.AlarmClockInfo alarmClock, int callingUid, String callingPackage,
             Bundle idleOptions, int exactAllowReason) {
+        Slog.d(TAG, "setImplLocked() callingPackage=" + callingPackage);
+        if (mConstants.LAZY_BATCHING == false && (type == ELAPSED_REALTIME_WAKEUP || type == RTC_WAKEUP)
+                && SystemConfig.getInstance().getWakeupAalarmalignWwhitelist().contains(callingPackage)) {
+            Slog.d(TAG, "setImplLocked() callingPackage=" + callingPackage + " add FLAG_WHITELIST");
+            flags |= FLAG_WHITELIST;
+        }
         final Alarm a = new Alarm(type, when, whenElapsed, windowLength, interval,
                 operation, directReceiver, listenerTag, workSource, flags, alarmClock,
                 callingUid, callingPackage, idleOptions, exactAllowReason);

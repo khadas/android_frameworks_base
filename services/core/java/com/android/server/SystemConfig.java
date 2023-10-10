@@ -287,6 +287,8 @@ public class SystemConfig {
     // Package names that are exempted from private API blacklisting
     final ArraySet<String> mHiddenApiPackageWhitelist = new ArraySet<>();
 
+    final ArraySet<String> mWakeupAalarmalignWhitelist = new ArraySet<>();
+
     // The list of carrier applications which should be disabled until used.
     // This function suppresses update notifications for these pre-installed apps.
     // In SubscriptionInfoUpdater, the listed applications are disabled until used when all of the
@@ -432,6 +434,8 @@ public class SystemConfig {
     public ArraySet<String> getHiddenApiWhitelistedApps() {
         return mHiddenApiPackageWhitelist;
     }
+
+    public ArraySet<String> getWakeupAalarmalignWwhitelist() { return mWakeupAalarmalignWhitelist; }
 
     public ArraySet<ComponentName> getDefaultVrComponents() {
         return mDefaultVrComponents;
@@ -1250,6 +1254,16 @@ public class SystemConfig {
                             }
                         } else {
                             logNotAllowedInPartition(name, permFile, parser);
+                        }
+                        XmlUtils.skipCurrentTag(parser);
+                    } break;
+                    case "wakeup-alarmalign-whitelist": {
+                        String pkgname = parser.getAttributeValue(null, "package");
+                        if (pkgname == null) {
+                            Slog.w(TAG, "<" + name + "> without package in "
+                                    + permFile + " at " + parser.getPositionDescription());
+                        } else {
+                            mWakeupAalarmalignWhitelist.add(pkgname);
                         }
                         XmlUtils.skipCurrentTag(parser);
                     } break;
