@@ -1184,7 +1184,11 @@ public final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (mService.isSystemAudioActivated()) {
             return Constants.ABORT_NOT_IN_CORRECT_MODE;
         } else {
-            mService.setStreamMusicVolume(message.getAudioVolumeLevel(), 0);
+            int audioVolumeLevel = message.getAudioVolumeLevel();
+            if (audioVolumeLevel >= AudioStatus.MIN_VOLUME
+                    && audioVolumeLevel <= AudioStatus.MAX_VOLUME) {
+                mService.setStreamMusicVolume(audioVolumeLevel, 0);
+            }
             return Constants.HANDLED;
         }
     }
@@ -1224,14 +1228,6 @@ public final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
     HdmiDeviceInfo getSafeAvrDeviceInfo() {
         return mService.getHdmiCecNetwork().getSafeCecDeviceInfo(Constants.ADDR_AUDIO_SYSTEM);
     }
-
-    /**
-     * Returns the audio output device used for System Audio Mode.
-     */
-    AudioDeviceAttributes getSystemAudioOutputDevice() {
-        return HdmiControlService.AUDIO_OUTPUT_DEVICE_HDMI_ARC;
-    }
-
 
     @ServiceThreadOnly
     void handleRemoveActiveRoutingPath(int path) {
@@ -1395,10 +1391,12 @@ public final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
 
     @Override
     @ServiceThreadOnly
-    protected void onStandby(boolean initiatedByCec, int standbyAction) {
+    protected void onStandby(boolean initiatedByCec, int standbyAction,
+            StandbyCompletedCallback callback) {
         assertRunOnServiceThread();
         // Seq #11
         if (!mService.isCecControlEnabled()) {
+            invokeStandbyCompletedCallback(callback);
             return;
         }
         boolean sendStandbyOnSleep =
@@ -1408,7 +1406,15 @@ public final class HdmiCecLocalDeviceTv extends HdmiCecLocalDevice {
         if (!initiatedByCec && sendStandbyOnSleep) {
             mService.sendCecCommand(
                     HdmiCecMessageBuilder.buildStandby(
-                            getDeviceInfo().getLogicalAddress(), Constants.ADDR_BROADCAST));
+                            getDeviceInfo().getLogicalAddress(), Constants.ADDR_BROADCAST),
+                    new SendMessageCallback() {
+                        @Override
+                        public void onSendCompleted(int error) {
+                            invokeStandbyCompletedCallback(callback);
+                        }
+                    });
+        } else {
+            invokeStandbyCompletedCallback(callback);
         }
     }
 
