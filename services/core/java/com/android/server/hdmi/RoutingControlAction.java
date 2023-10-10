@@ -17,6 +17,7 @@
 package com.android.server.hdmi;
 
 import android.hardware.hdmi.HdmiControlManager;
+import android.hardware.hdmi.HdmiDeviceInfo;
 import android.hardware.hdmi.IHdmiControlCallback;
 import android.util.Slog;
 
@@ -68,6 +69,24 @@ final class RoutingControlAction extends HdmiCecFeatureAction {
     @Override
     public boolean start() {
         mState = STATE_WAIT_FOR_ROUTING_INFORMATION;
+        HdmiDeviceInfo targetDevice = getDeviceInfoByPath(mCurrentRoutingPath);
+        if (targetDevice != null) {
+            // We should try to make sure RoutingControlAction is called when the DiscoveryAction
+            // has been finished. Or else it's difficult to work with only knowledge of routing path.
+            if (!HdmiUtils.isPowerOnOrTransient(targetDevice.getDevicePowerStatus())) {
+                // Just send a turn on message if the device's power status is not on.
+                // Sending power query messages and so on is much too protracted, and might
+                // introduce unexpected power control issues.
+                turnOnDevice(targetDevice.getLogicalAddress());
+            }
+            if (targetDevice.isSourceType()) {
+                // If there is a source device, just send another routing control message
+                // to make sure it 100 percent responds.
+                // sendSetStreamPath();
+                finishWithCallback(HdmiControlManager.RESULT_SUCCESS);
+                return true;
+            }
+        }
         addTimer(mState, TIMEOUT_ROUTING_INFORMATION_MS);
         return true;
     }
@@ -88,10 +107,23 @@ final class RoutingControlAction extends HdmiCecFeatureAction {
             mCurrentRoutingPath = routingPath;
             // Stop possible previous routing change sequence if in progress.
             removeActionExcept(RoutingControlAction.class, this);
-            addTimer(mState, TIMEOUT_ROUTING_INFORMATION_MS);
+            HdmiDeviceInfo targetDevice = getDeviceInfoByPath(mCurrentRoutingPath);
+            if (targetDevice != null
+                && !HdmiUtils.isPowerOnOrTransient(targetDevice.getDevicePowerStatus())) {
+                turnOnDevice(targetDevice.getLogicalAddress());
+            }
+            // Use the responded <Active Source> to update active input.
+            sendSetStreamPath();
+            finishWithCallback(HdmiControlManager.RESULT_SUCCESS);
             return true;
         }
         return false;
+    }
+
+    private void turnOnDevice(int logicalAddress) {
+        HdmiLogger.debug("turnOnDevice " + logicalAddress);
+        sendUserControlPressedAndReleased(logicalAddress,
+                HdmiCecKeycode.CEC_KEYCODE_POWER_ON_FUNCTION);
     }
 
     private void updateActiveInput() {
@@ -113,8 +145,9 @@ final class RoutingControlAction extends HdmiCecFeatureAction {
         }
         switch (timeoutState) {
             case STATE_WAIT_FOR_ROUTING_INFORMATION:
-                updateActiveInput();
-                sendSetStreamPath();
+                HdmiLogger.debug("No ROUTING_INFORMATION received, just finish");
+                //updateActiveInput();
+                //sendSetStreamPath();
                 finishWithCallback(HdmiControlManager.RESULT_SUCCESS);
                 return;
             default:

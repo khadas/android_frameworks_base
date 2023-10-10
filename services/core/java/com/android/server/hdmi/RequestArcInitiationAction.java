@@ -28,6 +28,8 @@ import android.hardware.tv.cec.V1_0.SendMessageResult;
 final class RequestArcInitiationAction extends RequestArcAction {
     private static final String TAG = "RequestArcInitiationAction";
 
+    private static final int MAX_SEND_RETRY_COUNT = 2;
+    private int mSendRetryCount = 0;
     /**
      * @Constructor
      *
@@ -50,27 +52,36 @@ final class RequestArcInitiationAction extends RequestArcAction {
     @Override
     boolean start() {
         // Seq #38
-        mState = STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE;
+        mState = STATE_WAITING_FOR_REQUEST_ARC_REQUEST_RESPONSE;
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
 
+        sendArcInitiation();
+        return true;
+    }
+
+    private void sendArcInitiation() {
         HdmiCecMessage command = HdmiCecMessageBuilder.buildRequestArcInitiation(
                 getSourceAddress(), mAvrAddress);
         sendCommand(command, new HdmiControlService.SendMessageCallback() {
             @Override
             public void onSendCompleted(int error) {
                 if (error != SendMessageResult.SUCCESS) {
-                    // Turn off ARC status if <Request ARC Initiation> fails.
-                    tv().disableArc();
-                    finishWithCallback(HdmiControlManager.RESULT_TARGET_NOT_AVAILABLE);
+                    if (mSendRetryCount++ >= MAX_SEND_RETRY_COUNT) {
+                        HdmiLogger.debug("Failed to send <Request Arc Initiation>:" + error);
+                        tv().disableArc();
+                        finish();
+                        return;
+                    }
+                    HdmiLogger.debug("send <Request Arc Initiation> retry:" + mSendRetryCount);
+                    sendArcInitiation();
                 }
             }
         });
-        return true;
     }
 
     @Override
     boolean processCommand(HdmiCecMessage cmd) {
-        if (mState != STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE
+        if (mState != STATE_WAITING_FOR_REQUEST_ARC_REQUEST_RESPONSE
                 || !HdmiUtils.checkCommandSource(cmd, mAvrAddress, TAG)) {
             return false;
         }
@@ -79,7 +90,11 @@ final class RequestArcInitiationAction extends RequestArcAction {
             case Constants.MESSAGE_FEATURE_ABORT:
                 int originalOpcode = cmd.getParams()[0] & 0xFF;
                 if (originalOpcode == Constants.MESSAGE_REQUEST_ARC_INITIATION) {
-                    tv().disableArc();
+                    HdmiLogger.warning("Receive abort for REQUEST_ARC_INITIATION");
+                    // For avrs which support both earc and arc, it may respond <Feature Abort> in
+                    // cases where it is in earc mode and where it is switching its arc status.
+                    // Don't disableArc in here.
+                    // tv().disableArc();
                     finishWithCallback(HdmiControlManager.RESULT_TARGET_NOT_AVAILABLE);
                     return true;
                 }
@@ -90,5 +105,20 @@ final class RequestArcInitiationAction extends RequestArcAction {
                 return false;
         }
         return false;
+    }
+
+    @Override
+    final void handleTimerEvent(int state) {
+        if (mState != state || state != STATE_WAITING_FOR_REQUEST_ARC_REQUEST_RESPONSE) {
+            return;
+        }
+        HdmiLogger.debug("[T] RequestArcInitiationAction.");
+        if (mSendRetryCount++ >= MAX_SEND_RETRY_COUNT) {
+            HdmiLogger.debug("No response for <Request Arc Initiation>");
+            finishWithCallback(HdmiControlManager.RESULT_TIMEOUT);
+            return;
+        }
+        addTimer(mState, HdmiConfig.TIMEOUT_MS);
+        sendArcInitiation();
     }
 }

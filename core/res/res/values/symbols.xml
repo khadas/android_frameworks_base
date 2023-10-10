@@ -1015,6 +1015,7 @@
   <java-symbol type="string" name="volume_icon_description_ringer" />
   <java-symbol type="string" name="volume_dialog_ringer_guidance_vibrate" />
   <java-symbol type="string" name="volume_dialog_ringer_guidance_silent" />
+  <java-symbol type="string" name="volume_control_hint" />
   <java-symbol type="string" name="wait" />
   <java-symbol type="string" name="webpage_unresponsive" />
   <java-symbol type="string" name="whichApplication" />
@@ -4846,6 +4847,16 @@
   <java-symbol type="bool" name="config_earcFeatureEnabled_default" />
   <java-symbol type="bool" name="config_earcFeatureDisabled_allowed" />
   <java-symbol type="bool" name="config_earcFeatureDisabled_default" />
+
+  <!-- Comatibility Cec Configuration -->
+  <java-symbol type="bool" name="config_cecUseAndroidVolumeBar" />
+  <java-symbol type="bool" name="config_cecSendStandbyNoneActive" />
+  <java-symbol type="bool" name="config_cecSendInactiveSource" />
+  <java-symbol type="bool" name="config_cecBootOneTouchPlay" />
+  <java-symbol type="bool" name="config_cecSuspendedByAutoDeviceOff" />
+  <java-symbol type="bool" name="config_cec_hdmiFullVolume" />
+  <java-symbol type="bool" name="config_cec_showPassthroughWarningAlways" />
+  <java-symbol type="integer" name="config_cec_passthroughMode" />
 
   <!-- Ids for RemoteViews -->
   <java-symbol type="id" name="remote_views_next_child" />

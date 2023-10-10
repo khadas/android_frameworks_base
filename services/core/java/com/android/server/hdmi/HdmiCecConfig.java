@@ -880,7 +880,7 @@ public class HdmiCecConfig {
             HdmiLogger.debug("Reading '" + storageKey + "' global setting.");
             return mStorageAdapter.retrieveGlobalSetting(storageKey, defaultValue);
         } else if (storage == STORAGE_SHARED_PREFS) {
-            HdmiLogger.debug("Reading '" + storageKey + "' shared preference.");
+            //HdmiLogger.debug("Reading '" + storageKey + "' shared preference.");
             return mStorageAdapter.retrieveSharedPref(storageKey, defaultValue);
         }
         return null;
@@ -1098,7 +1098,7 @@ public class HdmiCecConfig {
             throw new IllegalArgumentException("Setting '" + name
                     + "' is not a string-type setting.");
         }
-        HdmiLogger.debug("Getting CEC setting value '" + name + "'.");
+        //HdmiLogger.debug("Getting CEC setting value '" + name + "'.");
         return retrieveValue(setting, setting.getDefaultValue().getStringValue());
     }
 
@@ -1114,7 +1114,7 @@ public class HdmiCecConfig {
             throw new IllegalArgumentException("Setting '" + name
                     + "' is not a int-type setting.");
         }
-        HdmiLogger.debug("Getting CEC setting value '" + name + "'.");
+        //HdmiLogger.debug("Getting CEC setting value '" + name + "'.");
         String defaultValue = Integer.toString(setting.getDefaultValue().getIntValue());
         String value = retrieveValue(setting, defaultValue);
         return Integer.parseInt(value);

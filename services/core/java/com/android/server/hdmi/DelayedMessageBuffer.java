@@ -52,8 +52,13 @@ final class DelayedMessageBuffer {
                 mBuffer.add(message);
                 break;
             case Constants.MESSAGE_INITIATE_ARC:
-            case Constants.MESSAGE_SET_SYSTEM_AUDIO_MODE:
                 mBuffer.add(message);
+                break;
+            case Constants.MESSAGE_SET_SYSTEM_AUDIO_MODE:
+                boolean systemAudioStatus = HdmiUtils.parseCommandParamSystemAudioStatus(message);
+                if (systemAudioStatus) {
+                    mBuffer.add(message);
+                }
                 break;
             default:
                 buffered = false;
@@ -119,6 +124,27 @@ final class DelayedMessageBuffer {
             }
             mDevice.onMessage(message);
             HdmiLogger.debug("Processing message:" + message);
+        }
+    }
+
+    /**
+     * Process &lt;Active Source&gt;.
+     *
+     * <p>The message has a dependency on TV input framework. Should be invoked
+     * after we get the callback
+     * {@link android.media.tv.TvInputManager.TvInputCallback#onInputAdded(String)}
+     * to ensure the processing of the message takes effect when transformed
+     * to input change callback.
+     *
+     */
+    void processActiveSource() {
+        ArrayList<HdmiCecMessage> copiedBuffer = new ArrayList<HdmiCecMessage>(mBuffer);
+        for (HdmiCecMessage message : copiedBuffer) {
+            if (message.getOpcode() == Constants.MESSAGE_ACTIVE_SOURCE) {
+                mBuffer.remove(message);
+                mDevice.onMessage(message);
+                HdmiLogger.debug("Processing delayed message:" + message);
+            }
         }
     }
 

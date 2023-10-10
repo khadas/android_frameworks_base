@@ -101,13 +101,19 @@ public class HdmiEarcLocalDeviceTx extends HdmiEarcLocalDevice {
             mService.notifyEarcStatusToAudioService(false, new ArrayList<>());
             mService.startArcAction(false, null);
         } else if (status == HDMI_EARC_STATUS_ARC_PENDING) {
-            mService.notifyEarcStatusToAudioService(false, new ArrayList<>());
+            // Move this action to HdmiControlService#switchToArc.
+            //mService.notifyEarcStatusToAudioService(false, new ArrayList<>());
             mService.startArcAction(true, null);
         } else if (status == HDMI_EARC_STATUS_EARC_PENDING
                 && oldEarcStatus == HDMI_EARC_STATUS_ARC_PENDING) {
             mService.startArcAction(false, null);
         } else if (status == HDMI_EARC_STATUS_EARC_CONNECTED) {
+            // Arc actions could have been running, and remove them first.
+            mService.removeArcActions();
             if (oldEarcStatus == HDMI_EARC_STATUS_ARC_PENDING) {
+                // Note that if it's switched from ARC to EARC.
+                mService.switchToEArc();
+
                 mService.startArcAction(false, null);
             }
             mReportCapsHandler.postDelayed(mReportCapsRunnable, REPORT_CAPS_MAX_DELAY_MS);

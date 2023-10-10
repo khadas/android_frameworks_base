@@ -88,6 +88,9 @@ final class Constants {
     /** Logical address used to indicate the source comes from internal device. */
     public static final int ADDR_INTERNAL = HdmiDeviceInfo.ADDR_INTERNAL;
 
+    /** Whether support droidlogic_cec_support. */
+    public static final String DROIDLOGIC_CEC_SUPPORT = "droidlogic_cec_support";
+
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({
             MESSAGE_FEATURE_ABORT,
@@ -459,9 +462,26 @@ final class Constants {
     static final String PROPERTY_PREFERRED_ADDRESS_PLAYBACK = "persist.sys.hdmi.addr.playback";
     static final String PROPERTY_PREFERRED_ADDRESS_TV = "persist.sys.hdmi.addr.tv";
 
+    // In hdmi test, the arc port of tester audio system is fixed 1 for Agilent 882E.
+    static final int PORT_ARC_HDMI_TEST = 1;
+    // In hdmi test, the name of tester audio system.
+    static final String OSD_NAME_HDMI_TEST = "Test Dev";
+
+    // In eArc cert test, the arc port of tester audio system is fixed 1 for eArc
+    // protocol analyzer SL-870.
+    static final int PORT_ARC_EARC_TEST = 1;
+    // In eArc cert test, the name of tester audio system.
+    static final String OSD_NAME_EARC_TEST = "AuDSy";
+
     // Set to false to allow playback device to go to suspend mode even
     // when it's an active source. True by default.
     static final String PROPERTY_KEEP_AWAKE = "persist.sys.hdmi.keep_awake";
+
+    // Set to false to disable the function that suspending playback when hotpluggout out timeout.
+    static final String PROPERTY_HOTPLUG_SLEEP = "persist.sys.hdmi.hotplug_sleep";
+
+    // Set to false to disable the function that suspending playback when hotpluggout out timeout.
+    static final String PROPERTY_STANDBY_CHECK_SOURCE = "persist.sys.hdmi.standby_check_source";
 
     // TODO(UI): Set this from UI to decide if turn on System Audio Mode when power on the device
     /**
@@ -508,6 +528,9 @@ final class Constants {
      */
     static final String PROPERTY_STRIP_AUDIO_TV_NO_SYSTEM_AUDIO =
         "persist.sys.hdmi.property_strip_audio_tv_no_system_audio";
+
+    // Used to notify audio hal does not switch to speaker when switching between earc and arc.
+    static final String AUDIO_PARAM_SET_UPDATING_SAD = "set_ARC_hdmi=updating_sad";
 
     static final int RECORDING_TYPE_DIGITAL_RF = 1;
     static final int RECORDING_TYPE_ANALOGUE_RF = 2;

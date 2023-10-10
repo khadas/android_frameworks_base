@@ -17,8 +17,10 @@
 package com.android.server.hdmi;
 
 import android.hardware.hdmi.HdmiControlManager;
+import android.hardware.tv.cec.V1_0.SendMessageResult;
 import android.util.Slog;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -36,7 +38,8 @@ final class RequestSadAction extends HdmiCecFeatureAction {
     // State in which the action is waiting for <Report Short Audio Descriptor>.
     private static final int STATE_WAITING_FOR_REPORT_SAD = 1;
     private static final int MAX_SAD_PER_REQUEST = 4;
-    private static final int RETRY_COUNTER_MAX = 1;
+    private static final int RETRY_COUNTER_MAX = 2;
+    private static final int MAX_SEND_RETRY_COUNT = 5;
     private final int mTargetAddress;
     private final RequestSadCallback mCallback;
     private final List<Integer> mCecCodecsToQuery = new ArrayList<>();
@@ -44,6 +47,7 @@ final class RequestSadAction extends HdmiCecFeatureAction {
     private final List<byte[]> mSupportedSads = new ArrayList<>();
     private int mQueriedSadCount = 0; // Number of SADs queries that has already been completed
     private int mTimeoutRetry = 0; // Number of times we have already retried on time-out
+    private int mSendRetryCount = 0;
 
     /**
      * Constructor.
@@ -147,8 +151,23 @@ final class RequestSadAction extends HdmiCecFeatureAction {
         int[] codecsToQuery = mCecCodecsToQuery.subList(mQueriedSadCount,
                 Math.min(mCecCodecsToQuery.size(), mQueriedSadCount + MAX_SAD_PER_REQUEST))
                 .stream().mapToInt(i -> i).toArray();
-        sendCommand(HdmiCecMessageBuilder.buildRequestShortAudioDescriptor(getSourceAddress(),
-                mTargetAddress, codecsToQuery));
+        HdmiCecMessage sad = HdmiCecMessageBuilder.buildRequestShortAudioDescriptor(getSourceAddress(),
+                mTargetAddress, codecsToQuery);
+        sendCommand(sad, new HdmiControlService.SendMessageCallback() {
+            @Override
+            public void onSendCompleted(int error) {
+                if (error != SendMessageResult.SUCCESS) {
+                    if (mSendRetryCount++ >= MAX_SEND_RETRY_COUNT) {
+                        HdmiLogger.error("Failed to send <Request Short Audio Descriptor>:" + error);
+                        wrapUpAndFinish();
+                        return;
+                    }
+                    HdmiLogger.debug("send <Request Arc Initiation> retry:" + mSendRetryCount);
+                    querySad();
+                }
+            }
+        });
+        HdmiLogger.debug("querySad count:%d " + sad, mQueriedSadCount);
         mState = STATE_WAITING_FOR_REPORT_SAD;
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
     }
@@ -160,6 +179,7 @@ final class RequestSadAction extends HdmiCecFeatureAction {
             return false;
         }
         if (cmd.getOpcode() == Constants.MESSAGE_REPORT_SHORT_AUDIO_DESCRIPTOR) {
+            HdmiLogger.info("Received sad " + cmd);
             if (cmd.getParams() == null || cmd.getParams().length == 0
                     || cmd.getParams().length % 3 != 0) {
                 // Invalid message. Wait for time-out and query again.
@@ -185,6 +205,7 @@ final class RequestSadAction extends HdmiCecFeatureAction {
                 == Constants.MESSAGE_REQUEST_SHORT_AUDIO_DESCRIPTOR) {
             if ((cmd.getParams()[1] & 0xFF) == Constants.ABORT_UNRECOGNIZED_OPCODE) {
                 // SAD feature is not supported
+                HdmiLogger.warning("SAD feature is not supported");
                 wrapUpAndFinish();
                 return true;
             }
@@ -220,6 +241,8 @@ final class RequestSadAction extends HdmiCecFeatureAction {
             return;
         }
         if (state == STATE_WAITING_FOR_REPORT_SAD) {
+            HdmiLogger.warning("RequestSadAction timeout with retry:%d", mTimeoutRetry);
+
             if (++mTimeoutRetry <= RETRY_COUNTER_MAX) {
                 querySad();
                 return;
@@ -231,6 +254,14 @@ final class RequestSadAction extends HdmiCecFeatureAction {
     }
 
     private void wrapUpAndFinish() {
+        if (mSupportedSads.isEmpty()) {
+            HdmiLogger.warning("RequestSadAction got no sad!");
+        }
+        String sads = "";
+        for (byte[] sad : mSupportedSads) {
+            sads += Arrays.toString(sad);
+        }
+        HdmiLogger.info("RequestSadAction got sad:" + sads);
         mCallback.onRequestSadDone(mSupportedSads);
         finish();
     }

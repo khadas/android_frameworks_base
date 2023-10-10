@@ -103,4 +103,13 @@ public final class HdmiHotplugEvent implements Parcelable {
             return new HdmiHotplugEvent[size];
         }
     };
+
+    @Override
+    public String toString() {
+        StringBuilder s = new StringBuilder();
+        s.append("port:").append(mPort)
+            .append(" connected:").append(mConnected);
+        return s.toString();
+    }
+
 }

@@ -92,7 +92,8 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     void onHotplug(int portId, boolean connected) {
         assertRunOnServiceThread();
-        if (mService.getPortInfo(portId).getType() == HdmiPortInfo.PORT_OUTPUT) {
+        HdmiPortInfo portInfo = mService.getPortInfo(portId);
+        if (portInfo != null && portInfo.getType() == HdmiPortInfo.PORT_OUTPUT) {
             mCecMessageCache.flushAll();
         }
         // We'll not invalidate the active source on the hotplug event to pass CETC 11.2.2-2 ~ 3.
@@ -107,6 +108,7 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
         assertRunOnServiceThread();
         String powerControlMode = mService.getHdmiCecConfig().getStringValue(
                 HdmiControlManager.CEC_SETTING_NAME_POWER_CONTROL_MODE);
+        HdmiLogger.debug("sendStandby %d, mpde:%s", deviceId, powerControlMode) ;
         if (powerControlMode.equals(HdmiControlManager.POWER_CONTROL_MODE_BROADCAST)) {
             mService.sendCecCommand(
                     HdmiCecMessageBuilder.buildStandby(
@@ -124,11 +126,28 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     }
 
     @ServiceThreadOnly
+    void oneTouchPlay() {
+        oneTouchPlay(new IHdmiControlCallback.Stub() {
+            @Override
+            public void onComplete(int result) {
+                if (result != HdmiControlManager.RESULT_SUCCESS) {
+                    HdmiLogger.warning("Failed to complete One Touch Play. result=" + result);
+                }
+            }
+        });
+    }
+
+    @ServiceThreadOnly
     void oneTouchPlay(IHdmiControlCallback callback) {
         assertRunOnServiceThread();
+        if (!mService.isOneTouchPlayEnabled()) {
+            HdmiLogger.info("oneTouchPlay switch is disabled!");
+            return;
+        }
+
         List<OneTouchPlayAction> actions = getActions(OneTouchPlayAction.class);
         if (!actions.isEmpty()) {
-            Slog.i(TAG, "oneTouchPlay already in progress");
+            HdmiLogger.info("oneTouchPlay already in progress");
             actions.get(0).addCallback(callback);
             return;
         }
@@ -139,6 +158,7 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
             invokeCallback(callback, HdmiControlManager.RESULT_EXCEPTION);
             return;
         }
+        HdmiLogger.debug("oneTouchPlay " + action);
         addAndStartAction(action);
     }
 

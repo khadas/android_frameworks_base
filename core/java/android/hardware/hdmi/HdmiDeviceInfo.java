@@ -534,7 +534,8 @@ public class HdmiDeviceInfo implements Parcelable {
         s.append(" ");
         s.append("port_id: ").append(mPortId);
 
-        if (mHdmiDeviceType == HDMI_DEVICE_TYPE_CEC) {
+        if (mHdmiDeviceType == HDMI_DEVICE_TYPE_CEC
+                && (mCecVersion == HdmiControlManager.HDMI_CEC_VERSION_2_0)) {
             s.append("\n  ").append(mDeviceFeatures.toString());
         }
 

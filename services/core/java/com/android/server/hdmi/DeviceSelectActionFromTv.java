@@ -44,7 +44,7 @@ final class DeviceSelectActionFromTv extends HdmiCecFeatureAction {
 
     // The number of times we try to wake up the target device before we give up
     // and just send <Set Stream Path>.
-    private static final int LOOP_COUNTER_MAX = 20;
+    private static final int LOOP_COUNTER_MAX = 2;
 
     // State in which we wait for <Report Power Status> to come in response to the command
     // <Give Device Power Status> we have sent.
@@ -215,8 +215,9 @@ final class DeviceSelectActionFromTv extends HdmiCecFeatureAction {
 
     private void turnOnDevice() {
         if (!mIsCec20) {
-            sendUserControlPressedAndReleased(mTarget.getLogicalAddress(),
-                    HdmiCecKeycode.CEC_KEYCODE_POWER);
+            // Never send a POWER key to the source device for compatibility concern.
+            /*sendUserControlPressedAndReleased(mTarget.getLogicalAddress(),
+                    HdmiCecKeycode.CEC_KEYCODE_POWER);*/
             sendUserControlPressedAndReleased(mTarget.getLogicalAddress(),
                     HdmiCecKeycode.CEC_KEYCODE_POWER_ON_FUNCTION);
         }
@@ -234,6 +235,8 @@ final class DeviceSelectActionFromTv extends HdmiCecFeatureAction {
         // the selected device.
         tv().getActiveSource().invalidate();
         tv().setActivePath(mTarget.getPhysicalAddress());
+        tv().updateActiveSource(mTarget.getLogicalAddress(), mTarget.getPhysicalAddress(),
+                "DeviceSelectActionFromTv#sendSetStreamPath");
         sendCommand(HdmiCecMessageBuilder.buildSetStreamPath(
                 getSourceAddress(), mTarget.getPhysicalAddress()));
     }

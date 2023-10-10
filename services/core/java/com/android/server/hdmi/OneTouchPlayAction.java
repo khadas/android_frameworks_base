@@ -46,8 +46,8 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
     static final int STATE_WAITING_FOR_REPORT_POWER_STATUS = 1;
 
     // The maximum number of times we send <Give Device Power Status> before we give up.
-    // We wait up to RESPONSE_TIMEOUT_MS * LOOP_COUNTER_MAX = 20 seconds.
-    private static final int LOOP_COUNTER_MAX = 10;
+    // We wait up to RESPONSE_TIMEOUT_MS * LOOP_COUNTER_MAX = 10 seconds.
+    private static final int LOOP_COUNTER_MAX = 5;
 
     private final int mTargetAddress;
     private final boolean mIsCec20;
@@ -159,6 +159,7 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
         if (cmd.getOpcode() == Constants.MESSAGE_REPORT_POWER_STATUS) {
             int status = cmd.getParams()[0];
             if (status == HdmiControlManager.POWER_STATUS_ON) {
+                HdmiLogger.debug("One touch play is done for TV's power is ready");
                 // If the device is still the active source, send the <Active Source> message
                 // again.
                 maySendActiveSource();
@@ -176,6 +177,8 @@ final class OneTouchPlayAction extends HdmiCecFeatureAction {
         }
         if (state == STATE_WAITING_FOR_REPORT_POWER_STATUS) {
             if (mPowerStatusCounter++ < LOOP_COUNTER_MAX) {
+                HdmiLogger.debug("one touch play retry:" + mPowerStatusCounter);
+                sendCommand(HdmiCecMessageBuilder.buildTextViewOn(getSourceAddress(), mTargetAddress));
                 queryDevicePowerStatus();
                 addTimer(mState, HdmiConfig.TIMEOUT_MS);
             } else {

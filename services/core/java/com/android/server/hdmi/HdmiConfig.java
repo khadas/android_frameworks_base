@@ -54,7 +54,7 @@ final class HdmiConfig {
     // (non-CEC) switches is deprecated. They stop the correct operation of many mandatory
     // CEC features. If set to true, do not pass the list of CEC devices behind the legacy
     // switch since they won't be under control from TV.
-    static final boolean HIDE_DEVICES_BEHIND_LEGACY_SWITCH = true;
+    static final boolean HIDE_DEVICES_BEHIND_LEGACY_SWITCH = false;
 
     private HdmiConfig() { /* cannot be instantiated */ }
 }

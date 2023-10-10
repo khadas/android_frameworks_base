@@ -15,6 +15,7 @@
  */
 package com.android.server.hdmi;
 
+import android.hardware.hdmi.HdmiDeviceInfo;
 import android.hardware.hdmi.IHdmiControlCallback;
 import android.os.Handler;
 import android.os.Looper;
@@ -291,6 +292,10 @@ abstract class HdmiCecFeatureAction {
 
     protected final int getSourcePath() {
         return mSource.getDeviceInfo().getPhysicalAddress();
+    }
+
+    protected final HdmiDeviceInfo getDeviceInfoByPath(int path) {
+        return mService.getHdmiCecNetwork().getDeviceInfoByPath(path);
     }
 
     protected final void sendUserControlPressedAndReleased(int targetAddress, int uiCommand) {

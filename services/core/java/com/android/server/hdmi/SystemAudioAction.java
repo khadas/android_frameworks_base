@@ -79,6 +79,7 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
                     sendSystemAudioModeRequestInternal();
                 }
             });
+            HdmiLogger.debug("RoutingControlAction is in process and delay SAM");
             return;
         }
         sendSystemAudioModeRequestInternal();
@@ -88,13 +89,23 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
         HdmiCecMessage command = HdmiCecMessageBuilder.buildSystemAudioModeRequest(
                 getSourceAddress(),
                 mAvrLogicalAddress, getSystemAudioModeRequestParam(), mTargetAudioStatus);
+        HdmiLogger.debug("sendSystemAudioModeRequestInternal " + mTargetAudioStatus);
         sendCommand(command, new HdmiControlService.SendMessageCallback() {
             @Override
             public void onSendCompleted(int error) {
                 if (error != SendMessageResult.SUCCESS) {
-                    HdmiLogger.debug("Failed to send <System Audio Mode Request>:" + error);
+                    if (!mTargetAudioStatus  // Don't retry for Off case.
+                            || mSendRetryCount++ >= MAX_SEND_RETRY_COUNT) {
+                        HdmiLogger.debug("Failed to send <System Audio Mode Request>:" + error);
+                        setSystemAudioMode(false);
+                        finishWithCallback(HdmiControlManager.RESULT_COMMUNICATION_FAILED);
+                        return;
+                    }
+                    HdmiLogger.debug("send <System Audio Mode Request> retry:" + mSendRetryCount);
+                    sendSystemAudioModeRequestInternal();
+                } else if (!mTargetAudioStatus) {
                     setSystemAudioMode(false);
-                    finishWithCallback(HdmiControlManager.RESULT_COMMUNICATION_FAILED);
+                    finishWithCallback(HdmiControlManager.RESULT_SUCCESS);
                 }
             }
         });
@@ -151,6 +162,11 @@ abstract class SystemAudioAction extends HdmiCecFeatureAction {
                     return false;
                 }
                 boolean receivedStatus = HdmiUtils.parseCommandParamSystemAudioStatus(cmd);
+                if (receivedStatus) {
+                    // query the avr's power status to send a POWER_ON key if needed for compatibility.
+                    sendCommand(HdmiCecMessageBuilder.buildGiveDevicePowerStatus(
+                            getSourceAddress(), mAvrLogicalAddress));
+                }
                 if (receivedStatus == mTargetAudioStatus) {
                     setSystemAudioMode(receivedStatus);
                     finish();

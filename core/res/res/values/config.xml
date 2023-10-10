@@ -6053,6 +6053,16 @@
     <bool name="config_earcFeatureDisabled_allowed">true</bool>
     <bool name="config_earcFeatureDisabled_default">false</bool>
 
+    <!-- Comatibility Cec Configuration -->
+    <bool name="config_cecUseAndroidVolumeBar">false</bool>
+    <bool name="config_cecSendStandbyNoneActive">false</bool>
+    <bool name="config_cecSendInactiveSource">false</bool>
+    <bool name="config_cecBootOneTouchPlay">true</bool>
+    <bool name="config_cecSuspendedByAutoDeviceOff">false</bool>
+    <bool name="config_cec_hdmiFullVolume">true</bool>
+    <bool name="config_cec_showPassthroughWarningAlways">false</bool>
+    <integer name="config_cec_passthroughMode">0</integer>
+
     <!-- Whether app hibernation deletes OAT artifact files as part of global hibernation. -->
     <bool name="config_hibernationDeletesOatArtifactsEnabled">true</bool>
 

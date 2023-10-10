@@ -49,7 +49,7 @@ final class RequestArcTerminationAction extends RequestArcAction {
 
     @Override
     boolean start() {
-        mState = STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE;
+        mState = STATE_WAITING_FOR_REQUEST_ARC_REQUEST_RESPONSE;
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
 
         HdmiCecMessage command =
@@ -70,7 +70,7 @@ final class RequestArcTerminationAction extends RequestArcAction {
 
     @Override
     boolean processCommand(HdmiCecMessage cmd) {
-        if (mState != STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE
+        if (mState != STATE_WAITING_FOR_REQUEST_ARC_REQUEST_RESPONSE
                 || !HdmiUtils.checkCommandSource(cmd, mAvrAddress, TAG)) {
             return false;
         }
@@ -90,5 +90,15 @@ final class RequestArcTerminationAction extends RequestArcAction {
                 return false;
         }
         return false;
+    }
+
+    @Override
+    void handleTimerEvent(int state) {
+        if (mState != state || state != STATE_WAITING_FOR_REQUEST_ARC_REQUEST_RESPONSE) {
+            return;
+        }
+        HdmiLogger.debug("[T] RequestArcTerminationAction.");
+        disableArcTransmission();
+        finishWithCallback(HdmiControlManager.RESULT_TIMEOUT);
     }
 }

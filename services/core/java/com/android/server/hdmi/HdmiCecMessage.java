@@ -19,7 +19,7 @@ package com.android.server.hdmi;
 import static com.android.server.hdmi.HdmiCecMessageValidator.ValidationResult;
 
 import android.annotation.Nullable;
-
+import android.os.Build;
 import com.android.server.hdmi.Constants.FeatureOpcode;
 
 import libcore.util.EmptyArray;
@@ -79,6 +79,12 @@ public class HdmiCecMessage {
                 return SetAudioVolumeLevelMessage.build(source, destination, params);
             case Constants.MESSAGE_REPORT_FEATURES:
                 return ReportFeaturesMessage.build(source, destination, params);
+            case Constants.MESSAGE_REPORT_SHORT_AUDIO_DESCRIPTOR:
+                if (params == null || params.length == 0) {
+                    params = new byte[]{0, 0, 0};
+                    HdmiLogger.warning("Add params for invalid report sad message without params");
+                }
+                return new HdmiCecMessage(source, destination, opcode & 0xFF, params);
             default:
                 return new HdmiCecMessage(source, destination, opcode & 0xFF, params);
         }
@@ -368,7 +374,7 @@ public class HdmiCecMessage {
             case Constants.MESSAGE_VENDOR_REMOTE_BUTTON_DOWN:
             case Constants.MESSAGE_VENDOR_REMOTE_BUTTON_UP:
             case Constants.MESSAGE_VENDOR_COMMAND_WITH_ID:
-                return true;
+                return Build.IS_USERDEBUG;
             default:
                 return false;
         }

@@ -113,6 +113,16 @@ final class HdmiUtils {
 
     private HdmiUtils() { /* cannot be instantiated */ }
 
+    static boolean isPowerStandbyOrTransient(int powerStatus) {
+        return powerStatus == HdmiControlManager.POWER_STATUS_STANDBY
+                || powerStatus == HdmiControlManager.POWER_STATUS_TRANSIENT_TO_STANDBY;
+    }
+
+    static boolean isPowerOnOrTransient(int powerStatus) {
+        return powerStatus == HdmiControlManager.POWER_STATUS_ON
+                || powerStatus == HdmiControlManager.POWER_STATUS_TRANSIENT_TO_ON;
+    }
+
     /**
      * Check if the given logical address is valid. A logical address is valid
      * if it is one allocated for an actual device which allows communication

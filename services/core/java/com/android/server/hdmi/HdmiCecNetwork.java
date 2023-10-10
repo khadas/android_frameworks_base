@@ -73,6 +73,8 @@ public class HdmiCecNetwork {
     // Stores the local CEC devices in the system. Device type is used for key.
     private final SparseArray<HdmiCecLocalDevice> mLocalDevices = new SparseArray<>();
 
+    private HdmiPortInfo mArcPort;
+
     // Map-like container of all cec devices including local ones.
     // device id is used as key of container.
     // This is not thread-safe. For external purpose use mSafeDeviceInfos.
@@ -99,6 +101,9 @@ public class HdmiCecNetwork {
 
     // Map from port ID to HdmiDeviceInfo.
     private UnmodifiableSparseArray<HdmiDeviceInfo> mPortDeviceMap;
+
+    // Cached physical address
+    private int mPhysicalAddress = Constants.INVALID_PHYSICAL_ADDRESS;
 
     HdmiCecNetwork(HdmiControlService hdmiControlService,
             HdmiCecController hdmiCecController,
@@ -199,6 +204,11 @@ public class HdmiCecNetwork {
     private HdmiDeviceInfo addDeviceInfo(HdmiDeviceInfo deviceInfo) {
         assertRunOnServiceThread();
         HdmiDeviceInfo oldDeviceInfo = getCecDeviceInfo(deviceInfo.getLogicalAddress());
+        if (oldDeviceInfo == null) {
+            // Compatibility concern. When hdmi in devices switch connected ports, the old
+            // device info may not be removed in cec service or tif.
+            oldDeviceInfo = findDevicewithSameAddress(deviceInfo);
+        }
         mHdmiControlService.checkLogicalAddressConflictAndReallocate(
                 deviceInfo.getLogicalAddress(), deviceInfo.getPhysicalAddress());
         if (oldDeviceInfo != null) {
@@ -255,10 +265,14 @@ public class HdmiCecNetwork {
     final void addCecDevice(HdmiDeviceInfo info) {
         assertRunOnServiceThread();
         HdmiDeviceInfo old = addDeviceInfo(info);
+        HdmiLogger.debug("addCecDevice new:" + info + " old:" + old);
         if (isLocalDeviceAddress(info.getLogicalAddress())) {
             // The addition of a local device should not notify listeners
             return;
         }
+        // Compatibility concern. When the source device switches connected
+        // port, it may use a false physical address in <Report Physical Address> first.
+        checkAndUpdateActiveSource(info);
         mHdmiControlService.checkAndUpdateAbsoluteVolumeBehavior();
         if (info.getPhysicalAddress() == HdmiDeviceInfo.PATH_INVALID) {
             // Don't notify listeners of devices that haven't reported their physical address yet
@@ -267,11 +281,50 @@ public class HdmiCecNetwork {
             invokeDeviceEventListener(info,
                     HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
         } else if (!old.equals(info)) {
-            invokeDeviceEventListener(old,
-                    HdmiControlManager.DEVICE_EVENT_REMOVE_DEVICE);
-            invokeDeviceEventListener(info,
-                    HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
+            if (old.getPhysicalAddress() != info.getPhysicalAddress()
+                    || !old.getDisplayName().equals(info.getDisplayName())) {
+                invokeDeviceEventListener(old,
+                        HdmiControlManager.DEVICE_EVENT_REMOVE_DEVICE);
+                invokeDeviceEventListener(info,
+                        HdmiControlManager.DEVICE_EVENT_ADD_DEVICE);
+            } else {
+                invokeDeviceEventListener(info,
+                        HdmiControlManager.DEVICE_EVENT_UPDATE_DEVICE);
+            }
         }
+    }
+
+    /**
+     * Update local active source if physical address is equal.
+     */
+    private void checkAndUpdateActiveSource(HdmiDeviceInfo info) {
+        if (info.isSourceType()
+            && info.getPhysicalAddress() != Constants.INVALID_PHYSICAL_ADDRESS
+            && info.getPhysicalAddress() == mHdmiControlService.getLocalActiveSource().physicalAddress
+            && info.getLogicalAddress() != mHdmiControlService.getLocalActiveSource().logicalAddress
+            && info.getDeviceType() == HdmiUtils.getTypeFromAddress(mHdmiControlService.getLocalActiveSource().logicalAddress).get(0)) {
+            HdmiLogger.warning("checkAndUpdateActiveSource " + info);
+            mHdmiControlService.setActiveSource(info.getLogicalAddress(), info.getPhysicalAddress(),
+                    "HdmiCecNetwork#checkAndUpdateActiveSource");
+        }
+    }
+
+    private HdmiDeviceInfo findDevicewithSameAddress(HdmiDeviceInfo deviceInfo) {
+        if (deviceInfo.isSourceType()) {
+            // Check the same physical address if possible.
+            int physicalAddress = deviceInfo.getPhysicalAddress();
+            if (physicalAddress != Constants.INVALID_PHYSICAL_ADDRESS) {
+                HdmiDeviceInfo deviceInfoByPath = getDeviceInfoByPath(physicalAddress);
+                if (deviceInfoByPath != null && deviceInfoByPath.isSourceType()) {
+                    // Find a device with the same physical address but different logical
+                    // address. It happens when a device hotplugs out and into another port
+                    // of TV. There could be an edid analysis error.
+                    HdmiLogger.warning("Find a device with same physical address:" + deviceInfoByPath);
+                    return deviceInfoByPath;
+                }
+            }
+        }
+        return null;
     }
 
     private void invokeDeviceEventListener(HdmiDeviceInfo info, int event) {
@@ -386,7 +439,7 @@ public class HdmiCecNetwork {
         HdmiDeviceInfo info = removeDeviceInfo(HdmiDeviceInfo.idForCecDevice(address));
         mHdmiControlService.checkAndUpdateAbsoluteVolumeBehavior();
         localDevice.mCecMessageCache.flushMessagesFrom(address);
-        if (info.getPhysicalAddress() == HdmiDeviceInfo.PATH_INVALID) {
+        if (info == null || info.getPhysicalAddress() == HdmiDeviceInfo.PATH_INVALID) {
             // Don't notify listeners of devices that haven't reported their physical address yet
             return;
         }
@@ -426,6 +479,7 @@ public class HdmiCecNetwork {
     @VisibleForTesting
     public void initPortInfo() {
         assertRunOnServiceThread();
+        mPhysicalAddress = getPhysicalAddress();
         HdmiPortInfo[] cecPortInfo = null;
         // CEC HAL provides majority of the info while MHL does only MHL support flag for
         // each port. Return empty array if CEC HAL didn't provide the info.
@@ -440,10 +494,14 @@ public class HdmiCecNetwork {
         SparseIntArray portIdMap = new SparseIntArray();
         SparseArray<HdmiDeviceInfo> portDeviceMap = new SparseArray<>();
         for (HdmiPortInfo info : cecPortInfo) {
+            HdmiLogger.debug("initPortInfo port info:" + info);
             portIdMap.put(info.getAddress(), info.getId());
             portInfoMap.put(info.getId(), info);
             portDeviceMap.put(info.getId(),
                     HdmiDeviceInfo.hardwarePort(info.getAddress(), info.getId()));
+            if (info.isArcSupported()) {
+                mArcPort = info;
+            }
         }
         mPortIdMap = new UnmodifiableSparseIntArray(portIdMap);
         mPortInfoMap = new UnmodifiableSparseArray<>(portInfoMap);
@@ -484,6 +542,18 @@ public class HdmiCecNetwork {
 
     HdmiDeviceInfo getDeviceForPortId(int portId) {
         return mPortDeviceMap.get(portId, HdmiDeviceInfo.INACTIVE_DEVICE);
+    }
+
+    /**
+     * Returns HDMI port id for arc.
+     *
+     * @return port id for the arc port
+     */
+    int getArcPortId() {
+        if (mArcPort != null) {
+            return mArcPort.getId();
+        }
+        return HdmiDeviceInfo.PORT_INVALID;
     }
 
     /**
@@ -655,7 +725,9 @@ public class HdmiCecNetwork {
                     .setPortId(physicalAddressToPortId(physicalAddress))
                     .setDeviceType(type)
                     .build();
-            updateCecDevice(updatedDeviceInfo);
+            // Bug: DEVICE_EVENT_ADD_DEVICE could be called while DEVICE_EVENT_REMOVE_DEVICE is not.
+            //updateCecDevice(updatedDeviceInfo);
+            addCecDevice(updatedDeviceInfo);
         }
     }
 
@@ -859,12 +931,38 @@ public class HdmiCecNetwork {
         return mHdmiCecController.getPhysicalAddress();
     }
 
+    public int getCachedPhysicalAddress() {
+        return mPhysicalAddress;
+    }
+
     @ServiceThreadOnly
     public void clear() {
         assertRunOnServiceThread();
         initPortInfo();
         clearDeviceList();
         clearLocalDevices();
+    }
+
+    @ServiceThreadOnly
+    void removeUnusedLocalDevices(ArrayList<HdmiCecLocalDevice> allocatedDevices) {
+        ArrayList<Integer> deviceTypesToRemove = new ArrayList<>();
+        for (int i = 0; i < mLocalDevices.size(); i++) {
+            int deviceType = mLocalDevices.keyAt(i);
+            boolean shouldRemoveLocalDevice = allocatedDevices.stream().noneMatch(
+                    localDevice -> localDevice.getDeviceInfo() != null
+                    && localDevice.getDeviceInfo().getDeviceType() == deviceType);
+            if (shouldRemoveLocalDevice) {
+                deviceTypesToRemove.add(deviceType);
+            }
+        }
+        for (Integer deviceType : deviceTypesToRemove) {
+            mLocalDevices.remove(deviceType);
+        }
+    }
+
+    @ServiceThreadOnly
+    void removeLocalDeviceWithType(int deviceType) {
+        mLocalDevices.remove(deviceType);
     }
 
     @ServiceThreadOnly
@@ -899,6 +997,9 @@ public class HdmiCecNetwork {
      * port id.
      */
     int portIdToPath(int portId) {
+        if (portId == Constants.CEC_SWITCH_HOME) {
+            return getPhysicalAddress();
+        }
         HdmiPortInfo portInfo = getPortInfo(portId);
         if (portInfo == null) {
             Slog.e(TAG, "Cannot find the port info: " + portId);
@@ -968,6 +1069,7 @@ public class HdmiCecNetwork {
         pw.println("HDMI CEC Network");
         pw.increaseIndent();
         HdmiUtils.dumpIterable(pw, "mPortInfo:", mPortInfo);
+
         for (int i = 0; i < mLocalDevices.size(); ++i) {
             pw.println("HdmiCecLocalDevice #" + mLocalDevices.keyAt(i) + ":");
             pw.increaseIndent();

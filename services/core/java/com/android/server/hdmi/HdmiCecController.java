@@ -55,6 +55,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -121,6 +122,9 @@ final class HdmiCecController {
 
     /** Cookie for matching the right end point. */
     protected static final int HDMI_CEC_HAL_DEATH_COOKIE = 353;
+    // Common logical addresses used in reality.
+    private static final int[] COMMON_CANDIDATES = {0x0, 0x1, 0x3, 0x4, 0x5, 0x8, 0xb, 0xe};
+    private static final int[] COMMON_CANDIDATES_AUDIOSYSTEM = {0x1, 0x3, 0x4, 0x8, 0xb, 0xe};
 
     // Predicate for whether the given logical address is remote device's one or not.
     private final Predicate<Integer> mRemoteDeviceAddressPredicate = new Predicate<Integer>() {
@@ -540,20 +544,24 @@ final class HdmiCecController {
         }
 
         int iterationStrategy = pickStrategy & Constants.POLL_ITERATION_STRATEGY_MASK;
-        ArrayList<Integer> pollingCandidates = new ArrayList<>();
+        LinkedList<Integer> pollingCandidates = new LinkedList<>();
+        int[] candidates= COMMON_CANDIDATES;
+        if (mService.isAudioSystemDevice()) {
+            candidates = COMMON_CANDIDATES_AUDIOSYSTEM;
+        }
         switch (iterationStrategy) {
             case Constants.POLL_ITERATION_IN_ORDER:
-                for (int i = Constants.ADDR_TV; i <= Constants.ADDR_SPECIFIC_USE; ++i) {
-                    if (pickPredicate.test(i)) {
-                        pollingCandidates.add(i);
+                for (int i = 0; i <= candidates.length - 1; ++i) {
+                    if (pickPredicate.test(candidates[i])) {
+                        pollingCandidates.add(candidates[i]);
                     }
                 }
                 break;
             case Constants.POLL_ITERATION_REVERSE_ORDER:
             default:  // The default is reverse order.
-                for (int i = Constants.ADDR_SPECIFIC_USE; i >= Constants.ADDR_TV; --i) {
-                    if (pickPredicate.test(i)) {
-                        pollingCandidates.add(i);
+                for (int i = candidates.length - 1; i >= 0; --i) {
+                    if (pickPredicate.test(candidates[i])) {
+                        pollingCandidates.add(candidates[i]);
                     }
                 }
                 break;

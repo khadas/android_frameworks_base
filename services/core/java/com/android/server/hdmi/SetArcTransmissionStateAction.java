@@ -53,8 +53,14 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
         mEnabled = enabled;
     }
 
+    boolean enabled() {
+        return mEnabled;
+    }
+
     @Override
     boolean start() {
+        HdmiLogger.debug("SetArcTransmissionStateAction start " + mEnabled);
+        mState = STATE_WAITING_TIMEOUT;
         // Seq #37.
         if (mEnabled) {
             // Request SADs before enabling ARC
@@ -63,6 +69,11 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
                     new RequestSadAction.RequestSadCallback() {
                         @Override
                         public void onRequestSadDone(List<byte[]> supportedSads) {
+                            if (mState == STATE_NONE) {
+                                // For cect_11_1_17_5_NonAdjacentDeviceArcInitiation
+                                HdmiLogger.warning("onRequestSadDone but SetArcTransmissionStateAction is removed");
+                                return;
+                            }
                             // Enable ARC status immediately before sending <Report Arc Initiated>.
                             // If AVR responds with <Feature Abort>, disable ARC status again.
                             // This is different from spec that says that turns ARC status to
@@ -70,13 +81,13 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
                             // <Feature Abort> is received.
                             // But implemented this way to save the time having to wait for
                             // <Feature Abort>.
-                            Slog.i(TAG, "Enabling ARC");
+                            HdmiLogger.info("Enabling ARC");
                             tv().enableArc(supportedSads);
                             // If succeeds to send <Report ARC Initiated>, wait general timeout to
                             // check whether there is no <Feature Abort> for <Report ARC Initiated>.
-                            mState = STATE_WAITING_TIMEOUT;
                             addTimer(mState, HdmiConfig.TIMEOUT_MS);
                             sendReportArcInitiated();
+                            finish();
                         }
                     });
             addAndStartAction(action);
@@ -114,7 +125,7 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
     }
 
     private void disableArc() {
-        Slog.i(TAG, "Disabling ARC");
+        HdmiLogger.info("Disabling ARC");
 
         tv().disableArc();
         sendCommand(HdmiCecMessageBuilder.buildReportArcTerminated(getSourceAddress(),
@@ -146,6 +157,6 @@ final class SetArcTransmissionStateAction extends HdmiCecFeatureAction {
             return;
         }
         // Expire timeout for <Feature Abort>.
-        finish();
+        // finish();
     }
 }

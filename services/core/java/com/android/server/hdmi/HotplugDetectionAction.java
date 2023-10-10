@@ -75,7 +75,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
-        Slog.v(TAG, "Hot-plug detection started.");
+        HdmiLogger.debug("Hot-plug detection started.");
 
         mState = STATE_WAIT_FOR_NEXT_POLLING;
         mTimeoutCount = 0;
@@ -131,7 +131,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     }
 
     private void pollAllDevices() {
-        Slog.v(TAG, "Poll all devices.");
+        HdmiLogger.debug("Poll all devices.");
 
         pollDevices(new DevicePollingCallback() {
             @Override
@@ -143,7 +143,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     }
 
     private void pollAudioSystem() {
-        Slog.v(TAG, "Poll audio system.");
+        HdmiLogger.debug("Poll audio system.");
 
         pollDevices(new DevicePollingCallback() {
             @Override
@@ -155,6 +155,11 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     }
 
     private void checkHotplug(List<Integer> ackedAddress, boolean audioOnly) {
+        if (mState == STATE_NONE) {
+            Slog.w(TAG, "checkHotplug but action has been removed:" + this);
+            return;
+        }
+
         List<HdmiDeviceInfo> deviceInfoList =
                 localDevice().mService.getHdmiCecNetwork().getDeviceInfoList(false);
         BitSet currentInfos = infoListToBitSet(deviceInfoList, audioOnly, false);
@@ -174,7 +179,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
                     }
                 }
             }
-            Slog.v(TAG, "Remove device by hot-plug detection:" + index);
+            HdmiLogger.info("Remove device by hot-plug detection:" + index);
             removeDevice(index);
         }
 
@@ -188,7 +193,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
         BitSet added = complement(polledResult, currentInfosWithPhysicalAddress);
         index = -1;
         while ((index = added.nextSetBit(index + 1)) != -1) {
-            Slog.v(TAG, "Add device by hot-plug detection:" + index);
+            HdmiLogger.info("Add device by hot-plug detection:" + index);
             addDevice(index);
         }
     }

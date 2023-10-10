@@ -27,7 +27,7 @@ abstract class RequestArcAction extends HdmiCecFeatureAction {
     private static final String TAG = "RequestArcAction";
 
     // State in which waits for ARC response.
-    protected static final int STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE = 1;
+    protected static final int STATE_WAITING_FOR_REQUEST_ARC_REQUEST_RESPONSE = 1;
 
     // Logical address of AV Receiver.
     protected final int mAvrAddress;
@@ -53,6 +53,7 @@ abstract class RequestArcAction extends HdmiCecFeatureAction {
     }
 
     protected final void disableArcTransmission() {
+        HdmiLogger.debug("disableArcTransmission");
         // Start Set ARC Transmission State action.
         SetArcTransmissionStateAction action = new SetArcTransmissionStateAction(localDevice(),
                 mAvrAddress, false);
@@ -60,8 +61,8 @@ abstract class RequestArcAction extends HdmiCecFeatureAction {
     }
 
     @Override
-    final void handleTimerEvent(int state) {
-        if (mState != state || state != STATE_WATING_FOR_REQUEST_ARC_REQUEST_RESPONSE) {
+    void handleTimerEvent(int state) {
+        if (mState != state || state != STATE_WAITING_FOR_REQUEST_ARC_REQUEST_RESPONSE) {
             return;
         }
         HdmiLogger.debug("[T] RequestArcAction.");

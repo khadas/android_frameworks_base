@@ -47,10 +47,12 @@ final class SystemAudioAutoInitiationAction extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
+        HdmiLogger.debug("SystemAudioAutoInitiationAction start");
         mState = STATE_WAITING_FOR_SYSTEM_AUDIO_MODE_STATUS;
-
-        addTimer(mState, HdmiConfig.TIMEOUT_MS);
+        // Always try to establish the SAM connection in initialization.
         sendGiveSystemAudioModeStatus();
+        handleSystemAudioModeStatusTimeout();
+        finish();
         return true;
     }
 
@@ -60,7 +62,7 @@ final class SystemAudioAutoInitiationAction extends HdmiCecFeatureAction {
             @Override
             public void onSendCompleted(int error) {
                 if (error != SendMessageResult.SUCCESS) {
-                    handleSystemAudioModeStatusTimeout();
+                    finish();
                 }
             }
         });

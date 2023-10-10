@@ -94,7 +94,7 @@ public class SelectRequestBuffer {
         @Override
         public void process() {
             if (isLocalDeviceReady()) {
-                Slog.v(TAG, "calling delayed deviceSelect id:" + mId);
+                HdmiLogger.info("calling delayed deviceSelect id:" + mId);
                 tv().deviceSelect(mId, mCallback);
             }
         }
@@ -108,7 +108,7 @@ public class SelectRequestBuffer {
         @Override
         public void process() {
             if (isLocalDeviceReady()) {
-                Slog.v(TAG, "calling delayed portSelect id:" + mId);
+                HdmiLogger.info("calling delayed portSelect id:" + mId);
                 HdmiCecLocalDeviceTv tv = tv();
                 if (tv != null) {
                     tv.doManualPortSwitching(mId, mCallback);
@@ -124,11 +124,13 @@ public class SelectRequestBuffer {
 
     public static DeviceSelectRequest newDeviceSelect(HdmiControlService srv, int id,
             IHdmiControlCallback callback) {
+        HdmiLogger.debug("set device select buffer " + id);
         return new DeviceSelectRequest(srv, id, callback);
     }
 
     public static PortSelectRequest newPortSelect(HdmiControlService srv, int id,
             IHdmiControlCallback callback) {
+        HdmiLogger.debug("set port select buffer " + id);
         return new PortSelectRequest(srv, id, callback);
     }
 
@@ -137,7 +139,12 @@ public class SelectRequestBuffer {
     private SelectRequest mRequest;
 
     public void set(SelectRequest request) {
+        HdmiLogger.debug("SelectRequestBuffer set " + request);
         mRequest = request;
+    }
+
+    public boolean isValid() {
+        return mRequest != null;
     }
 
     public void process() {

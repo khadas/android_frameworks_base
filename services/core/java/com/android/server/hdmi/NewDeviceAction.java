@@ -112,12 +112,16 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
                 } catch (UnsupportedEncodingException e) {
                     Slog.e(TAG, "Failed to get OSD name: " + e.getMessage());
                 }
+                addDeviceInfo();
                 requestVendorId(true);
+                finish();
                 return true;
             } else if (opcode == Constants.MESSAGE_FEATURE_ABORT) {
                 int requestOpcode = params[0] & 0xFF;
                 if (requestOpcode == Constants.MESSAGE_GIVE_OSD_NAME) {
+                    addDeviceInfo();
                     requestVendorId(true);
+                    finish();
                     return true;
                 }
             }
@@ -172,12 +176,12 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
             return;
         }
         if (mDisplayName == null) {
-            mDisplayName = "";
+            mDisplayName = HdmiUtils.getDefaultDeviceName(mDeviceLogicalAddress);
         }
         HdmiDeviceInfo deviceInfo = HdmiDeviceInfo.cecDeviceBuilder()
                 .setLogicalAddress(mDeviceLogicalAddress)
                 .setPhysicalAddress(mDevicePhysicalAddress)
-                .setPortId(tv().getPortId(mDevicePhysicalAddress))
+                .setPortId(localDevice().getPortId(mDevicePhysicalAddress))
                 .setDeviceType(mDeviceType)
                 .setVendorId(mVendorId)
                 .setDisplayName(mDisplayName)
@@ -201,6 +205,9 @@ final class NewDeviceAction extends HdmiCecFeatureAction {
         if (state == STATE_WAITING_FOR_SET_OSD_NAME) {
             if (++mTimeoutRetry < HdmiConfig.TIMEOUT_RETRY) {
                 requestOsdName(false);
+                // Any exception hasppens, just finish the action first.
+                addDeviceInfo();
+                finish();
                 return;
             }
             // Osd name request timed out. Try vendor id

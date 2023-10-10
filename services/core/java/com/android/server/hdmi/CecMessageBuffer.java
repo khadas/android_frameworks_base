@@ -90,7 +90,10 @@ final class CecMessageBuffer {
     }
 
     private void bufferSystemAudioModeRequest(HdmiCecMessage message) {
-        if (!replaceMessageIfBuffered(message, Constants.MESSAGE_SYSTEM_AUDIO_MODE_REQUEST)) {
+        boolean systemAudioStatusOn = message.getParams().length != 0;
+        if (!replaceMessageIfBuffered(message, Constants.MESSAGE_SYSTEM_AUDIO_MODE_REQUEST)
+            // only buffer ON message.
+            && systemAudioStatusOn) {
             mBuffer.add(message);
         }
     }
@@ -109,6 +112,16 @@ final class CecMessageBuffer {
 
     public List<HdmiCecMessage> getBuffer() {
         return new ArrayList<>(mBuffer);
+    }
+
+    public boolean isBuffered(int opcode) {
+        List<HdmiCecMessage> list = new ArrayList<>(mBuffer);
+        for (HdmiCecMessage message: list) {
+            if (message.getOpcode() == opcode) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Returns true if the message is replaced

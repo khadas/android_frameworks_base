@@ -201,7 +201,8 @@ public class HdmiCecLocalDeviceAudioSystem extends HdmiCecLocalDeviceSource {
         if (WAKE_ON_HOTPLUG && connected) {
             mService.wakeUp();
         }
-        if (mService.getPortInfo(portId).getType() == HdmiPortInfo.PORT_OUTPUT) {
+        HdmiPortInfo portInfo = mService.getPortInfo(portId);
+        if (portInfo != null && portInfo.getType() == HdmiPortInfo.PORT_OUTPUT) {
             mCecMessageCache.flushAll();
             if (!connected) {
                 if (isSystemAudioActivated()) {
@@ -903,8 +904,8 @@ public class HdmiCecLocalDeviceAudioSystem extends HdmiCecLocalDeviceSource {
 
     private void notifyArcStatusToAudioService(boolean enabled) {
         // Note that we don't set any name to ARC.
-        mService.getAudioManager()
-            .setWiredDeviceConnectionState(AudioSystem.DEVICE_IN_HDMI_ARC, enabled ? 1 : 0, "", "");
+        //mService.getAudioManager()
+        //    .setWiredDeviceConnectionState(AudioSystem.DEVICE_IN_HDMI_ARC, enabled ? 1 : 0, "", "");
     }
 
     void reportAudioStatus(int source) {
