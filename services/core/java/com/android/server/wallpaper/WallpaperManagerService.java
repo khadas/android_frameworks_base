@@ -134,6 +134,12 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+//--------------------------rk-code-------------------------
+import libcore.io.IoUtils;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
+//----------------------------------------------------------
+
 public class WallpaperManagerService extends IWallpaperManager.Stub
         implements IWallpaperManagerService {
     private static final String TAG = "WallpaperManagerService";
@@ -3156,6 +3162,36 @@ public class WallpaperManagerService extends IWallpaperManager.Stub
         }
     }
 
+    //--------------------------rk-code-------------------------
+    private Bitmap getDefaultWallpaper(Context context) {
+        int defaultResId = com.android.internal.R.drawable.default_wallpaper;
+        InputStream is = context.getResources().openRawResource(defaultResId);
+        if (is != null) {
+            try {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                return BitmapFactory.decodeStream(is, null, options);
+            } catch (OutOfMemoryError e) {
+                Slog.w(TAG, "Can't decode stream", e);
+            } finally {
+                IoUtils.closeQuietly(is);
+            }
+        }
+        return null;
+    }
+
+    private void saveFile(Bitmap bm, String path) {
+        try{
+            File myCaptureFile = new File(path);
+            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(myCaptureFile));
+            bm.compress(Bitmap.CompressFormat.JPEG, 90, bos);
+            bos.flush();
+            bos.close();
+        }catch(Exception e) {
+            Slog.w(TAG, "saveFile can't save stream", e);
+        }
+    }
+    //----------------------------------------------------------
+
     private boolean migrateStaticSystemToLockWallpaperLocked(int userId) {
         WallpaperData sysWP = mWallpaperMap.get(userId);
         if (sysWP == null) {
@@ -3933,6 +3969,27 @@ public class WallpaperManagerService extends IWallpaperManager.Stub
     private void loadSettingsLocked(int userId, boolean keepDimensionHints, int which) {
         initializeFallbackWallpaper();
         WallpaperData wallpaperData = mWallpaperMap.get(userId);
+
+        //----------------------rk-code---------------------------
+        Slog.d(TAG, "wallpaperData = "+wallpaperData);
+        if (wallpaperData == null) {
+            if (!"true".equals(SystemProperties.get("cts_gts.status", "false"))) {
+                WallpaperData wallpaper = new WallpaperData(userId, FLAG_LOCK);
+                wallpaper.allowBackup = true;
+
+                //When system first bootup,lock wallpaper share with system,let's save it.
+                File mWallpaperDir = getWallpaperDir(wallpaper.userId);
+                File mWallpaperFile = new File(mWallpaperDir, "wallpaper_orig");
+                File mWallpaperCropFile = new File(mWallpaperDir, "wallpaper");
+                Bitmap bmp=getDefaultWallpaper(mContext);
+                saveFile(bmp,mWallpaperFile.getAbsolutePath());
+                //FileUtils.copyFile(mWallpaperCropFile,mWallpaperCropFile);
+                saveFile(bmp,mWallpaperCropFile.getAbsolutePath());
+                Slog.d(TAG, "generating from default wallpaper and save it.");
+           }
+        }
+        //--------------------------------------------------------
+
         WallpaperData lockWallpaperData = mLockWallpaperMap.get(userId);
         WallpaperDataParser.WallpaperLoadingResult result = mWallpaperDataParser.loadSettingsLocked(
                 userId, keepDimensionHints, wallpaperData, lockWallpaperData, which);
