@@ -951,7 +951,10 @@ public class WindowManagerService extends IWindowManager.Stub
 
     private float mWindowAnimationScaleSetting = 1.0f;
     private float mTransitionAnimationScaleSetting = 1.0f;
-    private float mAnimatorDurationScaleSetting = 1.0f;
+    //--------rk-changed--------------
+    //private float mAnimatorDurationScaleSetting = 1.0f;
+    private float mAnimatorDurationScaleSetting = 0.5f;
+    //--------------------------------
     private boolean mAnimationsDisabled = false;
     boolean mPointerLocationEnabled = false;
 
