@@ -689,6 +689,19 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                     if (isDisplayPrivate(physicalAddress)) {
                         mInfo.flags |= DisplayDeviceInfo.FLAG_PRIVATE;
                     }
+                    //-----rk-code-----//
+                    if (SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
+                        String property="persist.sys.rotation.einit-" + mPhysicalDisplayId;
+                        int rotation = SystemProperties.getInt(property, 0);
+                        Slog.d(TAG, "mPhysicalDisplayId" + mPhysicalDisplayId + " set rotation " + rotation);
+                        mInfo.rotation = rotation;
+
+                    } else {
+                        int rotation = SystemProperties.getInt("persist.sys.rotation.einit", 0);
+                        mInfo.rotation = rotation;
+                    }
+                    //-----------------//
+                    
                 }
 
                 if (DisplayCutout.getMaskBuiltInDisplayCutout(res, mInfo.uniqueId)) {
