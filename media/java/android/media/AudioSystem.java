@@ -1812,8 +1812,15 @@ public class AudioSystem
         int deviceInChecksum = DEVICE_BIT_IN;
         for (Integer device : deviceSet) {
             if ((device & (device - 1) & ~DEVICE_BIT_IN) != 0) {
-                Log.v(TAG, "getDeviceMaskFromSet skipping multi-bit device value " + device);
-                continue;
+                /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                /* Change-Id: I71fc61645db2c499a42539fbb809170d8d84bed9 */
+                if (device == DEVICE_OUT_HDMI_EARC) {
+                    device = DEVICE_OUT_HDMI_ARC;
+                /*[Amlogic end]-----------------------------------------------------------*/
+                } else {
+                    Log.v(TAG, "getDeviceMaskFromSet skipping multi-bit device value " + device);
+                    continue;
+                }
             }
             deviceMask |= device;
             deviceInChecksum &= device;
