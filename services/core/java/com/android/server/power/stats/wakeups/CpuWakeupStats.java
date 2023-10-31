@@ -207,6 +207,7 @@ public class CpuWakeupStats {
             String rawReason) {
         final Wakeup parsedWakeup = Wakeup.parseWakeup(rawReason, elapsedRealtime, uptime,
                 mIrqDeviceMap);
+        Slog.e("BJC", "noteWakeupTimeAndReason: " + rawReason);
         if (parsedWakeup == null) {
             // This wakeup is unsupported for attribution. Exit.
             return;
