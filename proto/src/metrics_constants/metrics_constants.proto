@@ -7437,6 +7437,10 @@ message MetricsEvent {
     KHADAS_FAN = 1800;
     KHADAS_LED = 1801;
     KHADAS_PORTMODE = 1802;
+    KHADAS_WOL = 1803;
+    KHADAS_STATUS_BAR = 1804;
+    KHADAS_CAMERA_IRCUT = 1805;
+    KHADAS_M2X = 1806;
     // ---- End Q Constants, all Q constants go above this line ----
     // Add new aosp constants above this line.
     // END OF AOSP CONSTANTS
