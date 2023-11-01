@@ -214,6 +214,9 @@
     <!-- Android AOSP input method  -->
     <string name="def_input_method" translatable="false">com.android.inputmethod.latin/.LatinIME</string>
 
+    <!-- captive portal mode -->
+    <integer name="def_captive_portal_mode">0</integer>
+
     <!-- Default for Settings.System.VIBRATE_WHEN_RINGING -->
     <bool name="def_vibrate_when_ringing">false</bool>
 
