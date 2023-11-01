@@ -400,6 +400,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     /** If true, hitting shift & menu will broadcast Intent.ACTION_BUG_REPORT */
     boolean mEnableShiftMenuBugReports = false;
 
+    int mMenuPressed = 0;
+    int mVolumeUpPressed = 0;
+    int mVolumeDownPressed = 0;
+    long mActionTime = 0;
+
     /** Controller that supports enabling an AccessibilityService by holding down the volume keys */
     private AccessibilityShortcutController mAccessibilityShortcutController;
 
@@ -3723,6 +3728,42 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 wakeUp(event.getEventTime(), mAllowTheaterModeWakeFromKey,
                         PowerManager.WAKE_REASON_WAKE_KEY, "android.policy:KEY");
             }
+
+            //add Factory ageing test support
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
+             if (event.getAction() == KeyEvent.ACTION_UP) {
+                  mMenuPressed++;
+            }
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            if (mMenuPressed >= 5) {
+                       if (event.getAction() == KeyEvent.ACTION_UP) {
+                            mVolumeUpPressed++;
+                       }
+                       if (mVolumeUpPressed >= 5) {
+                           CanceKeyClcik();
+                           startAgeingTest(8);
+                       }
+            } else {
+               CanceKeyClcik();
+            }
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (mMenuPressed >= 5) {
+                      if (event.getAction() == KeyEvent.ACTION_UP) {
+                            mVolumeDownPressed++;
+                      }
+                      if (mVolumeDownPressed >= 5) {
+                           CanceKeyClcik();
+                           startAgeingTest(4);
+                      }
+            } else {
+               CanceKeyClcik();
+            }
+        }
+        if (System.currentTimeMillis() - mActionTime > 500) {
+            CanceKeyClcik();
+            mActionTime = System.currentTimeMillis();
+        }
+
             return result;
         }
 
@@ -4097,6 +4138,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         return result;
+    }
+
+    private void CanceKeyClcik() {
+        mMenuPressed = 0;
+        mVolumeUpPressed = 0;
+        mVolumeDownPressed = 0;
+        mActionTime = System.currentTimeMillis();
+    }
+
+    private void startAgeingTest(int hour) {
+        Intent intent = new Intent();
+        Bundle bundle = new Bundle();
+        bundle.putInt("ageing_flag", 1);
+        bundle.putInt("ageing_time", hour);
+        intent.putExtras(bundle);
+        intent.setClassName("cn.com.factorytest", "cn.com.factorytest.MainActivity");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
     }
 
     /**
