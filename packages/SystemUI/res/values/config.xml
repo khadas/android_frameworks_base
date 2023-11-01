@@ -106,7 +106,7 @@
 
     <!-- The default tiles to display in QuickSettings -->
     <string name="quick_settings_tiles_default" translatable="false">
-        wifi,bt,dnd,flashlight,rotation,battery,cell,airplane,cast,screenrecord
+        wifi,bt,screenrecord
     </string>
 
     <!-- The minimum number of tiles to display in QuickSettings -->
@@ -169,7 +169,7 @@
     <integer name="long_press_dock_anim_duration">250</integer>
 
     <!-- Whether to enable KeyguardService or not -->
-    <bool name="config_enableKeyguardService">true</bool>
+    <bool name="config_enableKeyguardService">false</bool>
 
     <!-- The maximum count of notifications on Keyguard. The rest will be collapsed in an overflow
      card. -->

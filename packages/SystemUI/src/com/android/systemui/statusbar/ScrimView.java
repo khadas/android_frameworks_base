@@ -31,6 +31,7 @@ import android.view.View;
 
 import androidx.core.graphics.ColorUtils;
 
+import android.view.MotionEvent;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.colorextraction.ColorExtractor;
 import com.android.internal.colorextraction.drawable.ScrimDrawable;
@@ -52,6 +53,11 @@ public class ScrimView extends View {
 
     public ScrimView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return false;
     }
 
     public ScrimView(Context context, AttributeSet attrs, int defStyleAttr) {
