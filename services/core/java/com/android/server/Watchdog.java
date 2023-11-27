@@ -136,8 +136,26 @@ public class Watchdog implements Dumpable {
         "/vendor/bin/hw/android.hardware.tv.input@1.0-service",
         "/vendor/bin/hw/android.hardware.graphics.composer@2.4-service.droidlogic",
         "/vendor/bin/hw/android.hardware.graphics.allocator@4.0-service",
+        "/vendor/bin/hw/dtvkitserver",
+        "/system/bin/mediatuner",
+        "/vendor/bin/hw/android.hardware.graphics.allocator-service",
+        "/vendor/bin/hw/android.hardware.graphics.composer@3.2-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.audio.service-droidlogic",
+        "/vendor/bin/hw/android.hardware.bluetooth@1.0-service-droidlogic",
+        "/vendor/bin/hw/android.hardware.drm-service.clearkey",
+        "/vendor/bin/hw/android.hardware.dumpstate-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.media.c2@1.2-service",
+        "/vendor/bin/hw/android.hardware.power.aidl-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.tv.hdmi.cec-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.tv.hdmi.connection-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.tv.hdmi.earc-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.tv.tuner@1.1-service.droidlogic",
+        "/vendor/bin/hw/android.hardware.tv.input-service",
+        "/vendor/bin/hw/subtitleserver",
+        "com.droidlogic",
         "com.droidlogic.dtvkit.inputsource",
-        "/vendor/bin/hw/dtvkitserver"
+        "com.droidlogic.tvinput",
+        "com.google.android.tv.dtvinput",
     };
 
     public static final List<String> HAL_INTERFACES_OF_INTEREST = Arrays.asList(
