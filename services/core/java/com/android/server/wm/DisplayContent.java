@@ -195,6 +195,7 @@ import android.os.PowerManager;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.os.WorkSource;
@@ -6706,7 +6707,12 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
             }
             return false;
         }
-
+        //-------rk-code------//
+        if(SystemProperties.getBoolean("ro.display_mirror.disable",false)){
+            Slog.w(TAG,"Content Recording: display mirror disable.");
+            return false;
+        }
+        //-------rk-code------//
         // This is very unlikely, and probably impossible, but if the current display is
         // DEFAULT_DISPLAY and the displayId to mirror results in an invalid display, we don't want
         // to mirror the DEFAULT_DISPLAY so instead we just return

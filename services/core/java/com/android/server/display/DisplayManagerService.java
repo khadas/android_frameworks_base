@@ -2764,7 +2764,23 @@ public final class DisplayManagerService extends SystemService {
         // Find the logical display that the display device is showing.
         // Certain displays only ever show their own content.
         LogicalDisplay display = mLogicalDisplayMapper.getDisplayLocked(device);
-
+        //-------rk-code------//
+        if(SystemProperties.getBoolean("ro.display_mirror.disable",false)) {
+            final boolean ownContent = (info.flags & DisplayDeviceInfo.FLAG_OWN_CONTENT_ONLY) != 0;
+            if (!ownContent /*&& !device.isWindowManagerMirroringLocked()*/) {
+                // Only mirror the display if content recording is not taking place in WM.
+                if (display != null && !display.hasContentLocked()) {
+                    // If the display does not have any content of its own, then
+                    // automatically mirror the requested logical display contents if possible.
+                    display = mLogicalDisplayMapper.getDisplayLocked(
+                            device.getDisplayIdToMirrorLocked());
+                }
+                if (display == null) {
+                    display = mLogicalDisplayMapper.getDisplayLocked(Display.DEFAULT_DISPLAY);
+                }
+            }
+        }
+        //-------rk-code------//
         // Apply the logical display configuration to the display device.
         if (display == null) {
             // TODO: no logical display for the device, blank it
