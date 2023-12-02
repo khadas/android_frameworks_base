@@ -47,7 +47,11 @@
 #include <utils/String8.h>
 #include <utils/Timers.h>
 #include <utils/misc.h>
-
+//----rk-code----
+#ifdef RK_EBOOK
+#include <suspend/autosuspend.h>
+#endif
+//---------------
 #include "com_android_server_power_PowerManagerService.h"
 
 using aidl::android::system::suspend::ISystemSuspend;
@@ -62,6 +66,11 @@ using IPowerV1_0 = android::hardware::power::V1_0::IPower;
 using IPowerAidl = android::hardware::power::IPower;
 
 namespace android {
+//----rk-code----
+#ifdef RK_EBOOK
+static bool gScreenOn;
+#endif
+//---------------
 
 // ----------------------------------------------------------------------------
 
@@ -223,12 +232,23 @@ static void nativeReleaseSuspendBlocker(JNIEnv *env, jclass /* clazz */, jstring
 static void nativeSetAutoSuspend(JNIEnv* /* env */, jclass /* clazz */, jboolean enable) {
     if (enable) {
         android::base::Timer t;
+//----rk-code----
+#ifdef RK_EBOOK
+        gScreenOn = false;
+        autosuspend_idle(false);
+#endif
+//---------------
         enableAutoSuspend();
         if (t.duration() > 100ms) {
             ALOGD("Excessive delay in autosuspend_enable() while turning screen off");
         }
     } else {
         android::base::Timer t;
+//----rk-code----
+#ifdef RK_EBOOK
+        gScreenOn = true;
+#endif
+//---------------
         disableAutoSuspend();
         if (t.duration() > 100ms) {
             ALOGD("Excessive delay in autosuspend_disable() while turning screen on");
@@ -245,6 +265,17 @@ static jboolean nativeSetPowerMode(JNIEnv* /* env */, jclass /* clazz */, jint m
                                    jboolean enabled) {
     return setPowerMode(static_cast<Mode>(mode), enabled);
 }
+
+//----rk-code----
+#ifdef RK_EBOOK
+void android_server_PowerManagerService_idle() {
+    autosuspend_idle(gScreenOn);
+}
+void android_server_PowerManagerService_wake() {
+    autosuspend_wake();
+}
+#endif
+//---------------
 
 static bool nativeForceSuspend(JNIEnv* /* env */, jclass /* clazz */) {
     bool retval = false;
@@ -265,6 +296,12 @@ static const JNINativeMethod gPowerManagerServiceMethods[] = {
         {"nativeSetAutoSuspend", "(Z)V", (void*)nativeSetAutoSuspend},
         {"nativeSetPowerBoost", "(II)V", (void*)nativeSetPowerBoost},
         {"nativeSetPowerMode", "(IZ)Z", (void*)nativeSetPowerMode},
+//----rk-code----
+#ifdef RK_EBOOK
+        { "nativeIdle", "()V", (void*) android_server_PowerManagerService_idle },
+        { "nativeWake", "()V", (void*) android_server_PowerManagerService_wake },
+#endif
+//---------------
 };
 
 #define FIND_CLASS(var, className) \
@@ -297,6 +334,11 @@ int register_android_server_PowerManagerService(JNIEnv* env) {
     for (int i = 0; i <= USER_ACTIVITY_EVENT_LAST; i++) {
         gLastEventTime[i] = LLONG_MIN;
     }
+//----rk-code----
+#ifdef RK_EBOOK
+    gScreenOn = true;
+#endif
+//---------------
     gPowerManagerServiceObj = NULL;
     return 0;
 }

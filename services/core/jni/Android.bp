@@ -7,9 +7,36 @@ package {
     default_applicable_licenses: ["frameworks_base_license"],
 }
 
+//----rk-code----
+soong_config_module_type {
+    name: "rk_ebook_framework_soong_cc_defaults",
+    module_type: "cc_defaults",
+    config_namespace: "rk_ebook_framework",
+    bool_variables: ["rk_ebook_framework_en"],
+    properties: ["cflags"],
+}
+
+rk_ebook_framework_soong_cc_defaults {
+    name: "rk_ebook_framework_cc_defaults",
+
+    soong_config_variables: {
+        rk_ebook_framework_en: {
+            cflags: [
+                "-DRK_EBOOK",
+            ],
+        },
+    },
+}
+//---------------
+
 cc_library_static {
     name: "libservices.core",
-    defaults: ["libservices.core-libs"],
+    defaults: [
+        "libservices.core-libs",
+        //----rk-code----
+        "rk_ebook_framework_cc_defaults"
+        //---------------
+    ],
 
     cpp_std: "c++2a",
     cflags: [
@@ -153,6 +180,9 @@ cc_defaults {
         "libgui",
         "libtimestats_atoms_proto",
         "libusbhost",
+        //----rk-code----
+        "libsuspend",
+        //---------------
         "libtinyalsa",
         "libEGL",
         "libGLESv2",
