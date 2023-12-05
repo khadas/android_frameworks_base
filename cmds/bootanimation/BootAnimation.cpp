@@ -1182,8 +1182,20 @@ public:
                     if (error != NO_ERROR) {
                         SLOGE("Can't get active display mode.");
                     }
-                    mBootAnimation->resizeSurface(displayMode.resolution.getWidth(),
-                        displayMode.resolution.getHeight());
+                    char rotate[PROPERTY_VALUE_MAX];
+                    ui::Rotation rotaion(ui::ROTATION_0);
+
+                    if (property_get("persist.sys.builtinrotation", rotate, "0") > 0)
+                        rotaion = (ui::Rotation)atoi(rotate);
+                    else
+                        ALOGD("BootAnimation get property error\n");
+                    if (ui::ROTATION_90 == rotaion || ui::ROTATION_270 == rotaion) {
+                        mBootAnimation->resizeSurface(displayMode.resolution.getHeight(),
+                                                      displayMode.resolution.getWidth());
+                    } else {
+                        mBootAnimation->resizeSurface(displayMode.resolution.getWidth(),
+                                                      displayMode.resolution.getHeight());
+                    }
                 }
             }
         } while (numEvents > 0);
@@ -1231,6 +1243,9 @@ status_t BootAnimation::enableDisplay(SurfaceComposerClient::Transaction &t,
                                           const sp<IBinder> &displayToken, const Rect &primaryLayerStackRect){
     DisplayMode displayMode;
     const status_t error = SurfaceComposerClient::getActiveDisplayMode(displayToken, &displayMode);
+    if (ui::ROTATION_90 == mRotation || ui::ROTATION_270 == mRotation) {
+        std::swap(displayMode.resolution.width, displayMode.resolution.height);
+    }
     if (error != NO_ERROR)
         return error;
     SurfaceComposerClient::setDisplayPowerMode(displayToken, 2);
@@ -1309,9 +1324,8 @@ status_t BootAnimation::readyToRun() {
     ui::Size resolution = displayMode.resolution;
 
     if (ui::ROTATION_90 == mRotation || ui::ROTATION_270 == mRotation) {
-        int temp = resolution.height;
-        resolution.height= resolution.width;
-        resolution.width= temp;
+        std::swap(resolution.width, resolution.height);
+        std::swap(displayMode.resolution.width,displayMode.resolution.height);
     } else {
         resolution = limitSurfaceSize(resolution.width, resolution.height);
     }
@@ -1406,8 +1420,13 @@ status_t BootAnimation::readyToRun() {
     if (mode_error != NO_ERROR) {
         SLOGE("Can't get active display mode for RESIZE");
     } else {
-        resizeSurface(displayMode.resolution.getWidth(),
-            displayMode.resolution.getHeight());
+        if (ui::ROTATION_90 == mRotation || ui::ROTATION_270 == mRotation) {
+            resizeSurface(displayMode.resolution.getHeight(),
+                          displayMode.resolution.getWidth());
+        } else {
+            resizeSurface(displayMode.resolution.getWidth(),
+                          displayMode.resolution.getHeight());
+        }
     }
 
     return NO_ERROR;
