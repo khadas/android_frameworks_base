@@ -553,13 +553,24 @@ bool BootAnimation::bootVideo() {
 
     mMaxWidth = android::base::GetIntProperty("ro.surface_flinger.max_graphics_width", 0);
     mMaxHeight = android::base::GetIntProperty("ro.surface_flinger.max_graphics_height", 0);
+    SurfaceComposerClient::Transaction t;
+
     ui::Size resolution = displayMode.resolution;
-    resolution = limitSurfaceSize(resolution.width, resolution.height);
+    const ui::Size oldSize(resolution.getWidth(),resolution.getHeight());
+    if (ui::ROTATION_90 == mRotation || ui::ROTATION_270 == mRotation) {
+        resolution.height= (int32_t)(resolution.height/((float)resolution.width/resolution.height));
+        resolution.width= oldSize.height;
+        std::swap(displayMode.resolution.width,displayMode.resolution.height);
+    } else {
+        resolution = limitSurfaceSize(resolution.width, resolution.height);
+    }
+    Rect layerStackRect(resolution.getWidth(), resolution.getHeight());
+    Rect displayRect(displayMode.resolution.getWidth(), displayMode.resolution.getHeight());
+    t.setDisplayProjection(mDisplayToken, mRotation, layerStackRect, displayRect);
     // create the native surface
     sp<SurfaceControl> control = session()->createSurface(String8("BootVideo"),
             resolution.getWidth(), resolution.getHeight(), PIXEL_FORMAT_RGB_565);
 
-    SurfaceComposerClient::Transaction t;
     t.setLayer(control, LAYER_VIDEO)
         .apply();
 
@@ -1304,10 +1315,10 @@ status_t BootAnimation::readyToRun() {
     } else {
         resolution = limitSurfaceSize(resolution.width, resolution.height);
     }
-    Rect destRect(resolution.getWidth(), resolution.getHeight());
     SurfaceComposerClient::Transaction t;
-    t.setDisplayProjection(mDisplayToken, mRotation, destRect, destRect);
-    t.apply();
+    Rect layerStackRect(resolution.getWidth(), resolution.getHeight());
+    Rect displayRect(displayMode.resolution.getWidth(), displayMode.resolution.getHeight());
+    t.setDisplayProjection(mDisplayToken, mRotation, layerStackRect, displayRect);
 
     // create the native surface
     sp<SurfaceControl> control = session()->createSurface(String8("BootAnimation"),
