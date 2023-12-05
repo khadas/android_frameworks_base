@@ -23,6 +23,7 @@ import android.annotation.Nullable;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.display.DisplayManagerInternal;
+import android.os.SystemProperties;
 import android.util.ArraySet;
 import android.util.SparseArray;
 import android.view.Display;
@@ -77,6 +78,8 @@ final class LogicalDisplay {
     private final DisplayInfo mBaseDisplayInfo = new DisplayInfo();
     private final int mDisplayId;
     private final int mLayerStack;
+
+    private String mBuiltInUserRotation = SystemProperties.get("persist.sys.builtinrotation", "");
 
     // Indicates which display leads this logical display, in terms of brightness or other
     // properties.
@@ -689,6 +692,7 @@ final class LogicalDisplay {
             // Pillar box.
             displayRectWidth = displayInfo.logicalWidth * physHeight / displayInfo.logicalHeight;
             displayRectHeight = physHeight;
+
         }
         int displayRectTop = (physHeight - displayRectHeight) / 2;
         int displayRectLeft = (physWidth - displayRectWidth) / 2;

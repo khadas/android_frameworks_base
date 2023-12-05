@@ -225,6 +225,7 @@ public class DisplayRotation {
 
     @Surface.Rotation
     private int mUserRotation = Surface.ROTATION_0;
+    private String mBuiltInUserRotation = SystemProperties.get("persist.sys.builtinrotation", "");
 
     private static final int CAMERA_ROTATION_DISABLED = 0;
     private static final int CAMERA_ROTATION_ENABLED = 1;
@@ -295,7 +296,10 @@ public class DisplayRotation {
             mDisplayRotationCoordinator.setDefaultDisplayRotationChangedCallback(
                     mDefaultDisplayRotationChangedCallback);
         }
-
+        if (mBuiltInUserRotation != null && !mBuiltInUserRotation.isEmpty()) {
+            mUserRotation = Integer.parseInt(mBuiltInUserRotation) % 4;
+            mRotation = mUserRotation;
+        }
         if (isDefaultDisplay) {
             final Handler uiHandler = UiThread.getHandler();
             mOrientationListener =
@@ -1598,9 +1602,14 @@ public class DisplayRotation {
             }
 
             // Configure rotation lock.
-            final int userRotation = Settings.System.getIntForUser(resolver,
+            int userRotation = Settings.System.getIntForUser(resolver,
                     Settings.System.USER_ROTATION, Surface.ROTATION_0,
                     UserHandle.USER_CURRENT);
+
+            if (mBuiltInUserRotation != null && !mBuiltInUserRotation.isEmpty()) {
+                userRotation = Integer.parseInt(mBuiltInUserRotation) % 4;
+            }
+
             if (mUserRotation != userRotation) {
                 mUserRotation = userRotation;
                 shouldUpdateRotation = true;

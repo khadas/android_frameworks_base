@@ -917,7 +917,7 @@ status_t BootAnimation::InputReaderThread::readyToRun() {
 
 BootAnimation::BootAnimation(sp<Callbacks> callbacks)
         : Thread(false), mLooper(new Looper(false)), mClockEnabled(true), mTimeIsAccurate(false),
-        mTimeFormat12Hour(false), mTimeCheckThread(nullptr), mCallbacks(callbacks) {
+        mTimeFormat12Hour(false), mTimeCheckThread(nullptr), mCallbacks(callbacks), mRotation(ui::ROTATION_0) {
     mSession = new SurfaceComposerClient();
 
     std::string powerCtl = android::base::GetProperty("sys.powerctl", "");
@@ -926,6 +926,12 @@ BootAnimation::BootAnimation(sp<Callbacks> callbacks)
     } else {
         mShuttingDown = true;
     }
+    char rotate[PROPERTY_VALUE_MAX];
+    if (property_get("persist.sys.builtinrotation", rotate, "0") > 0)
+        mRotation = (ui::Rotation)atoi(rotate);
+    else
+        ALOGD("BootAnimation get property error\n");
+
     ALOGD("%sAnimationStartTiming start time: %" PRId64 "ms", mShuttingDown ? "Shutdown" : "Boot",
             elapsedRealtime());
 }
@@ -1290,13 +1296,24 @@ status_t BootAnimation::readyToRun() {
     mInitWidth = android::base::GetIntProperty("ro.bootanimation_optimal_display_width", 1920);
     mInitHeight = android::base::GetIntProperty("ro.bootanimation_optimal_display_height", 1080);
     ui::Size resolution = displayMode.resolution;
-    resolution = limitSurfaceSize(resolution.width, resolution.height);
+
+    if (ui::ROTATION_90 == mRotation || ui::ROTATION_270 == mRotation) {
+        int temp = resolution.height;
+        resolution.height= resolution.width;
+        resolution.width= temp;
+    } else {
+        resolution = limitSurfaceSize(resolution.width, resolution.height);
+    }
+    Rect destRect(resolution.getWidth(), resolution.getHeight());
+    SurfaceComposerClient::Transaction t;
+    t.setDisplayProjection(mDisplayToken, mRotation, destRect, destRect);
+    t.apply();
+
     // create the native surface
     sp<SurfaceControl> control = session()->createSurface(String8("BootAnimation"),
             resolution.getWidth(), resolution.getHeight(), PIXEL_FORMAT_RGBA_8888,
             ISurfaceComposerClient::eOpaque);
 
-    SurfaceComposerClient::Transaction t;
     if (isValid) {
         // In the case of multi-display, boot animation shows on the specified displays
         for (const auto id : physicalDisplayIds) {

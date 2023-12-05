@@ -28,6 +28,7 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.WindowConfiguration;
 import android.os.Environment;
+import android.os.SystemProperties;
 import android.util.AtomicFile;
 import android.util.Slog;
 import android.util.Xml;
@@ -66,6 +67,7 @@ class DisplayWindowSettingsProvider implements SettingsProvider {
     private static final String DATA_DISPLAY_SETTINGS_FILE_PATH = "system/display_settings.xml";
     private static final String VENDOR_DISPLAY_SETTINGS_FILE_PATH = "etc/display_settings.xml";
     private static final String WM_DISPLAY_COMMIT_TAG = "wm-displays";
+    private static String mBuiltInUserRotation = SystemProperties.get("persist.sys.builtinrotation", "");
 
     private static final int IDENTIFIER_UNIQUE_ID = 0;
     private static final int IDENTIFIER_PORT = 1;
@@ -383,6 +385,9 @@ class DisplayWindowSettingsProvider implements SettingsProvider {
                     null /* defaultValue */);
             settingsEntry.mUserRotation = getIntegerAttribute(parser, "userRotation",
                     null /* defaultValue */);
+            if (mBuiltInUserRotation != null && !mBuiltInUserRotation.isEmpty()) {
+                settingsEntry.mUserRotation = Integer.parseInt(mBuiltInUserRotation) % 4;
+            }
             settingsEntry.mForcedWidth = getIntAttribute(parser, "forcedWidth",
                     0 /* defaultValue */);
             settingsEntry.mForcedHeight = getIntAttribute(parser, "forcedHeight",

@@ -296,6 +296,7 @@ private:
     GLuint mTextCropAreaLocation;
     GLuint mTextTextureLocation;
     GLuint mImageColorProgressLocation;
+    ui::Rotation         mRotation;
 };
 
 // ---------------------------------------------------------------------------
