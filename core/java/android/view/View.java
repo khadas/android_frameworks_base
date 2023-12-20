@@ -5470,6 +5470,10 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
 
     private ViewTranslationResponse mViewTranslationResponse;
 
+    //-----------------------rk code----------
+    private static boolean mIsRkEbook = false;
+    //----------------------------------------
+
     /**
      * Simple constructor to use when creating a view from code.
      *
@@ -5477,6 +5481,12 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
      *        access the current theme, resources, etc.
      */
     public View(Context context) {
+        //-----------------------rk code----------
+        if (!sCompatibilityDone && context != null) {
+            mIsRkEbook = context.getResources().getBoolean(
+                com.android.internal.R.bool.config_rk_ebook);
+        }
+        //----------------------------------------
         mContext = context;
         mResources = context != null ? context.getResources() : null;
         mViewFlags = SOUND_EFFECTS_ENABLED | HAPTIC_FEEDBACK_ENABLED | FOCUSABLE_AUTO;
@@ -28627,7 +28637,9 @@ public class View implements Drawable.Callback, KeyEvent.Callback,
                 overScrollMode != OVER_SCROLL_NEVER) {
             throw new IllegalArgumentException("Invalid overscroll mode " + overScrollMode);
         }
-        mOverScrollMode = overScrollMode;
+        //-----------------------rk-changed----------
+        mOverScrollMode = mIsRkEbook ? OVER_SCROLL_NEVER : overScrollMode;
+        //-----------------------rk-changed----------
     }
 
     /**

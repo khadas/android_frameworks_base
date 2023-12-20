@@ -5176,4 +5176,8 @@
 
   <!-- Whether we order unlocking and waking -->
   <java-symbol type="bool" name="config_orderUnlockAndWake" />
+
+  <!-- ======rk code====== -->
+  <java-symbol type="bool" name="config_rk_ebook" />
+  <!-- =================== -->
 </resources>
