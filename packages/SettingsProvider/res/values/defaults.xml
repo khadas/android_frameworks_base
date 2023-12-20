@@ -37,7 +37,7 @@
     <fraction name="def_window_animation_scale">100%</fraction>
     <fraction name="def_window_transition_scale">100%</fraction>
     <!-- ======rk code====== -->
-    <fraction name="def_animator_duration_scale">100%</fraction>
+    <fraction name="def_animator_duration_scale">50%</fraction>
     <!-- =================== -->
     <bool name="def_haptic_feedback">true</bool>
 
