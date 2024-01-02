@@ -1065,6 +1065,10 @@ enum ItemId {
     // 2 hours
     PREFERENCES_SCREENSAVER_START_DELAY_2H = 0x17D25000;
 
+    // TvSettings > Device Preferences > Screen saver > When to start >
+    // Never
+    PREFERENCES_SCREENSAVER_START_DELAY_NEVER = 0x17D26000;
+
     // TvSettings > Device Preferences > Screen saver > Start now
     PREFERENCES_SCREENSAVER_START_NOW = 0x17D30000;
 
