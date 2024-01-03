@@ -495,7 +495,8 @@ void waitForMediaPlayerService() {
     }
 }
 
-BootAnimation::BootVideoListener::BootVideoListener() : isPlayCompleted(false) {
+BootAnimation::BootVideoListener::BootVideoListener(BootAnimation* bootanim) : isPlayCompleted(false) {
+    mBootAnimation = bootanim;
 }
 
 BootAnimation::BootVideoListener::~BootVideoListener() {
@@ -505,6 +506,9 @@ BootAnimation::BootVideoListener::~BootVideoListener() {
 void BootAnimation::BootVideoListener::notify(int msg, int ext1, int ext2, const Parcel *obj) {
     SLOGD("BootVideoListener msg=%d,ext1=%d, ext2=%d, obj=%p", msg, ext1, ext2, obj);
     switch (msg) {
+        case MEDIA_SET_VIDEO_SIZE:
+             mBootAnimation->displaySizeChange(ext1,ext2);
+             break;
         case MEDIA_PLAYBACK_COMPLETE:
         case MEDIA_ERROR:
             isPlayCompleted = true;
@@ -572,6 +576,7 @@ bool BootAnimation::bootVideo() {
             resolution.getWidth(), resolution.getHeight(), PIXEL_FORMAT_RGB_565);
 
     t.setLayer(control, LAYER_VIDEO)
+        .reparent(control,mFlingerSurfaceControl)
         .apply();
 
     sp<Surface> s = control->getSurface();
@@ -585,7 +590,7 @@ bool BootAnimation::bootVideo() {
     }
 
     mMediaPlayer = new MediaPlayer();
-    sp<BootVideoListener> listener = new BootVideoListener();
+    sp<BootVideoListener> listener = new BootVideoListener(this);
     mMediaPlayer->setListener(listener);
     mMediaPlayer->reset();
     mMediaPlayer->setDataSource(mBootVideoFd, 0, 0x7ffffffffffffffL);
@@ -598,6 +603,7 @@ bool BootAnimation::bootVideo() {
         float vol = mMute ? 0.00f : (1.00f * mVol / BOOT_VIDEO_VOL_MAX);
         SLOGD("bootVideo vol=%f", vol);
         mMediaPlayer->setVolume(vol, vol);
+        //t.hide(mFlingerSurfaceControl).apply();
         mMediaPlayer->start();
 
         int mDisplayMode = property_get_int(BOOT_VIDEO_OMX_DISPLAY_MODE_PROP_NAME, 0);
@@ -639,6 +645,7 @@ bool BootAnimation::bootVideo() {
             }
         }
 
+        displaySizeChange(mWidth,mHeight);
         while ((mConfig == CONFIG_BOOTANIM_BOOTVIDEO) || (mConfig == CONFIG_BOOTVIDEO)) {
             char value[PROPERTY_VALUE_MAX];
             property_get(EXIT_PROP_NAME, value, "0");
@@ -670,6 +677,27 @@ bool BootAnimation::bootVideo() {
     }
 
     return false;
+}
+void BootAnimation::displaySizeChange(int width,int height) {
+    const std::vector<PhysicalDisplayId> ids = SurfaceComposerClient::getPhysicalDisplayIds();
+    if (ids.empty() || ids.size() < 2) {
+        return;
+    }
+    SurfaceComposerClient::Transaction t;
+    ALOGE("displaySizeChange %d x %d --> %d x %d",width, height , mWidth, mHeight);
+    Rect src(width,height);
+    Rect lsrc(mWidth,mHeight);
+    t.setGeometry(mFlingerSurfaceControl,lsrc, src,0);
+    t.setDisplayProjection(mDisplayToken, mRotation, src, lsrc);
+    t.show(mFlingerSurfaceControl);
+    for (auto surfacecontrolwrapper:mMirroredSurfaceControls) {
+        if (mWidth == width && mHeight == height) {
+            t.setGeometry(surfacecontrolwrapper->sf, lsrc, surfacecontrolwrapper->displayRect,0);
+        }else {
+            t.setGeometry(surfacecontrolwrapper->sf, surfacecontrolwrapper->displayRect, surfacecontrolwrapper->displayRect,0);
+        }
+    }
+    t.apply();
 }
 
 static char *get_label(const struct label *labels, int value) {
@@ -1238,9 +1266,16 @@ ui::Size BootAnimation::limitSurfaceSize(int width, int height) const {
              limited.width, limited.height, width, height);
     return limited;
 }
-
-status_t BootAnimation::enableDisplay(SurfaceComposerClient::Transaction &t,
-                                          const sp<IBinder> &displayToken, const Rect &primaryLayerStackRect){
+BootAnimation::SurfaceControlWrapper::SurfaceControlWrapper(const sp<IBinder>& token, sp<SurfaceControl>& sc, Rect& rect) {
+    mToken = token;
+    sf = sc;
+    displayRect = rect;
+}
+BootAnimation::SurfaceControlWrapper::~SurfaceControlWrapper() {
+    sf = nullptr;
+}
+status_t BootAnimation::enableDisplay(SurfaceComposerClient::Transaction &t, PhysicalDisplayId id,
+                                          const sp<IBinder> &displayToken, const Rect &primaryLayerStackRect, int stackId){
     DisplayMode displayMode;
     const status_t error = SurfaceComposerClient::getActiveDisplayMode(displayToken, &displayMode);
     if (ui::ROTATION_90 == mRotation || ui::ROTATION_270 == mRotation) {
@@ -1249,15 +1284,24 @@ status_t BootAnimation::enableDisplay(SurfaceComposerClient::Transaction &t,
     if (error != NO_ERROR)
         return error;
     SurfaceComposerClient::setDisplayPowerMode(displayToken, 2);
+    auto mMirroredSurfaceControl = SurfaceComposerClient::getDefault()->mirrorDisplay(id);
     Rect displayRect(displayMode.resolution.getWidth(), displayMode.resolution.getHeight());
-    t.setDisplayProjection(displayToken, mRotation, primaryLayerStackRect, displayRect);
-    t.setDisplayLayerStack(displayToken, ui::DEFAULT_LAYER_STACK);
+    //t.setDisplayProjection(displayToken, mRotation, primaryLayerStackRect, displayRect);
+	SurfaceControlWrapper* sfWrapper = new SurfaceControlWrapper(displayToken, mMirroredSurfaceControl,displayRect);
+    mMirroredSurfaceControls.push_back(sfWrapper);
+    const auto layerStack = ui::LayerStack::fromValue(stackId);
+    t.setDisplayLayerStack(displayToken, layerStack);
+    ALOGE("enable display %d--->(%d %d)",stackId,primaryLayerStackRect.getWidth(), primaryLayerStackRect.getHeight());
+    t.setLayer(mMirroredSurfaceControl, 0x7FFFFFFF);
+    t.setLayerStack(mMirroredSurfaceControl, layerStack);
+    t.setGeometry(mMirroredSurfaceControl,primaryLayerStackRect, displayRect,0);
+    t.show(mMirroredSurfaceControl);
+    t.apply();
     return OK;
 }
 
 status_t BootAnimation::readyToRun() {
     mAssets.addDefaultAssets();
-
     const std::vector<PhysicalDisplayId> ids = SurfaceComposerClient::getPhysicalDisplayIds();
     if (ids.empty()) {
         SLOGE("Failed to get ID for any displays\n");
@@ -1339,33 +1383,11 @@ status_t BootAnimation::readyToRun() {
             resolution.getWidth(), resolution.getHeight(), PIXEL_FORMAT_RGBA_8888,
             ISurfaceComposerClient::eOpaque);
 
-    if (isValid) {
         // In the case of multi-display, boot animation shows on the specified displays
-        for (const auto id : physicalDisplayIds) {
-            if (std::find(ids.begin(), ids.end(), id) != ids.end()) {
-                if (const auto token = SurfaceComposerClient::getPhysicalDisplayToken(id)) {
-                    t.setDisplayLayerStack(token, ui::DEFAULT_LAYER_STACK);
-                }
-            }
-        }
-        t.setLayerStack(control, ui::DEFAULT_LAYER_STACK);
-    }  else {
-        // In the case of multi-display, enable the othres display as default
-        if (ids.size() > 1) {
-            int index = 0;
-            for (auto id: ids) {
-                if (index > 0) {
-                    ALOGD("boot animation enable display : %" PRIu64 "", id.value);
-                    Rect layerStackRect(resolution.getWidth(), resolution.getHeight());
-                    enableDisplay(t, SurfaceComposerClient::getPhysicalDisplayToken(id), layerStackRect);
-                }
-                index ++;
-            }
-            t.setLayerStack(control, ui::DEFAULT_LAYER_STACK);
-        }
-    }
+        // In the case of multi-display, enable the others display as default
 
     t.setLayer(control, 0x40000000)
+        .setLayerStack(control, ui::DEFAULT_LAYER_STACK)
         .apply();
 
     sp<Surface> s = control->getSurface();
@@ -1426,9 +1448,32 @@ status_t BootAnimation::readyToRun() {
         } else {
             resizeSurface(displayMode.resolution.getWidth(),
                           displayMode.resolution.getHeight());
+        
+	  }
+    }
+    if (isValid) {
+        for (const auto id : physicalDisplayIds) {
+            if (std::find(ids.begin(), ids.end(), id) != ids.end()) {
+                if (const auto token = SurfaceComposerClient::getPhysicalDisplayToken(id)) {
+                    t.setDisplayLayerStack(token, ui::DEFAULT_LAYER_STACK);
+                }
+            }
+        }
+    }  else {
+        if (ids.size() > 1) {
+            mMirroredSurfaceControls.reserve((ids.size() - 1));
+            int index = 0;
+            for (auto id: ids) {
+                if (index > 0) {
+                    ALOGD("boot animation enable display : %" PRIu64 "", id.value);
+                    ALOGE(" %d %d",resolution.getWidth(), resolution.getHeight());
+                    Rect layerStackRect(resolution.getWidth(), resolution.getHeight());
+                    enableDisplay(t, ids.front(), SurfaceComposerClient::getPhysicalDisplayToken(id), layerStackRect, (index+1));
+    }
+                index ++;
+            }
         }
     }
-
     return NO_ERROR;
 }
 
@@ -2604,7 +2649,7 @@ void BootAnimation::handleViewport(nsecs_t timestep) {
         SurfaceComposerClient::Transaction t;
         t.setPosition(mFlingerSurfaceControl, 0, -mTargetInset)
                 .setCrop(mFlingerSurfaceControl, Rect(0, mTargetInset, mWidth, mHeight));
-        t.setDisplayProjection(mDisplayToken, ui::ROTATION_0, layerStackRect, displayRect);
+        t.setDisplayProjection(mDisplayToken, mRotation, layerStackRect, displayRect);
         t.apply();
 
         mTargetInset = mCurrentInset = 0;
@@ -2790,3 +2835,4 @@ status_t BootAnimation::TimeCheckThread::readyToRun() {
 // ---------------------------------------------------------------------------
 
 } // namespace android
+

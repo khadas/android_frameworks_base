@@ -173,11 +173,19 @@ private:
         int mTimeWd;
         BootAnimation* mBootAnimation;
     };
-
+    class SurfaceControlWrapper {
+    public:
+        sp<SurfaceControl> sf;
+        sp<IBinder> mToken;
+        Rect displayRect;
+        SurfaceControlWrapper(const sp<IBinder>& token, sp<SurfaceControl>& sc, Rect& rect);
+        ~SurfaceControlWrapper();
+    };
     class BootVideoListener: public MediaPlayerListener {
     public:
         bool isPlayCompleted;
-        BootVideoListener();
+        BootAnimation* mBootAnimation;
+        BootVideoListener(BootAnimation* bootanim);
         ~BootVideoListener();
         virtual void notify(int msg, int ext1, int ext2, const Parcel *obj);
     };
@@ -241,15 +249,15 @@ private:
     void projectSceneToWindow();
     void rotateAwayFromNaturalOrientationIfNeeded();
     ui::Rotation parseOrientationProperty();
-    status_t enableDisplay(SurfaceComposerClient::Transaction &t, const sp <IBinder> &displayToken,
-                           const Rect &primaryLayerStackRect);
+    status_t enableDisplay(SurfaceComposerClient::Transaction &t,PhysicalDisplayId id, const sp <IBinder> &displayToken,
+                           const Rect &primaryLayerStackRect, int stackId);
     bool shouldStopPlayingPart(const Animation::Part& part, int fadedFramesCount,
                                int lastDisplayedProgress);
     void checkExit();
 
     void handleViewport(nsecs_t timestep);
     void initDynamicColors();
-
+    void displaySizeChange(int width,int height);
     bool bootVideo();
     void bootVideoSetVolume(int status);
     bool bootVideoVolumeUI(sp<BootVideoListener> listener);
@@ -278,6 +286,7 @@ private:
     EGLDisplay  mSurface;
     sp<IBinder> mDisplayToken;
     sp<SurfaceControl> mFlingerSurfaceControl;
+    std::vector<SurfaceControlWrapper*> mMirroredSurfaceControls;
     sp<Surface> mFlingerSurface;
     bool        mClockEnabled;
     bool        mTimeIsAccurate;
