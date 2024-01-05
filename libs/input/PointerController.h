@@ -77,6 +77,12 @@ public:
 
     void dump(std::string& dump);
 
+    void setDisplayId(int32_t id);
+    int32_t getDisplayId();
+
+    const DisplayViewport& getViewportLocked() {
+        return mCursorController.getViewportLocked();
+    }
 protected:
     using WindowListenerConsumer =
             std::function<void(const sp<android::gui::WindowInfosListener>&)>;
@@ -86,6 +92,7 @@ protected:
                       const sp<SpriteController>& spriteController,
                       WindowListenerConsumer registerListener,
                       WindowListenerConsumer unregisterListener);
+
 
 private:
     PointerController(const sp<PointerControllerPolicyInterface>& policy, const sp<Looper>& looper,

@@ -325,6 +325,10 @@ public:
     void notifyStylusGestureStarted(int32_t deviceId, nsecs_t eventTime) override;
     bool isInputMethodConnectionActive() override;
 
+    //-------rk-code------//
+    virtual int32_t notifyDisplayIdChanged();
+    //---------------------
+
     /* --- InputDispatcherPolicyInterface implementation --- */
 
     void notifySwitch(nsecs_t when, uint32_t switchValues, uint32_t switchMask,
@@ -2592,6 +2596,63 @@ static void nativeNotifyKeyGestureTimeoutsChanged(JNIEnv* env, jobject nativeImp
     im->getInputManager()->getDispatcher().requestRefreshConfiguration();
 }
 
+//-------rk-code------//
+int32_t NativeInputManager::notifyDisplayIdChanged() REQUIRES(mLock) {
+    std::shared_ptr<PointerController> controller = mLocked.pointerController.lock();
+    int32_t mDisplayId=controller->getDisplayId();
+    uint8_t physicalPortSize=0;
+    DisplayViewport mViewport=controller->getViewportLocked();
+    ALOGV("all viewports size=%d current viewport=%s ",(int32_t)mLocked.viewports.size(),mViewport.toString().c_str());
+    for (const DisplayViewport& v : mLocked.viewports) {
+        if (v.physicalPort!=std::nullopt) {
+           physicalPortSize++;
+        }
+    }
+    ALOGV("physical port size=%d",physicalPortSize);
+    if(physicalPortSize==1){
+       ALOGV("physicalPort size =1,return display id %d",mDisplayId);
+       return mDisplayId;
+    }
+    std::vector<DisplayViewport> viewports;
+
+    for (const DisplayViewport& v : mLocked.viewports) {
+       ALOGV("viewport=%s",v.toString().c_str());
+       if(mViewport.displayId!=v.displayId){
+         viewports.push_back(v);
+       }
+    }
+    std::sort(viewports.begin(),viewports.end(),[](const DisplayViewport& a,const DisplayViewport& b){
+                               return a.displayId<b.displayId;
+                           });
+
+    if(viewports.size()==0){
+      return mDisplayId;
+    }
+    if(viewports.size()==1){
+      controller->setDisplayId(viewports.front().displayId);
+      controller->setDisplayViewport(viewports.front());
+      mDisplayId=viewports.front().displayId;
+      return mDisplayId;
+    }
+    if(viewports.back().displayId<=mViewport.displayId){
+      controller->setDisplayId(viewports.front().displayId);
+      controller->setDisplayViewport(viewports.front());
+      mDisplayId=viewports.front().displayId;
+      return mDisplayId;
+    }
+    for (const DisplayViewport& v : viewports) {
+       ALOGV("viewport=%s",v.toString().c_str());
+       if(v.displayId>mViewport.displayId){
+         controller->setDisplayId(v.displayId);
+         controller->setDisplayViewport(v);
+         mDisplayId=v.displayId;
+         break;
+       }
+
+    }
+    return mDisplayId;
+}
+//---------------------
 // ----------------------------------------------------------------------------
 
 static const JNINativeMethod gInputManagerMethods[] = {

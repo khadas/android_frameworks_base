@@ -122,6 +122,13 @@ int32_t MouseCursorController::getDisplayId() const {
     return mLocked.viewport.displayId;
 }
 
+//-------rk-code------ //
+void MouseCursorController::setDisplayId(int32_t id) {
+    std::scoped_lock lock(mLock);
+    mLocked.pointerSprite->setDisplayId(id);
+}
+//--------------------
+
 void MouseCursorController::fade(PointerControllerInterface::Transition transition) {
     std::scoped_lock lock(mLock);
 
