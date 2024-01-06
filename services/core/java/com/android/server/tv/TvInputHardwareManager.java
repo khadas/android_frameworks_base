@@ -19,6 +19,9 @@ package com.android.server.tv;
 import static android.media.tv.TvInputManager.INPUT_STATE_CONNECTED;
 import static android.media.tv.TvInputManager.INPUT_STATE_CONNECTED_STANDBY;
 import static android.media.tv.TvInputManager.INPUT_STATE_DISCONNECTED;
+//-----------------------rk code----------
+import static android.media.tv.TvInputManager.TV_MESSAGE_KEY_SUBTYPE;
+//----------------------------------------
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -275,6 +278,15 @@ class TvInputHardwareManager implements TvInputHal.Callback {
     @Override
     public void onTvMessage(int deviceId, int type, Bundle data) {
         synchronized (mLock) {
+            //-----------------------rk code----------
+            if (null != data) {
+                String subType = data.getString(TV_MESSAGE_KEY_SUBTYPE);
+                if ("hdmiinout".equals(subType)) {
+                    if (null != mAudioStream)
+                        mAudioStream.stop();
+                }
+            }
+            //----------------------------------------
             String inputId = mHardwareInputIdMap.get(deviceId);
             if (inputId == null) {
                 return;
