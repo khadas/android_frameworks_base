@@ -7441,6 +7441,7 @@ message MetricsEvent {
     KHADAS_STATUS_BAR = 1804;
     KHADAS_CAMERA_IRCUT = 1805;
     KHADAS_M2X = 1806;
+    KHADAS_FUNKEY = 1807;
     // ---- End Q Constants, all Q constants go above this line ----
     // Add new aosp constants above this line.
     // END OF AOSP CONSTANTS
