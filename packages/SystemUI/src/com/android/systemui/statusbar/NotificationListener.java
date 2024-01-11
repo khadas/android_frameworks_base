@@ -25,6 +25,7 @@ import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.provider.Settings;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.os.UserHandle;
@@ -116,6 +117,9 @@ public class NotificationListener extends NotificationListenerWithPlugins {
     public void onNotificationPosted(final StatusBarNotification sbn,
             final RankingMap rankingMap) {
         if (DEBUG) Log.d(TAG, "onNotificationPosted: " + sbn);
+        boolean hasUpperBar = Settings.Global.getInt(mContext.getContentResolver(), Settings.Global.STATUS_BAR_UPPER, 0) == 1;
+        if (!hasUpperBar) return;
+
         if (sbn != null && !onPluginNotificationPosted(sbn, rankingMap)) {
             mMainHandler.post(() -> {
                 processForRemoteInput(sbn.getNotification(), mContext);

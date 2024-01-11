@@ -240,6 +240,23 @@ import javax.inject.Provider;
 
 import dagger.Lazy;
 
+import android.content.ServiceConnection;
+import android.os.Messenger;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageInfo;
+import android.app.Instrumentation;
+import android.content.SharedPreferences;
+import android.view.IRotationWatcher;
+import android.view.ViewGroup.LayoutParams;
+import com.android.systemui.statusbar.policy.KeyButtonView;
+import android.view.accessibility.AccessibilityEvent;
+import android.telecom.TelecomManager;
+import android.app.ActivityManagerNative;
+import android.app.IActivityManager;
+
 public class StatusBar extends SystemUI implements DemoMode,
         ActivityStarter, KeyguardStateController.Callback,
         OnHeadsUpChangedListener, CommandQueue.Callbacks,

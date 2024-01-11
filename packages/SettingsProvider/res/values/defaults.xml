@@ -217,6 +217,9 @@
     <!-- captive portal mode -->
     <integer name="def_captive_portal_mode">0</integer>
 
+    <integer name="def_show_upper_statusbar">1</integer>
+    <integer name="def_show_bottom_statusbar">1</integer>
+
     <!-- Default for Settings.System.VIBRATE_WHEN_RINGING -->
     <bool name="def_vibrate_when_ringing">false</bool>
 

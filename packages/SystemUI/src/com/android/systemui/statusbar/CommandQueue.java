@@ -126,6 +126,10 @@ public class CommandQueue extends IStatusBar.Stub implements CallbackController<
     private static final int MSG_HIDE_TOAST                        = 54 << MSG_SHIFT;
     private static final int MSG_TRACING_STATE_CHANGED             = 55 << MSG_SHIFT;
     private static final int MSG_SUPPRESS_AMBIENT_DISPLAY          = 56 << MSG_SHIFT;
+    private static final int MSG_ADD_BAR_BOTTOM                    = 57 << MSG_SHIFT;
+    private static final int MSG_REMOVE_BAR_BOTTOM                 = 58 << MSG_SHIFT;
+    private static final int MSG_ADD_BAR_UPPER                     = 59 << MSG_SHIFT;
+    private static final int MSG_REMOVE_BAR_UPPER                  = 60 << MSG_SHIFT;
 
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
@@ -190,6 +194,10 @@ public class CommandQueue extends IStatusBar.Stub implements CallbackController<
         default void dismissKeyboardShortcutsMenu() { }
         default void toggleKeyboardShortcutsMenu(int deviceId) { }
         default void cancelPreloadRecentApps() { }
+        default void addBottomBar() { }
+        default void removeBottomBar() { }
+        default void addUpperBar() { }
+        default void removeUpperBar() { }
 
         /**
          * Called to notify window state changes.
@@ -580,6 +588,38 @@ public class CommandQueue extends IStatusBar.Stub implements CallbackController<
             mHandler.removeMessages(MSG_CANCEL_PRELOAD_RECENT_APPS);
             mHandler.obtainMessage(MSG_CANCEL_PRELOAD_RECENT_APPS, 0, 0, null).sendToTarget();
         }
+    }
+
+    @Override
+    public void addBottomBar() {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_ADD_BAR_BOTTOM);
+            mHandler.obtainMessage(MSG_ADD_BAR_BOTTOM, 0, 0, null).sendToTarget();
+       }
+    }
+
+    @Override
+    public void removeBottomBar() {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_REMOVE_BAR_BOTTOM);
+            mHandler.obtainMessage(MSG_REMOVE_BAR_BOTTOM, 0, 0, null).sendToTarget();
+      }
+    }
+
+    @Override
+    public void addUpperBar() {
+       synchronized (mLock) {
+           mHandler.removeMessages(MSG_ADD_BAR_UPPER);
+           mHandler.obtainMessage(MSG_ADD_BAR_UPPER, 0, 0, null).sendToTarget();
+       }
+    }
+
+    @Override
+    public void removeUpperBar() {
+       synchronized (mLock) {
+           mHandler.removeMessages(MSG_REMOVE_BAR_UPPER);
+           mHandler.obtainMessage(MSG_REMOVE_BAR_UPPER, 0, 0, null).sendToTarget();
+       }
     }
 
     @Override
@@ -1120,6 +1160,26 @@ public class CommandQueue extends IStatusBar.Stub implements CallbackController<
                 case MSG_REMOVE_QS_TILE:
                     for (int i = 0; i < mCallbacks.size(); i++) {
                         mCallbacks.get(i).remQsTile((ComponentName) msg.obj);
+                    }
+                    break;
+                case MSG_ADD_BAR_BOTTOM:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).addBottomBar();
+                    }
+                    break;
+                case MSG_REMOVE_BAR_BOTTOM:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).removeBottomBar();
+                    }
+                    break;
+                case MSG_ADD_BAR_UPPER:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).addUpperBar();
+                    }
+                    break;
+                case MSG_REMOVE_BAR_UPPER:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).removeUpperBar();
                     }
                     break;
                 case MSG_CLICK_QS_TILE:

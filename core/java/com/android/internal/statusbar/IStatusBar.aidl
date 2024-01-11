@@ -44,6 +44,11 @@ oneway interface IStatusBar
             boolean showImeSwitcher, boolean isMultiClientImeEnabled);
     void setWindowState(int display, int window, int state);
 
+    void addBottomBar();
+    void removeBottomBar();
+    void addUpperBar();
+    void removeUpperBar();
+
     void showRecentApps(boolean triggeredFromAltTab);
     void hideRecentApps(boolean triggeredFromAltTab, boolean triggeredFromHomeKey);
     void toggleRecentApps();
