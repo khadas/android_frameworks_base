@@ -87,6 +87,7 @@
 ?audio/x-pn-realaudio ra
 ?audio/x-mpeg mp3
 ?audio/mp3 mp3
+?audio/ape ape
 
 ?image/bmp bmp
 ?image/gif gif
