@@ -21,6 +21,8 @@ import android.annotation.Nullable;
 import android.content.pm.PackageManagerInternal;
 import android.content.pm.PackageManagerInternal.PackageListObserver;
 
+import android.os.SystemProperties;
+
 import com.android.server.LocalServices;
 
 import java.util.List;
@@ -49,6 +51,14 @@ public class PackageList implements PackageListObserver, AutoCloseable {
     public void onPackageAdded(String packageName, int uid) {
         if (mWrappedObserver != null) {
             mWrappedObserver.onPackageAdded(packageName, uid);
+        }
+        if (packageName != null) {
+            if (packageName.contains("com.android.preconditions.cts") ||
+               (packageName.contains("com.google.android") && packageName.contains("gts")) ||
+                packageName.contains("android.cts.verifier") ||
+                packageName.endsWith(".cts")) {
+                SystemProperties.set("cts_gts.status", "true");
+            }
         }
     }
 
