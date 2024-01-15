@@ -190,6 +190,18 @@ public final class AudioDeviceInfo {
      */
     public static final int TYPE_DOCK_ANALOG = 31;
 
+//-----------------------rk code----------
+    /**
+     * A device type describing an VX_ROCKCHIP HDMI connection .
+     */
+    public static final int TYPE_VX_HDMI0 = 32;
+
+    /**
+     * A device type describing an VX_ROCKCHIP SPDIF connection .
+     */
+    public static final int TYPE_VX_SPDIF0 = 33;
+//----------------------------------------
+
     /** @hide */
     @IntDef(flag = false, prefix = "TYPE", value = {
             TYPE_BUILTIN_EARPIECE,
@@ -222,7 +234,9 @@ public final class AudioDeviceInfo {
             TYPE_BLE_SPEAKER,
             TYPE_ECHO_REFERENCE,
             TYPE_BLE_BROADCAST,
-            TYPE_DOCK_ANALOG}
+            TYPE_DOCK_ANALOG,
+            TYPE_VX_HDMI0,
+            TYPE_VX_SPDIF0}
     )
     @Retention(RetentionPolicy.SOURCE)
     public @interface AudioDeviceType {}
@@ -250,7 +264,8 @@ public final class AudioDeviceInfo {
             TYPE_HDMI_ARC,
             TYPE_HDMI_EARC,
             TYPE_ECHO_REFERENCE,
-            TYPE_DOCK_ANALOG}
+            TYPE_DOCK_ANALOG,
+            TYPE_VX_HDMI0}
     )
     @Retention(RetentionPolicy.SOURCE)
     public @interface AudioDeviceTypeIn {}
@@ -282,7 +297,9 @@ public final class AudioDeviceInfo {
             TYPE_BLE_HEADSET,
             TYPE_BLE_SPEAKER,
             TYPE_BLE_BROADCAST,
-            TYPE_DOCK_ANALOG}
+            TYPE_DOCK_ANALOG,
+            TYPE_VX_HDMI0,
+            TYPE_VX_SPDIF0}
     )
     @Retention(RetentionPolicy.SOURCE)
     public @interface AudioDeviceTypeOut {}
@@ -316,6 +333,10 @@ public final class AudioDeviceInfo {
             case TYPE_BLE_SPEAKER:
             case TYPE_BLE_BROADCAST:
             case TYPE_DOCK_ANALOG:
+//-----------------------rk code----------
+            case TYPE_VX_HDMI0:
+            case TYPE_VX_SPDIF0:
+//----------------------------------------
                 return true;
             default:
                 return false;
@@ -347,6 +368,9 @@ public final class AudioDeviceInfo {
             case TYPE_HDMI_EARC:
             case TYPE_ECHO_REFERENCE:
             case TYPE_DOCK_ANALOG:
+//-----------------------rk code----------
+            case TYPE_VX_HDMI0:
+//----------------------------------------
                 return true;
             default:
                 return false;
@@ -637,7 +661,9 @@ public final class AudioDeviceInfo {
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES, TYPE_BLUETOOTH_A2DP);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP_SPEAKER, TYPE_BLUETOOTH_A2DP);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_HDMI, TYPE_HDMI);
-        INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_HDMI_1, TYPE_HDMI);
+//-----------------------rk code----------
+        INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_HDMI_1, TYPE_VX_HDMI0);
+//----------------------------------------
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_ANLG_DOCK_HEADSET, TYPE_DOCK_ANALOG);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_DGTL_DOCK_HEADSET, TYPE_DOCK);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_USB_ACCESSORY, TYPE_USB_ACCESSORY);
@@ -648,7 +674,9 @@ public final class AudioDeviceInfo {
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_HDMI_ARC, TYPE_HDMI_ARC);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_HDMI_EARC, TYPE_HDMI_EARC);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_SPDIF, TYPE_LINE_DIGITAL);
-        INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_SPDIF_1, TYPE_LINE_DIGITAL);
+//-----------------------rk code----------
+        INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_SPDIF_1, TYPE_VX_SPDIF0);
+//----------------------------------------
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_FM, TYPE_FM);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_AUX_LINE, TYPE_AUX_LINE);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_OUT_IP, TYPE_IP);
@@ -665,7 +693,9 @@ public final class AudioDeviceInfo {
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_IN_BLUETOOTH_SCO_HEADSET, TYPE_BLUETOOTH_SCO);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_IN_WIRED_HEADSET, TYPE_WIRED_HEADSET);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_IN_HDMI, TYPE_HDMI);
-        INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_IN_HDMI_1, TYPE_HDMI);
+//-----------------------rk code----------
+        INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_IN_HDMI_1, TYPE_VX_HDMI0);
+//----------------------------------------
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_IN_TELEPHONY_RX, TYPE_TELEPHONY);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_IN_BACK_MIC, TYPE_BUILTIN_MIC);
         INT_TO_EXT_DEVICE_MAPPING.put(AudioSystem.DEVICE_IN_ANLG_DOCK_HEADSET, TYPE_DOCK_ANALOG);
@@ -695,11 +725,15 @@ public final class AudioDeviceInfo {
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_WIRED_HEADPHONES, AudioSystem.DEVICE_OUT_WIRED_HEADPHONE);
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_LINE_ANALOG, AudioSystem.DEVICE_OUT_LINE);
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_LINE_DIGITAL, AudioSystem.DEVICE_OUT_SPDIF);
-        EXT_TO_INT_DEVICE_MAPPING.put(TYPE_LINE_DIGITAL, AudioSystem.DEVICE_OUT_SPDIF_1);
+//-----------------------rk code----------
+        EXT_TO_INT_DEVICE_MAPPING.put(TYPE_VX_SPDIF0, AudioSystem.DEVICE_OUT_SPDIF_1);
+//----------------------------------------
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_BLUETOOTH_SCO, AudioSystem.DEVICE_OUT_BLUETOOTH_SCO);
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_BLUETOOTH_A2DP, AudioSystem.DEVICE_OUT_BLUETOOTH_A2DP);
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_HDMI, AudioSystem.DEVICE_OUT_HDMI);
-        EXT_TO_INT_DEVICE_MAPPING.put(TYPE_HDMI, AudioSystem.DEVICE_OUT_HDMI_1);
+//-----------------------rk code----------
+        EXT_TO_INT_DEVICE_MAPPING.put(TYPE_VX_HDMI0, AudioSystem.DEVICE_OUT_HDMI_1);
+//----------------------------------------
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_HDMI_ARC, AudioSystem.DEVICE_OUT_HDMI_ARC);
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_HDMI_EARC, AudioSystem.DEVICE_OUT_HDMI_EARC);
         EXT_TO_INT_DEVICE_MAPPING.put(TYPE_USB_DEVICE, AudioSystem.DEVICE_OUT_USB_DEVICE);
@@ -728,7 +762,9 @@ public final class AudioDeviceInfo {
         EXT_TO_INT_INPUT_DEVICE_MAPPING.put(
                 TYPE_WIRED_HEADSET, AudioSystem.DEVICE_IN_WIRED_HEADSET);
         EXT_TO_INT_INPUT_DEVICE_MAPPING.put(TYPE_HDMI, AudioSystem.DEVICE_IN_HDMI);
-        EXT_TO_INT_INPUT_DEVICE_MAPPING.put(TYPE_HDMI, AudioSystem.DEVICE_IN_HDMI_1);
+//-----------------------rk code----------
+        EXT_TO_INT_INPUT_DEVICE_MAPPING.put(TYPE_VX_HDMI0, AudioSystem.DEVICE_IN_HDMI_1);
+//----------------------------------------
         EXT_TO_INT_INPUT_DEVICE_MAPPING.put(TYPE_TELEPHONY, AudioSystem.DEVICE_IN_TELEPHONY_RX);
         EXT_TO_INT_INPUT_DEVICE_MAPPING.put(TYPE_DOCK, AudioSystem.DEVICE_IN_DGTL_DOCK_HEADSET);
         EXT_TO_INT_INPUT_DEVICE_MAPPING.put(
