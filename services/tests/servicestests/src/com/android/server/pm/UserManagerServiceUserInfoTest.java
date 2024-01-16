@@ -43,6 +43,7 @@ import android.annotation.UserIdInt;
 import android.app.PropertyInvalidatedCache;
 import android.content.pm.UserInfo;
 import android.content.pm.UserInfo.UserInfoFlag;
+import android.content.res.Resources;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.UserHandle;

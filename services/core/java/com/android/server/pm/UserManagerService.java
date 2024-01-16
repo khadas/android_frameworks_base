@@ -4513,7 +4513,6 @@ public class UserManagerService extends IUserManager.Stub {
                     } else {
                         localRestrictions = UserRestrictionsUtils.readRestrictions(parser);
                     }
-                    localRestrictions = UserRestrictionsUtils.readRestrictions(parser);
                 } else if (TAG_DEVICE_POLICY_GLOBAL_RESTRICTIONS.equals(tag)) {
                     globalRestrictions = UserRestrictionsUtils.readRestrictions(parser);
                 } else if (TAG_ACCOUNT.equals(tag)) {
