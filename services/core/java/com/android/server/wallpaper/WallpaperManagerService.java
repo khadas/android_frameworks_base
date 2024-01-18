@@ -3981,11 +3981,13 @@ public class WallpaperManagerService extends IWallpaperManager.Stub
                 File mWallpaperDir = getWallpaperDir(wallpaper.userId);
                 File mWallpaperFile = new File(mWallpaperDir, "wallpaper_orig");
                 File mWallpaperCropFile = new File(mWallpaperDir, "wallpaper");
+                if (!mWallpaperFile.exists() && !mWallpaperCropFile.exists()) {
                 Bitmap bmp=getDefaultWallpaper(mContext);
                 saveFile(bmp,mWallpaperFile.getAbsolutePath());
                 //FileUtils.copyFile(mWallpaperCropFile,mWallpaperCropFile);
                 saveFile(bmp,mWallpaperCropFile.getAbsolutePath());
                 Slog.d(TAG, "generating from default wallpaper and save it.");
+                }
            }
         }
         //--------------------------------------------------------
