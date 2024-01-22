@@ -2486,6 +2486,9 @@ public final class SystemServer implements Dumpable {
             }
 
             if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_LIVE_TV)
+                    //-----------------------rk code----------
+                    || SystemProperties.getBoolean("ro.tvinput.hdmiin.enable", false)
+                    //----------------------------------------
                     || mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
                 t.traceBegin("StartTvInputManager");
                 mSystemServiceManager.startService(TvInputManagerService.class);
