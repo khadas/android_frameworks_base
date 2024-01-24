@@ -1294,6 +1294,7 @@ status_t BootAnimation::enableDisplay(SurfaceComposerClient::Transaction &t, Phy
     ALOGE("enable display %d--->(%d %d)",stackId,primaryLayerStackRect.getWidth(), primaryLayerStackRect.getHeight());
     t.setLayer(mMirroredSurfaceControl, 0x7FFFFFFF);
     t.setLayerStack(mMirroredSurfaceControl, layerStack);
+    t.setDisplayProjection(displayToken, mRotation, displayRect, displayRect);
     t.setGeometry(mMirroredSurfaceControl,primaryLayerStackRect, displayRect,0);
     t.show(mMirroredSurfaceControl);
     t.apply();
