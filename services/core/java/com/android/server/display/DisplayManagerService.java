@@ -2832,6 +2832,13 @@ public final class DisplayManagerService extends SystemService {
         viewport.valid = true;
         viewport.displayId = displayId;
         viewport.isActive = Display.isActiveState(info.state);
+
+        //---------rk-code----------
+        LogicalDisplay display = mLogicalDisplayMapper.getDisplayLocked(device);
+        if(display!=null){
+            viewport.mirrorDisplayId = display.hasContentLocked()?displayId:device.getDisplayIdToMirrorLocked();
+        }
+        //--------------------------
     }
 
     private void updateViewportPowerStateLocked(LogicalDisplay display) {
@@ -2995,6 +3002,9 @@ public final class DisplayManagerService extends SystemService {
             pw.println("  mSafeMode=" + mSafeMode);
             pw.println("  mPendingTraversal=" + mPendingTraversal);
             pw.println("  mViewports=" + mViewports);
+            //---------rk-code----------
+            pw.println("  mTempViewports" + mTempViewports);
+            //--------------------------
             pw.println("  mDefaultDisplayDefaultColorMode=" + mDefaultDisplayDefaultColorMode);
             pw.println("  mWifiDisplayScanRequestCount=" + mWifiDisplayScanRequestCount);
             pw.println("  mStableDisplaySize=" + mStableDisplaySize);

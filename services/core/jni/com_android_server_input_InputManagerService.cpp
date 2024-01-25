@@ -521,6 +521,9 @@ void NativeInputManager::setDisplayViewports(JNIEnv* env, jobjectArray viewportO
             android_hardware_display_DisplayViewport_toNative(env, viewportObj, &viewport);
             ALOGI("Viewport [%d] to add: %s, isActive: %s", (int)i, viewport.uniqueId.c_str(),
                   toString(viewport.isActive));
+            //---------rk-code----------
+	    ALOGV("push viewport=%s mirrorDisplayId %d",viewport.toString().c_str(),viewport.mirrorDisplayId);
+            //--------------------------
             viewports.push_back(viewport);
 
             env->DeleteLocalRef(viewportObj);
@@ -2617,12 +2620,12 @@ int32_t NativeInputManager::notifyDisplayIdChanged() REQUIRES(mLock) {
 
     for (const DisplayViewport& v : mLocked.viewports) {
        ALOGV("viewport=%s",v.toString().c_str());
-       if(mViewport.displayId!=v.displayId){
+       if(mViewport.mirrorDisplayId!=v.mirrorDisplayId){
          viewports.push_back(v);
        }
     }
     std::sort(viewports.begin(),viewports.end(),[](const DisplayViewport& a,const DisplayViewport& b){
-                               return a.displayId<b.displayId;
+                               return a.mirrorDisplayId<b.mirrorDisplayId;
                            });
 
     if(viewports.size()==0){
@@ -2634,18 +2637,18 @@ int32_t NativeInputManager::notifyDisplayIdChanged() REQUIRES(mLock) {
       mDisplayId=viewports.front().displayId;
       return mDisplayId;
     }
-    if(viewports.back().displayId<=mViewport.displayId){
-      controller->setDisplayId(viewports.front().displayId);
+    if(viewports.back().mirrorDisplayId<=mViewport.mirrorDisplayId){
+      controller->setDisplayId(viewports.front().mirrorDisplayId);
       controller->setDisplayViewport(viewports.front());
-      mDisplayId=viewports.front().displayId;
+      mDisplayId=viewports.front().mirrorDisplayId;
       return mDisplayId;
     }
     for (const DisplayViewport& v : viewports) {
        ALOGV("viewport=%s",v.toString().c_str());
-       if(v.displayId>mViewport.displayId){
-         controller->setDisplayId(v.displayId);
+       if(v.mirrorDisplayId>mViewport.mirrorDisplayId){
+         //controller->setDisplayId(v.mirrorDisplayId);
          controller->setDisplayViewport(v);
-         mDisplayId=v.displayId;
+         mDisplayId=v.mirrorDisplayId;
          break;
        }
 

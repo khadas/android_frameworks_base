@@ -56,6 +56,10 @@ public final class DisplayViewport {
     // The logical display id.
     public int displayId;
 
+    //---------rk-code----------
+    public int mirrorDisplayId;
+    //--------------------------
+
     // The rotation applied to the physical coordinate system.
     public int orientation;
 
@@ -85,6 +89,9 @@ public final class DisplayViewport {
         valid = viewport.valid;
         isActive = viewport.isActive;
         displayId = viewport.displayId;
+        //---------rk-code----------
+        mirrorDisplayId = viewport.mirrorDisplayId;
+        //--------------------------
         orientation = viewport.orientation;
         logicalFrame.set(viewport.logicalFrame);
         physicalFrame.set(viewport.physicalFrame);
@@ -116,16 +123,19 @@ public final class DisplayViewport {
 
         DisplayViewport other = (DisplayViewport) o;
         return valid == other.valid
-              && isActive == other.isActive
-              && displayId == other.displayId
-              && orientation == other.orientation
-              && logicalFrame.equals(other.logicalFrame)
-              && physicalFrame.equals(other.physicalFrame)
-              && deviceWidth == other.deviceWidth
-              && deviceHeight == other.deviceHeight
-              && TextUtils.equals(uniqueId, other.uniqueId)
-              && Objects.equals(physicalPort, other.physicalPort)
-              && type == other.type;
+                && isActive == other.isActive
+                && displayId == other.displayId
+                //---------rk-code----------
+                && mirrorDisplayId == other.mirrorDisplayId
+                //--------------------------
+                && orientation == other.orientation
+                && logicalFrame.equals(other.logicalFrame)
+                && physicalFrame.equals(other.physicalFrame)
+                && deviceWidth == other.deviceWidth
+                && deviceHeight == other.deviceHeight
+                && TextUtils.equals(uniqueId, other.uniqueId)
+                && Objects.equals(physicalPort, other.physicalPort)
+                && type == other.type;
     }
 
     @Override
@@ -155,6 +165,9 @@ public final class DisplayViewport {
                 + ", valid=" + valid
                 + ", isActive=" + isActive
                 + ", displayId=" + displayId
+                //---------rk-code----------
+                + ", mirrorDisplayId=" + mirrorDisplayId
+                //--------------------------
                 + ", uniqueId='" + uniqueId + "'"
                 + ", physicalPort=" + physicalPort
                 + ", orientation=" + orientation

@@ -34,6 +34,9 @@ static struct {
     jclass clazz;
 
     jfieldID displayId;
+    //---------rk-code----------
+    jfieldID mirrorDisplayId;
+    //--------------------------
     jfieldID isActive;
     jfieldID orientation;
     jfieldID logicalFrame;
@@ -60,6 +63,9 @@ status_t android_hardware_display_DisplayViewport_toNative(JNIEnv* env, jobject 
     static const jmethodID byteValue = env->GetMethodID(intClass, "byteValue", "()B");
 
     viewport->displayId = env->GetIntField(viewportObj, gDisplayViewportClassInfo.displayId);
+    //---------rk-code----------
+    viewport->mirrorDisplayId = env->GetIntField(viewportObj, gDisplayViewportClassInfo.mirrorDisplayId);
+    //--------------------------
     viewport->isActive = env->GetBooleanField(viewportObj, gDisplayViewportClassInfo.isActive);
     jint orientation = env->GetIntField(viewportObj, gDisplayViewportClassInfo.orientation);
     viewport->orientation = static_cast<ui::Rotation>(orientation);
@@ -106,6 +112,11 @@ int register_android_hardware_display_DisplayViewport(JNIEnv* env) {
 
     gDisplayViewportClassInfo.displayId = GetFieldIDOrDie(env,
             gDisplayViewportClassInfo.clazz, "displayId", "I");
+
+    //---------rk-code----------
+    gDisplayViewportClassInfo.mirrorDisplayId = GetFieldIDOrDie(env,
+            gDisplayViewportClassInfo.clazz, "mirrorDisplayId", "I");
+    //--------------------------
 
     gDisplayViewportClassInfo.isActive =
             GetFieldIDOrDie(env, gDisplayViewportClassInfo.clazz, "isActive", "Z");
