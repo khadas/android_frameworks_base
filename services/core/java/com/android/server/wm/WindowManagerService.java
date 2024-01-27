@@ -3752,6 +3752,10 @@ public class WindowManagerService extends IWindowManager.Stub
             ProtoLog.v(ProtoLogGroup.WM_DEBUG_WINDOW_TRANSITIONS, "Notified TransitionController "
                     + "that the display is ready.");
         }
+
+	//----rk-code----
+	Settings.System.putInt(mContext.getContentResolver(),Settings.System.FORCE_TRAVERSAL_DISPLAY_LOCKED,1);
+	//---------------
     }
 
     private boolean checkBootAnimationCompleteLocked() {

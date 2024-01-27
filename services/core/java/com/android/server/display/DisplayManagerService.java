@@ -952,11 +952,25 @@ public final class DisplayManagerService extends SystemService {
             mContext.getContentResolver().registerContentObserver(
                     Settings.Secure.getUriFor(
                         Settings.Secure.MINIMAL_POST_PROCESSING_ALLOWED), false, this);
+	    //----rk-code----
+            mContext.getContentResolver().registerContentObserver(
+                    Settings.System.getUriFor(
+                        Settings.System.FORCE_TRAVERSAL_DISPLAY_LOCKED), false, this);
+	    //---------------
         }
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
-            handleSettingsChange();
+            //---------rk-code----------
+	    if(uri.equals(Settings.System.getUriFor(Settings.System.FORCE_TRAVERSAL_DISPLAY_LOCKED))){
+               if(Settings.System.getInt(mContext.getContentResolver(),Settings.System.FORCE_TRAVERSAL_DISPLAY_LOCKED,0)==1){
+                  scheduleTraversalLocked(false);
+		  Settings.System.putInt(mContext.getContentResolver(),Settings.System.FORCE_TRAVERSAL_DISPLAY_LOCKED,0);
+               }
+            }else {
+            //------------------------
+               handleSettingsChange();
+            }
         }
     }
 
@@ -2764,6 +2778,12 @@ public final class DisplayManagerService extends SystemService {
         // Find the logical display that the display device is showing.
         // Certain displays only ever show their own content.
         LogicalDisplay display = mLogicalDisplayMapper.getDisplayLocked(device);
+
+	//----rk-code----
+	if(!"1".equals(SystemProperties.get("service.bootanim.exit"))){
+            display = mLogicalDisplayMapper.getDisplayLocked(Display.DEFAULT_DISPLAY);
+        }
+	//---------------
         //-------rk-code------//
         if(SystemProperties.getBoolean("ro.display_mirror.disable",false)) {
             final boolean ownContent = (info.flags & DisplayDeviceInfo.FLAG_OWN_CONTENT_ONLY) != 0;

@@ -2703,7 +2703,8 @@ final class DisplayPowerController2 implements AutomaticBrightnessController.Cal
      * @return True if the display state is ready to update
      */
     private boolean readyToUpdateDisplayState() {
-        return mDisplayId == Display.DEFAULT_DISPLAY || mBootCompleted;
+        //return mDisplayId == Display.DEFAULT_DISPLAY || mBootCompleted;
+	return true;
     }
 
     private final class DisplayControllerHandler extends Handler {

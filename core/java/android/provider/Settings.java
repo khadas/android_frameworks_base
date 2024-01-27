@@ -5788,6 +5788,14 @@ public final class Settings {
         public static final String SCREEN_FLASH_NOTIFICATION_COLOR =
                 "screen_flash_notification_color_global";
 
+        //----rk-code----
+        /**
+         * Setting to force traversal display locked.
+         * @hide
+         */
+        public static final String FORCE_TRAVERSAL_DISPLAY_LOCKED = "force_traversal_display_locked";
+        //---------------
+
         /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
