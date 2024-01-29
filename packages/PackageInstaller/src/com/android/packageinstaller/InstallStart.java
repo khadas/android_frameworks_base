@@ -153,6 +153,16 @@ public class InstallStart extends Activity {
             return;
         }
 
+        //----------------------rk code---------------------------
+        if (callingPackage == null) {
+            callingPackage = intent.getStringExtra(PackageInstallerActivity.EXTRA_CALLING_PACKAGE);
+            if (callingPackage == null && callingUid == 1000) {
+                callingPackage = getLaunchedFromPackage();
+            }
+            Log.w(TAG, "callingUid " + callingUid + ", rk set callingPackage=" + callingPackage);
+        }
+        //--------------------------------------------------------
+
         Intent nextActivity = new Intent(intent);
         nextActivity.setFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT
                 | Intent.FLAG_GRANT_READ_URI_PERMISSION);
