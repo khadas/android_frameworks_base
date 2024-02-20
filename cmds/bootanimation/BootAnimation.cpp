@@ -683,21 +683,7 @@ void BootAnimation::displaySizeChange(int width,int height) {
     if (ids.empty() || ids.size() < 2) {
         return;
     }
-    SurfaceComposerClient::Transaction t;
     ALOGE("displaySizeChange %d x %d --> %d x %d",width, height , mWidth, mHeight);
-    Rect src(width,height);
-    Rect lsrc(mWidth,mHeight);
-    t.setGeometry(mFlingerSurfaceControl,lsrc, src,0);
-    t.setDisplayProjection(mDisplayToken, mRotation, src, lsrc);
-    t.show(mFlingerSurfaceControl);
-    for (auto surfacecontrolwrapper:mMirroredSurfaceControls) {
-        if (mWidth == width && mHeight == height) {
-            t.setGeometry(surfacecontrolwrapper->sf, lsrc, surfacecontrolwrapper->displayRect,0);
-        }else {
-            t.setGeometry(surfacecontrolwrapper->sf, surfacecontrolwrapper->displayRect, surfacecontrolwrapper->displayRect,0);
-        }
-    }
-    t.apply();
 }
 
 static char *get_label(const struct label *labels, int value) {
