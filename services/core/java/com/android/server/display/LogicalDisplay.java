@@ -523,7 +523,7 @@ final class LogicalDisplay {
             mBaseDisplayInfo.thermalRefreshRateThrottling = mThermalRefreshRateThrottling;
             mBaseDisplayInfo.thermalBrightnessThrottlingDataId = mThermalBrightnessThrottlingDataId;
             //-----rk-code-----//
-            if(SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
+            if(SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")||SystemProperties.get("ro.board.platform").equals("rk3576")) {
                 if (deviceInfo.type == Display.TYPE_EXTERNAL) {
                     String mPhysicalDisplayId = deviceInfo.uniqueId.split(":")[1];
                     String property = "persist.sys.rotation.einit-" + mPhysicalDisplayId;
@@ -732,7 +732,7 @@ final class LogicalDisplay {
             mTempDisplayRect.offset(-mDisplayOffsetY, mDisplayOffsetX);
         }
         //-----rk-code-----//
-        if (SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")) {
+        if (SystemProperties.get("ro.board.platform").equals("rk356x")||SystemProperties.get("ro.board.platform").equals("rk3588")||SystemProperties.get("ro.board.platform").equals("rk3576")) {
             if (displayDeviceInfo.type == Display.TYPE_EXTERNAL) {
                 String mPhysicalDisplayId = device.getDisplayDeviceInfoLocked().uniqueId.split(":")[1];
                 String property="persist.sys.rotation.efull-"+mPhysicalDisplayId;
