@@ -639,6 +639,10 @@ public final class PowerManagerService extends SystemService
     private float mScreenBrightnessOverrideFromWindowManager =
             PowerManager.BRIGHTNESS_INVALID_FLOAT;
 
+    /* -----rk-code----- */
+    private int mScreenBrightnessDisplayId = Display.INVALID_DISPLAY;
+    /* ---------- */
+
     // The window manager has determined the user to be inactive via other means.
     // Set this to false to disable.
     private boolean mUserInactiveOverrideFromWindowManager;
@@ -3874,6 +3878,11 @@ public final class PowerManagerService extends SystemService
                 } else {
                     screenBrightnessOverride = PowerManager.BRIGHTNESS_INVALID_FLOAT;
                 }
+
+                /* -----rk-code----- */
+                powerGroup.setScreenBrightnessDisplayId(mScreenBrightnessDisplayId);
+                /* ---------- */
+
                 boolean ready = powerGroup.updateLocked(screenBrightnessOverride,
                         shouldUseProximitySensorLocked(), shouldBoostScreenBrightness(),
                         mDozeScreenStateOverrideFromDreamManager,
@@ -3895,6 +3904,9 @@ public final class PowerManagerService extends SystemService
                             powerGroup.getUserActivitySummaryLocked())
                             + ", mBootCompleted=" + mBootCompleted
                             + ", screenBrightnessOverride=" + screenBrightnessOverride
+                            /* -----rk-code----- */
+                            + ", powerGroup.mScreenBrightnessDisplayId=" + powerGroup.getScreenBrightnessDisplayId()
+                            /* ---------- */
                             + ", mScreenBrightnessBoostInProgress="
                             + mScreenBrightnessBoostInProgress
                             + ", sQuiescent=" + sQuiescent);
@@ -4652,6 +4664,14 @@ public final class PowerManagerService extends SystemService
         }
     }
 
+    /* -----rk-code----- */
+    private void setScreenBrightnessDisplayIdFromWindowManagerInternal(int displayId) {
+        synchronized (mLock) {
+            mScreenBrightnessDisplayId = displayId;
+        }
+    }
+    /* ---------- */
+
     private void setUserInactiveOverrideFromWindowManagerInternal() {
         synchronized (mLock) {
             mUserInactiveOverrideFromWindowManager = true;
@@ -4980,6 +5000,9 @@ public final class PowerManagerService extends SystemService
             pw.println("  mStayOnWhilePluggedInSetting=" + mStayOnWhilePluggedInSetting);
             pw.println("  mScreenBrightnessOverrideFromWindowManager="
                     + mScreenBrightnessOverrideFromWindowManager);
+            /* -----rk-code----- */
+            pw.println("  mScreenBrightnessDisplayId=" + mScreenBrightnessDisplayId);
+            /* ---------- */
             pw.println("  mUserActivityTimeoutOverrideFromWindowManager="
                     + mUserActivityTimeoutOverrideFromWindowManager);
             pw.println("  mUserInactiveOverrideFromWindowManager="
@@ -7252,6 +7275,13 @@ public final class PowerManagerService extends SystemService
             }
             setScreenBrightnessOverrideFromWindowManagerInternal(screenBrightness);
         }
+
+        /* -----rk-code----- */
+        @Override
+        public void setScreenBrightnessDisplayIdFromWindowManager(int displayId) {
+            setScreenBrightnessDisplayIdFromWindowManagerInternal(displayId);
+        }
+        /* ---------- */
 
         @Override
         public void setDozeOverrideFromDreamManager(int screenState, int screenBrightness) {

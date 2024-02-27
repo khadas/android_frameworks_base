@@ -897,6 +897,20 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                     || mScreenBrightnessOverride > PowerManager.BRIGHTNESS_MAX
                     ? PowerManager.BRIGHTNESS_INVALID_FLOAT : mScreenBrightnessOverride;
             int brightnessFloatAsIntBits = Float.floatToIntBits(brightnessOverride);
+            /* -----rk-code----- */
+            DisplayContent dc = getTopFocusedDisplayContent();
+            if (dc != null) {
+                WindowState focusWindow = dc.mCurrentFocus;
+                if (focusWindow != null) {
+                    if (focusWindow.mAttrs.screenBrightness < PowerManager.BRIGHTNESS_MIN
+                        || focusWindow.mAttrs.screenBrightness > PowerManager.BRIGHTNESS_MAX) {
+                        brightnessFloatAsIntBits = Float.floatToIntBits(PowerManager.BRIGHTNESS_INVALID_FLOAT);
+                    } else {
+                        brightnessFloatAsIntBits = Float.floatToIntBits(focusWindow.mAttrs.screenBrightness);
+                    }
+                }
+            }
+            /* ---------- */
             // Post these on a handler such that we don't call into power manager service while
             // holding the window manager lock to avoid lock contention with power manager lock.
             mHandler.obtainMessage(SET_SCREEN_BRIGHTNESS_OVERRIDE, brightnessFloatAsIntBits,
@@ -1120,6 +1134,9 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case SET_SCREEN_BRIGHTNESS_OVERRIDE:
+                    /* -----rk-code----- */
+                    mWmService.mPowerManagerInternal.setScreenBrightnessDisplayIdFromWindowManager(mTopFocusedDisplayId);
+                    /* ---------- */
                     mWmService.mPowerManagerInternal.setScreenBrightnessOverrideFromWindowManager(
                             Float.intBitsToFloat(msg.arg1));
                     break;
