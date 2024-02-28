@@ -430,6 +430,11 @@ public class AudioService extends IAudioService.Stub
     private AudioHandler mAudioHandler;
     /** @see VolumeStreamState */
     private VolumeStreamState[] mStreamStates;
+    //-----rk-code-----//
+    private HashMap<Integer, VolumeStreamState[]> mUserIdStreamStatesMap;
+    private int mCurrentUserId;
+    private final Object mCreateStreamLock = new Object();
+    //-----------------//
 
     /*package*/ int getVssVolumeForDevice(int stream, int device) {
         return mStreamStates[stream].getIndex(device);
@@ -1031,6 +1036,10 @@ public class AudioService extends IAudioService.Stub
         mPlatformType = AudioSystem.getPlatformType(context);
 
         mDeviceBroker = new AudioDeviceBroker(mContext, this, mAudioSystem);
+        //-----rk-code-----//
+        mCurrentUserId = UserHandle.MIN_SECONDARY_USER_ID;
+        mUserIdStreamStatesMap = new HashMap<>();
+        //----------------//
 
         mIsSingleVolume = AudioSystem.isSingleVolume(context);
 
@@ -1296,7 +1305,13 @@ public class AudioService extends IAudioService.Stub
                     0);
         }
 
-        createStreamStates();
+        //-----rk-code-----//
+        if (isPlatformAutomotive()) {
+            getCurrentUserStreamSates(android.os.Process.SYSTEM_UID);
+        } else {
+            createStreamStates();
+        }
+        //----------------//
 
         // must be called after createStreamStates() as it uses MUSIC volume as default if no
         // persistent data
@@ -2168,6 +2183,29 @@ public class AudioService extends IAudioService.Stub
         checkMuteAffectedStreams();
         updateDefaultVolumes();
     }
+
+    //-----rk-code-----//
+    private void getCurrentUserStreamSates(int uid) {
+        if (isPlatformAutomotive()) {
+            synchronized (mCreateStreamLock) {
+                int userID = UserHandle.getUserId(uid);
+                if (userID != UserHandle.USER_SYSTEM) {
+                    mCurrentUserId = userID;
+                }
+                if (DEBUG_VOL) {
+                    Log.d(TAG, "get uid:" + uid + " userID:" + userID + " currentUserId: " + mCurrentUserId);
+                }
+                VolumeStreamState[] streamStates = mUserIdStreamStatesMap.get(mCurrentUserId);
+                if (streamStates == null && mCurrentUserId != UserHandle.USER_SYSTEM) {
+                    createStreamStates();
+                    mUserIdStreamStatesMap.put(mCurrentUserId, mStreamStates);
+                } else {
+                    mStreamStates = streamStates;
+                }
+            }
+        }
+    }
+    //----------------//
 
     /**
      * Update default indexes from aliased streams. Must be called after mStreamStates is created
@@ -3436,7 +3474,9 @@ public class AudioService extends IAudioService.Stub
         // including with regard to silent mode control (e.g the use of STREAM_RING below and in
         // checkForRingerModeChange() in place of STREAM_RING or STREAM_NOTIFICATION)
         int streamTypeAlias = mStreamVolumeAlias[streamType];
-
+        //-----rk-code-----//
+        getCurrentUserStreamSates(uid);
+        //-----------------//
         VolumeStreamState streamState = mStreamStates[streamTypeAlias];
 
         final int device = getDeviceForStream(streamTypeAlias);
@@ -4507,6 +4547,9 @@ public class AudioService extends IAudioService.Stub
         if (uid == android.os.Process.SYSTEM_UID) {
             uid = UserHandle.getUid(getCurrentUserId(), UserHandle.getAppId(uid));
         }
+        //-----rk-code-----//
+        getCurrentUserStreamSates(uid);
+        //----------------//
         if (!checkNoteAppOp(
                 STREAM_VOLUME_OPS[streamTypeAlias], uid, callingPackage, attributionTag)) {
             return;
@@ -5002,6 +5045,9 @@ public class AudioService extends IAudioService.Stub
     /** @see AudioManager#getStreamVolume(int) */
     public int getStreamVolume(int streamType) {
         ensureValidStreamType(streamType);
+        //-----rk-code-----//
+        getCurrentUserStreamSates(Binder.getCallingUid());
+        //----------------//
         int device = getDeviceForStream(streamType);
         synchronized (VolumeStreamState.class) {
             int index = mStreamStates[streamType].getIndex(device);
@@ -5060,6 +5106,9 @@ public class AudioService extends IAudioService.Stub
     /** @see AudioManager#getStreamMaxVolume(int) */
     public int getStreamMaxVolume(int streamType) {
         ensureValidStreamType(streamType);
+        //-----rk-code-----//
+        getCurrentUserStreamSates(Binder.getCallingUid());
+        //----------------//
         return (mStreamStates[streamType].getMaxIndex() + 5) / 10;
     }
 
@@ -5067,6 +5116,9 @@ public class AudioService extends IAudioService.Stub
      * Part of service interface, check permissions here */
     public int getStreamMinVolume(int streamType) {
         ensureValidStreamType(streamType);
+        //-----rk-code-----//
+        getCurrentUserStreamSates(Binder.getCallingUid());
+        //----------------//
         final boolean isPrivileged =
                 Binder.getCallingUid() == Process.SYSTEM_UID
                  || callingHasAudioSettingsPermission()
@@ -5081,6 +5133,9 @@ public class AudioService extends IAudioService.Stub
         super.getLastAudibleStreamVolume_enforcePermission();
 
         ensureValidStreamType(streamType);
+        //-----rk-code-----//
+        getCurrentUserStreamSates(Binder.getCallingUid());
+        //----------------//
         int device = getDeviceForStream(streamType);
         return (mStreamStates[streamType].getIndex(device) + 5) / 10;
     }
@@ -6221,7 +6276,9 @@ public class AudioService extends IAudioService.Stub
         // restore ringer mode, ringer mode affected streams, mute affected streams and vibrate settings
         readPersistedSettings();
         readUserRestrictions();
-
+        //-----rk-code-----//
+        getCurrentUserStreamSates(android.os.Process.SYSTEM_UID);
+        //----------------//
         // restore volume settings
         int numStreamTypes = AudioSystem.getNumStreamTypes();
         for (int streamType = 0; streamType < numStreamTypes; streamType++) {
@@ -8522,6 +8579,13 @@ public class AudioService extends IAudioService.Stub
                     && !isFullyMuted()) {
                 index = 1;
             }
+            //-----rk-code-----//
+            if (isPlatformAutomotive()) {
+                String userIdDevice = "CurrentUserID="  + Integer.toString(mCurrentUserId);
+                AudioSystem.setParameters(userIdDevice);
+            }
+            //----------------//
+
             mAudioSystem.setStreamVolumeIndexAS(mStreamType, index, device);
         }
 
