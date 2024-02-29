@@ -910,6 +910,12 @@ public final class UserVisibilityMediator implements Dumpable {
                     continue;
                 }
                 int userId = mUsersAssignedToDisplayOnStart.keyAt(i);
+                //-----rk-code-----//
+                if ("car".equals(SystemProperties.get("ro.target.product")) && UserManager.isHeadlessSystemUserMode()) {
+                    Slogf.d(TAG, "In AAOS, getUserAssignedToDisplay userId(" + userId + ")'s displayId = " + displayId + " is equals!");
+                    return userId;
+                }
+                //-----------------//
                 if (!isStartedVisibleProfileLocked(userId)) {
                     return userId;
                 } else if (DBG) {

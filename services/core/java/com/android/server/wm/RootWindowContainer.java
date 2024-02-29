@@ -118,6 +118,9 @@ import android.os.Message;
 import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
+/* -----rk-code----- */
+import android.os.SystemProperties;
+/* ---------- */
 import android.os.Trace;
 import android.os.UserHandle;
 import android.os.storage.StorageManager;
@@ -2575,7 +2578,18 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
     }
 
     private void startSystemDecorations(final DisplayContent displayContent) {
-        startHomeOnDisplay(mCurrentUser, "displayAdded", displayContent.getDisplayId());
+        /* -----rk-code----- */
+        // Referencing the methods of resumeHomeActivity and startHomeOnEmptyDisplays,
+        // use mWmService.getUserAssignedToDisplay instead of mCurrentUser
+        // to launch secondary screen applications.
+        if ("car".equals(SystemProperties.get("ro.target.product"))) {
+            int userId = mWmService.getUserAssignedToDisplay(displayContent.getDisplayId());
+            Slog.w(TAG, "startSystemDecorations in display(" + displayContent.getDisplayId() + ") with userId(" + userId + ") when onDisplayAdded");
+            startHomeOnDisplay(userId, "displayAdded", displayContent.getDisplayId());
+        } else {
+            startHomeOnDisplay(mCurrentUser, "displayAdded", displayContent.getDisplayId());
+        }
+        /* ---------- */
         displayContent.getDisplayPolicy().notifyDisplayReady();
     }
 
