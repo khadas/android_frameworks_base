@@ -19,6 +19,7 @@ package com.android.server.hdmi;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.hardware.hdmi.HdmiPortInfo;
+import android.hardware.hdmi.HdmiDeviceInfo;
 import android.hardware.tv.cec.V1_0.HotplugEvent;
 import android.hardware.tv.cec.V1_0.IHdmiCec.getPhysicalAddressCallback;
 import android.hardware.tv.cec.V1_0.OptionKey;
@@ -124,7 +125,6 @@ final class HdmiCecController {
     protected static final int HDMI_CEC_HAL_DEATH_COOKIE = 353;
     // Common logical addresses used in reality.
     private static final int[] COMMON_CANDIDATES = {0x0, 0x1, 0x3, 0x4, 0x5, 0x8, 0xb, 0xe};
-    private static final int[] COMMON_CANDIDATES_AUDIOSYSTEM = {0x1, 0x3, 0x4, 0x8, 0xb, 0xe};
 
     // Predicate for whether the given logical address is remote device's one or not.
     private final Predicate<Integer> mRemoteDeviceAddressPredicate = new Predicate<Integer>() {
@@ -270,11 +270,14 @@ final class HdmiCecController {
                 logicalAddressesToPoll.add(i);
             }
         }
-
+        int allocationRetry = HdmiConfig.ADDRESS_ALLOCATION_RETRY;
+        if (deviceType == HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM) {
+            allocationRetry = 1;
+        }
         int logicalAddress = Constants.ADDR_UNREGISTERED;
         for (Integer logicalAddressToPoll : logicalAddressesToPoll) {
             boolean acked = false;
-            for (int j = 0; j < HdmiConfig.ADDRESS_ALLOCATION_RETRY; ++j) {
+            for (int j = 0; j < allocationRetry; ++j) {
                 if (sendPollMessage(logicalAddressToPoll, logicalAddressToPoll, 1)) {
                     acked = true;
                     break;
@@ -546,9 +549,6 @@ final class HdmiCecController {
         int iterationStrategy = pickStrategy & Constants.POLL_ITERATION_STRATEGY_MASK;
         LinkedList<Integer> pollingCandidates = new LinkedList<>();
         int[] candidates= COMMON_CANDIDATES;
-        if (mService.isAudioSystemDevice()) {
-            candidates = COMMON_CANDIDATES_AUDIOSYSTEM;
-        }
         switch (iterationStrategy) {
             case Constants.POLL_ITERATION_IN_ORDER:
                 for (int i = 0; i <= candidates.length - 1; ++i) {
@@ -576,7 +576,7 @@ final class HdmiCecController {
         assertRunOnServiceThread();
         if (candidates.isEmpty()) {
             if (callback != null) {
-                HdmiLogger.debug("[P]:AllocatedAddress=%s", allocated.toString());
+                Slog.d(TAG, "[P]:AllocatedAddress=" + allocated.toString());
                 callback.onPollingFinished(allocated);
             }
             return;
@@ -759,7 +759,7 @@ final class HdmiCecController {
 
                 final int finalError = errorCode;
                 if (finalError != SendMessageResult.SUCCESS) {
-                    Slog.w(TAG, "Failed to send " + cecMessage + " with errorCode=" + finalError);
+                    HdmiLogger.error("Failed to send " + cecMessage + " with errorCode=" + finalError);
                 }
                 runOnServiceThread(new Runnable() {
                     @Override

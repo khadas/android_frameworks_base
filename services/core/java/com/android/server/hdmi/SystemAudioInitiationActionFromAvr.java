@@ -15,6 +15,7 @@
  */
 package com.android.server.hdmi;
 
+import android.hardware.hdmi.IHdmiControlCallback;
 import android.hardware.tv.cec.V1_0.SendMessageResult;
 
 import com.android.internal.annotations.VisibleForTesting;
@@ -41,14 +42,24 @@ public class SystemAudioInitiationActionFromAvr extends HdmiCecFeatureAction {
 
     @Override
     boolean start() {
-        if (audioSystem().getActiveSource().physicalAddress == Constants.INVALID_PHYSICAL_ADDRESS) {
-            mState = STATE_WAITING_FOR_ACTIVE_SOURCE;
-            addTimer(mState, HdmiConfig.TIMEOUT_MS);
-            sendRequestActiveSource();
-        } else {
-            mState = STATE_WAITING_FOR_TV_SUPPORT;
-            queryTvSystemAudioModeSupport();
+        int activePort = audioSystem().getLocalActivePort();
+        HdmiLogger.debug("SystemAudioInitiationActionFromAvr starts with " + activePort);
+        // When audio system wakes up, the active source is always invalidated. But actually the
+        // local active port saved is valid all the time. So it just needs to trigger one touch
+        // play when the device first boots.
+        // Besides, when TV switches to a channel without any source device, there is no response for
+        // the requestActiveSource but you can't do oneTouchPlay to steal the focus. And in tv waking
+        // up scene, there could be disturbant <Active Source> messages.
+        if (activePort == Constants.CEC_SWITCH_PORT_MAX) {
+            source().getService().oneTouchPlay(new IHdmiControlCallback.Stub() {
+                @Override
+                public void onComplete(int result) {
+                    HdmiLogger.debug("SystemAudioInitiationActionFromAvr otp result:" + result);
+                }
+            });
         }
+        mState = STATE_WAITING_FOR_TV_SUPPORT;
+        queryTvSystemAudioModeSupport();
         return true;
     }
 
@@ -91,7 +102,7 @@ public class SystemAudioInitiationActionFromAvr extends HdmiCecFeatureAction {
                             mSendRequestActiveSourceRetryCount++;
                             sendRequestActiveSource();
                         } else {
-                            audioSystem().checkSupportAndSetSystemAudioMode(false);
+                            //audioSystem().checkSupportAndSetSystemAudioMode(false);
                             finish();
                         }
                     }
@@ -106,6 +117,7 @@ public class SystemAudioInitiationActionFromAvr extends HdmiCecFeatureAction {
                             mSendSetSystemAudioModeRetryCount++;
                             sendSetSystemAudioMode(on, dest);
                         } else {
+                            HdmiLogger.error("sendSetSystemAudioMode fails");
                             audioSystem().checkSupportAndSetSystemAudioMode(false);
                             finish();
                         }
@@ -132,6 +144,7 @@ public class SystemAudioInitiationActionFromAvr extends HdmiCecFeatureAction {
     private void queryTvSystemAudioModeSupport() {
         audioSystem().queryTvSystemAudioModeSupport(
                 supported -> {
+                    HdmiLogger.debug("queryTvSystemAudioModeSupport supported:" + supported);
                     if (supported) {
                         if (audioSystem().checkSupportAndSetSystemAudioMode(true)) {
                             sendSetSystemAudioMode(true, Constants.ADDR_BROADCAST);

@@ -519,6 +519,22 @@ final class Constants {
             "persist.sys.hdmi.property_sytem_audio_mode_audio_port";
 
     /**
+     * Property to save the local active port to switch to when system audio control is on.
+     * <P>Audio system relies on this port to determine whether it works as a soundbar or a simple
+     * source device. There could be 3 cases.
+     * case 1 CEC_SWITCH_HOME: The current active source is soundbar itsself.
+     * case 2 CEC_SWITCH_ARC: The current active source is not soundbar or its child.
+     * case 3 others: like CEC_SWITCH_HDMI1 for the child device connected to HDMI1 of soundbar.
+     *
+     * <p>Default is CEC_SWITCH_PORT_MAX.
+     */
+    static final String PROPERTY_ROUTE_ACTIVE_PORT =
+            "persist.sys.hdmi.property_route_active_port";
+
+    static final String TV_INPUT_ARC =
+            "com.droidlogic.tvinput/.services.ArcInputService/HW18";
+
+    /**
      * Property to strip local audio of amplifier and use local speaker
      * when TV does not support system audio mode.
      *

@@ -139,6 +139,9 @@ final class DeviceDiscoveryAction extends HdmiCecFeatureAction {
      */
     DeviceDiscoveryAction(HdmiCecLocalDevice source, DeviceDiscoveryCallback callback) {
         this(source, callback, 0);
+        if (source instanceof HdmiCecLocalDevicePlayback) {
+            mSimplified = false;
+        }
     }
 
     @Override

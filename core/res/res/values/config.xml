@@ -6061,6 +6061,7 @@
     <bool name="config_cecSuspendedByAutoDeviceOff">false</bool>
     <bool name="config_cec_hdmiFullVolume">true</bool>
     <bool name="config_cec_showPassthroughWarningAlways">false</bool>
+    <bool name="config_cec_sendMuteKey">true</bool>
     <integer name="config_cec_passthroughMode">0</integer>
 
     <!-- Whether app hibernation deletes OAT artifact files as part of global hibernation. -->

@@ -54,6 +54,9 @@ final class CecMessageBuffer {
             case Constants.MESSAGE_SET_STREAM_PATH:
                 bufferSetStreamPath(message);
                 return true;
+            case Constants.MESSAGE_REQUEST_SHORT_AUDIO_DESCRIPTOR:
+                bufferRequestShortAudioDesCriptor(message);
+                return true;
             // Add here if new message that needs to buffer
             default:
                 // Do not need to buffer messages other than above
@@ -108,6 +111,10 @@ final class CecMessageBuffer {
         if (!replaceMessageIfBuffered(message, Constants.MESSAGE_SET_STREAM_PATH)) {
             mBuffer.add(message);
         }
+    }
+
+    private void bufferRequestShortAudioDesCriptor(HdmiCecMessage message) {
+        mBuffer.add(message);
     }
 
     public List<HdmiCecMessage> getBuffer() {

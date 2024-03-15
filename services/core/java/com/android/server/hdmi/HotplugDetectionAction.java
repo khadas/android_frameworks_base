@@ -59,6 +59,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     private int mAvrStatusCount = 0;
 
     private final boolean mIsTvDevice = localDevice().mService.isTvDevice();
+    private final boolean mIsAudioSystem = localDevice().mService.isAudioSystemDevice();
 
     /**
      * Constructor
@@ -70,7 +71,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     }
 
     private int getPollingInterval() {
-        return mIsTvDevice ? POLLING_INTERVAL_MS_FOR_TV : POLLING_INTERVAL_MS_FOR_PLAYBACK;
+        return mIsTvDevice || mIsAudioSystem ? POLLING_INTERVAL_MS_FOR_TV : POLLING_INTERVAL_MS_FOR_PLAYBACK;
     }
 
     @Override
@@ -131,7 +132,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     }
 
     private void pollAllDevices() {
-        HdmiLogger.debug("Poll all devices.");
+        Slog.v(TAG, "Poll all devices.");
 
         pollDevices(new DevicePollingCallback() {
             @Override
@@ -143,7 +144,7 @@ final class HotplugDetectionAction extends HdmiCecFeatureAction {
     }
 
     private void pollAudioSystem() {
-        HdmiLogger.debug("Poll audio system.");
+        Slog.v(TAG, "Poll all devices.");
 
         pollDevices(new DevicePollingCallback() {
             @Override

@@ -18,9 +18,11 @@ package com.android.server.hdmi;
 
 import android.annotation.CallSuper;
 import android.hardware.hdmi.HdmiControlManager;
+import android.hardware.hdmi.HdmiDeviceInfo;
 import android.hardware.hdmi.HdmiPortInfo;
 import android.hardware.hdmi.IHdmiControlCallback;
 import android.sysprop.HdmiProperties;
+import android.os.SystemProperties;
 import android.util.Slog;
 
 import com.android.internal.annotations.GuardedBy;
@@ -59,7 +61,7 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     // This can help prevent duplicate switching and provide status information.
     @GuardedBy("mLock")
     @LocalActivePort
-    protected int mLocalActivePort = Constants.CEC_SWITCH_HOME;
+    protected int mLocalActivePort = Constants.CEC_SWITCH_PORT_MAX;
 
     // Whether the Routing Coutrol feature is enabled or not. False by default.
     @GuardedBy("mLock")
@@ -223,6 +225,9 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     @ServiceThreadOnly
     protected void setActiveSource(int physicalAddress, String caller) {
         assertRunOnServiceThread();
+        if (mService.isPlaybackDevice() && (mDeviceType == HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM)) {
+            return;
+        }
         // Invalidate the internal active source record.
         ActiveSource activeSource = ActiveSource.of(Constants.ADDR_INVALID, physicalAddress);
         setActiveSource(activeSource, caller);
@@ -445,6 +450,8 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
     @LocalActivePort
     protected int getLocalActivePort() {
         synchronized (mLock) {
+            mLocalActivePort = SystemProperties.getInt(Constants.PROPERTY_ROUTE_ACTIVE_PORT,
+                mLocalActivePort);
             return mLocalActivePort;
         }
     }
@@ -459,9 +466,13 @@ abstract class HdmiCecLocalDeviceSource extends HdmiCecLocalDevice {
      * @param activePort The portId of the new active port.
      */
     protected void setLocalActivePort(@LocalActivePort int activePort) {
+        HdmiLogger.debug("setLocalActivePort port:%d current:%d", activePort, mLocalActivePort);
         synchronized (mLock) {
             mLocalActivePort = activePort;
         }
+        mService.writeStringSystemProperty(
+                Constants.PROPERTY_ROUTE_ACTIVE_PORT,
+                activePort + "");
     }
 
     boolean isRoutingControlFeatureEnabled() {

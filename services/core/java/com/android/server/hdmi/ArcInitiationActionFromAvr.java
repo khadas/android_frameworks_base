@@ -28,12 +28,17 @@ public class ArcInitiationActionFromAvr extends HdmiCecFeatureAction {
     // the required maximum response time specified in CEC 9.2
     private static final int TIMEOUT_MS = 1000;
 
+    static final int MAX_RETRY_COUNT = 5;
+
+    private int mRetryCount = 0;
+
     ArcInitiationActionFromAvr(HdmiCecLocalDevice source) {
         super(source);
     }
 
     @Override
     boolean start() {
+        HdmiLogger.debug("ArcInitiationActionFromAvr start");
         audioSystem().setArcStatus(true);
         mState = STATE_WAITING_FOR_INITIATE_ARC_RESPONSE;
         addTimer(mState, TIMEOUT_MS);
@@ -49,7 +54,7 @@ public class ArcInitiationActionFromAvr extends HdmiCecFeatureAction {
         switch (cmd.getOpcode()) {
             case Constants.MESSAGE_FEATURE_ABORT:
                 if ((cmd.getParams()[0] & 0xFF) == Constants.MESSAGE_INITIATE_ARC) {
-                    audioSystem().setArcStatus(false);
+                    //audioSystem().setArcStatus(false);
                     finish();
                     return true;
                 } else {
@@ -84,15 +89,25 @@ public class ArcInitiationActionFromAvr extends HdmiCecFeatureAction {
         sendCommand(HdmiCecMessageBuilder.buildInitiateArc(getSourceAddress(), Constants.ADDR_TV),
                 result -> {
                     if (result != SendMessageResult.SUCCESS) {
-                        audioSystem().setArcStatus(false);
-                        finish();
+                        if (mRetryCount < MAX_RETRY_COUNT) {
+                            mRetryCount++;
+                            sendInitiateArc();
+                        } else {
+                            HdmiLogger.error("sendInitiateArc finally fails.");
+                            finish();
+                        }
                     }
                 });
     }
 
     private void handleInitiateArcTimeout() {
         // Keep ARC status as what it is when TV does not respond to ARC init
-        HdmiLogger.debug("handleInitiateArcTimeout");
-        finish();
+        if (mRetryCount < MAX_RETRY_COUNT) {
+            mRetryCount++;
+            sendInitiateArc();
+        } else {
+            HdmiLogger.error("initiateArc finally no response");
+            finish();
+        }
     }
 }

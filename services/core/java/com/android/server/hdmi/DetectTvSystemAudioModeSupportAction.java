@@ -15,6 +15,7 @@
  */
 package com.android.server.hdmi;
 
+import android.hardware.hdmi.HdmiPortInfo;
 import android.hardware.tv.cec.V1_0.SendMessageResult;
 
 import com.android.server.hdmi.HdmiCecLocalDeviceAudioSystem.TvSystemAudioModeSupportedCallback;
@@ -43,6 +44,12 @@ public class DetectTvSystemAudioModeSupportAction extends HdmiCecFeatureAction {
         mState = STATE_WAITING_FOR_FEATURE_ABORT;
         addTimer(mState, HdmiConfig.TIMEOUT_MS);
         sendSetSystemAudioMode();
+        // Don't spend much time on whether tv supports audio contro, but just presuppose it does.
+        boolean connected = source().mService.isConnected(0);
+        HdmiLogger.debug("DetectTvSystemAudioModeSupportAction start with connection:" + connected);
+        if (connected) {
+            finishAction(true);
+        }
         return true;
     }
 
@@ -101,7 +108,27 @@ public class DetectTvSystemAudioModeSupportAction extends HdmiCecFeatureAction {
                         true),
                 result -> {
                     if (result != SendMessageResult.SUCCESS) {
-                        finishAction(false);
+                        if (mState == STATE_NONE) {
+                            return;
+                        }
+
+                        if (result == SendMessageResult.NACK) {
+                            boolean connected = source().mService.isConnected(0);
+                            HdmiLogger.error("sendSetSystemAudioMode NACK with connection:" + connected);
+                            if (connected) {
+                                finishAction(true);
+                                return;
+                            }
+
+                            finishAction(false);
+                            return;
+                        }
+                        mSendSetSystemAudioModeRetryCount++;
+                        if (mSendSetSystemAudioModeRetryCount < MAX_RETRY_COUNT) {
+                            mState = STATE_WAITING_FOR_FEATURE_ABORT;
+                            addTimer(mState, HdmiConfig.TIMEOUT_MS);
+                            sendSetSystemAudioMode();
+                        }
                     }
                 });
     }

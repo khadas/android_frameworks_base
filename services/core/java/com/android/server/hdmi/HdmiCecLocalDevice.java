@@ -245,6 +245,9 @@ abstract class HdmiCecLocalDevice extends HdmiLocalDevice {
     /** Set the preferred logical address to system properties. */
     protected abstract void setPreferredAddress(int addr);
 
+    void bootComplete() {
+    }
+
     /**
      * Returns true if the TV input associated with the CEC device is ready to accept further
      * processing such as input switching.
@@ -1021,6 +1024,7 @@ abstract class HdmiCecLocalDevice extends HdmiLocalDevice {
         return mDeviceType;
     }
 
+    @GuardedBy("mLock")
     HdmiDeviceInfo getDeviceInfo() {
         synchronized (mLock) {
             return mDeviceInfo;

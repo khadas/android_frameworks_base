@@ -274,6 +274,11 @@ public class HdmiCecNetwork {
         // port, it may use a false physical address in <Report Physical Address> first.
         checkAndUpdateActiveSource(info);
         mHdmiControlService.checkAndUpdateAbsoluteVolumeBehavior();
+        // For soundbar device, don't add the device outside soundbar to tvinput.
+        if (mHdmiControlService.isAudioSystemDevice()
+            && !isParentPath(getCachedPhysicalAddress(), info.getPhysicalAddress())) {
+            return;
+        }
         if (info.getPhysicalAddress() == HdmiDeviceInfo.PATH_INVALID) {
             // Don't notify listeners of devices that haven't reported their physical address yet
             return;

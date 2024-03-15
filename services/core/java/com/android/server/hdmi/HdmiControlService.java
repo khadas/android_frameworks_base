@@ -260,6 +260,12 @@ public class HdmiControlService extends SystemService {
         mUseAnroidVolumeUi = mResources.getBoolean(R.bool.config_cecUseAndroidVolumeBar);
         mBootOneTouchPlay = mResources.getBoolean(R.bool.config_cecBootOneTouchPlay);
         mSuspendedByAutoDeviceOff = mResources.getBoolean(R.bool.config_cecSuspendedByAutoDeviceOff);
+
+        boolean soundbarModeSettings = readBooleanSetting(HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE, false);
+        if (soundbarModeSettings != isDsmEnabled()) {
+            writeBooleanSetting(HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE, isDsmEnabled());
+            HdmiLogger.info("initialize global settings soundbar_mode:" + isDsmEnabled());
+        }
     }
 
     void runOnServiceThreadDelayed(Runnable runnable, long delay) {
@@ -393,6 +399,50 @@ public class HdmiControlService extends SystemService {
             } catch (InterruptedException e) {
                 HdmiLogger.error("shut down lock notify fail " + e);
             }
+        }
+    }
+
+    /***** soundbar feature for device without livetv **************************************/
+    private static final String ACTION_UPDATE_AUDIO_PATCH = "android.hdmi.update_audio_patch";
+    private static final String PERMISSION_UPDATE_AUDIO_PATCH = "android.permission.update_audio_patch";
+    private static final String KEY_ARC_IN_PATCH_STATE = "arc_in_patch_state";
+    private static final String KEY_ROUTING_PORT = "routing_port";
+
+    private static final int STATE_CREATE_ARC_IN_PATCH = 1;
+    private static final int STATE_RELEASE_ARC_IN_PATCH = 0;
+
+    private Intent mCachedAudioPatchBroadcast;
+    private boolean mBootComplete;
+
+    void notifyAudioPatchAndRoutingPort(int portId) {
+        if (portId == Constants.CEC_SWITCH_ARC
+            && !isPowerOnOrTransient()) {
+            HdmiLogger.error("notifyAudioPatchAndRoutingPort arc port but it's standby now");
+            return;
+        }
+    
+        int patchState = STATE_RELEASE_ARC_IN_PATCH;
+        if (portId == Constants.CEC_SWITCH_ARC) {
+            patchState = STATE_CREATE_ARC_IN_PATCH;
+        }
+        HdmiLogger.info("notifyAudioPatchAndRoutingPort port:" + portId + " arc in patch:" + patchState);
+    
+        Intent intent = new Intent(ACTION_UPDATE_AUDIO_PATCH);
+        intent.putExtra(KEY_ARC_IN_PATCH_STATE, patchState);
+        intent.putExtra(KEY_ROUTING_PORT, portId);
+        if (isBootCompleted()) {
+            getContext().sendBroadcastAsUser(intent, UserHandle.ALL, PERMISSION_UPDATE_AUDIO_PATCH);
+        } else {
+            HdmiLogger.info("system has not finished boot process yet.");
+            mCachedAudioPatchBroadcast = intent;
+        }
+    }
+
+    void bootComplete() {
+        if (mCachedAudioPatchBroadcast != null) {
+            HdmiLogger.info("bootComplete fire cached broadcast.");
+            getContext().sendBroadcastAsUser(mCachedAudioPatchBroadcast, UserHandle.ALL, PERMISSION_UPDATE_AUDIO_PATCH);
+            mCachedAudioPatchBroadcast = null;
         }
     }
 
@@ -909,7 +959,6 @@ public class HdmiControlService extends SystemService {
             mIoThread.start();
             mIoLooper = mIoThread.getLooper();
         }
-
         if (mPowerStatusController == null) {
             mPowerStatusController = new HdmiCecPowerStatusController(this);
         }
@@ -1143,6 +1192,7 @@ public class HdmiControlService extends SystemService {
                         boolean soundbarModeSetting = mHdmiCecConfig.getIntValue(
                                 HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE)
                                 == SOUNDBAR_MODE_ENABLED;
+                        HdmiLogger.debug("soundbar mode is changed to " + soundbarModeSetting);
                         setSoundbarMode(soundbarModeSetting && mSoundbarModeFeatureFlagEnabled
                                 ? SOUNDBAR_MODE_ENABLED : SOUNDBAR_MODE_DISABLED);
                     }
@@ -1175,16 +1225,23 @@ public class HdmiControlService extends SystemService {
     }
 
     private void bootCompleted() {
+        Slog.i(TAG, "bootCompleted");
+        mBootComplete = true;
         // on boot, if device is interactive, set HDMI CEC state as powered on as well
         if (mPowerManager.isInteractive() && isPowerStandbyOrTransient()) {
             mPowerStatusController.setPowerStatus(HdmiControlManager.POWER_STATUS_ON);
             // Start all actions that were queued because the device was in standby
             if (mAddressAllocated) {
                 for (HdmiCecLocalDevice localDevice : getAllCecLocalDevices()) {
+                    localDevice.bootComplete();
                     localDevice.startQueuedActions();
                 }
             }
         }
+    }
+
+    boolean isBootCompleted() {
+        return mBootComplete;
     }
 
     /**
@@ -1340,6 +1397,7 @@ public class HdmiControlService extends SystemService {
                         new IHdmiControlCallback.Stub() {
                             @Override
                             public void onComplete(int result) {
+                                HdmiControlService.this.clearCecLocalDevices();
                                 mAddressAllocated = false;
                                 initializeCecLocalDevices(INITIATED_BY_SOUNDBAR_MODE);
                             }
@@ -1476,6 +1534,11 @@ public class HdmiControlService extends SystemService {
                         }
                     }
                     break;
+                case HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE:
+                    int soundbarMode = enabled ? SOUNDBAR_MODE_ENABLED : SOUNDBAR_MODE_DISABLED;
+                    HdmiLogger.debug("soundbar mode settings changes to " + soundbarMode);
+                    mHdmiCecConfig.setIntValue(HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE, soundbarMode);
+                    break;
             }
         }
     }
@@ -1553,6 +1616,9 @@ public class HdmiControlService extends SystemService {
         if (isDsmEnabled() && !allLocalDeviceTypes.contains(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM)
                 && isArcSupported() && mSoundbarModeFeatureFlagEnabled) {
             allLocalDeviceTypes.add(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM);
+        } else if (!isDsmEnabled()
+                && allLocalDeviceTypes.contains(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM)) {
+            allLocalDeviceTypes.remove(new Integer(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM));
         }
         return allLocalDeviceTypes;
     }
@@ -3168,6 +3234,19 @@ public class HdmiControlService extends SystemService {
             if (!DumpUtils.checkDumpPermission(getContext(), TAG, writer)) return;
             final IndentingPrintWriter pw = new IndentingPrintWriter(writer, "  ");
 
+            String localDeviceTypes = "";
+            for (Integer deviceType : mCecLocalDevices) {
+                localDeviceTypes += deviceType + " ";
+            }
+            pw.println("mCecLocalDevices: " + localDeviceTypes);
+
+            pw.println("mSoundbarModeFeatureFlagEnabled: " + mSoundbarModeFeatureFlagEnabled);
+            if (mSoundbarModeFeatureFlagEnabled) {
+                for (Integer deviceType : getCecLocalDeviceTypes()) {
+                    pw.println("device type from getCecLocalDeviceTypes: " + deviceType);
+                }
+            }
+
             synchronized (mLock) {
                 pw.println("mProhibitMode: " + mProhibitMode);
             }
@@ -3895,7 +3974,8 @@ public class HdmiControlService extends SystemService {
     }
 
     boolean isAudioSystemDevice() {
-        return mCecLocalDevices.contains(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM);
+        return getCecLocalDeviceTypes().contains(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM)
+            || (mSoundbarModeFeatureFlagEnabled && isDsmEnabled());
     }
 
     boolean isPlaybackDevice() {
@@ -3955,7 +4035,7 @@ public class HdmiControlService extends SystemService {
         }
     }
 
-    private boolean isDsmEnabled() {
+    boolean isDsmEnabled() {
         return mHdmiCecConfig.getIntValue(HdmiControlManager.CEC_SETTING_NAME_SOUNDBAR_MODE)
                 == SOUNDBAR_MODE_ENABLED;
     }
@@ -4001,6 +4081,10 @@ public class HdmiControlService extends SystemService {
     @ServiceThreadOnly
     void wakeUp() {
         assertRunOnServiceThread();
+        if (isPowerOnOrTransient()) {
+            return;
+        }
+        HdmiLogger.info("Hdmi cec wake up");
         mWakeUpMessageReceived = true;
         mPowerManager.wakeUp(SystemClock.uptimeMillis(), PowerManager.WAKE_REASON_HDMI,
                 "android.server.hdmi:WAKE");
@@ -4014,6 +4098,10 @@ public class HdmiControlService extends SystemService {
         if (!canGoToStandby()) {
             return;
         }
+        if (isPowerStandbyOrTransient()) {
+            return;
+        }
+        HdmiLogger.info("Hdmi cec standby");
         mStandbyMessageReceived = true;
         mPowerManager.goToSleep(SystemClock.uptimeMillis(), PowerManager.GO_TO_SLEEP_REASON_HDMI, 0);
         // PowerManger will send the broadcast Intent.ACTION_SCREEN_OFF and after this gets
@@ -4208,11 +4296,11 @@ public class HdmiControlService extends SystemService {
         StandbyCompletedCallback callback = new StandbyCompletedCallback() {
             @Override
             public void onStandbyCompleted() {
-                if (localDevicesCount < ++countStandbyCompletedDevices[0]) {
+                if (localDevicesCount > ++countStandbyCompletedDevices[0]) {
                     return;
                 }
                 HdmiLogger.info("onStandby finally completed");
-                if (isAudioSystemDevice() || !isPowerStandby()) {
+                if (!isPowerStandby()) {
                     return;
                 }
                 mCecController.enableSystemCecControl(false);
@@ -4797,7 +4885,7 @@ public class HdmiControlService extends SystemService {
     private List<AudioDeviceAttributes> getAvbCapableAudioOutputDevices() {
         if (tv() != null) {
             return TV_AVB_AUDIO_OUTPUT_DEVICES;
-        } else if (playback() != null) {
+        } else if (playback() != null && audioSystem() == null) {
             return PLAYBACK_AVB_AUDIO_OUTPUT_DEVICES;
         } else {
             return Collections.emptyList();
@@ -4850,7 +4938,7 @@ public class HdmiControlService extends SystemService {
                 switchToFullVolumeBehavior();
                 return;
             }
-        } else if (isPlaybackDevice() && playback() != null) {
+        } else if (isPlaybackDevice() && playback() != null && !isAudioSystemDevice()) {
             localCecDevice = playback();
         } else {
             // Either this device type doesn't support AVB, or it hasn't fully initialized yet
@@ -4933,7 +5021,7 @@ public class HdmiControlService extends SystemService {
     private void switchToFullVolumeBehavior() {
         Slog.d(TAG, "Switching to full volume behavior");
 
-        if (playback() != null) {
+        if (playback() != null && audioSystem() == null) {
             playback().removeAvbAudioStatusAction();
         } else if (tv() != null) {
             tv().removeAvbAudioStatusAction();

@@ -4856,6 +4856,7 @@
   <java-symbol type="bool" name="config_cecSuspendedByAutoDeviceOff" />
   <java-symbol type="bool" name="config_cec_hdmiFullVolume" />
   <java-symbol type="bool" name="config_cec_showPassthroughWarningAlways" />
+  <java-symbol type="bool" name="config_cec_sendMuteKey" />
   <java-symbol type="integer" name="config_cec_passthroughMode" />
 
   <!-- Ids for RemoteViews -->

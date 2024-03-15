@@ -85,6 +85,11 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
     protected void onAddressAllocated(int logicalAddress, int reason) {
         assertRunOnServiceThread();
         super.onAddressAllocated(logicalAddress, reason);
+        if (mService.QUIESCENT && (reason == mService.INITIATED_BY_BOOT_UP)) {
+            HdmiLogger.warning("No more initiate for playback in quiescent boot.");
+            return;
+        }
+
         if (reason == mService.INITIATED_BY_ENABLE_CEC) {
             mService.setAndBroadcastActiveSource(mService.getPhysicalAddress(),
                     getDeviceInfo().getDeviceType(), Constants.ADDR_BROADCAST,
@@ -136,6 +141,10 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
     @ServiceThreadOnly
     private void launchDeviceDiscovery() {
         assertRunOnServiceThread();
+        if (mService.isAudioSystemDevice()) {
+            // There has been one started by HdmiCecLocalDeviceAudioSystem
+            return;
+        }
         clearDeviceInfoList();
         if (hasAction(DeviceDiscoveryAction.class)) {
             Slog.i(TAG, "Device Discovery Action is in progress. Restarting.");
@@ -222,7 +231,7 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
 
         if (connected) {
             mDelayedStandbyHandler.removeCallbacksAndMessages(null);
-        } else {
+        } else if (!connected && !mService.isAudioSystemDevice()) {
             // We'll not invalidate the active source on the hotplug event to pass CETC 11.2.2-2 ~ 3
             getWakeLock().release();
             mService.getHdmiCecNetwork().removeDevicesConnectedToPort(portId);
@@ -264,9 +273,11 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
             return;
         }
         boolean wasActiveSource = isActiveSource();
-        // Invalidate the internal active source record when going to standby
-        mService.setActiveSource(Constants.ADDR_INVALID, Constants.INVALID_PHYSICAL_ADDRESS,
-                "HdmiCecLocalDevicePlayback#onStandby()");
+        if (!mService.isAudioSystemDevice()) {
+            // Invalidate the internal active source record when going to standby
+            mService.setActiveSource(Constants.ADDR_INVALID, Constants.INVALID_PHYSICAL_ADDRESS,
+                    "HdmiCecLocalDevicePlayback#onStandby()");
+        }
         boolean sendStandbyNoneActive = mService.isSendStandbyNoneActive();
         HdmiLogger.debug("onStandby sendStandbyNoneActive:%b, wasActiveSource:%b",
                 sendStandbyNoneActive, wasActiveSource);
@@ -349,6 +360,15 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
         if (initiatedBy != HdmiControlService.INITIATED_BY_SCREEN_ON) {
             return;
         }
+        if (mService.isAudioSystemDevice()) {
+            // Constrain one touch play for an soundbar in wakeup case.
+            int port = SystemProperties.getInt(Constants.PROPERTY_ROUTE_ACTIVE_PORT,
+                            mLocalActivePort);
+            HdmiLogger.debug("Try to do one touch play with soundbar active port:" + port);
+            if (port != Constants.CEC_SWITCH_HOME) {
+                return;
+            }
+        }
         @HdmiControlManager.PowerControlMode
         String powerControlMode = mService.getHdmiCecConfig().getStringValue(
                 HdmiControlManager.CEC_SETTING_NAME_POWER_CONTROL_MODE);
@@ -412,6 +432,10 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
     protected void onActiveSourceLost() {
         assertRunOnServiceThread();
         mService.pauseActiveMediaSessions();
+        if (mService.isAudioSystemDevice()) {
+            // Don't do this for soundbar product.
+            return;
+        }
         String mode = mService.getHdmiCecConfig().getStringValue(
                 HdmiControlManager.CEC_SETTING_NAME_POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST);
         HdmiLogger.debug("onActiveSourceLost with mode:" + mode);
