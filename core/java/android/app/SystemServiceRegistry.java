@@ -212,7 +212,8 @@ import com.android.internal.util.Preconditions;
 
 import java.util.Map;
 import java.util.Objects;
-
+import android.app.IKhadasApiManager;
+import android.app.KhadasApiManager;
 /**
  * Manages all of the system services that can be returned by {@link Context#getSystemService}.
  * Used by {@link ContextImpl}.
@@ -581,6 +582,15 @@ public final class SystemServiceRegistry {
                 IThermalService thermalService = IThermalService.Stub.asInterface(thermalBinder);
                 return new PowerManager(ctx.getOuterContext(), powerService, thermalService,
                         ctx.mMainThread.getHandler());
+            }});
+
+        registerService(Context.KHADAS_API_SERVICE, KhadasApiManager.class,
+                new CachedServiceFetcher<KhadasApiManager>() {
+            @Override
+            public KhadasApiManager createService(ContextImpl ctx) throws ServiceNotFoundException {
+                IBinder b = ServiceManager.getServiceOrThrow(Context.KHADAS_API_SERVICE);
+                IKhadasApiManager service = IKhadasApiManager.Stub.asInterface(b);
+                return new KhadasApiManager(ctx.getOuterContext(), service);
             }});
 
         registerService(Context.RECOVERY_SERVICE, RecoverySystem.class,
