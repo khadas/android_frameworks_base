@@ -41,6 +41,11 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Objects;
 
+/* -------rk-code----- */
+import android.os.SystemProperties;
+import android.os.UserManager;
+/* ------------------- */
+
 /**
  * Describes how a logical display is configured.
  * <p>
@@ -980,6 +985,12 @@ final class LogicalDisplay {
      * Gets the name of display group to which the display is assigned.
      */
     public String getDisplayGroupNameLocked() {
+        /* -------rk-code----- */
+        // AAOS MUMD: assign DisplayGroupName to physical display, so every physical has own displaygroup
+        if(mDisplayGroupName == null && mHasContent && UserManager.isHeadlessSystemUserMode() && "car".equals(SystemProperties.get("ro.target.product")))
+            mDisplayGroupName =  Layout.DEFAULT_DISPLAY_GROUP_NAME_PASSENGER+mDisplayId;
+        /* ------------------- */
+
         return mDisplayGroupName;
     }
 
