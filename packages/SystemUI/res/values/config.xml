@@ -114,7 +114,7 @@
 
     <!-- Tiles native to System UI. Order should match "quick_settings_tiles_default" -->
     <string name="quick_settings_tiles_stock" translatable="false">
-        wifi,cell,battery,dnd,flashlight,rotation,bt,airplane,location,hotspot,inversion,saver,dark,work,cast,night,screenrecord,reverse
+        wifi,cell,dnd,flashlight,rotation,bt,airplane,location,hotspot,inversion,saver,dark,work,cast,night,screenrecord,reverse
     </string>
 
     <!-- The tiles to display in QuickSettings -->
@@ -537,6 +537,7 @@
     <string-array name="config_statusBarIconBlackList" translatable="false">
         <item>@*android:string/status_bar_rotate</item>
         <item>@*android:string/status_bar_headset</item>
+        <item>@*android:string/status_bar_battery</item>
     </string-array>
 
     <!-- A path similar to frameworks/base/core/res/res/values/config.xml
