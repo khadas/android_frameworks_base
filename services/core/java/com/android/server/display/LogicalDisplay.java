@@ -987,8 +987,12 @@ final class LogicalDisplay {
     public String getDisplayGroupNameLocked() {
         /* -------rk-code----- */
         // AAOS MUMD: assign DisplayGroupName to physical display, so every physical has own displaygroup
-        if(mDisplayGroupName == null && mHasContent && UserManager.isHeadlessSystemUserMode() && "car".equals(SystemProperties.get("ro.target.product")))
-            mDisplayGroupName =  Layout.DEFAULT_DISPLAY_GROUP_NAME_PASSENGER+mDisplayId;
+        if(mDisplayGroupName == null && "true".equals(SystemProperties.get("ro.fw.mu.headless_system_user")) && "car".equals(SystemProperties.get("ro.target.product"))){
+            DisplayDeviceInfo deviceInfo = mPrimaryDisplayDevice != null ? mPrimaryDisplayDevice.getDisplayDeviceInfoLocked():null;
+            if(deviceInfo != null && (deviceInfo.type == Display.TYPE_EXTERNAL || deviceInfo.type == Display.TYPE_INTERNAL)){
+                mDisplayGroupName =  Layout.DEFAULT_DISPLAY_GROUP_NAME_PASSENGER+mDisplayId;
+            }
+        }
         /* ------------------- */
 
         return mDisplayGroupName;
