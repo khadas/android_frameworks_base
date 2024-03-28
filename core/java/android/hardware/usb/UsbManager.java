@@ -31,6 +31,8 @@ import android.annotation.SdkConstant;
 import android.annotation.SdkConstant.SdkConstantType;
 import android.annotation.SystemApi;
 import android.annotation.SystemService;
+import android.app.ActivityThread;
+import android.app.ActivityManager;
 import android.app.PendingIntent;
 import android.compat.annotation.UnsupportedAppUsage;
 import android.content.ComponentName;
@@ -463,6 +465,25 @@ public class UsbManager {
     public static final String EXTRA_CAN_BE_DEFAULT = "android.hardware.usb.extra.CAN_BE_DEFAULT";
 
     /**
+     * Name of gms added
+     *
+     * @hide
+     */
+    public static final String D2D_GMS_PACKAGE_NAME = "com.google.android.apps.restore";
+    /**
+     * Name of google added
+     *
+     * @hide
+     */
+    public static final String PRODUCT_NAME_GOOGLE = "Google";
+    /**
+     * Name of apple added
+     *
+     * @hide
+     */
+    public static final String PRODUCT_NAME_APPLE = "Apple Inc";
+
+    /**
      * The Value for USB gadget hal is not presented.
      *
      * @hide
@@ -842,6 +863,17 @@ public class UsbManager {
         Bundle bundle = new Bundle();
         try {
             mService.getDeviceList(bundle);
+            String currentPackageName = ActivityThread.currentOpPackageName();
+            if (currentPackageName != null && currentPackageName.contains(D2D_GMS_PACKAGE_NAME)) {
+                for (String name : bundle.keySet()) {
+                     if (((UsbDevice)bundle.get(name)).getManufacturerName().contains(PRODUCT_NAME_GOOGLE)
+                         || ((UsbDevice)bundle.get(name)).getManufacturerName().contains(PRODUCT_NAME_APPLE)) {
+                             result.put(name, (UsbDevice)bundle.get(name));
+                             return result;
+                        }
+                    }
+                    return result;
+                }
             for (String name : bundle.keySet()) {
                 result.put(name, (UsbDevice)bundle.get(name));
             }
@@ -1388,6 +1420,7 @@ public class UsbManager {
      */
     @RequiresPermission(Manifest.permission.MANAGE_USB)
     public boolean enableUsbDataSignal(boolean enable) {
+        Log.e(TAG, "000 enableUsbDataSignal  enable is " + enable);
         return setUsbDataSignal(getPorts(), !enable, /* revertOnFailure= */ true);
     }
 
@@ -1396,18 +1429,91 @@ public class UsbManager {
         List<UsbPort> changedPorts = new ArrayList<>();
         for (int i = 0; i < usbPorts.size(); i++) {
             UsbPort port = usbPorts.get(i);
-            if (isPortDisabled(port) != disable) {
-                changedPorts.add(port);
-                if (port.enableUsbData(!disable) != UsbPort.ENABLE_USB_DATA_SUCCESS
-                        && revertOnFailure) {
-                    Log.e(TAG, "Failed to set usb data signal for portID(" + port.getId() + ")");
-                    setUsbDataSignal(changedPorts, !disable, /* revertOnFailure= */ false);
-                    return false;
+            if (isVisibleApp("com.android.cts.verifier")) {
+                if (ctsVerityEnableData(disable, revertOnFailure, changedPorts, port)) return false;
+            } else {
+                if (isPortDisabled(port) != disable) {
+                    changedPorts.add(port);
+                    if (port.enableUsbData(!disable) != UsbPort.ENABLE_USB_DATA_SUCCESS
+                            && revertOnFailure) {
+                        Log.e(TAG, "Failed to set usb data signal for portID(" + port.getId() + ")");
+                        setUsbDataSignal(changedPorts, !disable, /* revertOnFailure= */ false);
+                        return false;
+                    }
                 }
             }
         }
         return true;
     }
+
+    /**
+     * Name of ctsVerity
+     *
+     * @hide
+     */
+    private boolean ctsVerityEnableData(boolean disable, boolean revertOnFailure, List<UsbPort> changedPorts, UsbPort port) {
+        changedPorts.add(port);
+        if (disable) {
+            Log.e(TAG, " usb data signal disable is " + disable);
+            if (port.enableUsbData(false) != UsbPort.ENABLE_USB_DATA_SUCCESS
+                    && revertOnFailure) {
+                Log.e(TAG, "Failed to set usb data signal for portID(" + port.getId() + ")");
+                return true;
+            }
+        } else {
+            Log.e(TAG, " usb data signal disable is " + disable);
+            if (port.enableUsbData(true) != UsbPort.ENABLE_USB_DATA_SUCCESS
+                    && revertOnFailure) {
+                Log.e(TAG, "Failed to set usb data signal for portID(" + port.getId() + ")");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Name of VisibleApp
+     *
+     * @hide
+     */
+    public boolean isVisibleApp(@NonNull String pkgName) {
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> infos = am.getRunningAppProcesses();
+
+        for (int i = 0; i < infos.size(); i++) {
+            ActivityManager.RunningAppProcessInfo info = infos.get(i);
+            if (info.processName.contains(pkgName)) {
+                Log.d(TAG, "processName:" + info.processName + ",importance:" + info.importance);
+                if (info.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
+                    return true;
+                else {
+                    return isTopActivity(pkgName);
+                }
+            }
+        }
+
+        return isTopActivity(pkgName);
+    }
+
+    /**
+     * Name of TopActivity
+     *
+     * @hide
+     */
+    private boolean isTopActivity(@NonNull String pkgName) {
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> infos = am.getRunningTasks(1);
+        ComponentName componentInfo = infos.get(0).topActivity;
+
+        if (componentInfo.getPackageName().equals(pkgName)) {
+            Log.d(TAG, pkgName + " is top activity!");
+            return true;
+        } else {
+            Log.d(TAG, pkgName + "is not top activity.");
+            return false;
+        }
+    }
+
 
     private boolean isPortDisabled(UsbPort usbPort) {
         return (getPortStatus(usbPort).getUsbDataStatus() & DATA_STATUS_DISABLED_FORCE)

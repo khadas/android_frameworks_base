@@ -73,6 +73,7 @@ import android.os.Parcelable;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.os.SystemProperties;
 import android.service.ServiceProtoEnums;
 import android.service.usb.UsbPortInfoProto;
 import android.service.usb.UsbPortManagerProto;
@@ -1007,7 +1008,32 @@ public class UsbPortManager implements IBinder.DeathRecipient {
         // Process the updates.
         // Once finished, the list of ports will only contain ports in DISPOSITION_READY.
         for (int i = mPorts.size(); i-- > 0; ) {
-            final PortInfo portInfo = mPorts.valueAt(i);
+            PortInfo portInfo = mPorts.valueAt(i);
+            String isisconnect = SystemProperties.get("vendor.media.usb.port.connect", "false");
+            String isHostConnect = SystemProperties.get("vendor.media.usb.port.host.connect", "false");
+
+            logAndPrint(Log.INFO, pw, "aml USB portmanager sys.usb.connect pro is " + isisconnect);
+            logAndPrint(Log.INFO, pw, "aml USB portmanager host.connect pro is " + isHostConnect);
+
+            if (isisconnect.equals("true")) {
+                portInfo.setStatus(2, true,
+                        2, false,
+                        2, false,
+                        1);
+            }
+            if (isHostConnect.equals("true")) {
+                int supportedRoleCombinations = UsbPort.combineRolesAsBit(
+                        1, 1);
+                supportedRoleCombinations |=
+                        COMBO_SOURCE_HOST | COMBO_SOURCE_DEVICE
+                                | COMBO_SINK_HOST | COMBO_SINK_DEVICE;
+                portInfo.setStatus(2, true,
+                        1, true,
+                        1, true,
+                        supportedRoleCombinations,0,1,1,false,0);
+            }
+            handlePortChangedLocked(portInfo, pw);
+            portInfo.mDisposition = PortInfo.DISPOSITION_READY;
             switch (portInfo.mDisposition) {
                 case PortInfo.DISPOSITION_ADDED:
                     handlePortAddedLocked(portInfo, pw);
