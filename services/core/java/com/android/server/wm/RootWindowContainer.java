@@ -2599,10 +2599,14 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
         // Referencing the methods of resumeHomeActivity and startHomeOnEmptyDisplays,
         // use mWmService.getUserAssignedToDisplay instead of mCurrentUser
         // to launch secondary screen applications.
-        if ("car".equals(SystemProperties.get("ro.target.product"))) {
+        if ("car".equals(SystemProperties.get("ro.target.product")) && "true".equals(SystemProperties.get("ro.fw.mu.headless_system_user"))) {
             int userId = mWmService.getUserAssignedToDisplay(displayContent.getDisplayId());
-            Slog.w(TAG, "startSystemDecorations in display(" + displayContent.getDisplayId() + ") with userId(" + userId + ") when onDisplayAdded");
-            startHomeOnDisplay(userId, "displayAdded", displayContent.getDisplayId());
+            if(userId != mCurrentUser && userId != UserHandle.USER_NULL && userId != UserHandle.USER_SYSTEM){
+                Slog.w(TAG, "startSystemDecorations in display(" + displayContent.getDisplayId() + ") with userId(" + userId + ") when onDisplayAdded");
+                startHomeOnDisplay(userId, "displayAdded", displayContent.getDisplayId());
+            }else{
+                Slog.w(TAG, "AAOS MUMD, skip startHomeOnDisplay in onDisplayAdded() for userId="+userId+" display="+displayContent);
+            }
         } else {
             startHomeOnDisplay(mCurrentUser, "displayAdded", displayContent.getDisplayId());
         }
