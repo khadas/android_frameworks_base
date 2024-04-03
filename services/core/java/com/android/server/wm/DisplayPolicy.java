@@ -153,6 +153,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
+import android.graphics.Bitmap;
 
 /**
  * The policy that provides the basic behaviors and states of a display to show UI.
@@ -363,6 +364,8 @@ public class DisplayPolicy {
 
     //----rk-code----
     private ImageView imageView;
+    private Bitmap mDreamBitmap;
+    private boolean mRkebook;
     //---------------
 
     /**
@@ -375,6 +378,12 @@ public class DisplayPolicy {
     // -------- PolicyHandler --------
     private static final int MSG_ENABLE_POINTER_LOCATION = 4;
     private static final int MSG_DISABLE_POINTER_LOCATION = 5;
+
+    //----rk-code----
+    private static final int MSG_SHOW_SCREEN_DREAM = 6;
+    private static final int MSG_HIDE_SCREEN_DREAM = 7;
+    private static final int MSG_SHOW_SCREEN_POWER_OFF =8;
+    //---------------
 
     private final GestureNavigationSettingsObserver mGestureNavigationSettingsObserver;
 
@@ -398,6 +407,17 @@ public class DisplayPolicy {
                 case MSG_DISABLE_POINTER_LOCATION:
                     disablePointerLocation();
                     break;
+		//----rk-code----
+                case MSG_SHOW_SCREEN_DREAM:
+                    handleMessageShowDream();
+                    break;
+                case MSG_HIDE_SCREEN_DREAM:
+                    handleMessageHideDream();
+                    break;
+                case MSG_SHOW_SCREEN_POWER_OFF:
+                    handleMessageShowPoweroff();
+                    break;
+		//---------------
             }
         }
     }
@@ -692,6 +712,13 @@ public class DisplayPolicy {
         mForceShowNavBarSettingsObserver.setOnChangeRunnable(this::updateForceShowNavBarSettings);
         mForceShowNavigationBarEnabled = mForceShowNavBarSettingsObserver.isEnabled();
         mHandler.post(mForceShowNavBarSettingsObserver::register);
+
+	//----rk-code----
+	mRkebook = SystemProperties.getBoolean("persist.sys.rk-ebook", false);
+	if(mRkebook){
+	  mDreamBitmap=BitmapFactory.decodeFile("vendor/media/standby.png");
+	}
+	//---------------
     }
 
     private void updateForceShowNavBarSettings() {
@@ -2871,14 +2898,17 @@ public class DisplayPolicy {
     }
 
     public void showScreenDream() {
-        if (imageView != null) {
-            Slog.d(TAG, "return show screen dream.");
+	Slog.d("dzy","showScreenDream");
+	if (imageView != null) {
+            Slog.d(TAG, "return show screen dream...");
             return;
         }
+        mHandler.sendEmptyMessage(MSG_SHOW_SCREEN_DREAM);
+    }
+
+    private void handleMessageShowDream(){
         imageView = new ImageView(mContext);
-	    imageView.setImageBitmap(BitmapFactory.decodeFile("vendor/media/standby.png"));
-        //imageView.setImageResource(R.drawable.default_lock_dream);
-        //imageView.setBackgroundColor(Color.TRANSPARENT);
+        imageView.setImageBitmap(mDreamBitmap);
         final WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.type = WindowManager.LayoutParams.TYPE_SECURE_SYSTEM_OVERLAY;
         lp.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
@@ -2897,22 +2927,31 @@ public class DisplayPolicy {
         //lp.inputFeatures |= WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL;
         final WindowManager wm = mContext.getSystemService(WindowManager.class);
         wm.addView(imageView, lp);
-        Slog.d(TAG, "show screen dream");
+        Slog.d(TAG, "show screen dream...");
     }
 
     public void hideScreenDream() {
-        if (imageView == null) {
-            Slog.d(TAG, "return hide screen dream");
+	 Slog.d("dzy","hideScreenDream");
+	 if (imageView == null) {
+            Slog.d(TAG, "return hide screen dream...");
             return;
         }
+         mHandler.sendEmptyMessage(MSG_HIDE_SCREEN_DREAM);
+    }
+
+    private void handleMessageHideDream(){
         final WindowManager wm = mContext.getSystemService(WindowManager.class);
         wm.removeView(imageView);
-	((BitmapDrawable)imageView.getDrawable()).getBitmap().recycle();
+        //((BitmapDrawable)imageView.getDrawable()).getBitmap().recycle();
         imageView = null;
-        Slog.d(TAG, "remove screen dream");
+        Slog.d(TAG, "remove screen dream...");
     }
 
     public void showScreenPoweroff(){
+        mHandler.sendEmptyMessage(MSG_SHOW_SCREEN_POWER_OFF);
+    }
+
+    private void handleMessageShowPoweroff(){
         ImageView imageView = new ImageView(mContext);
         imageView.setImageBitmap(BitmapFactory.decodeFile("vendor/media/poweroff.png"));
         //imageView.setImageResource(R.drawable.default_lock_dream);
