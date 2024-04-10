@@ -1287,6 +1287,10 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
             }
         }
 
+        if (isCurrentlyRecording()) {
+            pauseRecording();
+            updateRecording();
+        }
         scheduleAnimation();
     }
 
@@ -3117,7 +3121,7 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
      * If xPpi or yDpi is equal to {@link #INVALID_DPI}, the values are ignored.
      */
     void setForcedSize(int width, int height, float xDPI, float yDPI) {
-  	// Can't force size higher than the maximal allowed
+    // Can't force size higher than the maximal allowed
         if (mMaxUiWidth > 0 && width > mMaxUiWidth) {
             final float ratio = mMaxUiWidth / (float) width;
             height = (int) (height * ratio);
