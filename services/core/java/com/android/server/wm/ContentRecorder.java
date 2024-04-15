@@ -33,6 +33,7 @@ import android.media.projection.IMediaProjectionManager;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.SystemProperties;
 import android.provider.DeviceConfig;
 import android.view.ContentRecordingSession;
 import android.view.ContentRecordingSession.RecordContent;
@@ -41,6 +42,7 @@ import android.view.SurfaceControl;
 
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.protolog.common.ProtoLog;
+import android.util.Slog;
 
 /**
  * Manages content recording for a particular {@link DisplayContent}.
@@ -515,17 +517,38 @@ final class ContentRecorder implements WindowContainerListener {
                 mDisplayContent.getConfiguration().screenWidthDp,
                 mDisplayContent.getConfiguration().screenHeightDp, surfaceSize.x, surfaceSize.y);
 
-        transaction
-                // Crop the area to capture to exclude the 'extra' wallpaper that is used
-                // for parallax (b/189930234).
-                .setWindowCrop(mRecordedSurface, recordedContentBounds.width(),
-                        recordedContentBounds.height())
-                // Scale the root mirror SurfaceControl, based upon the size difference between the
-                // source (DisplayArea to capture) and output (surface the app reads images from).
-                .setMatrix(mRecordedSurface, scale, 0 /* dtdx */, 0 /* dtdy */, scale)
-                // Position needs to be updated when the mirrored DisplayArea has changed, since
-                // the content will no longer be centered in the output surface.
-                .setPosition(mRecordedSurface, shiftedX /* x */, shiftedY /* y */);
+        //------rk-code---------
+        String mPhysicalDisplayId = mDisplayContent.getDisplayInfo().uniqueId.split(":")[1];
+        String property = "persist.sys.rotation.efull-" + mPhysicalDisplayId;
+        if (SystemProperties.getBoolean(property, false)) {
+            Slog.d("ContentRecorder"," display "+mPhysicalDisplayId + " full scaleX="+scaleX+" scaleY="+scaleY);
+            transaction
+                    // Crop the area to capture to exclude the 'extra' wallpaper that is used
+                    // for parallax (b/189930234).
+                    .setWindowCrop(mRecordedSurface, recordedContentBounds.width(),
+                            recordedContentBounds.height())
+                    // Scale the root mirror SurfaceControl, based upon the size difference between the
+                    // source (DisplayArea to capture) and output (surface the app reads images from).
+                    .setMatrix(mRecordedSurface, scaleX, 0 /* dtdx */, 0 /* dtdy */, scaleY);
+            // Position needs to be updated when the mirrored DisplayArea has changed, since
+            // the content will no longer be centered in the output surface.
+            //.setPosition(mRecordedSurface, shiftedX /* x */, shiftedY /* y */);
+        } else {
+        //----------------------
+            transaction
+                    // Crop the area to capture to exclude the 'extra' wallpaper that is used
+                    // for parallax (b/189930234).
+                    .setWindowCrop(mRecordedSurface, recordedContentBounds.width(),
+                            recordedContentBounds.height())
+                    // Scale the root mirror SurfaceControl, based upon the size difference between the
+                    // source (DisplayArea to capture) and output (surface the app reads images from).
+                    .setMatrix(mRecordedSurface, scale, 0 /* dtdx */, 0 /* dtdy */, scale)
+                    // Position needs to be updated when the mirrored DisplayArea has changed, since
+                    // the content will no longer be centered in the output surface.
+                    .setPosition(mRecordedSurface, shiftedX /* x */, shiftedY /* y */);
+        //------rk-code---------
+        }
+        //----------------------
         mLastRecordedBounds = new Rect(recordedContentBounds);
         mLastConsumingSurfaceSize.x = surfaceSize.x;
         mLastConsumingSurfaceSize.y = surfaceSize.y;
