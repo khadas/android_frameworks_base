@@ -453,6 +453,8 @@ public class AudioService extends IAudioService.Stub
     }
 
     private SettingsObserver mSettingsObserver;
+    private SoundbarObserver mSoundbarObserver;
+    private boolean mSoundbarMode;
 
     private AtomicInteger mMode = new AtomicInteger(AudioSystem.MODE_NORMAL);
 
@@ -1366,6 +1368,7 @@ public class AudioService extends IAudioService.Stub
      */
     private void initExternalEventReceivers() {
         mSettingsObserver = new SettingsObserver();
+        mSoundbarObserver = new SoundbarObserver();
 
         // Register for device connection intent broadcasts.
         IntentFilter intentFilter =
@@ -1476,7 +1479,9 @@ public class AudioService extends IAudioService.Stub
                 }
                 mHdmiPlaybackClient = mHdmiManager.getPlaybackClient();
                 mHdmiAudioSystemClient = mHdmiManager.getAudioSystemClient();
-
+                mSoundbarMode = Settings.Global.getInt(mContentResolver,
+                    SOUNDBAR_MODE, 0) == 1;
+                updateHdmiAudioSystemClient(mSoundbarMode);
                 if (mHdmiPlaybackClient != null) {
                     mAxelInstalled = isPackageInstalled(PACKAGE_AXEL);
 
@@ -1486,6 +1491,8 @@ public class AudioService extends IAudioService.Stub
                         com.android.internal.R.integer.config_cec_passthroughMode);
                     mShowPassthroughWarningAlways = mContext.getResources().getBoolean(
                         com.android.internal.R.bool.config_cec_showPassthroughWarningAlways);
+                    mSendMuteKey = mContext.getResources().getBoolean(
+                        com.android.internal.R.bool.config_cec_sendMuteKey);
 
                     if (mAxelInstalled) {
                         Slog.d(TAG, "Axel apk is installed with passthrough mode:" + mPassthroughMode);
@@ -3568,7 +3575,7 @@ public class AudioService extends IAudioService.Stub
                 && (keyEventMode != AudioDeviceVolumeManager.ADJUST_MODE_END)) {
             mAudioHandler.removeMessages(MSG_UNMUTE_STREAM);
 
-            if (isMuteAdjust && !mFullVolumeDevices.contains(device)) {
+            if (isMuteAdjust && !(isFullVolumeDevice(device) && mSendMuteKey)) {
                 boolean state;
                 if (direction == AudioManager.ADJUST_TOGGLE_MUTE) {
                     state = !streamState.mIsMuted;
@@ -3661,7 +3668,8 @@ public class AudioService extends IAudioService.Stub
                     }
 
                     boolean playbackDeviceConditions = mHdmiPlaybackClient != null
-                            && isFullVolumeDevice(device);
+                            && isFullVolumeDevice(device)
+                            && mFullVolumeDevices.contains(device);
                     boolean tvConditions = mHdmiTvClient != null
                             && mHdmiSystemAudioSupported
                             && !isAbsoluteVolumeDevice(device)
@@ -7611,7 +7619,7 @@ public class AudioService extends IAudioService.Stub
         // When the feature is activated the client becomes available, therefore Audio Service
         // requests a new HDMI Audio System Client instance when the ARC status is changed.
         if (attributes.getInternalType() == AudioSystem.DEVICE_IN_HDMI_ARC) {
-            updateHdmiAudioSystemClient();
+            //updateHdmiAudioSystemClient();
         }
     }
 
@@ -7619,10 +7627,27 @@ public class AudioService extends IAudioService.Stub
      * Replace the current HDMI Audio System Client.
      * See {@link #setWiredDeviceConnectionState(AudioDeviceAttributes, int, String)}.
      */
-    private void updateHdmiAudioSystemClient() {
-        Slog.d(TAG, "Hdmi Audio System Client is updated");
+    private void updateHdmiAudioSystemClient(boolean soundbarMode) {
+        if (mHdmiManager == null || mSoundbarMode == soundbarMode) {
+            return;
+        }
+        mSoundbarMode = soundbarMode;
         synchronized (mHdmiClientLock) {
             mHdmiAudioSystemClient = mHdmiManager.getAudioSystemClient();
+            if (!soundbarMode) {
+                // soundbar mode off
+                Slog.d(TAG, "soundbar mode off");
+                mHdmiPlaybackClient = mHdmiManager.getPlaybackClient();
+                updateHdmiCecSinkLocked(mHdmiCecSink);
+            } else {
+                Slog.d(TAG, "soundbar mode on");
+                // soundbar mode on
+                mHdmiPlaybackClient = null;
+                setDeviceVolumeBehaviorInternal(
+                        new AudioDeviceAttributes(AudioSystem.DEVICE_OUT_HDMI, ""),
+                        AudioManager.DEVICE_VOLUME_BEHAVIOR_VARIABLE,
+                        "AudioService.updateHdmiAudioSystemClient()");
+            }
         }
     }
 
@@ -9582,6 +9607,28 @@ public class AudioService extends IAudioService.Stub
         }
     }
 
+    private class SoundbarObserver extends ContentObserver {
+
+        SoundbarObserver() {
+            super(new Handler());
+            mContentResolver.registerContentObserver(Settings.Global.getUriFor(
+                    SOUNDBAR_MODE), false, this);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            String option = uri.getLastPathSegment();
+            boolean enabled = Settings.Global.getInt(mContentResolver, option, 0) == 1;
+            Slog.d(TAG, "SoundbarObserver onChange" + option + " " + enabled);
+            switch(option) {
+                case SOUNDBAR_MODE:
+                    updateHdmiAudioSystemClient(enabled);
+                    break;
+            }
+
+        }
+    }
+
     private void avrcpSupportsAbsoluteVolume(String address, boolean support) {
         // address is not used for now, but may be used when multiple a2dp devices are supported
         sVolumeLogger.enqueue(new EventLogger.StringEvent("avrcpSupportsAbsoluteVolume addr="
@@ -10992,9 +11039,6 @@ public class AudioService extends IAudioService.Stub
 
     @GuardedBy("mHdmiClientLock")
     private void updateHdmiCecSinkLocked(boolean hdmiCecSink, boolean updateStates) {
-        if (mHdmiPlaybackClient == null) {
-            return;
-        }
         mHdmiCecSink = hdmiCecSink;
 
         // When the volume behaviour is full, it still relies on the cec status to do volume control.
@@ -11031,7 +11075,7 @@ public class AudioService extends IAudioService.Stub
         public void onStatusChange(@HdmiControlManager.HdmiCecControl int isCecEnabled,
                 boolean isCecAvailable) {
             synchronized (mHdmiClientLock) {
-                if (mHdmiManager == null) return;
+                if (mHdmiManager == null || mHdmiAudioSystemClient != null) return;
                 boolean cecEnabled = isCecEnabled == HdmiControlManager.HDMI_CEC_CONTROL_ENABLED;
                 Slog.d(TAG, "onStatusChange cecEnabled:" + cecEnabled + " available:" + isCecAvailable);
                 updateHdmiCecSinkLocked(cecEnabled ? isCecAvailable : false);
@@ -11074,6 +11118,11 @@ public class AudioService extends IAudioService.Stub
     // Only send cec volume keys when it's audio passthrough decoding
     private static final int PASSTHROUGH_MODE_ACCORD_WITH_DECODING = 2;
 
+    // Global Settings to control soundbar mode. Must be updated together with
+    // the config setting "soundbar_mode" in HdmiControlManager. It's used for
+    // android does not provide the api of observing the soundbar mode changes.
+    private static final String SOUNDBAR_MODE = "soundbar_mode";
+
     // If true then use the original volume control android solution.
     private boolean mAxelInstalled;
 
@@ -11097,6 +11146,8 @@ public class AudioService extends IAudioService.Stub
     private boolean mShowPassthroughWarningAlways;
     // Only show the passthrough warning once after boot.
     private boolean mBootShowWarning;
+    // Whether send mute key to TV.
+    private boolean mSendMuteKey;
 
     // Whether the dolby audio data is transmitted to sink device for decoding.
     private boolean isPassthroughDecoding() {
@@ -11485,6 +11536,7 @@ public class AudioService extends IAudioService.Stub
         pw.print("  mLastPassthroughDecoding="); pw.println(mLastPassthroughDecoding);
         pw.print("  mShowPassthroughWarningAlways="); pw.println(mShowPassthroughWarningAlways);
         pw.print("  mBootShowWarning="); pw.println(mBootShowWarning);
+        pw.print("  mSendMuteKey="); pw.println(mSendMuteKey);
 
         pw.print("  mIsCallScreeningModeSupported="); pw.println(mIsCallScreeningModeSupported);
         pw.print("  mic mute FromSwitch=" + mMicMuteFromSwitch
@@ -13570,7 +13622,6 @@ public class AudioService extends IAudioService.Stub
                 && mRecordMonitor.isLegacyRemoteSubmixActive()) {
             return false;
         }
-
         return checkPassthroughMode(deviceType);
     }
 
