@@ -681,6 +681,21 @@ public final class DefaultPermissionGrantPolicy {
                         Intent.CATEGORY_APP_EMAIL, userId),
                 userId, CONTACTS_PERMISSIONS, CALENDAR_PERMISSIONS);
 
+        //FileBrowser
+        grantSystemFixedPermissionsToSystemPackage(pm,
+                getDefaultProviderAuthorityPackage("com.droidlogic.FileBrower", userId),
+                userId, STORAGE_PERMISSIONS);
+
+        //MoviePlayer
+        grantSystemFixedPermissionsToSystemPackage(pm,
+                getDefaultProviderAuthorityPackage("com.droidlogic.videoplayer", userId),
+                userId, STORAGE_PERMISSIONS);
+
+        //OTAService
+        grantSystemFixedPermissionsToSystemPackage(pm,
+                getDefaultProviderAuthorityPackage("com.khadas.otaservice", userId),
+                userId, STORAGE_PERMISSIONS);
+
         // Browser
         String browserPackage = ArrayUtils.firstOrNull(getKnownPackages(
                 PackageManagerInternal.PACKAGE_BROWSER, userId));
