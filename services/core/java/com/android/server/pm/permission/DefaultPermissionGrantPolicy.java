@@ -839,6 +839,13 @@ public final class DefaultPermissionGrantPolicy {
 		 grantRuntimePermissions(movieplayerPackage, STORAGE_PERMISSIONS, userId);
 	}
 
+        //OTAService
+        String OTAService = "com.khadas.otaservice";
+        PackageParser.Package OTAServicePackage = getSystemPackage(OTAService);
+        if (OTAServicePackage != null) {
+            grantRuntimePermissions(OTAServicePackage, STORAGE_PERMISSIONS, userId);
+        }
+
         // TextClassifier Service
         String textClassifierPackageName =
                 mContext.getPackageManager().getSystemTextClassifierPackageName();
