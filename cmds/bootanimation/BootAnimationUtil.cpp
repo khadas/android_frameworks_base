@@ -43,7 +43,9 @@ static const std::vector<std::string> PLAY_SOUND_BOOTREASON_BLACKLIST {
 
 bool bootAnimationDisabled() {
     char value[PROPERTY_VALUE_MAX];
-    if (property_get_int32("persist.vendor.media.bootvideo.tsplayer", 0) > 0) {
+    int type = property_get_int32("persist.vendor.media.bootvideo", 0);
+    type /= 1000;
+    if (type == 3 && property_get_int32("persist.vendor.media.bootvideo.tsplayer", 0) > 0) {
         ALOGD("bootAnimationDisabled: bootvideo use tsplayer, disable bootanim");
         return true;
     }
