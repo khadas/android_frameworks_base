@@ -1127,6 +1127,12 @@ public interface WindowManagerPolicy extends WindowManagerPolicyConstants {
      * @hide
      */
     public void showSleepDream();
+
+    /**
+     * Return whether the dream view is show.
+     * @hide
+     */
+    public boolean hasScreenDream();
     //---------------
 
     /**

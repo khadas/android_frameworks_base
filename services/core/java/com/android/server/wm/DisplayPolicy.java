@@ -2894,7 +2894,10 @@ public class DisplayPolicy {
 
     //----rk-code----
     public boolean hasScreenDream(){
-        return imageView!=null;
+	if(imageView!=null){
+	   Slog.d("dzy"," imageView.isShown() "+imageView.isShown()+" isAttachedToWindow "+imageView.isAttachedToWindow());
+	}
+	return imageView!=null && imageView.isShown() && imageView.isAttachedToWindow();
     }
 
     public void showScreenDream() {

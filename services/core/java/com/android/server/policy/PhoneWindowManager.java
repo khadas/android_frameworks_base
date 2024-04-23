@@ -5017,6 +5017,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public void showSleepDream() {
         mDefaultDisplayPolicy.showScreenDream();
     }
+
+    public boolean hasScreenDream(){
+        return mDefaultDisplayPolicy.hasScreenDream();
+    }
+
     //---------------
     @Override
     public void startedGoingToSleepGlobal(@PowerManager.GoToSleepReason int reason) {

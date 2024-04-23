@@ -2758,11 +2758,19 @@ public final class PowerManagerService extends SystemService
             }
 
             //----rk-code----
-            if(mPowerGroups.get(Display.DEFAULT_DISPLAY_GROUP).getUserActivitySummaryLocked()==USER_ACTIVITY_SCREEN_DREAM && mRkebook){
-                Slog.d("dzy","show screen dream,delay "+PhoneWindowManager.SLEEP_SCREEN_DREAM_DELAY+" ms to suspend. ");
-                mUpdatePowerStateInProgressSleep=true;
-                mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_SLEEP_DELAY_DREAM,dirtyPhase2,dirtyPhase2), PhoneWindowManager.SLEEP_SCREEN_DREAM_DELAY);
-                return;
+            if(mRkebook){
+                if(mPowerGroups.get(Display.DEFAULT_DISPLAY_GROUP).getUserActivitySummaryLocked()==USER_ACTIVITY_SCREEN_DREAM && !mPolicy.hasScreenDream()) {
+                    Slog.d("dzy", "user screen dream,show screen dream,delay " + PhoneWindowManager.SLEEP_SCREEN_DREAM_DELAY + " ms to suspend. ");
+                    mUpdatePowerStateInProgressSleep = true;
+                    mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_SLEEP_DELAY_DREAM, dirtyPhase2, dirtyPhase2), PhoneWindowManager.SLEEP_SCREEN_DREAM_DELAY);
+                    return;
+                }
+                if(mPowerGroups.get(Display.DEFAULT_DISPLAY_GROUP).getWakefulnessLocked()==WAKEFULNESS_DOZING && !mPolicy.hasScreenDream()){
+                    Slog.d("dzy", "wakefulness dozing,show screen dream,delay " + PhoneWindowManager.SLEEP_SCREEN_DREAM_DELAY + " ms to suspend. ");
+                    mUpdatePowerStateInProgressSleep = true;
+                    mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_SLEEP_DELAY_DREAM, dirtyPhase2, dirtyPhase2), PhoneWindowManager.SLEEP_SCREEN_DREAM_DELAY);
+                    return;
+                }
             }
             //--------------
 
@@ -7253,6 +7261,7 @@ public final class PowerManagerService extends SystemService
                             continue;
                         }
                     }
+
                     if (isNoDoze) {
                         sleepPowerGroupLocked(powerGroup, eventTime, reason, uid);
                     } else {
