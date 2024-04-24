@@ -736,6 +736,7 @@ void BootAnimation::findBootAnimationFile() {
     if (access(PRODUCT_BOOTVIDEO_FILE, R_OK) == 0) {
         mVideoFile = (char*)PRODUCT_BOOTVIDEO_FILE;
     }
+    char decrypt[PROPERTY_VALUE_MAX];
     property_get("persist.sys.bootvideo.enable", decrypt, "false");
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.sys.bootvideo.showtime", value, "-1");
