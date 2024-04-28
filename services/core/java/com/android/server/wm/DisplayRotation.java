@@ -1578,6 +1578,9 @@ public class DisplayRotation {
     }
 
     void onDisplayRemoved() {
+        if (!isDefaultDisplay && mSettingsObserver != null) {
+            mSettingsObserver.releaseContentObserver();
+        }
         removeDefaultDisplayRotationChangedCallback();
         if (mFoldController != null) {
             mFoldController.onDisplayRemoved();
