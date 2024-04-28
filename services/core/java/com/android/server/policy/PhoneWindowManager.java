@@ -123,6 +123,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManagerInternal;
 import android.hardware.hdmi.HdmiAudioSystemClient;
 import android.hardware.hdmi.HdmiControlManager;
+import android.hardware.hdmi.IHdmiControlService;
 import android.hardware.hdmi.HdmiPlaybackClient;
 import android.hardware.hdmi.HdmiPlaybackClient.OneTouchPlayCallback;
 import android.hardware.input.InputManager;
@@ -523,6 +524,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mSystemReady;
     boolean mSystemBooted;
     HdmiControl mHdmiControl;
+    IHdmiControlService mHdmiControlService;
+    private boolean mUseAnroidVolumeUi;
+    private static final String CEC_SCREEN_STATE = "cec_screen_state";
+
     IUiModeManager mUiModeManager;
     int mUiMode;
 
@@ -1752,6 +1757,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private void updateCecScreenStatus(int status) {
+        Slog.d(TAG, "updateCecScreenStatus " + status);
+        try {
+            if (mHdmiControlService != null) {
+                mHdmiControlService.setCecSettingIntValue(CEC_SCREEN_STATE,
+                    status);
+            }
+        }  catch (RemoteException e) {
+            Slog.w(TAG, "Error call IHdmiControlService:setCecSettingIntValue", e);
+        }
+    }
+
     private void launchAllAppsAction() {
         Intent intent = new Intent(Intent.ACTION_ALL_APPS);
         if (mHasFeatureLeanback) {
@@ -2069,6 +2086,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 .createSleepTokenAcquirer("ScreenOff");
 
         Resources res = mContext.getResources();
+
+        mUseAnroidVolumeUi = res.getBoolean(R.bool.config_cecUseAndroidVolumeBar);
+
         mWakeOnDpadKeyPress =
                 res.getBoolean(com.android.internal.R.bool.config_wakeOnDpadKeyPress);
         mWakeOnAssistKeyPress =
@@ -4867,6 +4887,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private static final int OSD_NAME_VOLUME_KEY = 3;
     private void handleVolumeKeyInArc(KeyEvent event) {
+        if (mUseAnroidVolumeUi) {
+            return;
+        }
         Slog.d(TAG, "handleVolumeKeyInArc " + event);
         if (event.getAction() != KeyEvent.ACTION_DOWN
                 ||(event.getKeyCode() != KeyEvent.KEYCODE_VOLUME_UP
@@ -5042,6 +5065,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (mKeyguardDelegate != null) {
             mKeyguardDelegate.onStartedGoingToSleep(pmSleepReason);
         }
+
+        updateCecScreenStatus(HdmiControlManager.POWER_STATUS_STANDBY);
     }
 
     // Called on the PowerManager's Notifier thread.
@@ -5114,6 +5139,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         mCameraGestureTriggered = false;
+
+        updateCecScreenStatus(HdmiControlManager.POWER_STATUS_ON);
     }
 
     // Called on the PowerManager's Notifier thread.
@@ -5566,6 +5593,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         readCameraLensCoverState();
         updateUiMode();
+        // Init IHdmiControlService
+        if (mHasFeatureHdmiCec) {
+            mHdmiControlService = IHdmiControlService.Stub.asInterface(
+                    ServiceManager.getService(Context.HDMI_CONTROL_SERVICE));
+        }
         mDefaultDisplayRotation.updateOrientationListener();
         synchronized (mLock) {
             mSystemReady = true;
