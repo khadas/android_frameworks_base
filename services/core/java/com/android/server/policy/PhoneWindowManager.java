@@ -3066,6 +3066,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
         }
 
+        if (Boolean.valueOf(SystemProperties.getBoolean("vendor.sys.tv.early.warning.system", false))) {
+            return true;
+        }
+
         switch (keyCode) {
             case KeyEvent.KEYCODE_HOME:
                 return handleHomeShortcuts(displayId, focusedToken, event);
@@ -4142,6 +4146,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final boolean down = event.getAction() == KeyEvent.ACTION_DOWN;
         boolean isWakeKey = (policyFlags & WindowManagerPolicy.FLAG_WAKE) != 0
                 || event.isWakeKey();
+
+        if (Boolean.valueOf(SystemProperties.getBoolean("vendor.sys.tv.early.warning.system", false))) {
+            return -1;
+        }
 
         if (!mSystemBooted) {
             // If we have not yet booted, don't let key events do anything.
