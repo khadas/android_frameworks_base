@@ -188,8 +188,9 @@ final class ContentRecorder implements WindowContainerListener {
         if (!mLastRecordedBounds.equals(recordedContentBounds)
                 || lastOrientation != recordedContentOrientation
                 || !mLastConsumingSurfaceSize.equals(surfaceSize)) {
-            if (mDisplayContent.getRotation()!= Surface.ROTATION_0 ){
-                Slog.d("ContentRecorder", "swap surface size");
+            if (mDisplayContent.getRotation()!= Surface.ROTATION_180 &&
+                    mDisplayContent.getRotation()!= Surface.ROTATION_0){
+                Slog.d("ContentRecorder", "swap surface size, rotation:" + mDisplayContent.getRotation());
                 surfaceSize = new Point(surfaceSize.y, surfaceSize.x);
             }
             if (surfaceSize != null) {
