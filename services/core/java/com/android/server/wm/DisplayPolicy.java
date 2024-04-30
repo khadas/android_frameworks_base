@@ -2923,7 +2923,7 @@ public class DisplayPolicy {
             lp.privateFlags |=
                     WindowManager.LayoutParams.PRIVATE_FLAG_FORCE_HARDWARE_ACCELERATED;
         }
-        lp.setTitle("ScreenDreamView_EBOOK_FULL");
+        lp.setTitle("ScreenDreamView_EBOOK_STANDBY");
         //lp.inputFeatures |= WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL;
         final WindowManager wm = mContext.getSystemService(WindowManager.class);
         wm.addView(imageView, lp);
