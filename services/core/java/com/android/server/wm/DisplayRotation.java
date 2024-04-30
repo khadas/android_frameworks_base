@@ -300,8 +300,12 @@ public class DisplayRotation {
             mUserRotation = Integer.parseInt(mBuiltInUserRotation) % 4;
             mRotation = mUserRotation;
         }
+
+        final Handler uiHandler = UiThread.getHandler();
+        mSettingsObserver = new SettingsObserver(uiHandler);
+        mSettingsObserver.observe();
+
         if (isDefaultDisplay) {
-            final Handler uiHandler = UiThread.getHandler();
             mOrientationListener =
                     new OrientationListener(mContext, uiHandler, defaultRotation);
             mOrientationListener.setCurrentRotation(mRotation);
@@ -1614,7 +1618,8 @@ public class DisplayRotation {
                 mUserRotation = userRotation;
                 shouldUpdateRotation = true;
             }
-
+            android.util.Log.d("DisplayRotation", "displayid: "+ mDisplayContent.getDisplayId()+
+                    " update mUserRotation: " + mUserRotation);
             final int userRotationMode = Settings.System.getIntForUser(resolver,
                     Settings.System.ACCELEROMETER_ROTATION, 0, UserHandle.USER_CURRENT) != 0
                             ? WindowManagerPolicy.USER_ROTATION_FREE

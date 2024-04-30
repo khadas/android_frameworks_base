@@ -29,6 +29,7 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.WindowConfiguration;
 import android.provider.Settings;
+import android.util.Slog;
 import android.view.Display;
 import android.view.DisplayInfo;
 import android.view.IWindowManager;
@@ -262,8 +263,13 @@ class DisplayWindowSettings {
         }
         final int userRotationMode = settings.mUserRotationMode != null
                 ? settings.mUserRotationMode : WindowManagerPolicy.USER_ROTATION_FREE;
-        final int userRotation = settings.mUserRotation != null
+        int userRotation = settings.mUserRotation != null
                 ? settings.mUserRotation : Surface.ROTATION_0;
+        if (displayInfo.type == Display.TYPE_EXTERNAL) {
+            userRotation =dc.getDisplayRotation().getUserRotation();
+            Slog.d("DisplayWindowSettings", "userRotation: " + userRotation +
+                    " for external device, skip display setting for" + displayInfo);
+        }
         final int mFixedToUserRotation = settings.mFixedToUserRotation != null
                 ? settings.mFixedToUserRotation : IWindowManager.FIXED_TO_USER_ROTATION_DEFAULT;
         dc.getDisplayRotation().restoreSettings(userRotationMode, userRotation,

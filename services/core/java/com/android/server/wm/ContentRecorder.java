@@ -34,9 +34,11 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.provider.DeviceConfig;
+import android.util.Slog;
 import android.view.ContentRecordingSession;
 import android.view.ContentRecordingSession.RecordContent;
 import android.view.Display;
+import android.view.Surface;
 import android.view.SurfaceControl;
 
 import com.android.internal.annotations.VisibleForTesting;
@@ -182,10 +184,14 @@ final class ContentRecorder implements WindowContainerListener {
         final Rect recordedContentBounds = mRecordedWindowContainer.getBounds();
         @Configuration.Orientation int recordedContentOrientation =
                 mRecordedWindowContainer.getConfiguration().orientation;
-        final Point surfaceSize = fetchSurfaceSizeIfPresent();
+        Point surfaceSize = fetchSurfaceSizeIfPresent();
         if (!mLastRecordedBounds.equals(recordedContentBounds)
                 || lastOrientation != recordedContentOrientation
                 || !mLastConsumingSurfaceSize.equals(surfaceSize)) {
+            if (mDisplayContent.getRotation()!= Surface.ROTATION_0 ){
+                Slog.d("ContentRecorder", "swap surface size");
+                surfaceSize = new Point(surfaceSize.y, surfaceSize.x);
+            }
             if (surfaceSize != null) {
                 ProtoLog.v(WM_DEBUG_CONTENT_RECORDING,
                         "Content Recording: Going ahead with updating recording for display "

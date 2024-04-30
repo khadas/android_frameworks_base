@@ -1250,7 +1250,7 @@ status_t BootAnimation::enableDisplay(SurfaceComposerClient::Transaction &t,
         return error;
     SurfaceComposerClient::setDisplayPowerMode(displayToken, 2);
     Rect displayRect(displayMode.resolution.getWidth(), displayMode.resolution.getHeight());
-    t.setDisplayProjection(displayToken, ui::ROTATION_0, primaryLayerStackRect, displayRect);
+    t.setDisplayProjection(displayToken, mRotation, primaryLayerStackRect, displayRect);
     t.setDisplayLayerStack(displayToken, ui::DEFAULT_LAYER_STACK);
     return OK;
 }
