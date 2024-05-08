@@ -155,9 +155,6 @@ public class NavigationBarController implements Callbacks {
             navBar.setAutoHideController(autoHideController);
             navBar.restoreAppearanceAndTransientState();
             mNavigationBars.append(displayId, navBar);
-			//add to control NavigationBar
-			mDisplayId = displayId;
-			//add end
 
             if (result != null) {
                 navBar.setImeWindowStatus(display.getDisplayId(), result.mImeToken,
@@ -166,12 +163,7 @@ public class NavigationBarController implements Callbacks {
             }
         });
     }
-	//add to control NavigationBar
-	private int mDisplayId;
-	public void removeNavigationBarView(){
-        removeNavigationBar(mDisplayId);
-    }
-	//add end
+
     private void removeNavigationBar(int displayId) {
         NavigationBarFragment navBar = mNavigationBars.get(displayId);
         if (navBar != null) {
