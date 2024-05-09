@@ -3319,6 +3319,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
             case KeyEvent.KEYCODE_VOLUME_MUTE:
+                if (event.getRepeatCount()%2==1){
+                    return false;
+                }
                 handleVolumeKeyInArc(event);
                 if (mUseTvRouting || mHandleVolumeKeysInWM) {
                     // On TVs or when the configuration is enabled, volume keys never
