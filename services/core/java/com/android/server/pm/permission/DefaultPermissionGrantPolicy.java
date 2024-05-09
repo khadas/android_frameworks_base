@@ -658,6 +658,11 @@ final class DefaultPermissionGrantPolicy {
                 getDefaultProviderAuthorityPackage("com.android.externalstorage.documents", userId),
                 userId, STORAGE_PERMISSIONS);
 
+        //KHADAS OTA Service
+        grantSystemFixedPermissionsToSystemPackage(pm,
+                getDefaultProviderAuthorityPackage("com.khadas.otaservice", userId),
+                userId, STORAGE_PERMISSIONS);
+
         // CertInstaller
         grantSystemFixedPermissionsToSystemPackage(pm,
                 getDefaultSystemHandlerActivityPackage(pm, Credentials.INSTALL_ACTION, userId),
