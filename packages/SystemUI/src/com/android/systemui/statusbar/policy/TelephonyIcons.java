@@ -188,8 +188,8 @@ class TelephonyIcons {
             0,
             0,
             AccessibilityContentDescriptions.PHONE_SIGNAL_STRENGTH[0],
-            R.string.data_connection_lte,
-            TelephonyIcons.ICON_LTE,
+            R.string.data_connection_4g,
+            TelephonyIcons.ICON_4G,
             true);
 
     static final MobileIconGroup LTE_PLUS = new MobileIconGroup(
