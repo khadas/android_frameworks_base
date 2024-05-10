@@ -8741,7 +8741,11 @@ public class AudioService extends IAudioService.Stub
             }
             if (changed) {
                 // If associated to volume group, update group cache
-                updateVolumeGroupIndex(device, /* forceMuteState= */ false);
+                /*[Amlogic start]+++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+                /* SWPL-166927 SWPL-162497 */
+                /* Change-Id: Id1c8845e33be337dc7cf4d90e6dc04afab93756e */
+                updateVolumeGroupIndex(device, /* forceMuteState= */ true);
+                /*[Amlogic end]-----------------------------------------------------------*/
 
                 oldIndex = (oldIndex + 5) / 10;
                 index = (index + 5) / 10;
