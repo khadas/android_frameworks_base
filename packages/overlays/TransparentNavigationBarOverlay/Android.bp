@@ -26,5 +26,5 @@ package {
 runtime_resource_overlay {
     name: "TransparentNavigationBarOverlay",
     theme: "TransparentNavigationBar",
-    product_specific: true,
+    vendor: true,
 }

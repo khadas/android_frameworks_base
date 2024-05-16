@@ -26,5 +26,5 @@ package {
 runtime_resource_overlay {
     name: "NavigationBarModeGesturalOverlayWideBack",
     theme: "NavigationBarModeGesturalWideBack",
-    product_specific: true,
+    vendor: true,
 }

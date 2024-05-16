@@ -26,5 +26,5 @@ package {
 runtime_resource_overlay {
     name: "NavigationBarModeGesturalOverlay",
     theme: "NavigationBarModeGestural",
-    product_specific: true,
+    vendor: true,
 }
