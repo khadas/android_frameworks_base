@@ -2268,6 +2268,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Controls rotation and the like.
         initializeHdmiState();
+        //------rk-code---------
+        initializeDpState();
+        //----------------------
 
         // Match current screen state.
         if (!mPowerManager.isInteractive()) {
@@ -4093,6 +4096,35 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mCameraLensCoverState = lensCoverState;
     }
 
+    //------rk-code---------
+    void initializeDpState() {
+        final int oldMask = StrictMode.allowThreadDiskReadsMask();
+        try {
+            initializeDpStateInternal();
+        } finally {
+            StrictMode.setThreadPolicyMask(oldMask);
+        }
+    }
+
+    void initializeDpStateInternal(){
+        boolean plugged = false;
+        final List<ExtconUEventObserver.ExtconInfo> extcons =
+                    ExtconUEventObserver.ExtconInfo.getExtconInfoForTypes(
+                            new String[] {ExtconUEventObserver.ExtconInfo.EXTCON_DP});
+        if (extcons.isEmpty()) {
+            Slog.i(TAG, "Not observing DP plug state because DP was not found.");
+        } else {
+            for(int i=0; i<extcons.size(); i++){
+                MultiDpVideoExtconUEventObserver observer=new MultiDpVideoExtconUEventObserver();
+                ExtconUEventObserver.ExtconInfo info=(ExtconUEventObserver.ExtconInfo) extcons.get(i);
+                plugged = observer.init(info);
+                mDefaultDisplayPolicy.addDpPluggedState(info.getName(),plugged);
+                mDefaultDisplayPolicy.setMultiDpPlugged(plugged,info);
+            }
+        }
+    }
+    //----------------------
+
     void initializeHdmiState() {
         final int oldMask = StrictMode.allowThreadDiskReadsMask();
         try {
@@ -4134,10 +4166,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     ExtconUEventObserver.ExtconInfo.getExtconInfoForTypes(
                             new String[] {ExtconUEventObserver.ExtconInfo.EXTCON_HDMI});
             if (!extcons.isEmpty()) {
-                // TODO: handle more than one HDMI
-                HdmiVideoExtconUEventObserver observer = new HdmiVideoExtconUEventObserver();
-                plugged = observer.init(extcons.get(0));
-                mHDMIObserver = observer;
+                //------rk-code---------
+                for (int i = 0; i < extcons.size(); i++) {
+                    MultiHdmiVideoExtconUEventObserver observer = new MultiHdmiVideoExtconUEventObserver();
+                    ExtconUEventObserver.ExtconInfo info = (ExtconUEventObserver.ExtconInfo) extcons.get(i);
+                    plugged = observer.init(info);
+                    mDefaultDisplayPolicy.addHdmiPluggedState(info.getName(), plugged);
+                    mDefaultDisplayPolicy.setMultiHdmiPlugged(plugged, true, info);
+                }
+                //----------------------
             } else if (localLOGV) {
                 Slog.v(TAG, "Not observing HDMI plug state because HDMI was not found.");
             }
@@ -6631,6 +6668,68 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return state.contains(HDMI_EXIST);
         }
     }
+
+    //------rk-code---------
+    private class MultiHdmiVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
+        private static final String HDMI_EXIST = "HDMI=1";
+        private static final String NAME = "hdmi";
+        private static final String EXIST = "=1";
+
+        private boolean init(ExtconInfo info) {
+            boolean plugged = false;
+            try {
+                plugged = parseStateFromFile(info);
+            } catch (Exception e) {
+                Slog.e(TAG, "Error reading " + info.getStatePath(), e);
+            }
+            Slog.i(TAG, "start observing HDMI "+info.getName());
+            startObserving(info);
+            return plugged;
+        }
+
+        @Override
+        public void updateState(ExtconInfo extconInfo, String eventName, Boolean state) {
+            mDefaultDisplayPolicy.setMultiHdmiPlugged(state,extconInfo);
+        }
+
+        @Override
+        public Boolean parseState(ExtconInfo extconIfno, String state) {
+            // state: HDMI=1 or state: hdmi*=1
+            return (state.contains(NAME) && state.contains(EXIST))
+                || state.contains(HDMI_EXIST);
+        }
+    }
+
+    private class MultiDpVideoExtconUEventObserver extends ExtconStateObserver<Boolean> {
+        private static final String DP_EXIST = "DP=1";
+        private static final String NAME = "dp";
+        private static final String EXIST = "=1";
+
+        private boolean init(ExtconInfo info) {
+            boolean plugged = false;
+            try {
+                plugged = parseStateFromFile(info);
+            } catch (Exception e) {
+                Slog.e(TAG, "Error reading " + info.getStatePath(), e);
+            }
+            Slog.i(TAG, "start observing DP "+info.getName());
+            startObserving(info);
+            return plugged;
+        }
+
+        @Override
+        public void updateState(ExtconInfo extconInfo, String eventName, Boolean state) {
+            mDefaultDisplayPolicy.setMultiDpPlugged(state,extconInfo);
+        }
+
+        @Override
+        public Boolean parseState(ExtconInfo extconIfno, String state) {
+            // state: DP=1 or state: dp*=1
+            return (state.contains(NAME) && state.contains(EXIST))
+                || state.contains(DP_EXIST);
+        }
+    }
+    //----------------------
 
     private void launchTargetSearchActivity() {
         Intent intent;
