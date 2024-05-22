@@ -1588,7 +1588,7 @@ public class DisplayRotation {
     }
 
     /** Return whether the rotation settings has changed. */
-    private boolean updateSettings() {
+    boolean updateSettings() {
         final ContentResolver resolver = mContext.getContentResolver();
         boolean shouldUpdateRotation = false;
 

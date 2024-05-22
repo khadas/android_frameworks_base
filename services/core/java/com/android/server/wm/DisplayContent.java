@@ -1232,6 +1232,10 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
         setWindowingMode(WINDOWING_MODE_FULLSCREEN);
         mWmService.mDisplayWindowSettings.applySettingsToDisplayLocked(this);
 
+        if (!isDefaultDisplay && mDisplayRotation.updateSettings()) {
+            updateRotationUnchecked();
+        }
+
         // Sets the initial touch mode state.
         mInTouchMode = mWmService.mContext.getResources().getBoolean(
                 R.bool.config_defaultInTouchMode);
