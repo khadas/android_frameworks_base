@@ -867,4 +867,226 @@ public class RkDisplayOutputManager {
         }
         return ret;
     }
+
+    /*
+    * bright: [0, 100], default 50
+    */
+    /**
+    *
+    * @param display
+    * @param bright
+    * @return
+    * @hide
+    */
+    public int setSWBrightness(int display, int bright)
+    {
+        if (bright < 0 || bright > 100) {
+            Log.e(TAG, "setSWBrightness out of range " + bright);
+            return -1;
+        }
+        try {
+            mService.setSWBrightness(display, bright);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set swbrightness :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getSWBrightness(int display)
+    {
+        try {
+            return mService.getSWBrightness(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get swbrightness :" + e);
+            return 50;
+        }
+    }
+
+    /**
+    *
+    * @return
+    * @hide
+    */
+    public int setPqEnable(boolean enable) {
+        int ret = 0;
+        try {
+            ret = mService.setPqEnable(enable);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setPqEnable :" + e);
+            return -1;
+        }
+        return ret;
+    }
+
+    /*
+    * contrast: [0, 100], default 50
+    */
+    /**
+    *
+    * @param display
+    * @param contrast
+    * @return
+    * @hide
+    */
+    public int setSWContrast(int display, int contrast)
+    {
+        if (contrast < 0 || contrast > 100) {
+            Log.e(TAG, "setSWContrast out of range " + contrast);
+            return -1;
+        }
+        try {
+            mService.setSWContrast(display, contrast);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set SWContrast :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getSWContrast(int display)
+    {
+        try {
+            return mService.getSWContrast(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get SWContrast :" + e);
+            return 50;
+        }
+    }
+
+    /*
+    * saturation: [0, 100], default 50
+    */
+    /**
+    *
+    * @param display
+    * @param saturation
+    * @return
+    * @hide
+    */
+    public int setSWSaturation(int display, int saturation)
+    {
+        if (saturation < 0 || saturation > 100) {
+            Log.e(TAG, "setSWSaturation out of range " + saturation);
+            return -1;
+        }
+        try {
+            mService.setSWSaturation(display, saturation);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set SWSaturation :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getSWSaturation(int display)
+    {
+        try {
+            return mService.getSWSaturation(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get SWSaturation :" + e);
+            return 50;
+        }
+    }
+
+    public int setSharpEnable(boolean enable) {
+        int ret = 0;
+        try {
+            ret = mService.setSharpEnable(enable);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setSharpEnable :" + e);
+            return -1;
+        }
+        return ret;
+    }
+
+    /*
+    * sharpness: [0, 100], default 50
+    */
+    /**
+    *
+    * @param display
+    * @param sharpness
+    * @return
+    * @hide
+    */
+    public int setSharpness(int display, int sharpness)
+    {
+        if (sharpness < 0 || sharpness > 100) {
+            Log.e(TAG, "setSharpness out of range " + sharpness);
+            return -1;
+        }
+        try {
+            mService.setSharpness(display, sharpness);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set sharpness :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getSharpness(int display)
+    {
+        try {
+            return mService.getSharpness(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get sharpness :" + e);
+            return 0;
+        }
+    }
+
+    /*
+    * hue: [0, 100], default 50
+    */
+    /**
+    *
+    * @param display
+    * @param hue
+    * @return
+    * @hide
+    */
+    public int setSWHue(int display, int hue)
+    {
+        if (hue < 0 || hue > 100) {
+            Log.e(TAG, "setSWHue out of range " + hue);
+            return -1;
+        }
+        try {
+            mService.setSWHue(display, hue);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set swhue :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getSWHue(int display)
+    {
+        try {
+            return mService.getSWHue(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get swhue :" + e);
+            return 50;
+        }
+    }
+
+    public int setAcmEnable(boolean enable) {
+        int ret = 0;
+        try {
+            ret = mService.setAcmEnable(enable);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setAcmEnable :" + e);
+            return -1;
+        }
+        return ret;
+    }
+
+    public int getAcmEnable() {
+        try {
+            return mService.getAcmEnable();
+        } catch (Exception e) {
+            Log.e(TAG, "Error getAcmEnable :" + e);
+            return 0;
+        }
+    }
 }

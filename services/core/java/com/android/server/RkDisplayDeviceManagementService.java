@@ -267,4 +267,60 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
     public boolean setAiImageQualityLabMode(boolean enable) {
         return mdrmModes.setAiImageQualityLabMode(enable);
     }
+
+    public int setPqEnable(boolean enable) {
+        return mdrmModes.setPqEnable(enable);
+    }
+
+    public void setSWBrightness(int display, int brightness) {
+        mdrmModes.setSWBrightness(display, brightness);
+    }
+
+    public int getSWBrightness(int display) {
+        return mdrmModes.getSWBrightness(display);
+    }
+
+    public void setSWContrast(int display, int contrast) {
+        mdrmModes.setSWContrast(display, contrast);
+    }
+
+    public int getSWContrast(int display) {
+        return mdrmModes.getSWContrast(display);
+    }
+
+    public void setSWSaturation(int display, int saturation) {
+        mdrmModes.setSWSaturation(display, saturation);
+    }
+
+    public int getSWSaturation(int display) {
+        return mdrmModes.getSWSaturation(display);
+    }
+
+    public int setSharpEnable(boolean enable) {
+        return mdrmModes.setSharpEnable(enable);
+    }
+
+    public void setSharpness(int display, int sharpness) {
+        mdrmModes.setSharpness(display, sharpness);
+    }
+
+    public int getSharpness(int display) {
+        return mdrmModes.getSharpness(display);
+    }
+
+    public void setSWHue(int display, int hue) {
+        mdrmModes.setSWHue(display, hue);
+    }
+
+    public int getSWHue(int display) {
+       return mdrmModes.getSWHue(display);
+    }
+
+    public int setAcmEnable(boolean enable) {
+        return mdrmModes.setAcmEnable(enable);
+    }
+
+    public int getAcmEnable() {
+        return mdrmModes.getAcmEnable();
+    }
 }

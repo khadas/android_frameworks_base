@@ -48,6 +48,7 @@ using android::hardware::Void;
 #define DEFAULT_SATURATION  50
 #define DEFAULT_HUE  50
 #define DEFAULT_OVERSCAN_VALUE 100
+#define DEFAULT_SHARPNESS  0
 
 static struct {
     jclass clazz;
@@ -574,6 +575,193 @@ static int nativeGetHdrResolutionSupported(JNIEnv* env, jobject obj, jint dpy, j
     return (int)res;
 }
 
+static int nativeSetPqEnable(JNIEnv* env, jobject obj, jboolean enable)
+{
+    Result ret = Result::UNKNOWN;
+    int value = enable==JNI_TRUE ? 1 : 0;
+    if (mComposer != nullptr)
+        ret = mComposer->setPqEnable(value);
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeSetSWBrightness(JNIEnv* env, jobject obj, jint dpy, jint brightness)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setSWBrightness(dpy, brightness);
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeGetSWBrightness(JNIEnv* env, jobject obj, jint dpy)
+{
+    int ret = DEFAULT_BRIGHTNESS;
+    if (mComposer != nullptr) {
+        mComposer->getSWBrightness(dpy,
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = tmpValue;
+                }
+        });
+    }
+    return ret;
+}
+
+static int nativeSetSWContrast(JNIEnv* env, jobject obj, jint dpy, jint contrast)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setSWContrast(dpy, contrast);
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeGetSWContrast(JNIEnv* env, jobject obj, jint dpy)
+{
+    int ret = DEFAULT_CONTRAST;
+    if (mComposer != nullptr) {
+        mComposer->getSWContrast(dpy,
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = tmpValue;
+                }
+        });
+    }
+    return ret;
+}
+
+static int nativeSetSWSaturation(JNIEnv* env, jobject obj, jint dpy, jint saturation)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setSWSaturation(dpy, saturation);
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeGetSWSaturation(JNIEnv* env, jobject obj, jint dpy)
+{
+    int ret = DEFAULT_SATURATION;
+    if (mComposer != nullptr) {
+        mComposer->getSWSaturation(dpy,
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = tmpValue;
+                }
+        });
+    }
+    return ret;
+}
+
+static int nativeSetSharpEnable(JNIEnv* env, jobject obj, jboolean enable)
+{
+    Result ret = Result::UNKNOWN;
+    int value = enable==JNI_TRUE ? 1 : 0;
+    if (mComposer != nullptr) {
+        ret = mComposer->setSharpEnable(value);
+    }
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeSetSharpness(JNIEnv* env, jobject obj, jint dpy, jint sharpness)
+{
+    Result ret = Result::UNKNOWN;
+    int sharpPeakingGain = (float)sharpness / 100 * 1023 + 1;
+    sharpPeakingGain = sharpPeakingGain > 1023 ? 1023 : sharpPeakingGain;
+    if (mComposer != nullptr) {
+        ret = mComposer->setSharpPeakingGain(dpy, sharpPeakingGain);
+    }
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeGetSharpness(JNIEnv* env, jobject obj, jint dpy)
+{
+    int ret = DEFAULT_SHARPNESS;
+    if (mComposer != nullptr) {
+        mComposer->getSharpPeakingGain(dpy,
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = (float)tmpValue / 1023 * 100;
+                }
+        });
+    }
+    return ret;
+}
+
+static int nativeSetSWHue(JNIEnv* env, jobject obj, jint dpy, jint hue)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setSWHue(dpy, hue);
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeGetSWHue(JNIEnv* env, jobject obj, jint dpy)
+{
+    int ret = DEFAULT_HUE;
+    if (mComposer != nullptr) {
+        mComposer->getSWHue(dpy,
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = tmpValue;
+                }
+        });
+    }
+    return ret;
+}
+
+static int nativeSetAcmEnable(JNIEnv* env, jobject obj, jboolean enable)
+{
+    Result ret = Result::UNKNOWN;
+    int value = enable==JNI_TRUE ? 1 : 0;
+    if (mComposer != nullptr)
+        ret = mComposer->setAcmEnable(value);
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static int nativeGetAcmEnable(JNIEnv* env, jobject obj)
+{
+    int ret = 0;
+    if (mComposer != nullptr) {
+        mComposer->getAcmEnable(
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = tmpValue;
+                }
+        });
+    }
+    return ret;
+}
+
 // ----------------------------------------------------------------------------
 //com.android.server.rkdisplay
 static const JNINativeMethod sRkDrmModeMethods[] = {
@@ -628,7 +816,20 @@ static const JNINativeMethod sRkDrmModeMethods[] = {
     {"nativeGetModeState", "(Ljava/lang/String;)Ljava/lang/String;", (void*)nativeGetModeState},
     {"nativeSetModeState", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)nativeSetModeState},
     {"nativeGetHdrResolutionSupported", "(ILjava/lang/String;)I", (void*)nativeGetHdrResolutionSupported},
-
+    {"nativeSetPqEnable", "(Z)I", (void*)nativeSetPqEnable},
+    {"nativeSetSWBrightness", "(II)I", (void*)nativeSetSWBrightness},
+    {"nativeGetSWBrightness", "(I)I", (void*)nativeGetSWBrightness},
+    {"nativeSetSWContrast", "(II)I", (void*)nativeSetSWContrast},
+    {"nativeGetSWContrast", "(I)I", (void*)nativeGetSWContrast},
+    {"nativeSetSWSaturation", "(II)I", (void*)nativeSetSWSaturation},
+    {"nativeGetSWSaturation", "(I)I", (void*)nativeGetSWSaturation},
+    {"nativeSetSharpEnable", "(Z)I", (void*)nativeSetSharpEnable},
+    {"nativeSetSharpness", "(II)I", (void*)nativeSetSharpness},
+    {"nativeGetSharpness", "(I)I", (void*)nativeGetSharpness},
+    {"nativeSetSWHue", "(II)I", (void*)nativeSetSWHue},
+    {"nativeGetSWHue", "(I)I", (void*)nativeGetSWHue},
+    {"nativeSetAcmEnable", "(Z)I", (void*)nativeSetAcmEnable},
+    {"nativeGetAcmEnable", "()I", (void*)nativeGetAcmEnable},
 };
 
 #define FIND_CLASS(var, className) \

@@ -217,4 +217,50 @@ interface IRkDisplayDeviceManagementService
      * return: boolean 是否成功
     */
     boolean setAiImageQualityLabMode(boolean enabled);
+
+    /**
+     * setPqEnable
+     */
+    int setPqEnable(boolean enable);
+
+    /**
+     * Set sw brightness
+     */
+    void setSWBrightness(int display, int brightness);
+
+    int getSWBrightness(int display);
+
+    /**
+     * Set sw contrast
+     */
+    void setSWContrast(int display, int contrast);
+
+    int getSWContrast(int display);
+
+    /**
+     * Set sw saturation
+     */
+    void setSWSaturation(int display, int saturation);
+
+    int getSWSaturation(int display);
+
+    int setSharpEnable(boolean enable);
+
+    /**
+     * Set sharpness
+     */
+    void setSharpness(int display, int sharpness);
+
+    int getSharpness(int display);
+
+    /**
+     * Set sw hue
+     */
+    void setSWHue(int display, int hue);
+
+    int getSWHue(int display);
+
+    int setAcmEnable(boolean enable);
+
+    int getAcmEnable();
 }

@@ -47,7 +47,20 @@ public class RkDisplayModes {
     private static native String nativeGetModeState(String mode);
     private static native int nativeSetModeState(String mode, String state);
     private static native int nativeGetHdrResolutionSupported(int dpy, String hdrMode);
-
+    private static native int nativeSetPqEnable(boolean enable);
+    private static native int nativeSetSWBrightness(int display, int brightness);
+    private static native int nativeGetSWBrightness(int display);
+    private static native int nativeSetSWContrast(int display, int contrast);
+    private static native int nativeGetSWContrast(int display);
+    private static native int nativeSetSWSaturation(int display, int saturation);
+    private static native int nativeGetSWSaturation(int display);
+    private static native int nativeSetSharpEnable(boolean enable);
+    private static native int nativeSetSharpness(int display, int sharpness);
+    private static native int nativeGetSharpness(int display);
+    private static native int nativeSetSWHue(int display, int hue);
+    private static native int nativeGetSWHue(int display);
+    private static native int nativeSetAcmEnable(boolean enable);
+    private static native int nativeGetAcmEnable();
 
     private static RkDisplayModes.RkPhysicalDisplayInfo mDisplayInfos[];
     private static List<String> mWhiteList;
@@ -858,6 +871,62 @@ public class RkDisplayModes {
         int ret = nativeSetModeState(PROP_SVEP_LAB_MODE, enabled ? "1" : "0");
         Log.d(TAG, "setAiImageQualityLabMode ===========  enabled = " + enabled + " ret = " + ret);
         return ret == 0;
+    }
+
+    public int setPqEnable(boolean enable) {
+        return nativeSetPqEnable(enable);
+    }
+
+    public int setSWBrightness(int display, int brightness) {
+        return nativeSetSWBrightness(display, brightness);
+    }
+
+    public int getSWBrightness(int display) {
+        return nativeGetSWBrightness(display);
+    }
+
+    public int setSWContrast(int display, int contrast) {
+        return nativeSetSWContrast(display, contrast);
+    }
+
+    public int getSWContrast(int display) {
+        return nativeGetSWContrast(display);
+    }
+
+    public int setSWSaturation(int display, int saturation) {
+        return nativeSetSWSaturation(display, saturation);
+    }
+
+    public int getSWSaturation(int display) {
+        return nativeGetSWSaturation(display);
+    }
+
+    public int setSharpEnable(boolean enable) {
+        return nativeSetSharpEnable(enable);
+    }
+
+    public int setSharpness(int display, int sharpness) {
+        return nativeSetSharpness(display, sharpness);
+    }
+
+    public int getSharpness(int display) {
+        return nativeGetSharpness(display);
+    }
+
+    public int setSWHue(int display, int hue) {
+        return nativeSetSWHue(display, hue);
+    }
+
+    public int getSWHue(int display) {
+        return nativeGetSWHue(display);
+    }
+
+    public int setAcmEnable(boolean enable) {
+        return nativeSetAcmEnable(enable);
+    }
+
+    public int getAcmEnable() {
+        return nativeGetAcmEnable();
     }
 
 }
