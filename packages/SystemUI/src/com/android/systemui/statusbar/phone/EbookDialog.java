@@ -1,0 +1,121 @@
+/*
+ * Copyright 2024 Rockchip Electronics S.LSI Co. LTD
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.systemui.statusbar.phone;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.SeekBar;
+import android.os.EbookManager;
+
+import com.android.systemui.R;
+import com.android.systemui.navigationbar.NavigationBar;
+
+public class EbookDialog extends EbookBaseDialog implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, CompoundButton.OnCheckedChangeListener {
+    private static final String TAG = "EbookDialog";
+    private Context mContext;
+    private Button mRefreshButton;
+    private CheckBox mRefreshCheckbox;
+    private EbookRefreshDialog mEbookRefreshDialog;
+    private EbookSettingsManager mEbookSettingsManager;
+
+    public EbookDialog(Context context) {
+        super(context, null);
+        mContext = context;
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.ebook_menu_dialog);
+        NavigationBar.mIsShowEbookDialog = true;
+        if (mEbookSettingsManager == null) {
+            mEbookSettingsManager = new EbookSettingsManager(mContext);
+        }
+        mRefreshCheckbox = (CheckBox) findViewById(R.id.ebook_dialog_refresh_checkbox);
+        mRefreshCheckbox.setChecked(EbookSettingsProvider.isRefreshSetting);
+        mRefreshCheckbox.setOnCheckedChangeListener(this);
+        mRefreshButton = (Button) findViewById(R.id.ebook_dialog_refresh_button);
+        mRefreshButton.setOnClickListener(this);
+        mRefreshButton.setEnabled(mRefreshCheckbox.isChecked());
+    }
+
+    @Override
+    public void onClick(View v) {
+        int id = v.getId();
+        if(id == R.id.ebook_dialog_refresh_button) {
+            if(EbookSettingsProvider.isRefreshSetting) {
+                if (null != mEbookRefreshDialog && mEbookRefreshDialog.isShowing()) {
+                    return;
+                }
+                mEbookRefreshDialog = new EbookRefreshDialog(mContext, this);
+                mEbookRefreshDialog.show();
+            }
+        }
+    }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        int id = buttonView.getId();
+        if(id == R.id.ebook_dialog_refresh_checkbox) {
+            EbookSettingsProvider.isRefreshSetting = isChecked;
+            ContentValues values = new ContentValues();
+            values.put(EbookSettingsDataBaseHelper.IS_REFRESH_SETTING,
+                    EbookSettingsProvider.isRefreshSetting?1:0);
+            mContext.getContentResolver().update(EbookSettingsProvider.URI_EBOOK_SETTINGS,
+                    values, EbookSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
+                    new String[]{EbookSettingsProvider.packageName});
+            if(EbookSettingsProvider.isRefreshSetting) {
+                mEbookSettingsManager.setEbookMode(String.valueOf(EbookSettingsProvider.refreshMode));
+                mEbookSettingsManager.setProperty(EbookSettingsProvider.EBOOK_REFRESH_FREQUENCY,
+                        String.valueOf(EbookSettingsProvider.refreshFrequency));
+            } else {
+                mEbookSettingsManager.setEbookMode(String.valueOf(EbookManager.EbookMode.EPD_PART_GLR16));
+                mEbookSettingsManager.setProperty(EbookSettingsProvider.EBOOK_REFRESH_FREQUENCY,
+                        String.valueOf(EbookSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY));
+            }
+            mRefreshButton.setEnabled(isChecked);
+        }
+    }
+
+    public void dismissAllDialog() {
+        if (null != mEbookRefreshDialog && mEbookRefreshDialog.isShowing()) {
+            mEbookRefreshDialog.cancel();
+            mEbookRefreshDialog = null;
+        }
+        cancel();
+    }
+}

@@ -70,6 +70,11 @@ public class NavigationBarInflaterView extends FrameLayout {
     public static final String SCREENSHOT = "screenshot";
     public static final String VOLUME_ADD = "volume_add";
     public static final String VOLUME_SUB = "volume_sub";
+    //----------------------rk code---------------------------
+    public static final String EBOOK_REFRESH = "ebook_refresh";
+    public static final String EBOOK_SWITCH_MODE = "ebook_switch_mode";
+    public static final String EBOOK_MENU = "ebook_menu";
+    //--------------------------------------------------------
 
     public static final String GRAVITY_SEPARATOR = ";";
     public static final String BUTTON_SEPARATOR = ",";
@@ -424,6 +429,14 @@ public class NavigationBarInflaterView extends FrameLayout {
             v = inflater.inflate(R.layout.sysbar_screenshot, parent, false);
         } else if (VOLUME_ADD.equals(button)) {
             v = inflater.inflate(R.layout.volume_add, parent, false);
+        //----------------------rk code---------------------------
+        } else if (EBOOK_REFRESH.equals(button)) {
+            v = inflater.inflate(R.layout.ebook_refresh, parent, false);
+        } else if (EBOOK_SWITCH_MODE.equals(button)) {
+            v = inflater.inflate(R.layout.ebook_switch_mode, parent, false);
+        } else if (EBOOK_MENU.equals(button)) {
+            v = inflater.inflate(R.layout.ebook_menu, parent, false);
+        //--------------------------------------------------------
         } else if (VOLUME_SUB.equals(button)) {
             v = inflater.inflate(R.layout.volume_sub, parent, false);
         } else if (button.startsWith(KEY)) {

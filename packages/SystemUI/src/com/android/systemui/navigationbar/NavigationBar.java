@@ -75,8 +75,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.os.SystemClock;
 import android.os.SystemProperties;
+import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -178,6 +178,20 @@ import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
+//----------------------rk code---------------------------
+import android.app.ActivityManager;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.os.EbookManager;
+import android.os.Message;
+import android.widget.Toast;
+import com.android.systemui.statusbar.phone.EbookDialog;
+import com.android.systemui.statusbar.phone.EbookSettingsProvider;
+import com.android.systemui.util.Utils;
+import java.util.List;
+//--------------------------------------------------------
+
+
 /**
  * Contains logic for a navigation bar view.
  */
@@ -274,6 +288,34 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     public int mDisplayId;
     private boolean mIsOnDefaultDisplay;
     public boolean mHomeBlockedThisTouch;
+
+    //----------------------rk code---------------------------
+    private EbookDialog mEbookDialog;
+    private ActivityManager mActivityManager;
+    private static EbookManager mEbookManager;
+    private String mPreMode = null;
+    public static boolean mIsShowEbookDialog = false;
+
+    public static final String[] BLACK_EBOOK_CONFIG_APP = new String[] {
+            "com.android.systemui",
+            "com.android.permissioncontroller",
+            "com.android.launcher3",
+            "com.rockchip.notedemo",
+            "android.rk.RockVideoPlayer",
+    };
+
+    private Handler popupHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case 0:
+                    showEbookDialog();
+                    break;
+            }
+        }
+
+    };
+    //--------------------------------------------------------
 
     /**
      * When user is QuickSwitching between apps of different orientations, we'll draw a fake
@@ -590,6 +632,11 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         mContext = context;
         mSavedState = savedState;
         mWindowManager = windowManager;
+        //----------------------rk code---------------------------
+        if (mEbookManager == null && Utils.isEbookProduct()){
+            mEbookManager = (EbookManager)getContext().getSystemService(Context.EBOOK_SERVICE);
+        }
+        //--------------------------------------------------------
         mAccessibilityManager = accessibilityManager;
         mDeviceProvisionedController = deviceProvisionedController;
         mStatusBarStateController = statusBarStateController;
@@ -1317,6 +1364,28 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         }
         // Note, this needs to be set after even if we're setting the listener to null
         backButton.setLongClickable(mScreenPinningActive);
+
+        //----------------------rk code---------------------------
+        ButtonDispatcher ebookRefreshButton = mView.getEbookRefreshButton();
+        ButtonDispatcher ebookSwitchModeButton = mView.getEbookSwitchModeButton();
+        ButtonDispatcher ebookMenuButton = mView.getEbookMenuButton();
+        if (Utils.isEbookProduct()) {
+            ebookRefreshButton.setLongClickable(true);
+            ebookRefreshButton.setOnClickListener(this:: onEbookRefreshClick);
+            ebookRefreshButton.setOnTouchListener(this:: onEbookRefreshTouch);
+            ebookRefreshButton.setVisibility(View.VISIBLE);
+            ebookSwitchModeButton.setLongClickable(true);
+            ebookSwitchModeButton.setOnClickListener(this:: onEbookSwitchModeClick);
+            ebookSwitchModeButton.setVisibility(View.VISIBLE);
+            ebookMenuButton.setLongClickable(true);
+            ebookMenuButton.setOnClickListener(this:: onEbookMenuClick);
+            ebookMenuButton.setVisibility(View.VISIBLE);
+        } else{
+            ebookRefreshButton.setVisibility(View.GONE);
+            ebookSwitchModeButton.setVisibility(View.GONE);
+            ebookMenuButton.setVisibility(View.GONE);
+        }
+        //--------------------------------------------------------
         recentsButton.setLongClickable(mScreenPinningActive);
     }
 
@@ -1372,6 +1441,90 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         updateScreenPinningGestures();
     }
 
+    //----------------------rk code---------------------------
+    private void onEbookRefreshRepaintEverything(){
+        if (null != mEbookManager) {
+            mEbookManager.sendOneFullFrame();
+            mView.postInvalidate();
+        }
+    }
+
+    private boolean onEbookRefreshTouch(View v, MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_UP) {
+            onEbookRefreshRepaintEverything();
+        }
+        return false;
+    }
+
+    private void onEbookRefreshClick(View v) {
+        onEbookRefreshRepaintEverything();
+    }
+
+    private void onEbookSwitchModeClick(View v) {
+        if(mEbookManager != null){
+            String curMode = mEbookManager.getMode();
+            if(!EbookManager.EbookMode.EPD_A2_DITHER.equals(curMode)){
+                mPreMode = curMode;
+                mEbookManager.setMode(EbookManager.EbookMode.EPD_A2_DITHER);
+            } else if(mPreMode != null){
+                mEbookManager.setMode(mPreMode);
+            }
+        }
+    }
+
+    private void onEbookMenuClick(View v) {
+        Log.d(TAG, "onEbookMenuClick mContext: " + mContext);
+        try {
+            String topPackageName = EbookSettingsProvider.packageName;
+            boolean queryTopActivityName = false;
+            if (queryTopActivityName) {
+                if (null == mActivityManager) {
+                    mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+                }
+                final List<ActivityManager.RunningTaskInfo> list = mActivityManager.getRunningTasks(2);
+                if (null != list && list.size() > 0) {
+                    topPackageName = list.get(0).topActivity.getPackageName();
+                }
+            }
+            Log.i(TAG, "onEbookMenuClick name: " + topPackageName);
+            for (String temp: BLACK_EBOOK_CONFIG_APP) {
+                if (temp.equals(topPackageName)) {
+                    Toast.makeText(mContext, R.string.ebook_dialog_not_allow, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        popupHandler.sendEmptyMessageDelayed(0, 100);
+    }
+
+    private void showEbookDialog(){
+        if(!mIsShowEbookDialog) {
+            mEbookDialog = new EbookDialog(mContext);
+            mEbookDialog.getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG));
+            mEbookDialog.setCanceledOnTouchOutside(true);
+            mEbookDialog.show();
+            mEbookDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    mIsShowEbookDialog = false;
+                    Log.d(TAG, "onCancel: ");
+                }
+            });
+        } else {
+            Log.d(TAG, "isShowEbookDialog: " + mIsShowEbookDialog);
+        }
+    }
+
+    private void dismissEbookDialog() {
+        if (null != mEbookDialog && mEbookDialog.isShowing()) {
+            mEbookDialog.dismissAllDialog();
+            mEbookDialog = null;
+        }
+    }
+    //--------------------------------------------------------
+
     @VisibleForTesting
     boolean onHomeTouch(View v, MotionEvent event) {
         if (mHomeBlockedThisTouch && event.getActionMasked() != MotionEvent.ACTION_DOWN) {
@@ -1383,6 +1536,9 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
         final Optional<CentralSurfaces> centralSurfacesOptional = mCentralSurfacesOptionalLazy.get();
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                //----------------------rk code---------------------------
+                dismissEbookDialog();
+                //--------------------------------------------------------
                 mHomeBlockedThisTouch = false;
                 if (mTelecomManagerOptional.isPresent()
                         && mTelecomManagerOptional.get().isRinging()) {
@@ -1449,6 +1605,9 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     private boolean onRecentsTouch(View v, MotionEvent event) {
         int action = event.getAction() & MotionEvent.ACTION_MASK;
         if (action == MotionEvent.ACTION_DOWN) {
+            //----------------------rk code---------------------------
+            dismissEbookDialog();
+            //--------------------------------------------------------
             mCommandQueue.preloadRecentApps();
         } else if (action == MotionEvent.ACTION_CANCEL) {
             mCommandQueue.cancelPreloadRecentApps();

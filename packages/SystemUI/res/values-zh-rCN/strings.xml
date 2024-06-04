@@ -1190,4 +1190,18 @@
     <string name="privacy_dialog_recent_app_usage_1" msgid="2551340497722370109">"“<xliff:g id="APP_NAME">%1$s</xliff:g>”最近使用过（<xliff:g id="ATTRIBUTION_LABEL">%2$s</xliff:g>）"</string>
     <string name="privacy_dialog_active_app_usage_2" msgid="2770926061339921767">"“<xliff:g id="APP_NAME">%1$s</xliff:g>”正在使用（<xliff:g id="ATTRIBUTION_LABEL">%2$s</xliff:g> • <xliff:g id="PROXY_LABEL">%3$s</xliff:g>）"</string>
     <string name="privacy_dialog_recent_app_usage_2" msgid="2874689735085367167">"“<xliff:g id="APP_NAME">%1$s</xliff:g>”最近使用过（<xliff:g id="ATTRIBUTION_LABEL">%2$s</xliff:g> • <xliff:g id="PROXY_LABEL">%3$s</xliff:g>）"</string>
+
+    <!--     rk code begin     -->
+    <string name="ebook_animation_setting">动画设置</string>
+    <string name="ebook_refresh_setting">刷新设置</string>
+    <string name="ebook_refresh_mode">刷新模式</string>
+    <string name="ebook_common_mode">普通</string>
+    <string name="ebook_auto_mode">auto</string>
+    <string name="ebook_a2_mode">A2</string>
+    <string name="ebook_a2_dither_mode">A2 Dither</string>
+    <string name="ebook_du_mode">DU</string>
+    <string name="ebook_du_4_mode">DU4</string>
+    <string name="ebook_refresh_frequency">全刷频率</string>
+    <string name="ebook_dialog_not_allow">"当前界面不允许进行配置"</string>
+    <!--     rk code begin     -->
 </resources>

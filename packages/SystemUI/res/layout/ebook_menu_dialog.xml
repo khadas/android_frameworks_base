@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="400dp"
+    android:layout_height="300dp"
+    android:layout_gravity="center"
+    android:clickable="true">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/ebook_dialog_refresh_layout"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="20dp">
+        <TextView
+            android:background="#ffffff"
+            android:id="@+id/ebook_dialog_refresh_text"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:text="@string/ebook_refresh_setting"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true" />
+        <Button
+            android:id="@+id/ebook_dialog_refresh_button"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:background="@drawable/ic_ebook_settings"
+            android:layout_toLeftOf="@+id/ebook_dialog_refresh_checkbox"
+            android:layout_marginLeft="10dp"/>
+        <CheckBox
+            android:id="@+id/ebook_dialog_refresh_checkbox"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentRight="true"/>
+    </RelativeLayout>
+
+</RelativeLayout>

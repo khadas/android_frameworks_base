@@ -123,6 +123,11 @@ public class NavigationBarView extends FrameLayout {
     private KeyButtonDrawable mVolumeAddIcon;
     private KeyButtonDrawable mVolumeSubIcon;
     private KeyButtonDrawable mScreenshotIcon;
+    //----------------------rk code---------------------------
+    private KeyButtonDrawable mEbookRefreshIcon;
+    private KeyButtonDrawable mEbookSwitchModeIcon;
+    private KeyButtonDrawable mEbookMenuIcon;
+    //--------------------------------------------------------
     private Context mLightContext;
     private int mLightIconColor;
     private int mDarkIconColor;
@@ -336,6 +341,11 @@ public class NavigationBarView extends FrameLayout {
         mButtonDispatchers.put(R.id.menu_container, mContextualButtonGroup);
         mButtonDispatchers.put(R.id.screenshot, new ButtonDispatcher(R.id.screenshot));
         mButtonDispatchers.put(R.id.volume_add, new ButtonDispatcher(R.id.volume_add));
+        //----------------------rk code---------------------------
+        mButtonDispatchers.put(R.id.ebook_refresh, new ButtonDispatcher(R.id.ebook_refresh));
+        mButtonDispatchers.put(R.id.ebook_switch_mode, new ButtonDispatcher(R.id.ebook_switch_mode));
+        mButtonDispatchers.put(R.id.ebook_menu, new ButtonDispatcher(R.id.ebook_menu));
+        //--------------------------------------------------------
         mButtonDispatchers.put(R.id.volume_sub, new ButtonDispatcher(R.id.volume_sub));
         mDeadZone = new DeadZone(this);
     }
@@ -451,6 +461,20 @@ public class NavigationBarView extends FrameLayout {
         return mButtonDispatchers.get(R.id.volume_add);
     }
 
+    //----------------------rk code---------------------------
+    public ButtonDispatcher getEbookRefreshButton() {
+        return mButtonDispatchers.get(R.id.ebook_refresh);
+    }
+
+    public ButtonDispatcher getEbookSwitchModeButton() {
+        return mButtonDispatchers.get(R.id.ebook_switch_mode);
+    }
+
+    public ButtonDispatcher getEbookMenuButton() {
+        return mButtonDispatchers.get(R.id.ebook_menu);
+    }
+    //--------------------------------------------------------
+
     public ButtonDispatcher getVolumeSubButton() {
         return mButtonDispatchers.get(R.id.volume_sub);
     }
@@ -500,6 +524,11 @@ public class NavigationBarView extends FrameLayout {
             mBackIcon = getBackDrawable();
         }
 
+        //----------------------rk code---------------------------
+        mEbookRefreshIcon = getDrawable(R.drawable.ic_sysbar_ebook_refresh_button);
+        mEbookSwitchModeIcon = getDrawable(R.drawable.ic_sysbar_ebook_switch_mode_button);
+        mEbookMenuIcon = getDrawable(R.drawable.ic_sysbar_ebook_menu_button);
+        //--------------------------------------------------------
         mVolumeAddIcon = getDrawable(R.drawable.ic_sysbar_volume_add_button);
         mVolumeSubIcon = getDrawable(R.drawable.ic_sysbar_volume_sub_button);
         mScreenshotIcon = getDrawable(R.drawable.ic_sysbar_capture_button);
@@ -647,6 +676,11 @@ public class NavigationBarView extends FrameLayout {
         }
         getHomeButton().setImageDrawable(homeIcon);
         getBackButton().setImageDrawable(backIcon);
+        //----------------------rk code---------------------------
+        getEbookRefreshButton().setImageDrawable(mEbookRefreshIcon);
+        getEbookSwitchModeButton().setImageDrawable(mEbookSwitchModeIcon);
+        getEbookMenuButton().setImageDrawable(mEbookMenuIcon);
+        //--------------------------------------------------------
         getVolumeAddButton().setImageDrawable(mVolumeAddIcon);
         getVolumeSubButton().setImageDrawable(mVolumeSubIcon);
         getScreenshotButton().setImageDrawable(mScreenshotIcon);

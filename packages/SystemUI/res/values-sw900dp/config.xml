@@ -19,6 +19,6 @@
 <resources>
 
     <!-- Nav bar button default ordering/layout -->
-    <string name="config_navBarLayout" translatable="false">back,home,left;space;right,recent</string>
+    <string name="config_navBarLayout" translatable="false">left;volume_sub,back,home,recent,volume_add,ebook_refresh,ebook_switch_mode,ebook_menu,screenshot;right</string>
 
 </resources>

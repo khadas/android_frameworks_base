@@ -2691,6 +2691,24 @@
     <string name="controls_menu_add">Add controls</string>
     <!-- Controls menu, edit [CHAR_LIMIT=30] -->
     <string name="controls_menu_edit">Edit controls</string>
+
+    <!--     rk code begin     -->
+    <string name="ebook_accessibility_refresh">Refresh</string>
+    <string name="ebook_accessibility_switch_mode">Switch mode</string>
+    <string name="ebook_accessibility_menu">Ebook menu</string>
+    <string name="ebook_animation_setting">Animation Setting</string>
+    <string name="ebook_refresh_setting">Refresh Setting</string>
+    <string name="ebook_refresh_mode">Refresh Mode</string>
+    <string name="ebook_common_mode">Common</string>
+    <string name="ebook_auto_mode">Auto</string>
+    <string name="ebook_a2_mode">A2</string>
+    <string name="ebook_a2_dither_mode">A2 Dither</string>
+    <string name="ebook_du_mode">DU</string>
+    <string name="ebook_du_4_mode">DU4</string>
+    <string name="ebook_refresh_frequency">Refresh Frequency</string>
+    <string name="ebook_dialog_not_allow">Not allow to start config in current page</string>
+    <!--     rk code end     -->
+
     <!-- Controls menu, add another app [CHAR LIMIT=30] -->
     <string name="controls_menu_add_another_app">Add app</string>
     <!-- Controls menu, remove app [CHAR_LIMIT=30] -->

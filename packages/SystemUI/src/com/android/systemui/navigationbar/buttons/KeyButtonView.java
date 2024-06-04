@@ -62,6 +62,10 @@ import com.android.systemui.R;
 import com.android.systemui.recents.OverviewProxyService;
 import com.android.systemui.shared.system.QuickStepContract;
 
+//----------------------rk code---------------------------
+import com.android.systemui.util.Utils;
+//--------------------------------------------------------
+
 public class KeyButtonView extends ImageView implements ButtonInterface {
     private static final String TAG = KeyButtonView.class.getSimpleName();
 
@@ -175,7 +179,11 @@ public class KeyButtonView extends ImageView implements ButtonInterface {
         mRipple = new KeyButtonRipple(context, this, R.dimen.key_button_ripple_max_width);
         mOverviewProxyService = Dependency.get(OverviewProxyService.class);
         mInputManagerGlobal = manager;
-        setBackground(mRipple);
+        //----------------------rk code---------------------------
+        if (!Utils.isEbookProduct()) {
+            setBackground(mRipple);
+        }
+        //--------------------------------------------------------
         setWillNotDraw(false);
         forceHasOverlappingRendering(false);
     }
@@ -356,8 +364,12 @@ public class KeyButtonView extends ImageView implements ButtonInterface {
         if (mHasOvalBg) {
             mOvalBgPaint.setColor(keyButtonDrawable.getDrawableBackgroundColor());
         }
-        mRipple.setType(keyButtonDrawable.hasOvalBg() ? KeyButtonRipple.Type.OVAL
+        //----------------------rk code---------------------------
+        if (!Utils.isEbookProduct()) {
+            mRipple.setType(keyButtonDrawable.hasOvalBg() ? KeyButtonRipple.Type.OVAL 
                 : KeyButtonRipple.Type.ROUNDED_RECT);
+        }
+        //--------------------------------------------------------
     }
 
     public void playSoundEffect(int soundConstant) {
@@ -440,7 +452,11 @@ public class KeyButtonView extends ImageView implements ButtonInterface {
             sendEvent(KeyEvent.ACTION_UP, KeyEvent.FLAG_CANCELED);
         }
         setPressed(false);
-        mRipple.abortDelayedRipple();
+        //----------------------rk code---------------------------
+        if (!Utils.isEbookProduct()) {
+            mRipple.abortDelayedRipple();
+        }
+        //--------------------------------------------------------
         mGestureAborted = true;
     }
 
@@ -455,12 +471,20 @@ public class KeyButtonView extends ImageView implements ButtonInterface {
             // manually.
             invalidate();
         }
-        mRipple.setDarkIntensity(darkIntensity);
+        //----------------------rk code---------------------------
+        if (!Utils.isEbookProduct()) {
+            mRipple.setDarkIntensity(darkIntensity);
+        }
+        //--------------------------------------------------------
     }
 
     @Override
     public void setDelayTouchFeedback(boolean shouldDelay) {
-        mRipple.setDelayTouchFeedback(shouldDelay);
+        //----------------------rk code---------------------------
+        if (!Utils.isEbookProduct()) {
+            mRipple.setDelayTouchFeedback(shouldDelay);
+        }
+        //--------------------------------------------------------
     }
 
     @Override

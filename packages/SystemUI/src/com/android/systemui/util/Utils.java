@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.os.SystemProperties;
 import android.provider.Settings;
 import android.view.DisplayCutout;
 
@@ -126,4 +127,10 @@ public class Utils {
                 .getDimensionPixelSize(R.dimen.status_bar_header_height_keyguard);
         return Math.max(statusBarHeight, statusBarHeaderHeightKeyguard + waterfallInsetTop);
     }
+
+    //----------------------rk code---------------------------
+    public static boolean isEbookProduct() {
+        return "true".equals(SystemProperties.get("ro.rk.ebook_settings"));
+    }
+    //--------------------------------------------------------
 }
