@@ -256,6 +256,11 @@ import com.android.internal.util.Preconditions;
 import java.util.Map;
 import java.util.Objects;
 
+//----------------------rk code---------------------------
+import android.os.IEbookManager;
+import android.os.EbookManager;
+//--------------------------------------------------------
+
 /**
  * Manages all of the system services that can be returned by {@link Context#getSystemService}.
  * Used by {@link ContextImpl}.
@@ -580,6 +585,21 @@ public final class SystemServiceRegistry {
                                     com.android.internal.R.style.Theme_DeviceDefault_Light_Dialog)),
                     ctx.mMainThread.getHandler());
             }});
+
+        //----------------------rk code---------------------------
+        registerService(Context.EBOOK_SERVICE, EbookManager.class,
+                new CachedServiceFetcher<EbookManager>() {
+            @Override
+            public EbookManager createService(ContextImpl ctx) {
+                IBinder b = ServiceManager.getService(Context.EBOOK_SERVICE);
+                IEbookManager service = IEbookManager.Stub.asInterface(b);
+                if (service == null) {
+                    Log.wtf(TAG, "Failed to get Ebook manager service.");
+                }
+                return new EbookManager(ctx.getOuterContext(),
+                        service, ctx.mMainThread.getHandler());
+            }});
+        //--------------------------------------------------------
 
         registerService(Context.PEOPLE_SERVICE, PeopleManager.class,
                 new CachedServiceFetcher<PeopleManager>() {

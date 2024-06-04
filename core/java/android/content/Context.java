@@ -4059,6 +4059,7 @@ public abstract class Context {
     /** @hide */
     @StringDef(suffix = { "_SERVICE" }, value = {
             POWER_SERVICE,
+            EBOOK_SERVICE,
             //@hide: POWER_STATS_SERVICE,
             WINDOW_SERVICE,
             LAYOUT_INFLATER_SERVICE,
@@ -4225,6 +4226,8 @@ public abstract class Context {
      *  visual bounds of an area on screen.
      *  <dt> {@link #POWER_SERVICE} ("power")
      *  <dd> A {@link android.os.PowerManager} for controlling power
+     *  <dt> {@link #EBOOK_SERVICE} ("ebook")
+     *  <dd> A {@link android.os.EbookManager} for controlling ebook
      *  management.
      *  <dt> {@link #ALARM_SERVICE} ("alarm")
      *  <dd> A {@link android.app.AlarmManager} for receiving intents at the
@@ -4314,6 +4317,8 @@ public abstract class Context {
      * @see android.app.ActivityManager
      * @see #POWER_SERVICE
      * @see android.os.PowerManager
+     * @see #EBOOK_SERVICE
+     * @see android.os.EbookManager
      * @see #ALARM_SERVICE
      * @see android.app.AlarmManager
      * @see #NOTIFICATION_SERVICE
@@ -4376,6 +4381,7 @@ public abstract class Context {
      * Currently available classes are:
      * {@link android.view.WindowManager}, {@link android.view.LayoutInflater},
      * {@link android.app.ActivityManager}, {@link android.os.PowerManager},
+     * {@link android.os.EbookManager},
      * {@link android.app.AlarmManager}, {@link android.app.NotificationManager},
      * {@link android.app.KeyguardManager}, {@link android.location.LocationManager},
      * {@link android.app.SearchManager}, {@link android.os.Vibrator},
@@ -4435,6 +4441,12 @@ public abstract class Context {
      * you're running long tasks.
      */
     public static final String POWER_SERVICE = "power";
+
+    /**
+     * Use with {@link #getSystemService(String)} to retrieve a
+     * {@link android.os.EbookManager} for controlling ebook management,
+     */
+    public static final String EBOOK_SERVICE = "ebook";
 
     /**
      * Use with {@link #getSystemService(String)} to retrieve a

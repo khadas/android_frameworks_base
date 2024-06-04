@@ -10386,6 +10386,7 @@ package android.content {
     field public static final String DOMAIN_VERIFICATION_SERVICE = "domain_verification";
     field public static final String DOWNLOAD_SERVICE = "download";
     field public static final String DROPBOX_SERVICE = "dropbox";
+    field public static final String EBOOK_SERVICE = "ebook";
     field public static final String EUICC_SERVICE = "euicc";
     field public static final String FILE_INTEGRITY_SERVICE = "file_integrity";
     field public static final String FINGERPRINT_SERVICE = "fingerprint";
@@ -33177,6 +33178,37 @@ package android.os {
     method public long getTimeMillis();
     method public void writeToParcel(android.os.Parcel, int);
     field @NonNull public static final android.os.Parcelable.Creator<android.os.DropBoxManager.Entry> CREATOR;
+  }
+
+  public class EbookManager {
+    method @Nullable public String getMode();
+    method public int init();
+    method public void sendOneFullFrame();
+    method public void setMode(@Nullable String);
+  }
+
+  public class EbookManager.EbookMode {
+    field public static final String EPD_A2 = "12";
+    field public static final String EPD_A2_DITHER = "13";
+    field public static final String EPD_A2_ENTER = "16";
+    field public static final String EPD_AUTO = "0";
+    field public static final String EPD_AUTO_DU = "22";
+    field public static final String EPD_AUTO_DU4 = "23";
+    field public static final String EPD_DU = "14";
+    field public static final String EPD_DU4 = "15";
+    field public static final String EPD_FULL_GC16 = "2";
+    field public static final String EPD_FULL_GCC16 = "6";
+    field public static final String EPD_FULL_GL16 = "3";
+    field public static final String EPD_FULL_GLD16 = "5";
+    field public static final String EPD_FULL_GLR16 = "4";
+    field public static final String EPD_NULL = "-1";
+    field public static final String EPD_OVERLAY = "1";
+    field public static final String EPD_PART_GC16 = "7";
+    field public static final String EPD_PART_GCC16 = "11";
+    field public static final String EPD_PART_GL16 = "8";
+    field public static final String EPD_PART_GLD16 = "10";
+    field public static final String EPD_PART_GLR16 = "9";
+    field public static final String EPD_RESET = "17";
   }
 
   public class Environment {

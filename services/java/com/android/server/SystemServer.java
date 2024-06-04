@@ -247,6 +247,10 @@ import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 
+//----------------------rk code---------------------------
+import com.android.server.ebook.EbookService;
+//--------------------------------------------------------
+
 /**
  * Entry point to {@code system_server}.
  */
@@ -452,6 +456,11 @@ public final class SystemServer implements Dumpable {
     // maximum number of binder threads used for system_server
     // will be higher than the system default
     private static final int sMaxBinderThreads = 31;
+
+    //----------------------rk code---------------------------
+    private static final boolean RKEBOOK = "true".equals(
+        SystemProperties.get("ro.rk.ebook_settings"));
+    //--------------------------------------------------------
 
     /**
      * Default theme used by the system context. This is used to style system-provided dialogs, such
@@ -1725,6 +1734,13 @@ public final class SystemServer implements Dumpable {
             mSystemServiceManager.startService(LogcatManagerService.class);
             t.traceEnd();
 
+            //----------------------rk code---------------------------
+            if (RKEBOOK) {
+                t.traceBegin("StartEbookService");
+                ServiceManager.addService(Context.EBOOK_SERVICE,new EbookService(context));
+                t.traceEnd();
+            }
+            //--------------------------------------------------------
         } catch (Throwable e) {
             Slog.e("System", "******************************************");
             Slog.e("System", "************ Failure starting core service");
