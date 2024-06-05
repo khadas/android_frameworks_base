@@ -332,6 +332,51 @@ public class DefaultCrossProfileIntentFiltersUtils {
                     .addCategory(Intent.CATEGORY_DEFAULT)
                     .build();
 
+    /** Android setting can be performed by primary user. */
+    private static final DefaultCrossProfileIntentFilter SET_SETTINGS =
+            new DefaultCrossProfileIntentFilter.Builder(
+                    DefaultCrossProfileIntentFilter.Direction.TO_PARENT,
+                    /* flags= */0,
+                    /* letsPersonalDataIntoProfile= */ false)
+                   .addAction("android.settings.ACCESSIBILITY_SETTINGS")
+                   .addAction("android.settings.CAPTIONING_SETTINGS")
+                   .addAction("android.settings.DATE_SETTINGS")
+                   .addAction("android.settings.DEVICE_INFO_SETTINGS")
+                   .addAction("android.settings.DISPLAY_SETTINGS")
+                   .addAction("android.settings.LOCALE_SETTINGS")
+                   .addAction("android.settings.PRIVACY_SETTINGS")
+                   .addAction("android.settings.SETTINGS")
+                   .addAction("android.settings.WIRELESS_SETTINGS")
+                   .addAction("android.net.vpn.SETTINGS")
+                   .addAction("android.settings.VPN_SETTINGS")
+                   .addAction("android.settings.BATTERY_SAVER_SETTINGS")
+                   .addAction("android.settings.LICENSE")
+                   .addAction("android.settings.NOTIFICATION_SETTINGS")
+                   .addAction("android.settings.ZEN_MODE_SETTINGS")
+                   .addAction("com.android.settings.ACCESSIBILITY_COLOR_SPACE_SETTINGS")
+                   .addAction("com.android.settings.TTS_SETTINGS")
+                   .addAction("android.settings.INTERNAL_STORAGE_SETTINGS")
+                   .addAction("android.settings.USER_SETTINGS")
+                   .addAction("android.settings.MEMORY_CARD_SETTINGS")
+                   .addAction("android.settings.WIFI_IP_SETTINGS")
+                   .addAction("android.settings.WIFI_SETTINGS")
+                   .addAction("android.settings.SOUND_SETTINGS")
+                   .addAction("android.settings.ACTION_OTHER_SOUND_SETTINGS")
+                   .addAction("android.settings.DREAM_SETTINGS")
+                   .addAction("android.settings.ADD_ACCOUNT_SETTINGS")
+                   .addAction("android.settings.MANAGE_APPLICATIONS_SETTINGS")
+                   .addAction("android.settings.MANAGE_ALL_APPLICATIONS_SETTINGS")
+                   .addAction("android.settings.APPLICATION_SETTINGS")
+                   .addAction("android.app.action.SET_NEW_PASSWORD")
+                   .addAction("android.settings.ACCOUNT_SYNC_SETTINGS")
+                   .addAction("android.settings.LOCATION_SOURCE_SETTINGS")
+                   .addAction("android.settings.AIRPLANE_MODE_SETTINGS")
+                   .addAction("android.settings.APPLICATION_DEVELOPMENT_SETTINGS")
+                   .addAction("android.settings.SYNC_SETTINGS")
+                   .addCategory(Intent.CATEGORY_DEFAULT)
+                   .build();
+
+
     // Intents from parent to profile user
 
     /** ACTION_SEND can be forwarded to the managed profile on user's choice. */
@@ -366,6 +411,7 @@ public class DefaultCrossProfileIntentFiltersUtils {
                 EMERGENCY_CALL_DATA,
                 CALL_BUTTON,
                 SET_ALARM,
+                SET_SETTINGS,
                 MEDIA_CAPTURE,
                 RECOGNIZE_SPEECH,
                 ACTION_PICK_RAW,
