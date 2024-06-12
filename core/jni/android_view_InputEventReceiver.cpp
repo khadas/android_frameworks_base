@@ -24,6 +24,7 @@
 
 #include <android-base/stringprintf.h>
 #include <android_runtime/AndroidRuntime.h>
+#include <cutils/properties.h>
 #include <input/InputTransport.h>
 #include <log/log.h>
 #include <utils/Looper.h>
@@ -279,6 +280,9 @@ int NativeInputEventReceiver::handleEvent(int receiveFd, int events, void* data)
     if (events & ALOOPER_EVENT_INPUT) {
         JNIEnv* env = AndroidRuntime::getJNIEnv();
         status_t status = consumeEvents(env, false /*consumeBatches*/, -1, nullptr);
+        if (mBatchedInputEventPending && property_get_bool("vendor.media.c2.vdec.game_low_latency", false)) {
+            status = consumeEvents(env, true /*consumeBatches*/, -1, nullptr);
+        }
         mMessageQueue->raiseAndClearException(env, "handleReceiveCallback");
         return status == OK || status == NO_MEMORY ? KEEP_CALLBACK : REMOVE_CALLBACK;
     }
