@@ -2201,11 +2201,8 @@ public class AudioService extends IAudioService.Stub
                     int userID = UserHandle.getUserId(uid);
                     if (userID != UserHandle.USER_SYSTEM) {
                         mCurrentUserId = userID;
-                    }else {
+                    } else {
                         mCurrentUserId = UserHandle.MIN_SECONDARY_USER_ID;
-                        if (DEBUG_VOL) {
-                                Log.d(TAG, "--getCurrentUserStreamSates called from U0,force mCurrentUserId to Driver--");
-                        }
                     }
                     if (DEBUG_VOL) {
                         Log.d(TAG, "get uid:" + uid + " userID:" + userID + " currentUserId: " + mCurrentUserId);
@@ -5929,6 +5926,14 @@ public class AudioService extends IAudioService.Stub
                     + ", uid=" + Binder.getCallingUid());
             return;
         }
+
+        //-----rk-code-----//
+        if (isPlatformAutomotive()) {
+            getCurrentUserStreamSates(uid);
+            String userIdDevice = "CurrentUserID="  + Integer.toString(mCurrentUserId);
+            AudioSystem.setParameters(userIdDevice);
+        }
+        //----------------//
 
         SetModeDeathHandler currentModeHandler = null;
         synchronized (mDeviceBroker.mSetModeLock) {
