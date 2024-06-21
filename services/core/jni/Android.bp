@@ -108,6 +108,7 @@ cc_library_static {
         "com_android_server_audio_RkAudioSetting.cpp",
         //-----rk-code-----
         "com_android_server_wm_DisplayAnimation.cpp",
+        "com_android_server_RkHandWriteManagementService.cpp",
         //-----------------
         "onload.cpp",
         ":lib_cachedAppOptimizer_native",
@@ -200,6 +201,7 @@ cc_defaults {
         "libpsi",
         "libdataloader",
         "libincfs",
+        "libjnigraphics",
         "android.hardware.audio.common@2.0",
         "android.media.audio.common.types-V1-ndk",
         "android.hardware.broadcastradio@1.0",

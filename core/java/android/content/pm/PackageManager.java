@@ -3086,7 +3086,15 @@ public abstract class PackageManager {
      */
     @SdkConstant(SdkConstantType.FEATURE)
     public static final String FEATURE_ROCKCHIP_AUDIO = "rockchip.software.audio";
-//-------------- 
+
+    /**
+     * Feature for {@link #getSystemAvailableFeatures} and
+     * {@link #hasSystemFeature}: The device includes rockchip rkhandwrite.
+     * @hide
+     */
+    @SdkConstant(SdkConstantType.FEATURE)
+    public static final String FEATURE_ROCKCHIP_RKHANDWRITE = "rockchip.software.rkhandwrite";
+//--------------
     /**
      * Feature for {@link #getSystemAvailableFeatures} and
      * {@link #hasSystemFeature}: The device can record audio via a

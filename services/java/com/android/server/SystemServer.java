@@ -2163,7 +2163,17 @@ public final class SystemServer implements Dumpable {
                     Slog.e(TAG, "Failure starting RkAudioSettingManager Service", e);
                 }
             }
-	    //-------------- 
+            if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_ROCKCHIP_RKHANDWRITE)) {
+                Slog.i(TAG, "addService rkhandwrite_management.");
+                try {
+                    ServiceManager.addService("rkhandwrite_management",
+                            new RkHandWriteManagementService(context));
+                } catch (Throwable e) {
+                    Slog.e(TAG, "Failure starting RkHandWriteManagement Service", e);
+                }
+            }
+	    //--------------
+
             t.traceBegin("StartNotificationManager");
             mSystemServiceManager.startService(NotificationManagerService.class);
             SystemNotificationChannels.removeDeprecated(context);
