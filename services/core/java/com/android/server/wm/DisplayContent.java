@@ -171,6 +171,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ActivityInfo.ScreenOrientation;
+/* ------rk-code------ */
+import android.content.pm.PackageManager;
+/* ------------------- */
 import android.content.res.CompatibilityInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -265,6 +268,9 @@ import com.android.server.wm.utils.WmDisplayCutout;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+/* ------rk-code------ */
+import java.lang.reflect.Constructor;
+/* ------------------- */
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -1175,6 +1181,19 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
         mTapDetector = new TaskTapPointerEventListener(mWmService, this);
         registerPointerEventListener(mTapDetector);
         registerPointerEventListener(mWmService.mMousePositionTracker);
+        /* ------rk-code------ */
+        try {
+            if(mWmService.mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+                Class<?> clazz = Class.forName("com.android.server.wm.FingersDisplayAnimationEventListener");
+                Constructor<?> initMethod = clazz.getConstructor(WindowManagerService.class,
+                    DisplayContent.class, RootWindowContainer.class);
+                Object fingersDisplayAnimationEventListener = initMethod.newInstance(mWmService, this, mRootWindowContainer);
+                registerPointerEventListener((PointerEventListener)fingersDisplayAnimationEventListener);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        /* ------------------- */
         if (mWmService.mAtmService.getRecentTasks() != null) {
             registerPointerEventListener(
                     mWmService.mAtmService.getRecentTasks().getInputListener());
