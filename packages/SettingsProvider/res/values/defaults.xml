@@ -129,7 +129,7 @@
     <integer name="def_multi_press_timeout_millis">300</integer>
 
     <!-- Default for Settings.Secure.SHOW_IME_WITH_HARD_KEYBOARD -->
-    <bool name="def_show_ime_with_hard_keyboard">false</bool>
+    <bool name="def_show_ime_with_hard_keyboard">true</bool>
 
     <!-- Default for Settings.System.POINTER_SPEED -->
     <integer name="def_pointer_speed">0</integer>
