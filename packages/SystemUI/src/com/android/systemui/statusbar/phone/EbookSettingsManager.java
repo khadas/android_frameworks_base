@@ -59,6 +59,13 @@ public class EbookSettingsManager {
         mEbookManager.sendOneFullFrame();
     }
 
+    public void setFullModeCnt(int cnt) {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        mEbookManager.setFullModeCnt(cnt);
+    }
+
     public int[] convertLevelToArray(int contrastLevel) {
         int contrast[] = new int[16];
         int mWhiteCount;

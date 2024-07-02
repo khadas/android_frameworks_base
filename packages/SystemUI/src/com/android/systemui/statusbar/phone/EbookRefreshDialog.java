@@ -231,7 +231,7 @@ public class EbookRefreshDialog extends EbookBaseDialog implements View.OnClickL
         if(id == R.id.ebook_refresh_dialog_frequency_seekbar) {
             Log.d(TAG, "ebook_refresh_dialog_frequency_seekbar is onClick ");
             //设置全刷频率
-            mEbookSettingsManager.setProperty(EbookSettingsProvider.EBOOK_REFRESH_FREQUENCY, "" + EbookSettingsProvider.refreshFrequency);
+            mEbookSettingsManager.setFullModeCnt(EbookSettingsProvider.refreshFrequency);
             //把全刷频率更新到数据库
             Log.d(TAG, "packageName: " + EbookSettingsProvider.packageName);
             ContentValues values = new ContentValues();

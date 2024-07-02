@@ -33181,9 +33181,11 @@ package android.os {
   }
 
   public class EbookManager {
+    method public int getFullModeCnt();
     method @Nullable public String getMode();
     method public int init();
     method public void sendOneFullFrame();
+    method public void setFullModeCnt(int);
     method public void setMode(@Nullable String);
   }
 

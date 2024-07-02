@@ -103,6 +103,21 @@ public class EbookManager {
         return mode;
     }
 
+    public void setFullModeCnt(int cnt) {
+        try {
+            Log.i(TAG, "setFullModeCnt " + cnt);
+            mService.setProperty("persist.ebook.fullmode_cnt", String.valueOf(cnt));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getFullModeCnt() {
+        int cnt = SystemProperties.getInt("persist.ebook.fullmode_cnt", 0);
+        Log.i(TAG, "getFullModeCnt value: " + cnt);
+        return cnt;
+    }
+
     public int init() {
         try {
             Log.i(TAG, "init()");

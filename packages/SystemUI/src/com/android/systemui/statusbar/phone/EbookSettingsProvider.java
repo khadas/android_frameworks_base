@@ -37,7 +37,6 @@ public class EbookSettingsProvider extends ContentProvider {
     public static final int EBOOKSETTINGS = 0;
     public static final int EBOOKSETTINGS_UPDATE = 1;
     public static String packageName = "";
-    public static final String EBOOK_REFRESH_FREQUENCY = "persist.vendor.fullmode_cnt";
     public static final String AUTHORITY = "com.android.systemui.ebook";
     public static final String EBOOKSETTINGS_TABLE = "EbookSettings";
     public static final Uri URI_EBOOK_SETTINGS = Uri.parse("content://com.android.systemui.ebook/ebooksettings");
@@ -114,11 +113,10 @@ public class EbookSettingsProvider extends ContentProvider {
                     //刷新设置开启下才设置
                     if(isRefreshSetting && mEbookSettingsManager != null) {
                         mEbookSettingsManager.setEbookMode(String.valueOf(refreshMode));
-                        mEbookSettingsManager.setProperty(EBOOK_REFRESH_FREQUENCY, String.valueOf(refreshFrequency));
+                        mEbookSettingsManager.setFullModeCnt(refreshFrequency);
                     } else {
                         mEbookSettingsManager.setEbookMode(String.valueOf(EbookManager.EbookMode.EPD_PART_GLR16));
-                        mEbookSettingsManager.setProperty(EbookSettingsProvider.EBOOK_REFRESH_FREQUENCY,
-                                String.valueOf(EbookSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY));
+                        mEbookSettingsManager.setFullModeCnt(EbookSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY);
                     }
                     break;
                 } else {

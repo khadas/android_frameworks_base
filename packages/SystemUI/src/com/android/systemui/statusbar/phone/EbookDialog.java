@@ -100,12 +100,10 @@ public class EbookDialog extends EbookBaseDialog implements View.OnClickListener
                     new String[]{EbookSettingsProvider.packageName});
             if(EbookSettingsProvider.isRefreshSetting) {
                 mEbookSettingsManager.setEbookMode(String.valueOf(EbookSettingsProvider.refreshMode));
-                mEbookSettingsManager.setProperty(EbookSettingsProvider.EBOOK_REFRESH_FREQUENCY,
-                        String.valueOf(EbookSettingsProvider.refreshFrequency));
+                mEbookSettingsManager.setFullModeCnt(EbookSettingsProvider.refreshFrequency);
             } else {
                 mEbookSettingsManager.setEbookMode(String.valueOf(EbookManager.EbookMode.EPD_PART_GLR16));
-                mEbookSettingsManager.setProperty(EbookSettingsProvider.EBOOK_REFRESH_FREQUENCY,
-                        String.valueOf(EbookSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY));
+                mEbookSettingsManager.setFullModeCnt(EbookSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY);
             }
             mRefreshButton.setEnabled(isChecked);
         }
