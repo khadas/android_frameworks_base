@@ -1451,7 +1451,7 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
 
     private boolean onEbookRefreshTouch(View v, MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_UP) {
-            onEbookRefreshRepaintEverything();
+            //onEbookRefreshRepaintEverything();
         }
         return false;
     }
