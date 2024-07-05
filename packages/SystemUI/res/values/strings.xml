@@ -2707,6 +2707,12 @@
     <string name="ebook_du_4_mode">DU4</string>
     <string name="ebook_refresh_frequency">Refresh Frequency</string>
     <string name="ebook_dialog_not_allow">Not allow to start config in current page</string>
+    <string name="ebook_color_cfg">Color Setting</string>
+    <string name="ebook_color_dep">color depth</string>
+    <string name="ebook_contrast">contrast</string>
+    <string name="ebook_saturation">saturation</string>
+    <string name="ebook_brightness">brightness</string>
+    <string name="ebook_reset">reset</string>
     <!--     rk code end     -->
 
     <!-- Controls menu, add another app [CHAR LIMIT=30] -->

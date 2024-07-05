@@ -1203,5 +1203,11 @@
     <string name="ebook_du_4_mode">DU4</string>
     <string name="ebook_refresh_frequency">全刷频率</string>
     <string name="ebook_dialog_not_allow">"当前界面不允许进行配置"</string>
+    <string name="ebook_color_cfg">"色彩设置"</string>
+    <string name="ebook_color_dep">"色位深度"</string>
+    <string name="ebook_contrast">"对比度"</string>
+    <string name="ebook_saturation">"饱和度"</string>
+    <string name="ebook_brightness">"亮度"</string>
+    <string name="ebook_reset">"重置"</string>
     <!--     rk code begin     -->
 </resources>

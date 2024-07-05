@@ -34,7 +34,9 @@ public class EbookDialog extends EbookBaseDialog implements View.OnClickListener
     private Context mContext;
     private Button mRefreshButton;
     private CheckBox mRefreshCheckbox;
+    private Button mColorCfgBtn;
     private EbookRefreshDialog mEbookRefreshDialog;
+    private EbookColorCfgDialog mEbookColorCfgDialog;
     private EbookSettingsManager mEbookSettingsManager;
 
     public EbookDialog(Context context) {
@@ -56,6 +58,9 @@ public class EbookDialog extends EbookBaseDialog implements View.OnClickListener
         mRefreshButton = (Button) findViewById(R.id.ebook_dialog_refresh_button);
         mRefreshButton.setOnClickListener(this);
         mRefreshButton.setEnabled(mRefreshCheckbox.isChecked());
+        //color cfg
+        mColorCfgBtn = (Button) findViewById(R.id.ebook_dialog_color_button);
+        mColorCfgBtn.setOnClickListener(this);
     }
 
     @Override
@@ -68,6 +73,13 @@ public class EbookDialog extends EbookBaseDialog implements View.OnClickListener
                 }
                 mEbookRefreshDialog = new EbookRefreshDialog(mContext, this);
                 mEbookRefreshDialog.show();
+            }
+        } else if (id == R.id.ebook_dialog_color_button) {
+            if (null == mEbookColorCfgDialog) {
+                mEbookColorCfgDialog = new EbookColorCfgDialog(mContext, this);
+            }
+            if (!mEbookColorCfgDialog.isShowing()) {
+                mEbookColorCfgDialog.show();
             }
         }
     }
@@ -113,6 +125,10 @@ public class EbookDialog extends EbookBaseDialog implements View.OnClickListener
         if (null != mEbookRefreshDialog && mEbookRefreshDialog.isShowing()) {
             mEbookRefreshDialog.cancel();
             mEbookRefreshDialog = null;
+        }
+        if (null != mEbookColorCfgDialog && mEbookColorCfgDialog.isShowing()) {
+            mEbookColorCfgDialog.cancel();
+            mEbookColorCfgDialog = null;
         }
         cancel();
     }

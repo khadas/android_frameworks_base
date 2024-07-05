@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Copyright 2024 Rockchip Electronics S.LSI Co. LTD
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="400dp"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:minHeight="180dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/ebook_ccd_title_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:text="@string/ebook_color_cfg"
+            android:textColor="@android:color/black"
+            android:textSize="18sp" />
+
+        <!-- color dep -->
+        <TextView
+            android:id="@+id/ebook_ccd_color_dep_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ebook_ccd_title_text"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp"
+            android:text="@string/ebook_color_dep"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/ebook_ccd_color_dep_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/ebook_ccd_color_dep_title"
+            android:layout_alignParentRight="true"
+            android:ems="3"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <SeekBar
+            android:id="@+id/ebook_ccd_color_dep_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/ebook_ccd_color_dep_title"
+            android:layout_alignBottom="@+id/ebook_ccd_color_dep_title"
+            android:layout_toLeftOf="@+id/ebook_ccd_color_dep_value"
+            android:layout_toRightOf="@+id/ebook_ccd_color_dep_title"
+            android:max="128" />
+
+        <!-- contrast -->
+        <TextView
+            android:id="@+id/ebook_ccd_contrast_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ebook_ccd_color_dep_title"
+            android:layout_alignRight="@+id/ebook_ccd_color_dep_title"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp"
+            android:text="@string/ebook_contrast"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/ebook_ccd_contrast_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/ebook_ccd_contrast_title"
+            android:layout_alignParentRight="true"
+            android:ems="3"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <SeekBar
+            android:id="@+id/ebook_ccd_contrast_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/ebook_ccd_contrast_title"
+            android:layout_alignBottom="@+id/ebook_ccd_contrast_title"
+            android:layout_toLeftOf="@+id/ebook_ccd_contrast_value"
+            android:layout_toRightOf="@+id/ebook_ccd_contrast_title"
+            android:max="128" />
+
+        <!-- saturation -->
+        <TextView
+            android:id="@+id/ebook_ccd_saturation_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ebook_ccd_contrast_title"
+            android:layout_alignRight="@+id/ebook_ccd_color_dep_title"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp"
+            android:text="@string/ebook_saturation"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/ebook_ccd_saturation_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/ebook_ccd_saturation_title"
+            android:layout_alignParentRight="true"
+            android:ems="3"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <SeekBar
+            android:id="@+id/ebook_ccd_saturation_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/ebook_ccd_saturation_title"
+            android:layout_alignBottom="@+id/ebook_ccd_saturation_title"
+            android:layout_toLeftOf="@+id/ebook_ccd_saturation_value"
+            android:layout_toRightOf="@+id/ebook_ccd_saturation_title"
+            android:max="128" />
+
+        <!-- brightness -->
+        <TextView
+            android:id="@+id/ebook_ccd_brightness_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ebook_ccd_saturation_title"
+            android:layout_alignRight="@+id/ebook_ccd_color_dep_title"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp"
+            android:text="@string/ebook_brightness"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/ebook_ccd_brightness_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/ebook_ccd_brightness_title"
+            android:layout_alignParentRight="true"
+            android:ems="3"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <SeekBar
+            android:id="@+id/ebook_ccd_brightness_seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/ebook_ccd_brightness_title"
+            android:layout_alignBottom="@+id/ebook_ccd_brightness_title"
+            android:layout_toLeftOf="@+id/ebook_ccd_brightness_value"
+            android:layout_toRightOf="@+id/ebook_ccd_brightness_title"
+            android:max="128" />
+
+        <Button
+            android:id="@+id/ebook_ccd_reset_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/ebook_ccd_brightness_title"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:background="@null"
+            android:text="@string/ebook_reset"
+            android:textColor="#000000"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+</FrameLayout>

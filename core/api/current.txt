@@ -33181,12 +33181,20 @@ package android.os {
   }
 
   public class EbookManager {
+    method public int getBrightness();
+    method public int getColorDep();
+    method public int getContrast();
     method public int getFullModeCnt();
     method @Nullable public String getMode();
+    method public int getSaturation();
     method public int init();
     method public void sendOneFullFrame();
+    method public boolean setBrightness(int);
+    method public boolean setColorDep(int);
+    method public boolean setContrast(int);
     method public void setFullModeCnt(int);
     method public void setMode(@Nullable String);
+    method public boolean setSaturation(int);
   }
 
   public class EbookManager.EbookMode {

@@ -23,6 +23,11 @@ import android.content.Context;
 
 public class EbookSettingsManager {
     private static final String TAG = "EbookSettingsManager";
+
+    public static final int MIN_COLOR_CFG_RKCFA_VALUE = 0;
+    public static final int MAX_COLOR_CFG_RKCFA_VALUE = 128;
+    public static final int COLOR_CFG_RKCFA_INIT_VALUE = 64;
+
     private static EbookManager mEbookManager;
     private Context mContext;
     public EbookSettingsManager(Context context) {
@@ -64,6 +69,62 @@ public class EbookSettingsManager {
             mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
         }
         mEbookManager.setFullModeCnt(cnt);
+    }
+
+    public boolean setColorDep(int value) {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.setColorDep(value);
+    }
+
+    public int getColorDep() {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.getColorDep();
+    }
+
+    public boolean setContrast(int value) {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.setContrast(value);
+    }
+
+    public int getContrast() {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.getContrast();
+    }
+
+    public boolean setSaturation(int value) {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.setSaturation(value);
+    }
+
+    public int getSaturation() {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.getSaturation();
+    }
+
+    public boolean setBrightness(int value) {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.setBrightness(value);
+    }
+
+    public int getBrightness() {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.getBrightness();
     }
 
     public int[] convertLevelToArray(int contrastLevel) {

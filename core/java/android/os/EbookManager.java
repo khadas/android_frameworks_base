@@ -28,6 +28,9 @@ public class EbookManager {
     private static final String TAG = "EbookManager";
     private static final boolean DEBUG = true;
     private static int num =1;
+    private static final int MIN_COLOR_CFG_RKCFA_VALUE = 0;
+    private static final int MAX_COLOR_CFG_RKCFA_VALUE = 128;
+    private static final int DEFAULT_COLOR_CFG_RKCFA_VALUE = 64;
 
     public class EbookMode {
 
@@ -116,6 +119,94 @@ public class EbookManager {
         int cnt = SystemProperties.getInt("persist.ebook.fullmode_cnt", 0);
         Log.i(TAG, "getFullModeCnt value: " + cnt);
         return cnt;
+    }
+
+    public boolean setColorDep(int value) {
+        Log.i(TAG, "setColorDep " + value);
+        if (value < MIN_COLOR_CFG_RKCFA_VALUE || value > MAX_COLOR_CFG_RKCFA_VALUE) {
+            Log.e(TAG, "setColorDep value need in [" + MIN_COLOR_CFG_RKCFA_VALUE
+                + ", " + MAX_COLOR_CFG_RKCFA_VALUE + "]");
+            return false;
+        }
+        try {
+            mService.setProperty("persist.ebook.colordep", String.valueOf(value));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int getColorDep() {
+        int value = SystemProperties.getInt("persist.ebook.colordep", DEFAULT_COLOR_CFG_RKCFA_VALUE);
+        Log.i(TAG, "getColorDep value: " + value);
+        return value;
+    }
+
+    public boolean setContrast(int value) {
+        Log.i(TAG, "setContrast " + value);
+        if (value < MIN_COLOR_CFG_RKCFA_VALUE || value > MAX_COLOR_CFG_RKCFA_VALUE) {
+            Log.e(TAG, "setContrast value need in [" + MIN_COLOR_CFG_RKCFA_VALUE
+                + ", " + MAX_COLOR_CFG_RKCFA_VALUE + "]");
+            return false;
+        }
+        try {
+            mService.setProperty("persist.ebook.contgain", String.valueOf(value));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int getContrast() {
+        int value = SystemProperties.getInt("persist.ebook.contgain", DEFAULT_COLOR_CFG_RKCFA_VALUE);
+        Log.i(TAG, "getContrast value: " + value);
+        return value;
+    }
+
+    public boolean setSaturation(int value) {
+        Log.i(TAG, "setSaturation " + value);
+        if (value < MIN_COLOR_CFG_RKCFA_VALUE || value > MAX_COLOR_CFG_RKCFA_VALUE) {
+            Log.e(TAG, "setSaturation value need in [" + MIN_COLOR_CFG_RKCFA_VALUE
+                + ", " + MAX_COLOR_CFG_RKCFA_VALUE + "]");
+            return false;
+        }
+        try {
+            mService.setProperty("persist.ebook.satugain", String.valueOf(value));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int getSaturation() {
+        int value = SystemProperties.getInt("persist.ebook.satugain", DEFAULT_COLOR_CFG_RKCFA_VALUE);
+        Log.i(TAG, "getSaturation value: " + value);
+        return value;
+    }
+
+    public boolean setBrightness(int value) {
+        Log.i(TAG, "setBrightness " + value);
+        if (value < MIN_COLOR_CFG_RKCFA_VALUE || value > MAX_COLOR_CFG_RKCFA_VALUE) {
+            Log.e(TAG, "setBrightness value need in [" + MIN_COLOR_CFG_RKCFA_VALUE
+                + ", " + MAX_COLOR_CFG_RKCFA_VALUE + "]");
+            return false;
+        }
+        try {
+            mService.setProperty("persist.ebook.lumagain", String.valueOf(value));
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int getBrightness() {
+        int value = SystemProperties.getInt("persist.ebook.lumagain", DEFAULT_COLOR_CFG_RKCFA_VALUE);
+        Log.i(TAG, "getBrightness value: " + value);
+        return value;
     }
 
     public int init() {
