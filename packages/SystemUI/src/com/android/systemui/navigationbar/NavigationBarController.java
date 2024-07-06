@@ -361,6 +361,9 @@ public class NavigationBarController implements
         NavigationBar navBar = component.getNavigationBar();
         navBar.init();
         mNavigationBars.put(displayId, navBar);
+        //add to control NavigationBar
+        mDisplayId = displayId;
+        //add end
 
         navBar.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
@@ -378,6 +381,13 @@ public class NavigationBarController implements
             }
         });
     }
+
+    //add to control NavigationBar
+    private int mDisplayId;
+    public void removeNavigationBarView(){
+        removeNavigationBar(mDisplayId);
+    }
+    //add end
 
     void removeNavigationBar(int displayId) {
         NavigationBar navBar = mNavigationBars.get(displayId);
