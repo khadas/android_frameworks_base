@@ -3022,6 +3022,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             + keyguardOn() + " canceled=" + event.isCanceled());
         }
 
+        //add function key
+        if(keyCode == KeyEvent.KEYCODE_HOME){
+            if(SystemProperties.getInt("persist.sys.func.key.action", 3) != 3){
+                Intent intentkey = new Intent("com.customer.key");
+                intentkey.putExtra("code",keyCode);
+                mContext.sendBroadcast(intentkey);
+                return -1;
+            }
+        }
+        //add end
+
         if (mKeyCombinationManager.isKeyConsumed(event)) {
             return keyConsumed;
         }
