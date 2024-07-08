@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.systemui.statusbar.phone;
+package com.android.systemui.ebook;
 
 import android.content.Context;
 import android.os.SystemProperties;
@@ -27,6 +27,8 @@ public class EbookSettingsManager {
     public static final int MIN_COLOR_CFG_RKCFA_VALUE = 0;
     public static final int MAX_COLOR_CFG_RKCFA_VALUE = 128;
     public static final int COLOR_CFG_RKCFA_INIT_VALUE = 64;
+    public static final int DEFAULT_REFRESH_FREQUENCY = 0;
+    public static final int DEFAULT_REFRESH_MODE = EbookManager.EbookRefreshMode.EPD_PART_GLR16;
 
     private static EbookManager mEbookManager;
     private Context mContext;
@@ -43,18 +45,18 @@ public class EbookSettingsManager {
         SystemProperties.set(key, refrshFrequency);
     }
 
-    public void setEbookMode(String ebookMode) {
+    public void setRefreshMode(int mode) {
         if (mEbookManager == null){
             mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
         }
-        mEbookManager.setMode(ebookMode);
+        mEbookManager.setRefreshMode(mode);
     }
 
-    public String getEbookMode() {
+    public int getRefreshMode() {
         if (mEbookManager == null){
             mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
         }
-        return mEbookManager.getMode();
+        return mEbookManager.getRefreshMode();
     }
 
     public void refreshAll() {
@@ -69,6 +71,13 @@ public class EbookSettingsManager {
             mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
         }
         mEbookManager.setFullModeCnt(cnt);
+    }
+
+    public int getFullModeCnt() {
+        if (null == mEbookManager){
+            mEbookManager = (EbookManager)mContext.getSystemService(Context.EBOOK_SERVICE);
+        }
+        return mEbookManager.getFullModeCnt();
     }
 
     public boolean setColorDep(int value) {

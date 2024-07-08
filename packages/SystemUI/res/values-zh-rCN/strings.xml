@@ -1194,13 +1194,18 @@
     <!--     rk code begin     -->
     <string name="ebook_animation_setting">动画设置</string>
     <string name="ebook_refresh_setting">刷新设置</string>
-    <string name="ebook_refresh_mode">刷新模式</string>
+    <string name="ebook_refresh_mode">模式</string>
     <string name="ebook_common_mode">普通</string>
     <string name="ebook_auto_mode">auto</string>
     <string name="ebook_a2_mode">A2</string>
     <string name="ebook_a2_dither_mode">A2 Dither</string>
     <string name="ebook_du_mode">DU</string>
     <string name="ebook_du_4_mode">DU4</string>
+    <string name="ebook_refresh_mode_normal">"普通"</string>
+    <string name="ebook_refresh_mode_regal">"regal"</string>
+    <string name="ebook_refresh_mode_fast">"快速"</string>
+    <string name="ebook_refresh_mode_high_speed">"高速"</string>
+    <string name="ebook_refresh_mode_top_speed">"极速"</string>
     <string name="ebook_refresh_frequency">全刷频率</string>
     <string name="ebook_dialog_not_allow">"当前界面不允许进行配置"</string>
     <string name="ebook_color_cfg">"色彩设置"</string>

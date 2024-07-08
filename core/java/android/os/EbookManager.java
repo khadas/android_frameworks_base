@@ -32,31 +32,15 @@ public class EbookManager {
     private static final int MAX_COLOR_CFG_RKCFA_VALUE = 128;
     private static final int DEFAULT_COLOR_CFG_RKCFA_VALUE = 64;
 
-    public class EbookMode {
+    public class EbookRefreshMode {
 
-        private EbookMode() {}
+        private EbookRefreshMode() {}
 
-        public static final String EPD_NULL ="-1";
-        public static final String EPD_AUTO ="0";
-        public static final String EPD_OVERLAY ="1";
-        public static final String EPD_FULL_GC16 ="2";
-        public static final String EPD_FULL_GL16 ="3";
-        public static final String EPD_FULL_GLR16 ="4";
-        public static final String EPD_FULL_GLD16 ="5";
-        public static final String EPD_FULL_GCC16 ="6";
-        public static final String EPD_PART_GC16 ="7";
-        public static final String EPD_PART_GL16 ="8";
-        public static final String EPD_PART_GLR16 ="9";
-        public static final String EPD_PART_GLD16 ="10";
-        public static final String EPD_PART_GCC16 ="11";
-        public static final String EPD_A2 ="12";
-        public static final String EPD_A2_DITHER ="13";
-        public static final String EPD_DU ="14";
-        public static final String EPD_DU4 ="15";
-        public static final String EPD_A2_ENTER ="16";
-        public static final String EPD_RESET ="17";
-        public static final String EPD_AUTO_DU ="22";
-        public static final String EPD_AUTO_DU4 ="23";
+        public static final int EPD_PART_GC16           = 7;
+        public static final int EPD_PART_GLR16          = 9;
+        public static final int EPD_A2                  = 12;
+        public static final int EPD_A2_FAST             = 13;
+        public static final int EPD_DU                  = 14;
     }
 
     /*-------------------------------------------------------*/
@@ -84,25 +68,24 @@ public class EbookManager {
                 num =1;
             }
             String numStr = num +"";
-            mService.setProperty("sys.eink.one_full_mode_timeline",numStr);
+            mService.setProperty("sys.ebook.one_full_mode_timeline",numStr);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void setMode(@Nullable String ebookMode){
+    public void setRefreshMode(int mode) {
         try {
-            Log.i(TAG, "setMode " + ebookMode);
-            mService.setProperty("sys.eink.mode",ebookMode);
+            Log.i(TAG, "setRefreshMode " + mode);
+            mService.setProperty("sys.ebook.mode", String.valueOf(mode));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    @Nullable
-    public String getMode() {
-        String mode = SystemProperties.get("sys.eink.mode", EbookMode.EPD_PART_GLR16);
-        Log.i(TAG, "getMode " + mode);
+    public int getRefreshMode() {
+        int mode = SystemProperties.getInt("sys.ebook.mode", EbookRefreshMode.EPD_PART_GLR16);
+        Log.i(TAG, "getMode value: " + mode);
         return mode;
     }
 

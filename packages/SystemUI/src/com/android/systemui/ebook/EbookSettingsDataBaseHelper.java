@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.systemui.statusbar.phone;
+package com.android.systemui.ebook;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -23,7 +23,6 @@ import android.util.Log;
 
 public class EbookSettingsDataBaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "EbookSettingsDBH";
-    public static final int INIT_REFRESH_FREQUENCY = 20;
     public static final String PACKAGE_NAME = "package_name";
     public static final String IS_REFRESH_SETTING = "is_refresh_setting";
     public static final String REFRESH_MODE = "refresh_mode";

@@ -54,6 +54,14 @@ import rockchip.hardware.hdmi.V1_0.IHdmiAudioCallback;
 import android.os.RemoteException;
 import android.media.AudioPreviewThread;
 
+//----------------------rk code---------------------------
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.net.Uri;
+
+import com.android.systemui.util.Utils;
+//--------------------------------------------------------
+
 /**
  * Application class for SystemUI.
  */
@@ -219,6 +227,40 @@ public class SystemUIApplication extends Application implements
             // start those components now for the current non-system user.
             startSecondaryUserServicesIfNeeded();
         }
+
+        //----------------------rk code---------------------------
+        if (Utils.isEbookProduct()) {
+            Cursor cursor = null;
+            try {
+                Uri URI_EBOOK_SETTINGS_UPDATE = Uri.parse(
+                        "content://com.android.systemui.ebook/ebooksettingsupdate");
+                Uri URI_EINK_SETTINGS = Uri.parse(
+                        "content://com.android.systemui.ebook/ebooksettings");
+                cursor = getContentResolver().query(URI_EBOOK_SETTINGS_UPDATE,
+                        null, "package_name = ?", new String[] {""}, null);
+                Log.i(TAG, "EBook cursor=" + cursor);
+                if (null != cursor) {
+                    if (cursor.getCount() > 0) {
+                        //Log.i(TAG, "EBook cursor.getCount() > 0");
+                    } else {
+                        ContentValues values = new ContentValues();
+                        values.put("package_name", "");
+                        getContentResolver().insert(URI_EINK_SETTINGS, values);
+                        Log.i(TAG, "EBook insert ");
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "EBook Exception: " + e.getMessage());
+            } finally {
+                try {
+                    if (null != cursor) {
+                        cursor.close();
+                    }
+                } catch (Exception e1) {
+                }
+            }
+        }
+        //--------------------------------------------------------
     }
 
     /**

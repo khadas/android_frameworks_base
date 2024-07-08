@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.android.systemui.statusbar.phone;
+package com.android.systemui.ebook;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.view.KeyEvent;
+import android.view.Window;
 import android.view.WindowManager;
 
 public class EbookBaseDialog extends Dialog {
@@ -27,6 +28,7 @@ public class EbookBaseDialog extends Dialog {
 
     public EbookBaseDialog(Context context, Dialog parentDialog) {
         super(context);
+        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         getWindow().setType((WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG));
         setCanceledOnTouchOutside(true);
 

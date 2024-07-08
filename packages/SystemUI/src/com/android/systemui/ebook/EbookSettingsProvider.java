@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.systemui.statusbar.phone;
+package com.android.systemui.ebook;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -23,7 +23,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
-import android.os.EbookManager;
 
 import com.android.systemui.navigationbar.NavigationBar;
 import com.android.systemui.util.Utils;
@@ -40,9 +39,9 @@ public class EbookSettingsProvider extends ContentProvider {
     public static final String AUTHORITY = "com.android.systemui.ebook";
     public static final String EBOOKSETTINGS_TABLE = "EbookSettings";
     public static final Uri URI_EBOOK_SETTINGS = Uri.parse("content://com.android.systemui.ebook/ebooksettings");
-    public static int refreshMode;
-    public static int refreshFrequency;
-    public static boolean isRefreshSetting;
+    public static int mRefreshMode;
+    public static int mRefreshFrequency;
+    public static boolean mIsRefreshSetting;
     public static int mAppAnimFilter;//动画过滤
 
     private static UriMatcher mUriMatcher;
@@ -50,11 +49,13 @@ public class EbookSettingsProvider extends ContentProvider {
     private SQLiteDatabase mDB;
     private EbookSettingsManager mEbookSettingsManager;
     private static final Set<String> mBlackListSet = new HashSet<>(Arrays.asList(NavigationBar.BLACK_EBOOK_CONFIG_APP));
+
     static {
         mUriMatcher = new UriMatcher((UriMatcher.NO_MATCH));
         mUriMatcher.addURI(AUTHORITY, "ebooksettings", EBOOKSETTINGS);
         mUriMatcher.addURI(AUTHORITY, "ebooksettingsupdate", EBOOKSETTINGS_UPDATE);
     }
+
     private boolean isEbookProduct = Utils.isEbookProduct();
 
     public EbookSettingsProvider() {
@@ -71,7 +72,7 @@ public class EbookSettingsProvider extends ContentProvider {
         if (mEbookSettingsDataBaseHelper != null) {
             mDB = mEbookSettingsDataBaseHelper.getWritableDatabase();
         }
-        if(mEbookSettingsManager == null) {
+        if (mEbookSettingsManager == null) {
             mEbookSettingsManager = new EbookSettingsManager(getContext());
         }
         return true;
@@ -92,38 +93,68 @@ public class EbookSettingsProvider extends ContentProvider {
                 break;
             case EBOOKSETTINGS_UPDATE:
                 packageName = selectionArgs[0];
-                Log.d(TAG, "packageName: " + packageName);
-                if (!mBlackListSet.contains(packageName)) {
-                    //query(URI_EBOOK_SETTINGS_UPDATE,       null,      "package_name = ?",
-                    cursor = mDB.query(EBOOKSETTINGS_TABLE, projection, selection,
-                            // new String[]{null}, null);
-                            selectionArgs, null, null, sortOrder);
-                    if(cursor.getCount() > 0) {
-                        if(cursor.moveToFirst()) {
-                            //动画过滤
-                            mAppAnimFilter = cursor.getInt(cursor.getColumnIndex(
-                                    EbookSettingsDataBaseHelper.APP_ANIM_FILTER));
-                        }
-                    } else {
-                        isRefreshSetting = false;
-                        refreshMode = Integer.valueOf(EbookManager.EbookMode.EPD_PART_GLR16);
-                        refreshFrequency = EbookSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY;
-                        mAppAnimFilter = 0;
-                    }
-                    //刷新设置开启下才设置
-                    if(isRefreshSetting && mEbookSettingsManager != null) {
-                        mEbookSettingsManager.setEbookMode(String.valueOf(refreshMode));
-                        mEbookSettingsManager.setFullModeCnt(refreshFrequency);
-                    } else {
-                        mEbookSettingsManager.setEbookMode(String.valueOf(EbookManager.EbookMode.EPD_PART_GLR16));
-                        mEbookSettingsManager.setFullModeCnt(EbookSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY);
-                    }
+                Log.i(TAG, "EBOOKSETTINGS_UPDATE packageName: " + packageName);
+                if (mBlackListSet.contains(packageName)) {
+                    Log.w(TAG, "It's in the blacklist with " + packageName);
                     break;
-                } else {
-                    Log.d(TAG, "It's in the blacklist with " + packageName);
                 }
+                //query(URI_EBOOK_SETTINGS_UPDATE,       null,      "package_name = ?",
+                cursor = mDB.query(EBOOKSETTINGS_TABLE, projection, selection,
+                        // new String[]{null}, null);
+                        selectionArgs, null, null, sortOrder);
+                if (cursor.getCount() > 0) {
+                    Log.i(TAG, "EBOOKSETTINGS_UPDATE packageName: " + packageName);
+                    if (cursor.moveToFirst()) {
+                        getRefreshCfgFromCursor(cursor);
+                        //动画过滤
+                        //mAppAnimFilter = cursor.getInt(cursor.getColumnIndex(
+                        //        EbookSettingsDataBaseHelper.APP_ANIM_FILTER));
+                    }
+                } else {
+                    mIsRefreshSetting = false;
+                    mRefreshMode = EbookSettingsManager.DEFAULT_REFRESH_MODE;
+                    mRefreshFrequency = EbookSettingsManager.DEFAULT_REFRESH_FREQUENCY;
+                    //mAppAnimFilter = 0;
+                }
+                //刷新设置开启下才设置
+                if (mIsRefreshSetting) {
+                    mEbookSettingsManager.setRefreshMode(mRefreshMode);
+                    mEbookSettingsManager.setFullModeCnt(mRefreshFrequency);
+                } else {
+                    mEbookSettingsManager.setRefreshMode(EbookSettingsManager.DEFAULT_REFRESH_MODE);
+                    mEbookSettingsManager.setFullModeCnt(EbookSettingsManager.DEFAULT_REFRESH_FREQUENCY);
+                }
+                break;
         }
         return cursor;
+    }
+
+    private void getRefreshCfgFromCursor(Cursor cursor) {
+        if (null == cursor) {
+            return;
+        }
+        int indexRefreshSetting = cursor.getColumnIndex(EbookSettingsDataBaseHelper.IS_REFRESH_SETTING);
+        int isRefreshSettingFromDB = -1;
+        if (indexRefreshSetting > -1) {
+            isRefreshSettingFromDB = cursor.getInt(indexRefreshSetting);
+        }
+        mIsRefreshSetting = 1 == isRefreshSettingFromDB;
+
+        int indexRefreshMode = cursor.getColumnIndex(EbookSettingsDataBaseHelper.REFRESH_MODE);
+        int refreshModeFromDB = -1;
+        if (indexRefreshMode > -1) {
+            refreshModeFromDB = cursor.getInt(indexRefreshMode);
+        }
+        mRefreshMode = refreshModeFromDB == -1 ?
+                EbookSettingsManager.DEFAULT_REFRESH_MODE : refreshModeFromDB;
+
+        int indexFreshFrequency = cursor.getColumnIndex(EbookSettingsDataBaseHelper.REFRESH_FREQUENCY);
+        int refreshFrequencyFromDB = -1;
+        if (indexFreshFrequency > -1) {
+            refreshFrequencyFromDB = cursor.getInt(indexFreshFrequency);
+        }
+        mRefreshFrequency = refreshFrequencyFromDB == -1 ?
+                EbookSettingsManager.DEFAULT_REFRESH_FREQUENCY : refreshFrequencyFromDB;
     }
 
     @Override

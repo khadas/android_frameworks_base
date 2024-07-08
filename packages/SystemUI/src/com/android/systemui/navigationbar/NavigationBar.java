@@ -181,12 +181,11 @@ import javax.inject.Inject;
 //----------------------rk code---------------------------
 import android.app.ActivityManager;
 import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.os.EbookManager;
 import android.os.Message;
 import android.widget.Toast;
-import com.android.systemui.statusbar.phone.EbookDialog;
-import com.android.systemui.statusbar.phone.EbookSettingsProvider;
+import com.android.systemui.ebook.EbookDialog;
+import com.android.systemui.ebook.EbookSettingsProvider;
 import com.android.systemui.util.Utils;
 import java.util.List;
 //--------------------------------------------------------
@@ -293,7 +292,7 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     private EbookDialog mEbookDialog;
     private ActivityManager mActivityManager;
     private static EbookManager mEbookManager;
-    private String mPreMode = null;
+    private int mPreMode = -1;
     public static boolean mIsShowEbookDialog = false;
 
     public static final String[] BLACK_EBOOK_CONFIG_APP = new String[] {
@@ -1462,12 +1461,12 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
 
     private void onEbookSwitchModeClick(View v) {
         if(mEbookManager != null){
-            String curMode = mEbookManager.getMode();
-            if(!EbookManager.EbookMode.EPD_A2_DITHER.equals(curMode)){
+            int curMode = mEbookManager.getRefreshMode();
+            if (EbookManager.EbookRefreshMode.EPD_A2_FAST != curMode) {
                 mPreMode = curMode;
-                mEbookManager.setMode(EbookManager.EbookMode.EPD_A2_DITHER);
-            } else if(mPreMode != null){
-                mEbookManager.setMode(mPreMode);
+                mEbookManager.setRefreshMode(EbookManager.EbookRefreshMode.EPD_A2_FAST);
+            } else if (mPreMode != -1){
+                mEbookManager.setRefreshMode(mPreMode);
             }
         }
     }

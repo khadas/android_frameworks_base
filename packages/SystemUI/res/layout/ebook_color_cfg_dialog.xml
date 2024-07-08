@@ -34,7 +34,7 @@
             android:layout_centerHorizontal="true"
             android:text="@string/ebook_color_cfg"
             android:textColor="@android:color/black"
-            android:textSize="18sp" />
+            android:textSize="20sp" />
 
         <!-- color dep -->
         <TextView
@@ -43,7 +43,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/ebook_ccd_title_text"
             android:layout_alignParentLeft="true"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="20dp"
             android:text="@string/ebook_color_dep"
             android:textColor="@android:color/black"
             android:textSize="16sp" />
@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/ebook_ccd_color_dep_title"
             android:layout_alignParentRight="true"
-            android:ems="3"
+            android:ems="2"
             android:textColor="@android:color/black"
             android:textSize="16sp" />
 
@@ -76,7 +76,7 @@
             android:layout_below="@+id/ebook_ccd_color_dep_title"
             android:layout_alignRight="@+id/ebook_ccd_color_dep_title"
             android:layout_alignParentLeft="true"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="16dp"
             android:text="@string/ebook_contrast"
             android:textColor="@android:color/black"
             android:textSize="16sp" />
@@ -87,7 +87,7 @@
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/ebook_ccd_contrast_title"
             android:layout_alignParentRight="true"
-            android:ems="3"
+            android:ems="2"
             android:textColor="@android:color/black"
             android:textSize="16sp" />
 
@@ -109,7 +109,7 @@
             android:layout_below="@+id/ebook_ccd_contrast_title"
             android:layout_alignRight="@+id/ebook_ccd_color_dep_title"
             android:layout_alignParentLeft="true"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="16dp"
             android:text="@string/ebook_saturation"
             android:textColor="@android:color/black"
             android:textSize="16sp" />
@@ -120,7 +120,7 @@
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/ebook_ccd_saturation_title"
             android:layout_alignParentRight="true"
-            android:ems="3"
+            android:ems="2"
             android:textColor="@android:color/black"
             android:textSize="16sp" />
 
@@ -142,7 +142,7 @@
             android:layout_below="@+id/ebook_ccd_saturation_title"
             android:layout_alignRight="@+id/ebook_ccd_color_dep_title"
             android:layout_alignParentLeft="true"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="16dp"
             android:text="@string/ebook_brightness"
             android:textColor="@android:color/black"
             android:textSize="16sp" />
@@ -153,7 +153,7 @@
             android:layout_height="wrap_content"
             android:layout_alignBaseline="@+id/ebook_ccd_brightness_title"
             android:layout_alignParentRight="true"
-            android:ems="3"
+            android:ems="2"
             android:textColor="@android:color/black"
             android:textSize="16sp" />
 
@@ -174,7 +174,6 @@
             android:layout_below="@+id/ebook_ccd_brightness_title"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="20dp"
-            android:background="@null"
             android:text="@string/ebook_reset"
             android:textColor="#000000"
             android:textSize="20sp" />

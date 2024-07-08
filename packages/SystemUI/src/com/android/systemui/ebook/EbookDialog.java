@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.systemui.statusbar.phone;
+package com.android.systemui.ebook;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -53,7 +53,7 @@ public class EbookDialog extends EbookBaseDialog implements View.OnClickListener
             mEbookSettingsManager = new EbookSettingsManager(mContext);
         }
         mRefreshCheckbox = (CheckBox) findViewById(R.id.ebook_dialog_refresh_checkbox);
-        mRefreshCheckbox.setChecked(EbookSettingsProvider.isRefreshSetting);
+        mRefreshCheckbox.setChecked(EbookSettingsProvider.mIsRefreshSetting);
         mRefreshCheckbox.setOnCheckedChangeListener(this);
         mRefreshButton = (Button) findViewById(R.id.ebook_dialog_refresh_button);
         mRefreshButton.setOnClickListener(this);
@@ -67,7 +67,7 @@ public class EbookDialog extends EbookBaseDialog implements View.OnClickListener
     public void onClick(View v) {
         int id = v.getId();
         if(id == R.id.ebook_dialog_refresh_button) {
-            if(EbookSettingsProvider.isRefreshSetting) {
+            if (EbookSettingsProvider.mIsRefreshSetting) {
                 if (null != mEbookRefreshDialog && mEbookRefreshDialog.isShowing()) {
                     return;
                 }
@@ -103,19 +103,19 @@ public class EbookDialog extends EbookBaseDialog implements View.OnClickListener
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         int id = buttonView.getId();
         if(id == R.id.ebook_dialog_refresh_checkbox) {
-            EbookSettingsProvider.isRefreshSetting = isChecked;
+            EbookSettingsProvider.mIsRefreshSetting = isChecked;
             ContentValues values = new ContentValues();
             values.put(EbookSettingsDataBaseHelper.IS_REFRESH_SETTING,
-                    EbookSettingsProvider.isRefreshSetting?1:0);
+                    EbookSettingsProvider.mIsRefreshSetting ? 1 : 0);
             mContext.getContentResolver().update(EbookSettingsProvider.URI_EBOOK_SETTINGS,
                     values, EbookSettingsDataBaseHelper.PACKAGE_NAME + " = ?",
                     new String[]{EbookSettingsProvider.packageName});
-            if(EbookSettingsProvider.isRefreshSetting) {
-                mEbookSettingsManager.setEbookMode(String.valueOf(EbookSettingsProvider.refreshMode));
-                mEbookSettingsManager.setFullModeCnt(EbookSettingsProvider.refreshFrequency);
+            if (EbookSettingsProvider.mIsRefreshSetting) {
+                mEbookSettingsManager.setRefreshMode(EbookSettingsProvider.mRefreshMode);
+                mEbookSettingsManager.setFullModeCnt(EbookSettingsProvider.mRefreshFrequency);
             } else {
-                mEbookSettingsManager.setEbookMode(String.valueOf(EbookManager.EbookMode.EPD_PART_GLR16));
-                mEbookSettingsManager.setFullModeCnt(EbookSettingsDataBaseHelper.INIT_REFRESH_FREQUENCY);
+                mEbookSettingsManager.setRefreshMode(EbookSettingsManager.DEFAULT_REFRESH_MODE);
+                mEbookSettingsManager.setFullModeCnt(EbookSettingsManager.DEFAULT_REFRESH_FREQUENCY);
             }
             mRefreshButton.setEnabled(isChecked);
         }

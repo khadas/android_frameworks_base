@@ -33185,7 +33185,7 @@ package android.os {
     method public int getColorDep();
     method public int getContrast();
     method public int getFullModeCnt();
-    method @Nullable public String getMode();
+    method public int getRefreshMode();
     method public int getSaturation();
     method public int init();
     method public void sendOneFullFrame();
@@ -33193,32 +33193,16 @@ package android.os {
     method public boolean setColorDep(int);
     method public boolean setContrast(int);
     method public void setFullModeCnt(int);
-    method public void setMode(@Nullable String);
+    method public void setRefreshMode(int);
     method public boolean setSaturation(int);
   }
 
-  public class EbookManager.EbookMode {
-    field public static final String EPD_A2 = "12";
-    field public static final String EPD_A2_DITHER = "13";
-    field public static final String EPD_A2_ENTER = "16";
-    field public static final String EPD_AUTO = "0";
-    field public static final String EPD_AUTO_DU = "22";
-    field public static final String EPD_AUTO_DU4 = "23";
-    field public static final String EPD_DU = "14";
-    field public static final String EPD_DU4 = "15";
-    field public static final String EPD_FULL_GC16 = "2";
-    field public static final String EPD_FULL_GCC16 = "6";
-    field public static final String EPD_FULL_GL16 = "3";
-    field public static final String EPD_FULL_GLD16 = "5";
-    field public static final String EPD_FULL_GLR16 = "4";
-    field public static final String EPD_NULL = "-1";
-    field public static final String EPD_OVERLAY = "1";
-    field public static final String EPD_PART_GC16 = "7";
-    field public static final String EPD_PART_GCC16 = "11";
-    field public static final String EPD_PART_GL16 = "8";
-    field public static final String EPD_PART_GLD16 = "10";
-    field public static final String EPD_PART_GLR16 = "9";
-    field public static final String EPD_RESET = "17";
+  public class EbookManager.EbookRefreshMode {
+    field public static final int EPD_A2 = 12; // 0xc
+    field public static final int EPD_A2_FAST = 13; // 0xd
+    field public static final int EPD_DU = 14; // 0xe
+    field public static final int EPD_PART_GC16 = 7; // 0x7
+    field public static final int EPD_PART_GLR16 = 9; // 0x9
   }
 
   public class Environment {

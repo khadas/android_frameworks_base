@@ -1070,7 +1070,7 @@
 
         <!--     rk code begin     -->
         <provider
-            android:name=".statusbar.phone.EbookSettingsProvider"
+            android:name=".ebook.EbookSettingsProvider"
             android:authorities="com.android.systemui.ebook"
             android:enabled="true"
             android:exported="true" />
