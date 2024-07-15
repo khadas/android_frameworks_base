@@ -63,6 +63,7 @@ import com.android.systemui.statusbar.phone.AutoHideController;
 import com.android.systemui.statusbar.phone.BarTransitions.TransitionMode;
 import com.android.systemui.statusbar.phone.LightBarController;
 import com.android.systemui.statusbar.policy.ConfigurationController;
+import com.android.systemui.util.Utils;
 import com.android.systemui.util.settings.SecureSettings;
 import com.android.wm.shell.back.BackAnimation;
 import com.android.wm.shell.pip.Pip;
@@ -249,6 +250,12 @@ public class NavigationBarController implements
 
     /** @return {@code true} if taskbar is enabled, false otherwise */
     private boolean initializeTaskbarIfNecessary() {
+        //----------------------rk code---------------------------
+        if (Utils.isEbookProduct()) {
+            mTaskbarDelegate.destroy();
+            return false;
+        }
+        //--------------------------------------------------------
         // Enable for large screens or (phone AND flag is set); assuming phone = !mIsLargeScreen
         boolean taskbarEnabled = (mIsLargeScreen || mFeatureFlags.isEnabled(
                 Flags.HIDE_NAVBAR_WINDOW)) && shouldCreateNavBarAndTaskBar(mContext.getDisplayId());
@@ -349,7 +356,9 @@ public class NavigationBarController implements
 
         // We may show TaskBar on the default display for large screen device. Don't need to create
         // navigation bar for this case.
-        if (isOnDefaultDisplay && initializeTaskbarIfNecessary()) {
+        //----------------------rk code---------------------------
+        if (isOnDefaultDisplay && initializeTaskbarIfNecessary() && !Utils.isEbookProduct()) {
+        //--------------------------------------------------------
             return;
         }
 
