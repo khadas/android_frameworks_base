@@ -1527,6 +1527,7 @@ public final class PowerManagerService extends SystemService
                     if (strAction.equals(Intent.ACTION_BOOT_COMPLETED)) {
                         mUserBootComplete = true;
                         Slog.d(TAG, "ACTION_BOOT_COMPLETED:......................");
+                        resetIdle(true);
                     }
                 }
             };
