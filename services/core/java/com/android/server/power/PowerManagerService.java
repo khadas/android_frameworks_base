@@ -1188,10 +1188,9 @@ public final class PowerManagerService extends SystemService
                 public void run() {
                     if (mSpew)
                         Slog.d(TAG, "set alarm:" + mAction
-                                + ", now:" + System.currentTimeMillis() + ", wake:" + mWakeTime);
-                    mAlarmManager.set(AlarmManager.RTC_WAKEUP,
-                       mWakeTime,
-                    mPendingIntent);
+                                + ", now:" + System.currentTimeMillis() + ", wake:" + mWakeTime
+				+ ", interval:" + (mWakeTime - System.currentTimeMillis()));
+                    mAlarmManager.setExact(AlarmManager.RTC_WAKEUP, mWakeTime, mPendingIntent);
                 }
             };
 
@@ -3324,6 +3323,10 @@ public final class PowerManagerService extends SystemService
                 //modify by lyx, set an alarm for waking from idle, then send msg
                 mUserTimeoutAlarmHelper.setAlarm(System.currentTimeMillis()
                         + nextTimeout - SystemClock.elapsedRealtime());
+
+                Slog.d(TAG, "mRkebook: set wakeup alarm: now" + System.currentTimeMillis()
+                        + ", nextTimeout=" + nextTimeout
+                        + ", elapsedRealtime=" + SystemClock.elapsedRealtime());
             } else {
                 scheduleUserInactivityTimeout(nextTimeout);
             }
