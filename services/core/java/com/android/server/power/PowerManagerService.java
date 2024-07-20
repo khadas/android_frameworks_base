@@ -1250,14 +1250,16 @@ public final class PowerManagerService extends SystemService
             if (0 == SuspendBlockerCount) {
                 nativeIdle();
             } else {
-                Slog.d(TAG, "Wake Locks: size=" + mWakeLocks.size());
-                for (WakeLock wl : mWakeLocks) {
-                     Slog.d(TAG,"  " + wl);
+                synchronized (mLock) {
+                    Slog.d(TAG, "Wake Locks: size=" + mWakeLocks.size());
+                    for (WakeLock wl : mWakeLocks) {
+                        Slog.d(TAG,"  " + wl);
+                    }
+                    Slog.d(TAG, "Suspend Blockers: size=" + mSuspendBlockers.size());
+                    for (SuspendBlocker sb : mSuspendBlockers) {
+                        Slog.d(TAG,"  " + sb);
+                    }
                 }
-                Slog.d(TAG, "Suspend Blockers: size=" + mSuspendBlockers.size());
-		for (SuspendBlocker sb : mSuspendBlockers) {
-                     Slog.d(TAG,"  " + sb);
-		}
             }
             mHandler.postDelayed(mIdleTimer, mIdleDelay);
         }
