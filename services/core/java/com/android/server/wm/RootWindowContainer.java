@@ -3265,6 +3265,7 @@ class RootWindowContainer extends WindowContainer<DisplayContent>
                 + focusedActivity.mActivityComponent.toString()
                 + " -- " + focusedActivity.packageName
                 + " -- mode=" + mode);
+            SystemProperties.set("sys.top_package",focusedActivity.packageName);
         }
         if (mode == 0) {
             // End power mode launch when idle.
