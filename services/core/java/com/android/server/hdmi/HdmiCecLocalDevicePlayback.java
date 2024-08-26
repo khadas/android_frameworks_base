@@ -119,6 +119,13 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
                     });
         }
         launchDeviceDiscovery();
+        // -----------------------rk code----------
+        /* add one touch play after hdmi plug in and cec initialization */
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildTextViewOn(
+            getDeviceInfo().getLogicalAddress(), Constants.ADDR_TV));
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildActiveSource(
+                getDeviceInfo().getLogicalAddress(), mService.getPhysicalAddress()));
+        // ----------------------------------------
         startQueuedActions();
     }
 
