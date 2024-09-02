@@ -61,6 +61,17 @@ import android.window.OnBackInvokedDispatcher;
 import java.util.Collections;
 import java.util.List;
 
+//----------------------rk code---------------------------
+import java.io.File;
+import java.util.ArrayList;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+//--------------------------------------------------------
+
 /**
  * Abstract base class for a top-level window look and behavior policy.  An
  * instance of this class should be used as the top-level view added to the
@@ -331,6 +342,10 @@ public abstract class Window {
 
     private boolean mOverlayWithDecorCaptionEnabled = true;
     private boolean mCloseOnSwipeEnabled = false;
+
+    //----------------------rk code---------------------------
+    private int mWhitelistStatus = -1;
+    //--------------------------------------------------------
 
     // The current window attributes.
     @UnsupportedAppUsage
@@ -1288,11 +1303,59 @@ public abstract class Window {
      * @see #clearFlags
      */
     public void setFlags(int flags, int mask) {
+        //----------------------rk code---------------------------
+        if (mWhitelistStatus == 1) {
+            if ((flags & WindowManager.LayoutParams.FLAG_SECURE) != 0) {
+                flags &= ~WindowManager.LayoutParams.FLAG_SECURE;
+            }
+        } else if (mWhitelistStatus == -1) {
+            mWhitelistStatus = 0;
+            List<String> whitelist = loadWhitelist();
+            String currentPackageName = getContext().getPackageName();
+            if (whitelist.contains(currentPackageName)) {
+                mWhitelistStatus = 1;
+                if ((flags & WindowManager.LayoutParams.FLAG_SECURE) != 0) {
+                    flags &= ~WindowManager.LayoutParams.FLAG_SECURE;
+                }
+            }
+        }
+        //--------------------------------------------------------
+
         final WindowManager.LayoutParams attrs = getAttributes();
         attrs.flags = (attrs.flags&~mask) | (flags&mask);
         mForcedWindowFlags |= mask;
         dispatchWindowAttributesChanged(attrs);
     }
+
+    //----------------------rk code---------------------------
+    private List<String> loadWhitelist() {
+        List<String> whitelist = new ArrayList<>();
+        try {
+            File xmlFile = new File("/vendor/etc/whitelist_of_screenshots.xml");
+            if (!xmlFile.exists()) {
+                return whitelist;
+            }
+
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(xmlFile);
+            doc.getDocumentElement().normalize();
+
+            NodeList nodeList = doc.getElementsByTagName("package");
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Node node = nodeList.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element element = (Element) node;
+                    String packageName = element.getTextContent().trim();
+                    whitelist.add(packageName);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return whitelist;
+    }
+    //--------------------------------------------------------
 
     private void setPrivateFlags(int flags, int mask) {
         final WindowManager.LayoutParams attrs = getAttributes();
