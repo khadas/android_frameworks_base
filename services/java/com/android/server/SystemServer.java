@@ -251,6 +251,7 @@ public final class SystemServer implements Dumpable {
 
     private static final String TAG = "SystemServer";
 
+	private static final String TV_USER_SETUP_COMPLETE = "tv_user_setup_complete";
     private static final long SLOW_DISPATCH_THRESHOLD_MS = 100;
     private static final long SLOW_DELIVERY_THRESHOLD_MS = 200;
 
@@ -2906,6 +2907,7 @@ public final class SystemServer implements Dumpable {
         // initialization.
         mActivityManagerService.systemReady(() -> {
             Slog.i(TAG, "Making services ready");
+			UserSetup(context);
             t.traceBegin("StartActivityManagerReadyPhase");
             mSystemServiceManager.startBootPhase(t, SystemService.PHASE_ACTIVITY_MANAGER_READY);
             t.traceEnd();
@@ -3193,6 +3195,14 @@ public final class SystemServer implements Dumpable {
         t.traceEnd(); // startOtherServices
     }
 
+    private void UserSetup(Context context) {
+        if (Settings.Secure.getInt(context.getContentResolver(), TV_USER_SETUP_COMPLETE, 0) == 1) {
+            //Log.d(TAG, "force tv user setup");
+            Settings.Global.putInt(context.getContentResolver(), Settings.Global.DEVICE_PROVISIONED, 0);
+            Settings.Secure.putInt(context.getContentResolver(), Settings.Secure.USER_SETUP_COMPLETE, 0);
+            Settings.Secure.putInt(context.getContentResolver(), TV_USER_SETUP_COMPLETE, 0);
+        }
+    }
     /**
      * Starts system services defined in apexes.
      *
