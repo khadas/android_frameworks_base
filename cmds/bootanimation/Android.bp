@@ -69,6 +69,10 @@ cc_library_shared {
 
     srcs: ["BootAnimation.cpp"],
 
+    static_libs: [
+         "libSurfaceFlingerProperties",
+     ],
+
     shared_libs: [
         "libui",
         "libjnigraphics",

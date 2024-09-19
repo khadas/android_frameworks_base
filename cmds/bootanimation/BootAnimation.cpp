@@ -42,6 +42,7 @@
 #include <utils/SystemClock.h>
 
 #include <android-base/properties.h>
+#include <SurfaceFlingerProperties.sysprop.h>
 
 #include <ui/DisplayMode.h>
 #include <ui/PixelFormat.h>
@@ -518,6 +519,27 @@ void BootAnimation::BootVideoListener::notify(int msg, int ext1, int ext2, const
     }
 }
 
+
+ui::Rotation getPhysicalDisplayOrientation() {
+    char value_private[PROPERTY_VALUE_MAX];
+    property_get("persist.surface_flinger.primary_display_orientation", value_private, "0");
+    int temp = atoi(value_private);
+    ALOGD("persist.surface_flinger.primary_display_orientation is: %d",temp);
+
+    ALOGD("entry dual dispaly Primary rotation : %d",temp);
+    switch (temp) {
+        case 90:
+            return ui::ROTATION_90;
+        case 180:
+            return ui::ROTATION_180;
+        case 270:
+            return ui::ROTATION_270;
+        default:
+            break;
+   }
+    return ui::ROTATION_0;
+} 
+
 bool BootAnimation::bootVideo() {
     const float MAX_FPS = 60.0f;
     const float CHECK_DELAY = ns2us(s2ns(1) / MAX_FPS);
@@ -557,6 +579,14 @@ bool BootAnimation::bootVideo() {
 
     mMaxWidth = android::base::GetIntProperty("ro.surface_flinger.max_graphics_width", 0);
     mMaxHeight = android::base::GetIntProperty("ro.surface_flinger.max_graphics_height", 0);
+ 
+    ui::Rotation physicalDisplayOrientation =  getPhysicalDisplayOrientation();
+    if (physicalDisplayOrientation == ui::ROTATION_90 or physicalDisplayOrientation == ui::ROTATION_270) {
+        ALOGD("swap max config due to physicalDisplayOrientation %d changed", physicalDisplayOrientation);
+        std::swap(mMaxWidth, mMaxHeight);
+    }
+
+ 
     SurfaceComposerClient::Transaction t;
 
     ui::Size resolution = displayMode.resolution;
@@ -1352,6 +1382,14 @@ status_t BootAnimation::readyToRun() {
     mMaxHeight = android::base::GetIntProperty("ro.surface_flinger.max_graphics_height", 0);
     mInitWidth = android::base::GetIntProperty("ro.bootanimation_optimal_display_width", 1920);
     mInitHeight = android::base::GetIntProperty("ro.bootanimation_optimal_display_height", 1080);
+ 
+    ui::Rotation physicalDisplayOrientation = getPhysicalDisplayOrientation();
+
+    if (physicalDisplayOrientation == ui::ROTATION_90 or physicalDisplayOrientation == ui::ROTATION_270) {
+        ALOGD("swap max config due to physicalDisplayOrientation %d changed", physicalDisplayOrientation);
+        std::swap(mMaxWidth, mMaxHeight);
+    }
+ 
     ui::Size resolution = displayMode.resolution;
 
     if (ui::ROTATION_90 == mRotation || ui::ROTATION_270 == mRotation) {
