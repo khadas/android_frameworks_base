@@ -2,6 +2,7 @@
 package android {
 
   public static final class Manifest.permission {
+    field public static final String ACCESSIBILITY_MOTION_EVENT_OBSERVING = "android.permission.ACCESSIBILITY_MOTION_EVENT_OBSERVING";
     field public static final String ACCESS_NOTIFICATIONS = "android.permission.ACCESS_NOTIFICATIONS";
     field public static final String ACTIVITY_EMBEDDING = "android.permission.ACTIVITY_EMBEDDING";
     field public static final String ADJUST_RUNTIME_PERMISSIONS_POLICY = "android.permission.ADJUST_RUNTIME_PERMISSIONS_POLICY";
@@ -49,6 +50,7 @@ package android {
     field public static final String SET_AND_VERIFY_LOCKSCREEN_CREDENTIALS = "android.permission.SET_AND_VERIFY_LOCKSCREEN_CREDENTIALS";
     field public static final String SET_GAME_SERVICE = "android.permission.SET_GAME_SERVICE";
     field public static final String SET_KEYBOARD_LAYOUT = "android.permission.SET_KEYBOARD_LAYOUT";
+    field public static final String START_ACTIVITIES_FROM_SDK_SANDBOX = "android.permission.START_ACTIVITIES_FROM_SDK_SANDBOX";
     field public static final String SUSPEND_APPS = "android.permission.SUSPEND_APPS";
     field public static final String TEST_BIOMETRIC = "android.permission.TEST_BIOMETRIC";
     field public static final String TEST_INPUT_METHOD = "android.permission.TEST_INPUT_METHOD";
@@ -2122,7 +2124,7 @@ package android.media.tv.tuner {
 package android.media.voice {
 
   public final class KeyphraseModelManager {
-    method @RequiresPermission("android.permission.MANAGE_VOICE_KEYPHRASES") public void setModelDatabaseForTestEnabled(boolean);
+    method @RequiresPermission(android.Manifest.permission.MANAGE_VOICE_KEYPHRASES) public void setModelDatabaseForTestEnabled(boolean);
   }
 
 }

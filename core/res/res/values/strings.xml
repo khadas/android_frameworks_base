@@ -1072,6 +1072,12 @@
     <string name="permdesc_manageOngoingCalls">Allows an app to see details about ongoing calls
          on your device and to control these calls.</string>
 
+    <!-- Title for an application permission, listed so that the user can access the last known cell id provided by telephony. -->
+    <string name="permlab_accessLastKnownCellId">Access last known cell identity.</string>
+    <!-- Description on an application permission, listed so that the user can access the last known cell id provided by telephony -->
+    <string name="permdesc_accessLastKnownCellId">Allows an app to access to the last known
+        cell identity provided by telephony.</string>
+
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_readCellBroadcasts">read cell broadcast messages</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
@@ -1243,6 +1249,11 @@
     <string name="permlab_foregroundServiceFileManagement">run foreground service with the type \"fileManagement\"</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permdesc_foregroundServiceFileManagement">Allows the app to make use of foreground services with the type \"fileManagement\"</string>
+
+    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permlab_foregroundServiceMediaProcessing">run foreground service with the type \"mediaProcessing\"</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permdesc_foregroundServiceMediaProcessing">Allows the app to make use of foreground services with the type \"mediaProcessing\"</string>
 
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_foregroundServiceSpecialUse">run foreground service with the type \"specialUse\"</string>
@@ -1444,6 +1455,11 @@
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. [CHAR_LIMIT=NONE] -->
     <string name="permdesc_cameraOpenCloseListener">This app can receive callbacks when any camera device is being opened (by what application) or closed.</string>
 
+    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. [CHAR_LIMIT=NONE] -->
+    <string name="permlab_cameraHeadlessSystemUser">Allow an application or service to access camera as Headless System User.</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. [CHAR_LIMIT=NONE] -->
+    <string name="permdesc_cameraHeadlessSystemUser">This app can access camera as Headless System User.</string>
+
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_vibrate">control vibration</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
@@ -1551,6 +1567,11 @@
     <string name="permlab_setWallpaper">set wallpaper</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permdesc_setWallpaper">Allows the app to set the system wallpaper.</string>
+
+    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permlab_accessHiddenProfile">Access hidden profiles</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permdesc_accessHiddenProfile">Allows the app to access hidden profiles.</string>
 
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_setWallpaperHints">adjust your wallpaper size</string>
@@ -1709,6 +1730,12 @@
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permdesc_nfc">Allows the app to communicate
       with Near Field Communication (NFC) tags, cards, and readers.</string>
+
+    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permlab_nfcTransactionEvent">Secure Element transaction event</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
+    <string name="permdesc_nfcTransactionEvent">Allows the app to receive information about
+      transactions happening on a Secure Element.</string>
 
     <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. -->
     <string name="permlab_disableKeyguard">disable your screen lock</string>
@@ -2196,6 +2223,11 @@
     <string name="permlab_updatePackagesWithoutUserAction">update app without user action</string>
     <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this.[CHAR_LIMIT=NONE] -->
     <string name="permdesc_updatePackagesWithoutUserAction">Allows the holder to update the app it previously installed without user action</string>
+
+    <!-- Title of an application permission, listed so the user can choose whether they want to allow the application to do this. [CHAR_LIMIT=NONE] -->
+    <string name="permlab_writeVerificationStateE2eeContactKeys">update the verification states of E2EE contact keys owned by other apps</string>
+    <!-- Description of an application permission, listed so the user can choose whether they want to allow the application to do this.[CHAR_LIMIT=NONE] -->
+    <string name="permdesc_writeVerificationStateE2eeContactKeys">Allows the app to update the verification states of E2EE contact keys owned by other apps</string>
 
     <!-- Policy administration -->
 

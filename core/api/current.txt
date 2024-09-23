@@ -13,6 +13,7 @@ package android {
     field public static final String ACCESS_CHECKIN_PROPERTIES = "android.permission.ACCESS_CHECKIN_PROPERTIES";
     field public static final String ACCESS_COARSE_LOCATION = "android.permission.ACCESS_COARSE_LOCATION";
     field public static final String ACCESS_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
+    field public static final String ACCESS_HIDDEN_PROFILES = "android.permission.ACCESS_HIDDEN_PROFILES";
     field public static final String ACCESS_LOCATION_EXTRA_COMMANDS = "android.permission.ACCESS_LOCATION_EXTRA_COMMANDS";
     field public static final String ACCESS_MEDIA_LOCATION = "android.permission.ACCESS_MEDIA_LOCATION";
     field public static final String ACCESS_NETWORK_STATE = "android.permission.ACCESS_NETWORK_STATE";
@@ -49,6 +50,7 @@ package android {
     field public static final String BIND_SCREENING_SERVICE = "android.permission.BIND_SCREENING_SERVICE";
     field public static final String BIND_TELECOM_CONNECTION_SERVICE = "android.permission.BIND_TELECOM_CONNECTION_SERVICE";
     field public static final String BIND_TEXT_SERVICE = "android.permission.BIND_TEXT_SERVICE";
+    field public static final String BIND_TV_AD_SERVICE = "android.permission.BIND_TV_AD_SERVICE";
     field public static final String BIND_TV_INPUT = "android.permission.BIND_TV_INPUT";
     field public static final String BIND_TV_INTERACTIVE_APP = "android.permission.BIND_TV_INTERACTIVE_APP";
     field public static final String BIND_VISUAL_VOICEMAIL_SERVICE = "android.permission.BIND_VISUAL_VOICEMAIL_SERVICE";
@@ -102,6 +104,7 @@ package android {
     field public static final String FOREGROUND_SERVICE_HEALTH = "android.permission.FOREGROUND_SERVICE_HEALTH";
     field public static final String FOREGROUND_SERVICE_LOCATION = "android.permission.FOREGROUND_SERVICE_LOCATION";
     field public static final String FOREGROUND_SERVICE_MEDIA_PLAYBACK = "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK";
+    field public static final String FOREGROUND_SERVICE_MEDIA_PROCESSING = "android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING";
     field public static final String FOREGROUND_SERVICE_MEDIA_PROJECTION = "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION";
     field public static final String FOREGROUND_SERVICE_MICROPHONE = "android.permission.FOREGROUND_SERVICE_MICROPHONE";
     field public static final String FOREGROUND_SERVICE_PHONE_CALL = "android.permission.FOREGROUND_SERVICE_PHONE_CALL";
@@ -136,15 +139,19 @@ package android {
     field public static final String MANAGE_DEVICE_POLICY_APPS_CONTROL = "android.permission.MANAGE_DEVICE_POLICY_APPS_CONTROL";
     field public static final String MANAGE_DEVICE_POLICY_APP_RESTRICTIONS = "android.permission.MANAGE_DEVICE_POLICY_APP_RESTRICTIONS";
     field public static final String MANAGE_DEVICE_POLICY_APP_USER_DATA = "android.permission.MANAGE_DEVICE_POLICY_APP_USER_DATA";
+    field public static final String MANAGE_DEVICE_POLICY_ASSIST_CONTENT = "android.permission.MANAGE_DEVICE_POLICY_ASSIST_CONTENT";
     field public static final String MANAGE_DEVICE_POLICY_AUDIO_OUTPUT = "android.permission.MANAGE_DEVICE_POLICY_AUDIO_OUTPUT";
     field public static final String MANAGE_DEVICE_POLICY_AUTOFILL = "android.permission.MANAGE_DEVICE_POLICY_AUTOFILL";
     field public static final String MANAGE_DEVICE_POLICY_BACKUP_SERVICE = "android.permission.MANAGE_DEVICE_POLICY_BACKUP_SERVICE";
+    field public static final String MANAGE_DEVICE_POLICY_BLOCK_UNINSTALL = "android.permission.MANAGE_DEVICE_POLICY_BLOCK_UNINSTALL";
     field public static final String MANAGE_DEVICE_POLICY_BLUETOOTH = "android.permission.MANAGE_DEVICE_POLICY_BLUETOOTH";
     field public static final String MANAGE_DEVICE_POLICY_BUGREPORT = "android.permission.MANAGE_DEVICE_POLICY_BUGREPORT";
     field public static final String MANAGE_DEVICE_POLICY_CALLS = "android.permission.MANAGE_DEVICE_POLICY_CALLS";
     field public static final String MANAGE_DEVICE_POLICY_CAMERA = "android.permission.MANAGE_DEVICE_POLICY_CAMERA";
+    field public static final String MANAGE_DEVICE_POLICY_CAMERA_TOGGLE = "android.permission.MANAGE_DEVICE_POLICY_CAMERA_TOGGLE";
     field public static final String MANAGE_DEVICE_POLICY_CERTIFICATES = "android.permission.MANAGE_DEVICE_POLICY_CERTIFICATES";
     field public static final String MANAGE_DEVICE_POLICY_COMMON_CRITERIA_MODE = "android.permission.MANAGE_DEVICE_POLICY_COMMON_CRITERIA_MODE";
+    field public static final String MANAGE_DEVICE_POLICY_CONTENT_PROTECTION = "android.permission.MANAGE_DEVICE_POLICY_CONTENT_PROTECTION";
     field public static final String MANAGE_DEVICE_POLICY_DEBUGGING_FEATURES = "android.permission.MANAGE_DEVICE_POLICY_DEBUGGING_FEATURES";
     field public static final String MANAGE_DEVICE_POLICY_DEFAULT_SMS = "android.permission.MANAGE_DEVICE_POLICY_DEFAULT_SMS";
     field public static final String MANAGE_DEVICE_POLICY_DEVICE_IDENTIFIERS = "android.permission.MANAGE_DEVICE_POLICY_DEVICE_IDENTIFIERS";
@@ -160,8 +167,10 @@ package android {
     field public static final String MANAGE_DEVICE_POLICY_LOCK = "android.permission.MANAGE_DEVICE_POLICY_LOCK";
     field public static final String MANAGE_DEVICE_POLICY_LOCK_CREDENTIALS = "android.permission.MANAGE_DEVICE_POLICY_LOCK_CREDENTIALS";
     field public static final String MANAGE_DEVICE_POLICY_LOCK_TASK = "android.permission.MANAGE_DEVICE_POLICY_LOCK_TASK";
+    field public static final String MANAGE_DEVICE_POLICY_MANAGED_SUBSCRIPTIONS = "android.permission.MANAGE_DEVICE_POLICY_MANAGED_SUBSCRIPTIONS";
     field public static final String MANAGE_DEVICE_POLICY_METERED_DATA = "android.permission.MANAGE_DEVICE_POLICY_METERED_DATA";
     field public static final String MANAGE_DEVICE_POLICY_MICROPHONE = "android.permission.MANAGE_DEVICE_POLICY_MICROPHONE";
+    field public static final String MANAGE_DEVICE_POLICY_MICROPHONE_TOGGLE = "android.permission.MANAGE_DEVICE_POLICY_MICROPHONE_TOGGLE";
     field public static final String MANAGE_DEVICE_POLICY_MOBILE_NETWORK = "android.permission.MANAGE_DEVICE_POLICY_MOBILE_NETWORK";
     field public static final String MANAGE_DEVICE_POLICY_MODIFY_USERS = "android.permission.MANAGE_DEVICE_POLICY_MODIFY_USERS";
     field public static final String MANAGE_DEVICE_POLICY_MTE = "android.permission.MANAGE_DEVICE_POLICY_MTE";
@@ -193,6 +202,7 @@ package android {
     field public static final String MANAGE_DEVICE_POLICY_SYSTEM_APPS = "android.permission.MANAGE_DEVICE_POLICY_SYSTEM_APPS";
     field public static final String MANAGE_DEVICE_POLICY_SYSTEM_DIALOGS = "android.permission.MANAGE_DEVICE_POLICY_SYSTEM_DIALOGS";
     field public static final String MANAGE_DEVICE_POLICY_SYSTEM_UPDATES = "android.permission.MANAGE_DEVICE_POLICY_SYSTEM_UPDATES";
+    field public static final String MANAGE_DEVICE_POLICY_THREAD_NETWORK = "android.permission.MANAGE_DEVICE_POLICY_THREAD_NETWORK";
     field public static final String MANAGE_DEVICE_POLICY_TIME = "android.permission.MANAGE_DEVICE_POLICY_TIME";
     field public static final String MANAGE_DEVICE_POLICY_USB_DATA_SIGNALLING = "android.permission.MANAGE_DEVICE_POLICY_USB_DATA_SIGNALLING";
     field public static final String MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER = "android.permission.MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER";
@@ -211,6 +221,7 @@ package android {
     field public static final String MANAGE_WIFI_NETWORK_SELECTION = "android.permission.MANAGE_WIFI_NETWORK_SELECTION";
     field public static final String MASTER_CLEAR = "android.permission.MASTER_CLEAR";
     field public static final String MEDIA_CONTENT_CONTROL = "android.permission.MEDIA_CONTENT_CONTROL";
+    field public static final String MEDIA_ROUTING_CONTROL = "android.permission.MEDIA_ROUTING_CONTROL";
     field public static final String MODIFY_AUDIO_SETTINGS = "android.permission.MODIFY_AUDIO_SETTINGS";
     field public static final String MODIFY_PHONE_STATE = "android.permission.MODIFY_PHONE_STATE";
     field public static final String MOUNT_FORMAT_FILESYSTEMS = "android.permission.MOUNT_FORMAT_FILESYSTEMS";
@@ -232,6 +243,7 @@ package android {
     field public static final String READ_CALENDAR = "android.permission.READ_CALENDAR";
     field public static final String READ_CALL_LOG = "android.permission.READ_CALL_LOG";
     field public static final String READ_CONTACTS = "android.permission.READ_CONTACTS";
+    field public static final String READ_DROPBOX_DATA = "android.permission.READ_DROPBOX_DATA";
     field public static final String READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
     field public static final String READ_HOME_APP_SEARCH_DATA = "android.permission.READ_HOME_APP_SEARCH_DATA";
     field @Deprecated public static final String READ_INPUT_STATE = "android.permission.READ_INPUT_STATE";
@@ -269,8 +281,10 @@ package android {
     field public static final String REQUEST_IGNORE_BATTERY_OPTIMIZATIONS = "android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS";
     field public static final String REQUEST_INSTALL_PACKAGES = "android.permission.REQUEST_INSTALL_PACKAGES";
     field public static final String REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE = "android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE";
+    field public static final String REQUEST_OBSERVE_DEVICE_UUID_PRESENCE = "android.permission.REQUEST_OBSERVE_DEVICE_UUID_PRESENCE";
     field public static final String REQUEST_PASSWORD_COMPLEXITY = "android.permission.REQUEST_PASSWORD_COMPLEXITY";
     field @Deprecated public static final String RESTART_PACKAGES = "android.permission.RESTART_PACKAGES";
+    field public static final String RUN_BACKUP_JOBS = "android.permission.RUN_BACKUP_JOBS";
     field public static final String RUN_USER_INITIATED_JOBS = "android.permission.RUN_USER_INITIATED_JOBS";
     field public static final String SCHEDULE_EXACT_ALARM = "android.permission.SCHEDULE_EXACT_ALARM";
     field public static final String SEND_RESPOND_VIA_MESSAGE = "android.permission.SEND_RESPOND_VIA_MESSAGE";
@@ -278,6 +292,7 @@ package android {
     field public static final String SET_ALARM = "com.android.alarm.permission.SET_ALARM";
     field public static final String SET_ALWAYS_FINISH = "android.permission.SET_ALWAYS_FINISH";
     field public static final String SET_ANIMATION_SCALE = "android.permission.SET_ANIMATION_SCALE";
+    field public static final String SET_BIOMETRIC_DIALOG_LOGO = "android.permission.SET_BIOMETRIC_DIALOG_LOGO";
     field public static final String SET_DEBUG_APP = "android.permission.SET_DEBUG_APP";
     field @Deprecated public static final String SET_PREFERRED_APPLICATIONS = "android.permission.SET_PREFERRED_APPLICATIONS";
     field public static final String SET_PROCESS_LIMIT = "android.permission.SET_PROCESS_LIMIT";

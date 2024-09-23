@@ -20,6 +20,7 @@ import static java.lang.Long.max;
 
 import android.Manifest;
 import android.annotation.CallbackExecutor;
+import android.annotation.FlaggedApi;
 import android.annotation.IntDef;
 import android.annotation.IntRange;
 import android.annotation.NonNull;
@@ -45,6 +46,7 @@ import android.content.pm.ParceledListSlice;
 import android.database.DatabaseUtils;
 import android.health.connect.HealthConnectManager;
 import android.media.AudioAttributes.AttributeUsage;
+import android.media.MediaRouter2;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -62,9 +64,11 @@ import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
+
 import android.provider.DeviceConfig;
 import android.util.ArrayMap;
 import android.util.ArraySet;
+import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.LongSparseLongArray;
 import android.util.Pools;
@@ -1477,9 +1481,37 @@ public class AppOpsManager {
     public static final int OP_RECORD_AUDIO_SANDBOXED =
             AppProtoEnums.APP_OP_RECORD_AUDIO_SANDBOXED;
 
+    /**
+     * Allows the assistant app to be voice-triggered by detected hotwords from a trusted detection
+     * service.
+     *
+     * @hide
+     */
+    public static final int OP_RECEIVE_SANDBOX_TRIGGER_AUDIO =
+            AppProtoEnums.APP_OP_RECEIVE_SANDBOX_TRIGGER_AUDIO;
+
+    /**
+     * Allows the privileged assistant app to receive the training data from the sandboxed hotword
+     * detection service.
+     *
+     * @hide
+     */
+    public static final int OP_RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA =
+            AppProtoEnums.APP_OP_RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA;
+    /**
+     * See {@link #OPSTR_MEDIA_ROUTING_CONTROL}.
+     * @hide
+     */
+    public static final int OP_MEDIA_ROUTING_CONTROL = AppProtoEnums.APP_OP_MEDIA_ROUTING_CONTROL;
+    /**
+     * Allows an app with a major use case of backing-up or syncing content to run longer jobs.
+     *
+     * @hide
+     */
+    public static final int OP_RUN_BACKUP_JOBS = AppProtoEnums.APP_OP_RUN_BACKUP_JOBS;
     /** @hide */
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.R, trackingBug = 170729553)
-    public static final int _NUM_OP = 136;
+    public static final int _NUM_OP = 140;
 
     /**
      * All app ops represented as strings.
@@ -1621,7 +1653,11 @@ public class AppOpsManager {
             OPSTR_CAPTURE_CONSENTLESS_BUGREPORT_ON_USERDEBUG_BUILD,
             OPSTR_USE_FULL_SCREEN_INTENT,
             OPSTR_CAMERA_SANDBOXED,
-            OPSTR_RECORD_AUDIO_SANDBOXED
+            OPSTR_RECORD_AUDIO_SANDBOXED,
+            OPSTR_RECEIVE_SANDBOX_TRIGGER_AUDIO,
+            OPSTR_RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA,
+            OPSTR_MEDIA_ROUTING_CONTROL,
+            OPSTR_RUN_BACKUP_JOBS,
     })
     public @interface AppOpString {}
 
@@ -1949,6 +1985,19 @@ public class AppOpsManager {
     public static final String OPSTR_MANAGE_ONGOING_CALLS = "android:manage_ongoing_calls";
 
     /**
+     * Allows apps holding this permission to control the routing of other apps via {@link
+     * MediaRouter2}.
+     *
+     * <p>For example, holding this permission allows watches (via companion apps) to control the
+     * routing of applications running on the phone.
+     *
+     * @hide
+     */
+    @SystemApi
+//    @FlaggedApi(com.android.media.flags.Flags
+//            .FLAG_ENABLE_PRIVILEGED_ROUTING_FOR_MEDIA_ROUTING_CONTROL)
+    public static final String OPSTR_MEDIA_ROUTING_CONTROL = "android:media_routing_control";
+    /**
      * AppOp granted to apps that we are started via {@code am instrument -e --no-isolated-storage}
      *
      * <p>MediaProvider is the only component (outside of system server) that should care about this
@@ -2232,6 +2281,29 @@ public class AppOpsManager {
      */
     public static final String OPSTR_USE_FULL_SCREEN_INTENT = "android:use_full_screen_intent";
 
+    /**
+     * Allows the assistant app to be voice-triggered by detected hotwords from a trusted detection
+     * service.
+     *
+     * @hide
+     */
+    public static final String OPSTR_RECEIVE_SANDBOX_TRIGGER_AUDIO =
+            "android:receive_sandbox_trigger_audio";
+
+    /**
+     * Allows the privileged assistant app to receive training data from the sandboxed hotword
+     * detection service.
+     *
+     * @hide
+     */
+    public static final String OPSTR_RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA =
+            "android:RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA";
+    /**
+     * Allows an app whose primary use case is to backup or sync content to run longer jobs.
+     *
+     * @hide
+     */
+    public static final String OPSTR_RUN_BACKUP_JOBS = "android:run_backup_jobs";
     /** {@link #sAppOpsToNote} not initialized yet for this op */
     private static final byte SHOULD_COLLECT_NOTE_OP_NOT_INITIALIZED = 0;
     /** Should not collect noting of this app-op in {@link #sAppOpsToNote} */
@@ -2341,7 +2413,11 @@ public class AppOpsManager {
             OP_READ_MEDIA_VISUAL_USER_SELECTED,
             OP_FOREGROUND_SERVICE_SPECIAL_USE,
             OP_CAPTURE_CONSENTLESS_BUGREPORT_ON_USERDEBUG_BUILD,
-            OP_USE_FULL_SCREEN_INTENT
+            OP_USE_FULL_SCREEN_INTENT,
+            OP_RECEIVE_SANDBOX_TRIGGER_AUDIO,
+            OP_RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA,
+            OP_MEDIA_ROUTING_CONTROL,
+            OP_RUN_BACKUP_JOBS
     };
 
     static final AppOpInfo[] sAppOpInfos = new AppOpInfo[]{
@@ -2768,7 +2844,22 @@ public class AppOpsManager {
         new AppOpInfo.Builder(OP_CAMERA_SANDBOXED, OPSTR_CAMERA_SANDBOXED,
             "CAMERA_SANDBOXED").setDefaultMode(AppOpsManager.MODE_ALLOWED).build(),
         new AppOpInfo.Builder(OP_RECORD_AUDIO_SANDBOXED, OPSTR_RECORD_AUDIO_SANDBOXED,
-                "RECORD_AUDIO_SANDBOXED").setDefaultMode(AppOpsManager.MODE_ALLOWED).build()
+                "RECORD_AUDIO_SANDBOXED").setDefaultMode(AppOpsManager.MODE_ALLOWED).build(),
+        new AppOpInfo.Builder(OP_RECEIVE_SANDBOX_TRIGGER_AUDIO,
+                OPSTR_RECEIVE_SANDBOX_TRIGGER_AUDIO,
+                "RECEIVE_SANDBOX_TRIGGER_AUDIO")
+                .setPermission(Manifest.permission.RECEIVE_SANDBOX_TRIGGER_AUDIO)
+                .setDefaultMode(AppOpsManager.MODE_DEFAULT).build(),
+        new AppOpInfo.Builder(OP_RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA,
+                OPSTR_RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA,
+                "RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA")
+                .setPermission(Manifest.permission.RECEIVE_SANDBOXED_DETECTION_TRAINING_DATA)
+                .setDefaultMode(AppOpsManager.MODE_DEFAULT).build(),
+        new AppOpInfo.Builder(OP_MEDIA_ROUTING_CONTROL, OPSTR_MEDIA_ROUTING_CONTROL,
+                "MEDIA_ROUTING_CONTROL")
+                .setPermission(Manifest.permission.MEDIA_ROUTING_CONTROL).build(),
+        new AppOpInfo.Builder(OP_RUN_BACKUP_JOBS, OPSTR_RUN_BACKUP_JOBS, "RUN_BACKUP_JOBS")
+                .setPermission(Manifest.permission.RUN_BACKUP_JOBS).build(),
     };
 
     // The number of longs needed to form a full bitmask of app ops
