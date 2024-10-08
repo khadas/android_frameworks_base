@@ -269,6 +269,26 @@ final class LogicalDisplay {
             }
             mInfo.set(info);
         }
+
+        if (mDisplayId == Display.TYPE_EXTERNAL && mOverrideDisplayInfo != null) {
+            int bootCompleted = SystemProperties.getInt("sys.boot_completed", 0);
+            if (bootCompleted == 1) {
+                int userRotation = SystemProperties.getInt("persist.sys.user_rotation", 0);
+                mInfo.get().rotation = userRotation;
+                if (((userRotation % 2) == 0)) {
+                    mInfo.get().appWidth = mOverrideDisplayInfo.appWidth;
+                    mInfo.get().appHeight = mOverrideDisplayInfo.appHeight;
+                    mInfo.get().logicalWidth = mOverrideDisplayInfo.logicalWidth;
+                    mInfo.get().logicalHeight = mOverrideDisplayInfo.logicalHeight;
+                } else {
+                    mInfo.get().appWidth = mOverrideDisplayInfo.appHeight;
+                    mInfo.get().appHeight = mOverrideDisplayInfo.appWidth;
+                    mInfo.get().logicalWidth = mOverrideDisplayInfo.logicalHeight;
+                    mInfo.get().logicalHeight = mOverrideDisplayInfo.logicalWidth;
+                }
+            }
+        }
+
         return mInfo.get();
     }
 
