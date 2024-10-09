@@ -5287,7 +5287,24 @@ public class PackageManagerService implements PackageSender, TestUtilityService 
             fi.reqGlEsVersion = SystemProperties.getInt("ro.opengles.version",
                     FeatureInfo.GL_ES_VERSION_UNDEFINED);
             res.add(fi);
+            String propertyValue = SystemProperties.get("ro.com.google.gmsversion");
 
+            if (propertyValue != null && propertyValue.length() > 0) {
+               try {
+                      String callingApp = mContext.getPackageManager().getNameForUid(Binder.getCallingUid());
+                      if("com.android.vending".equals(callingApp)){
+                         final FeatureInfo portrait_faketouch = new FeatureInfo();
+                         portrait_faketouch.name = "android.hardware.faketouch";
+                         res.add(portrait_faketouch);
+
+                         final FeatureInfo portrait_touch = new FeatureInfo();
+                         portrait_touch.name = "android.hardware.touchscreen";
+                         res.add(portrait_touch);
+                        }
+                    }catch(Exception e){
+                        Slog.w(TAG,e);
+                    }
+           }
             return new ParceledListSlice<>(res);
         }
 
