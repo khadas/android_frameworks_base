@@ -170,6 +170,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Iterator;
+import android.os.SystemProperties;
 
 /**
  * This class contains the implementation of the Computer functions.  It
@@ -1722,7 +1724,37 @@ public class ComputerEngine implements Computer {
                 }
             }
         }
+
+        String[] packageNames = null;
+        String callPackageName = null;
+        String propertyValue = SystemProperties.get("ro.com.google.gmsversion");
+        if (propertyValue != null && propertyValue.length() > 0) {
+            packageNames = getPackagesForUid(callingUid);             
+            if (null != packageNames && packageNames.length >= 1) {
+                callPackageName = packageNames[0].trim();
+                Slog.i(TAG, "getInstalledPackagesBody CALLING package name = " + callPackageName);
+            }
+       
+            if (callPackageName != null && callPackageName.contains("com.google.android.permission.gts")) {
+                Slog.e(TAG, "getInstalledPackagesBody gts start to skip bluetooth");
+                removePackagesContainingString(list, "com.android.bluetooth");
+                removePackagesContainingString(list, "com.android.btservices");
+            }
+        }
+
         return new ParceledListSlice<>(list);
+    }
+
+    public void removePackagesContainingString(ArrayList<PackageInfo> packageList, String removePkgName){
+        if (packageList != null && removePkgName != null && !removePkgName.isEmpty()) {
+            Iterator<PackageInfo> iterator = packageList.iterator();
+            while (iterator.hasNext()) {
+                PackageInfo info = iterator.next();
+                if (info.packageName.contains(removePkgName)) {
+                    iterator.remove();
+                }
+            }
+        }
     }
 
     public final ResolveInfo createForwardingResolveInfoUnchecked(WatchedIntentFilter filter,
