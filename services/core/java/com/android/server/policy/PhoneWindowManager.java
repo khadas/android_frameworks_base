@@ -3007,6 +3007,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         return audioService;
     }
 
+    //-----------------------rk code----------
+    public void openRkProjectorAiDialog() {
+        if("true".equals(SystemProperties.get("persist.sys.settings.ai_lab" ,"false"))) {
+            ComponentName component = new ComponentName("com.android.tv.settings",
+                                  "com.android.tv.settings.ai_lab.AiLabActivity");
+            Intent intent = new Intent();
+            intent.setComponent(component);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+            mContext.startActivity(intent);
+        }
+    }
+    //---------------------------------------
+
     boolean keyguardOn() {
         return isKeyguardShowingAndNotOccluded() || inKeyguardRestrictedKeyInputMode();
     }
@@ -3151,6 +3165,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final int deviceId = event.getDeviceId();
         final boolean firstDown = down && repeatCount == 0;
 
+        //-----------------------rk code----------
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+	//----------------------------------------
+
         // Cancel any pending meta actions if we see any other keys being pressed between the
         // down of the meta key and its corresponding up.
         if (mPendingMetaAction && !KeyEvent.isMetaKey(keyCode)) {
@@ -3171,11 +3189,25 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
 
         switch (keyCode) {
+            //-----------------------rk code----------
+            case KeyEvent.KEYCODE_SETTINGS:
+                if(isBox && down){
+                   openRkProjectorAiDialog();
+                }
+                break;
+            //----------------------------------------
             case KeyEvent.KEYCODE_HOME:
                 return handleHomeShortcuts(displayId, focusedToken, event);
             case KeyEvent.KEYCODE_MENU:
                 // Hijack modified menu keys for debugging features
                 final int chordBug = KeyEvent.META_SHIFT_ON;
+
+                //-----------------------rk code----------
+                if (isBox && !keyguardOn && down && repeatCount == 20) {
+                    openRkProjectorAiDialog();
+                    return true;
+                }
+                //----------------------------------------
 
                 if (mEnableShiftMenuBugReports && firstDown
                         && (metaState & chordBug) == chordBug) {
