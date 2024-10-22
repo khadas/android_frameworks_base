@@ -6123,6 +6123,7 @@ message MetricsEvent {
     KHADAS_STATUS_BAR = 1604;
     KHADAS_CAMERA_IRCUT = 1605;
     KHADAS_M2X = 1606;
+    KHADAS_CAMERA_SETTINGS = 1607;
 
 
     // ---- End P Constants, all P constants go above this line ----
