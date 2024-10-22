@@ -3057,6 +3057,7 @@ public abstract class Context {
             //@hide: STATS_COMPANION_SERVICE,
             COMPANION_DEVICE_SERVICE,
             CROSS_PROFILE_APPS_SERVICE,
+            CUSTOM_SERVICE,
             //@hide: SYSTEM_UPDATE_SERVICE,
 	    //@hide: KHADAS_API_SERVICE,
     })
@@ -4192,6 +4193,8 @@ public abstract class Context {
      * @see #getSystemService(String)
      */
     public static final String TIME_ZONE_RULES_MANAGER_SERVICE = "timezone";
+
+    public static final String CUSTOM_SERVICE = "custom_service";
 
     /**
      * Use with {@link #getSystemService(String)} to retrieve a

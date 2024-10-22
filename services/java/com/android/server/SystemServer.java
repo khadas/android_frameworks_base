@@ -1631,6 +1631,14 @@ public final class SystemServer {
             traceEnd();
         }
 
+        traceBeginAndSlog("StartCustomService");
+        try {
+            ServiceManager.addService(Context.CUSTOM_SERVICE, new CustomService(context));
+        } catch (Throwable e) {
+            reportWtf("Failure starting Custom Service", e);
+        }
+        traceEnd();
+
         // It is now time to start up the app processes...
 
         traceBeginAndSlog("MakeVibratorServiceReady");

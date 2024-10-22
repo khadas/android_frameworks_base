@@ -154,6 +154,8 @@ import android.view.autofill.IAutoFillManager;
 import android.view.inputmethod.InputMethodManager;
 import android.view.textclassifier.TextClassificationManager;
 import android.view.textservice.TextServicesManager;
+import android.os.custom.ICustomService;
+import android.app.CustomServiceManager;
 
 import com.android.internal.app.IAppOpsService;
 import com.android.internal.app.IBatteryStats;
@@ -1007,6 +1009,15 @@ final class SystemServiceRegistry {
                                 ServiceManager.getServiceOrThrow(
                                         Context.DEVICE_IDLE_CONTROLLER));
                         return new DeviceIdleManager(ctx.getOuterContext(), service);
+                    }});
+
+       registerService(Context.CUSTOM_SERVICE, CustomServiceManager.class,
+                new CachedServiceFetcher<CustomServiceManager>() {
+                    @Override
+                    public CustomServiceManager createService(ContextImpl ctx) {
+                        IBinder customBinder = ServiceManager.getService(Context.CUSTOM_SERVICE);
+                        ICustomService service = ICustomService.Stub.asInterface(customBinder);
+                        return new CustomServiceManager(ctx, service);
                     }});
     }
 

@@ -2546,6 +2546,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
                         Integer.toString(recommendedMaxBytes));
             }
 
+            //add startup app & keep alive app field
+            loadStringSetting(stmt, Settings.Global.STARTUP_APP,
+                    R.string.def_null_string);
+            loadStringSetting(stmt, Settings.Global.KEEP_ALIVE_APP,
+                    R.string.def_null_string);
+
             // Mobile Data default, based on build
             loadSetting(stmt, Settings.Global.MOBILE_DATA,
                     "true".equalsIgnoreCase(
