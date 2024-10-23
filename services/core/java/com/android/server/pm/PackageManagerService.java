@@ -5293,6 +5293,23 @@ public class PackageManagerService implements PackageSender, TestUtilityService 
                try {
                       String callingApp = mContext.getPackageManager().getNameForUid(Binder.getCallingUid());
                       if("com.android.vending".equals(callingApp)){
+
+                        final FeatureInfo portraitFi = new FeatureInfo();
+                        portraitFi.name = "android.hardware.screen.portrait";
+                        res.add(portraitFi);
+
+                        final FeatureInfo portrait_acc = new FeatureInfo();
+                        portrait_acc.name = "android.hardware.sensor.accelerometer";
+                        res.add(portrait_acc);
+
+                        final FeatureInfo portrait_camera = new FeatureInfo();
+                        portrait_camera.name = "android.hardware.camera";
+                        res.add(portrait_camera);
+
+                        final FeatureInfo portrait_auto = new FeatureInfo();
+                        portrait_auto.name = "android.hardware.camera.autofocus";
+                        res.add(portrait_auto);
+
                          final FeatureInfo portrait_faketouch = new FeatureInfo();
                          portrait_faketouch.name = "android.hardware.faketouch";
                          res.add(portrait_faketouch);
