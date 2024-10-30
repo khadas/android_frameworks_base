@@ -466,6 +466,8 @@ java_library {
 
 // TODO(b/145644363): move this to under StubLibraries.bp or ApiDocs.bp
 metalava_framework_docs_args = "" +
+    "--api-lint-ignore-prefix android.app. " +
+    "--api-lint-ignore-prefix android.os.custom. " +
     "--api-lint-ignore-prefix android.icu. " +
     "--api-lint-ignore-prefix java. " +
     "--api-lint-ignore-prefix junit. " +

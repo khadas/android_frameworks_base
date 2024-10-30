@@ -3933,6 +3933,7 @@ public abstract class Context {
             //@hide: ATTESTATION_VERIFICATION_SERVICE,
             //@hide: SAFETY_CENTER_SERVICE,
             DISPLAY_HASH_SERVICE,
+            CUSTOM_SERVICE,
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface ServiceName {}
@@ -5937,6 +5938,17 @@ public abstract class Context {
      */
     @SystemApi
     public static final String UWB_SERVICE = "uwb";
+
+    /**
+     * Use with {@link #getSystemService(String)} to retrieve a
+     * {@link android.app.CustomServiceManager} for interacting with the global
+     * system state.
+     *
+     * @see #getSystemService(String)
+     * @see android.app.CustomServiceManager
+     */
+     @SuppressLint("ServiceName")
+     public static final String CUSTOM_SERVICE = "custom_service";
 
     /**
      * Use with {@link #getSystemService(String)} to retrieve a

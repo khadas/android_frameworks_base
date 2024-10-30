@@ -2492,6 +2492,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
                         Integer.toString(recommendedMaxBytes));
             }
 
+            //add startup app & keep alive app field
+            loadStringSetting(stmt, Settings.Global.STARTUP_APP,
+                    R.string.def_null_string);
+            loadStringSetting(stmt, Settings.Global.KEEP_ALIVE_APP,
+                    R.string.def_null_string);
+
             // Mobile Data default, based on build
             loadSetting(stmt, Settings.Global.MOBILE_DATA,
                     TelephonyProperties.mobile_data().orElse(true) ? 1 : 0);
@@ -2592,6 +2598,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 defaultLidBehavior = 0;
             }
             loadSetting(stmt, Settings.Global.LID_BEHAVIOR, defaultLidBehavior);
+
+            SystemProperties.set("persist.sys.camera_usb_faceback", "2");
+            SystemProperties.set("persist.sys.camera_usb_orientation", "0");
 
             /*
              * IMPORTANT: Do not add any more upgrade steps here as the global,

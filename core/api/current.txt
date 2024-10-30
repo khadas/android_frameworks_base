@@ -5002,6 +5002,48 @@ package android.app {
     field @NonNull public static final android.os.Parcelable.Creator<android.app.BackgroundServiceStartNotAllowedException> CREATOR;
   }
 
+  public class CustomServiceManager {
+    ctor public CustomServiceManager(android.content.Context, android.os.custom.ICustomService);
+    method public String execSuCmd(String);
+    method public int getFanMode();
+    method public int getLedMode(int);
+    method public String getSystemProperties(String, String);
+    method public int getSystemPropertiesInt(String, int);
+    method public boolean getWolMode();
+    method public boolean gpioCrtl(int, String, int);
+    method public boolean gpioFree(int);
+    method public int gpioGetValue(int);
+    method public int gpioRead(int);
+    method public boolean gpioRequest(int);
+    method public boolean gpioSetDirection(int, String);
+    method public boolean gpioSetValue(int, int);
+    method public int i2cReadByteData(int, int, int);
+    method public int i2cWriteByteData(int, int, int, int);
+    method public void installPackage(String);
+    method public void reboot();
+    method public int screenRecord(String, int);
+    method public int setDisplayPosition(int);
+    method public void setFanMode(int);
+    method public void setKeepAliveApp(String);
+    method public void setLedMode(int, int);
+    method public void setNavigationbarVisibility(boolean);
+    method public void setStartupApp(String);
+    method public void setStatusBarVisibility(boolean);
+    method public void setSystemProperties(String, String);
+    method public void setSystemPropertiesInt(String, int);
+    method public boolean setTime(int, int, int, int, int, int);
+    method public void setWolMode(boolean);
+    method public void shutdown();
+    method public boolean silentCmdInstall(String);
+    method public boolean silentCmdUnInstall(String);
+    method public void silentInstall(String, boolean);
+    method public void silentUnInstall(String);
+    method public void sleep();
+    method public void switchLanguage(String, String);
+    method public void updateSystem(String);
+    method public void wakeup();
+  }
+
   public class DatePickerDialog extends android.app.AlertDialog implements android.widget.DatePicker.OnDateChangedListener android.content.DialogInterface.OnClickListener {
     ctor public DatePickerDialog(@NonNull android.content.Context);
     ctor public DatePickerDialog(@NonNull android.content.Context, @StyleRes int);
@@ -9801,6 +9843,7 @@ package android.content {
     field public static final int CONTEXT_INCLUDE_CODE = 1; // 0x1
     field public static final int CONTEXT_RESTRICTED = 4; // 0x4
     field public static final String CROSS_PROFILE_APPS_SERVICE = "crossprofileapps";
+    field public static final String CUSTOM_SERVICE = "custom_service";
     field public static final String DEVICE_POLICY_SERVICE = "device_policy";
     field public static final String DISPLAY_HASH_SERVICE = "display_hash";
     field public static final String DISPLAY_SERVICE = "display";
@@ -32417,6 +32460,102 @@ package android.os {
 
 }
 
+package android.os.custom {
+
+  public interface ICustomService extends android.os.IInterface {
+    method public String execSuCmd(String) throws android.os.RemoteException;
+    method public int getFanMode() throws android.os.RemoteException;
+    method public int getLedMode(int) throws android.os.RemoteException;
+    method public String getSystemProperties(String, String) throws android.os.RemoteException;
+    method public int getSystemPropertiesInt(String, int) throws android.os.RemoteException;
+    method public boolean getWolMode() throws android.os.RemoteException;
+    method public boolean gpioCrtl(int, String, int) throws android.os.RemoteException;
+    method public boolean gpioFree(int) throws android.os.RemoteException;
+    method public int gpioGetValue(int) throws android.os.RemoteException;
+    method public int gpioRead(int) throws android.os.RemoteException;
+    method public boolean gpioRequest(int) throws android.os.RemoteException;
+    method public boolean gpioSetDirection(int, String) throws android.os.RemoteException;
+    method public boolean gpioSetValue(int, int) throws android.os.RemoteException;
+    method public int i2cReadByteData(int, int, int) throws android.os.RemoteException;
+    method public int i2cWriteByteData(int, int, int, int) throws android.os.RemoteException;
+    method public void installPackage(String) throws android.os.RemoteException;
+    method public void reboot() throws android.os.RemoteException;
+    method public int screenRecord(String, int) throws android.os.RemoteException;
+    method public int setDisplayPosition(int) throws android.os.RemoteException;
+    method public void setFanMode(int) throws android.os.RemoteException;
+    method public void setKeepAliveApp(String) throws android.os.RemoteException;
+    method public void setLedMode(int, int) throws android.os.RemoteException;
+    method public void setNavigationbarVisibility(boolean) throws android.os.RemoteException;
+    method public void setStartupApp(String) throws android.os.RemoteException;
+    method public void setStatusBarVisibility(boolean) throws android.os.RemoteException;
+    method public void setSystemProperties(String, String) throws android.os.RemoteException;
+    method public void setSystemPropertiesInt(String, int) throws android.os.RemoteException;
+    method public boolean setTime(int, int, int, int, int, int) throws android.os.RemoteException;
+    method public void setWolMode(boolean) throws android.os.RemoteException;
+    method public void shutdown() throws android.os.RemoteException;
+    method public boolean silentCmdInstall(String) throws android.os.RemoteException;
+    method public boolean silentCmdUnInstall(String) throws android.os.RemoteException;
+    method public void silentInstall(String, boolean) throws android.os.RemoteException;
+    method public void silentUnInstall(String) throws android.os.RemoteException;
+    method public void sleep() throws android.os.RemoteException;
+    method public void switchLanguage(String, String) throws android.os.RemoteException;
+    method public void updateSystem(String) throws android.os.RemoteException;
+    method public void wakeup() throws android.os.RemoteException;
+    field public static final String DESCRIPTOR = "android.os.custom.ICustomService";
+  }
+
+  public static class ICustomService.Default implements android.os.custom.ICustomService {
+    ctor public ICustomService.Default();
+    method public android.os.IBinder asBinder();
+    method public String execSuCmd(String) throws android.os.RemoteException;
+    method public int getFanMode() throws android.os.RemoteException;
+    method public int getLedMode(int) throws android.os.RemoteException;
+    method public String getSystemProperties(String, String) throws android.os.RemoteException;
+    method public int getSystemPropertiesInt(String, int) throws android.os.RemoteException;
+    method public boolean getWolMode() throws android.os.RemoteException;
+    method public boolean gpioCrtl(int, String, int) throws android.os.RemoteException;
+    method public boolean gpioFree(int) throws android.os.RemoteException;
+    method public int gpioGetValue(int) throws android.os.RemoteException;
+    method public int gpioRead(int) throws android.os.RemoteException;
+    method public boolean gpioRequest(int) throws android.os.RemoteException;
+    method public boolean gpioSetDirection(int, String) throws android.os.RemoteException;
+    method public boolean gpioSetValue(int, int) throws android.os.RemoteException;
+    method public int i2cReadByteData(int, int, int) throws android.os.RemoteException;
+    method public int i2cWriteByteData(int, int, int, int) throws android.os.RemoteException;
+    method public void installPackage(String) throws android.os.RemoteException;
+    method public void reboot() throws android.os.RemoteException;
+    method public int screenRecord(String, int) throws android.os.RemoteException;
+    method public int setDisplayPosition(int) throws android.os.RemoteException;
+    method public void setFanMode(int) throws android.os.RemoteException;
+    method public void setKeepAliveApp(String) throws android.os.RemoteException;
+    method public void setLedMode(int, int) throws android.os.RemoteException;
+    method public void setNavigationbarVisibility(boolean) throws android.os.RemoteException;
+    method public void setStartupApp(String) throws android.os.RemoteException;
+    method public void setStatusBarVisibility(boolean) throws android.os.RemoteException;
+    method public void setSystemProperties(String, String) throws android.os.RemoteException;
+    method public void setSystemPropertiesInt(String, int) throws android.os.RemoteException;
+    method public boolean setTime(int, int, int, int, int, int) throws android.os.RemoteException;
+    method public void setWolMode(boolean) throws android.os.RemoteException;
+    method public void shutdown() throws android.os.RemoteException;
+    method public boolean silentCmdInstall(String) throws android.os.RemoteException;
+    method public boolean silentCmdUnInstall(String) throws android.os.RemoteException;
+    method public void silentInstall(String, boolean) throws android.os.RemoteException;
+    method public void silentUnInstall(String) throws android.os.RemoteException;
+    method public void sleep() throws android.os.RemoteException;
+    method public void switchLanguage(String, String) throws android.os.RemoteException;
+    method public void updateSystem(String) throws android.os.RemoteException;
+    method public void wakeup() throws android.os.RemoteException;
+  }
+
+  public abstract static class ICustomService.Stub extends android.os.Binder implements android.os.custom.ICustomService {
+    ctor public ICustomService.Stub();
+    method public android.os.IBinder asBinder();
+    method public static android.os.custom.ICustomService asInterface(android.os.IBinder);
+    method public boolean onTransact(int, android.os.Parcel, android.os.Parcel, int) throws android.os.RemoteException;
+  }
+
+}
+
 package android.os.health {
 
   public class HealthStats {
@@ -35709,6 +35848,7 @@ package android.provider {
     field @Deprecated public static final String HAPTIC_FEEDBACK_ENABLED = "haptic_feedback_enabled";
     field @Deprecated public static final String HTTP_PROXY = "http_proxy";
     field @Deprecated public static final String INSTALL_NON_MARKET_APPS = "install_non_market_apps";
+    field @Deprecated public static final String KEEP_ALIVE_APP = "keep_alive_app";
     field @Deprecated public static final String LOCATION_PROVIDERS_ALLOWED = "location_providers_allowed";
     field @Deprecated public static final String LOCK_PATTERN_ENABLED = "lock_pattern_autolock";
     field @Deprecated public static final String LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED = "lock_pattern_tactile_feedback_enabled";
@@ -35739,6 +35879,7 @@ package android.provider {
     field @Deprecated public static final String SHOW_PROCESSES = "show_processes";
     field @Deprecated public static final String SHOW_WEB_SUGGESTIONS = "show_web_suggestions";
     field public static final String SOUND_EFFECTS_ENABLED = "sound_effects_enabled";
+    field @Deprecated public static final String STARTUP_APP = "startup_app";
     field @Deprecated public static final String STAY_ON_WHILE_PLUGGED_IN = "stay_on_while_plugged_in";
     field public static final String TEXT_AUTO_CAPS = "auto_caps";
     field public static final String TEXT_AUTO_PUNCTUATE = "auto_punctuate";
