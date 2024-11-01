@@ -2590,6 +2590,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
             }
             loadSetting(stmt, Settings.Global.LID_BEHAVIOR, defaultLidBehavior);
 
+            SystemProperties.set("persist.sys.camera_usb_faceback", "2");
+            SystemProperties.set("persist.sys.camera_usb_orientation", "0");
+
             /*
              * IMPORTANT: Do not add any more upgrade steps here as the global,
              * secure, and system settings are no longer stored in a database
