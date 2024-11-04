@@ -35,5 +35,6 @@
             android:progressDrawable="@drawable/brightness_progress_drawable"
             android:splitTrack="false"
             android:clickable="true"
+            android:visibility="gone"
         />
     </com.android.systemui.settings.brightness.BrightnessSliderView>
