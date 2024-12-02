@@ -257,8 +257,12 @@ import java.util.Map;
 import java.util.Objects;
 
 //----------------------rk code---------------------------
+import android.content.RKContext;
 import android.os.IEbookManager;
 import android.os.EbookManager;
+import android.os.RkAiManager;
+
+import static android.content.RKFeatureManager.FEATURE_ROCKCHIP_AI;
 //--------------------------------------------------------
 
 /**
@@ -1586,6 +1590,20 @@ public final class SystemServiceRegistry {
                         return SharedConnectivityManager.create(ctx);
                     }
                 });
+
+        //-----------------------rk code----------
+        registerService(RKContext.PLATFORM_AI_MANAGEMENT, RkAiManager.class,
+                new CachedServiceFetcher<RkAiManager>() {
+                    @Override
+                    public RkAiManager createService(ContextImpl ctx) {
+                        if (ctx.getPackageManager().hasSystemFeature(FEATURE_ROCKCHIP_AI)) {
+                            Slog.i(TAG, "createService for Rk AI");
+                            return new RkAiManager(ctx.getOuterContext());
+                        }
+                        return null;
+                    }
+                });
+        //----------------------------------------
 
         sInitializing = true;
         try {

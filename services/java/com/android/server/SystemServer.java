@@ -249,6 +249,10 @@ import java.util.concurrent.Future;
 
 //----------------------rk code---------------------------
 import com.android.server.ebook.EbookService;
+import com.android.server.RkAiManagerService;
+
+import static android.content.RKContext.PLATFORM_AI_MANAGEMENT;
+import static android.content.RKFeatureManager.FEATURE_ROCKCHIP_AI;
 //--------------------------------------------------------
 
 /**
@@ -2170,6 +2174,16 @@ public final class SystemServer implements Dumpable {
                             new RkHandWriteManagementService(context));
                 } catch (Throwable e) {
                     Slog.e(TAG, "Failure starting RkHandWriteManagement Service", e);
+                }
+            }
+            if (mPackageManager.hasSystemFeature(FEATURE_ROCKCHIP_AI)) {
+                try {
+                    Slog.i(TAG, "add service: " + PLATFORM_AI_MANAGEMENT);
+                    ServiceManager.addService(PLATFORM_AI_MANAGEMENT,
+                        new RkAiManagerService(context));
+                } catch (Exception e) {
+                    Slog.e(TAG, "Failed to start " + PLATFORM_AI_MANAGEMENT);
+                    e.printStackTrace();
                 }
             }
 	    //--------------

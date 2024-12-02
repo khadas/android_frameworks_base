@@ -14332,6 +14332,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 || Intent.ACTION_FACTORY_RESET.equals(action)
                 //-----------------------rk code----------
                 || Intent.ACTION_HDMIIN_RK_PRIV_CMD.equals(action)
+                || "com.rockchip.rkaiservice.stop_service".equals(action)
                 //----------------------------------------
                 || AppWidgetManager.ACTION_APPWIDGET_CONFIGURE.equals(action)
                 || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)

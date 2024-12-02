@@ -113,6 +113,9 @@ cc_library_static {
         "onload.cpp",
         ":lib_cachedAppOptimizer_native",
         ":lib_gameManagerService_native",
+        //-----------------------rk code----------
+        "com_android_server_RkAiManagerService.cpp",
+        //----------------------------------------
     ],
 
     include_dirs: [
@@ -256,6 +259,8 @@ cc_defaults {
         "rockchip.hardware.tv.input@1.0",
         "librksoundsetting",
         "libdisplay-animation",
+        "libmedia",
+        "audioflinger-aidl-cpp",
         //----------------------------------------
     ],
 

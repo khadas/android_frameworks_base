@@ -74,6 +74,7 @@ int register_com_android_server_audio_RkAudioSetting(JNIEnv* env);
 int register_android_server_EbookService(JNIEnv* env);
 int register_android_server_wm_DisplayAnimation(JNIEnv* env);
 int register_com_android_server_RkHandWriteManagementService(JNIEnv* env);
+int register_com_android_server_RkAiManagerService(JNIEnv* env);
 //-----------------
 };
 
@@ -141,6 +142,7 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void* /* reserved */)
     register_android_server_EbookService(env);
     register_android_server_wm_DisplayAnimation(env);
     register_com_android_server_RkHandWriteManagementService(env);
+    register_com_android_server_RkAiManagerService(env);
     //-----------------
     return JNI_VERSION_1_4;
 }
