@@ -2112,6 +2112,14 @@ public final class SystemServer {
         mSystemServiceManager.startService(AppBindingService.Lifecycle.class);
         t.traceEnd();
 
+        t.traceBegin("StartCustomService");
+        try {
+            ServiceManager.addService(Context.CUSTOM_SERVICE, new CustomService(context));
+        } catch (Throwable e) {
+            reportWtf("Failure starting Custom Service", e);
+        }
+        t.traceEnd();
+
         // It is now time to start up the app processes...
 
         t.traceBegin("MakeVibratorServiceReady");

@@ -200,6 +200,8 @@ import android.view.contentcapture.IContentCaptureManager;
 import android.view.inputmethod.InputMethodManager;
 import android.view.textclassifier.TextClassificationManager;
 import android.view.textservice.TextServicesManager;
+import android.app.ICustomService;
+import android.app.CustomServiceManager;
 
 import com.android.internal.app.IAppOpsService;
 import com.android.internal.app.IBatteryStats;
@@ -1544,6 +1546,15 @@ public final class SystemServiceRegistry {
                     public TServiceClass createService() throws ServiceNotFoundException {
                         return serviceProducer.createService(
                                 ServiceManager.getServiceOrThrow(serviceName));
+                    }});
+
+       registerService(Context.CUSTOM_SERVICE, CustomServiceManager.class,
+                new CachedServiceFetcher<CustomServiceManager>() {
+                    @Override
+                    public CustomServiceManager createService(ContextImpl ctx) {
+                        IBinder customBinder = ServiceManager.getService(Context.CUSTOM_SERVICE);
+                        ICustomService service = ICustomService.Stub.asInterface(customBinder);
+                        return new CustomServiceManager(ctx, service);
                     }});
     }
 

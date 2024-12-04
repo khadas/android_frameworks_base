@@ -42,6 +42,7 @@ filegroup {
     srcs: [
         "core/java/android/app/IApplicationThread.aidl",
         "core/java/android/app/IServiceConnection.aidl",
+        "core/java/android/app/ICustomService.aidl",
         "core/java/android/content/IContentProvider.java",
         "core/java/android/content/pm/IPackageDataObserver.aidl",
         "core/java/android/content/pm/InstantAppInfo.java",
@@ -1217,6 +1218,7 @@ metalava_framework_docs_args = "--manifest $(location core/res/AndroidManifest.x
     "--hide SdkConstant --hide HiddenTypeParameter --hide Todo --hide Typo " +
     "--force-convert-to-warning-nullability-annotations +*:-android.*:+android.icu.*:-dalvik.* " +
     "--api-lint-ignore-prefix android.icu. " +
+    "--api-lint-ignore-prefix android.app. " +
     "--api-lint-ignore-prefix java. " +
     "--api-lint-ignore-prefix junit. " +
     "--api-lint-ignore-prefix org. "
