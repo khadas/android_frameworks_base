@@ -3848,6 +3848,8 @@ public final class Settings {
             MOVED_TO_GLOBAL.add(Settings.Global.AIRPLANE_MODE_TOGGLEABLE_RADIOS);
             MOVED_TO_GLOBAL.add(Settings.Global.AUTO_TIME);
             MOVED_TO_GLOBAL.add(Settings.Global.AUTO_TIME_ZONE);
+            MOVED_TO_GLOBAL.add(Settings.Global.STARTUP_APP);
+            MOVED_TO_GLOBAL.add(Settings.Global.KEEP_ALIVE_APP);
             MOVED_TO_GLOBAL.add(Settings.Global.CAR_DOCK_SOUND);
             MOVED_TO_GLOBAL.add(Settings.Global.CAR_UNDOCK_SOUND);
             MOVED_TO_GLOBAL.add(Settings.Global.DESK_DOCK_SOUND);
@@ -5273,6 +5275,20 @@ public final class Settings {
          */
         @Deprecated
         public static final String AUTO_TIME_ZONE = Global.AUTO_TIME_ZONE;
+
+         /**
+         * @deprecated Use {@link android.provider.Settings.Global#STARTUP_APP}
+         * instead
+         */
+        @Deprecated
+        public static final String STARTUP_APP = Global.STARTUP_APP;
+
+        /**
+         * @deprecated Use {@link android.provider.Settings.Global#KEEP_ALIVE_APP}
+         * instead
+         */
+        @Deprecated
+        public static final String KEEP_ALIVE_APP = Global.KEEP_ALIVE_APP;
 
         /**
          * Display the user's times, e.g. in the status bar, as 12 or 24 hours.
@@ -12091,7 +12107,20 @@ public final class Settings {
         public static final String AUTO_TIME_ZONE_EXPLICIT = "auto_time_zone_explicit";
 
         /**
-         * URI for the car dock "in" event sound.
+         * URI for the car dock "out" event sound.
+         * @hide
+         */
+        @Readable
+        public static final String STARTUP_APP = "startup_app";
+        /**
+         *
+         * @hide
+         */
+        @Readable
+        public static final String KEEP_ALIVE_APP = "keep_alive_app";
+
+        /**
+         *
          * @hide
          */
         @Readable

@@ -4194,6 +4194,7 @@ public abstract class Context {
             DEVICE_LOCK_SERVICE,
             VIRTUALIZATION_SERVICE,
             GRAMMATICAL_INFLECTION_SERVICE,
+            CUSTOM_SERVICE,
 
     })
     @Retention(RetentionPolicy.SOURCE)
@@ -6239,6 +6240,17 @@ public abstract class Context {
      */
     @SystemApi
     public static final String UWB_SERVICE = "uwb";
+
+    /**
+     * Use with {@link #getSystemService(String)} to retrieve a
+     * {@link android.app.CustomServiceManager} for interacting with the global
+     * system state.
+     *
+     * @see #getSystemService(String)
+     * @see android.app.CustomServiceManager
+     */
+     @SuppressLint("ServiceName")
+     public static final String CUSTOM_SERVICE = "custom_service";
 
     /**
      * Use with {@link #getSystemService(String)} to retrieve a
