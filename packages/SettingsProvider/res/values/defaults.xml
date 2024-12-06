@@ -17,6 +17,7 @@
  */
 -->
 <resources>
+    <string name="def_null_string" translatable="false"></string>
     <bool name="def_dim_screen">true</bool>
     <integer name="def_screen_off_timeout">60000</integer>
     <integer name="def_sleep_timeout">-1</integer>
