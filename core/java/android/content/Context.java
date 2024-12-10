@@ -3494,6 +3494,7 @@ public abstract class Context {
             //@hide: TIME_ZONE_DETECTOR_SERVICE,
             PERMISSION_SERVICE,
             LIGHTS_SERVICE,
+            CUSTOM_SERVICE,
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface ServiceName {}
@@ -5151,6 +5152,18 @@ public abstract class Context {
      * @hide
      */
     public static final String LIGHTS_SERVICE = "lights";
+
+
+    /**
+     * Use with {@link #getSystemService(String)} to retrieve a
+     * {@link android.app.CustomServiceManager} for interacting with the global
+     * system state.
+     *
+     * @see #getSystemService(String)
+     * @see android.app.CustomServiceManager
+     */
+     @SuppressLint("ServiceName")
+     public static final String CUSTOM_SERVICE = "custom_service";
 
     /**
      * Use with {@link #getSystemService(String)} to retrieve a

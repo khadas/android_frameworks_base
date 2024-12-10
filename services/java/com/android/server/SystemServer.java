@@ -2378,6 +2378,14 @@ public final class SystemServer {
             }
             t.traceEnd();
 
+            t.traceBegin("StartCustomService");
+            try {
+                ServiceManager.addService(Context.CUSTOM_SERVICE, new CustomService(context));
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting Custom Service", e);
+            }
+            t.traceEnd();
+
             t.traceBegin("StartTethering");
             try {
                 // TODO: hide implementation details, b/146312721.

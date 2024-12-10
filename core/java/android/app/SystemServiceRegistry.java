@@ -209,6 +209,8 @@ import com.android.internal.net.INetworkWatchlistManager;
 import com.android.internal.os.IDropBoxManagerService;
 import com.android.internal.policy.PhoneLayoutInflater;
 import com.android.internal.util.Preconditions;
+import android.os.custom.ICustomService;
+import android.app.CustomServiceManager;
 
 import java.util.Map;
 import java.util.Objects;
@@ -1332,6 +1334,15 @@ public final class SystemServiceRegistry {
                     public DreamManager createService(ContextImpl ctx)
                             throws ServiceNotFoundException {
                         return new DreamManager(ctx);
+                    }});
+
+        registerService(Context.CUSTOM_SERVICE, CustomServiceManager.class,
+                new CachedServiceFetcher<CustomServiceManager>() {
+                    @Override
+                    public CustomServiceManager createService(ContextImpl ctx) {
+                        IBinder customBinder = ServiceManager.getService(Context.CUSTOM_SERVICE);
+                        ICustomService service = ICustomService.Stub.asInterface(customBinder);
+                        return new CustomServiceManager(ctx, service);
                     }});
 
         sInitializing = true;

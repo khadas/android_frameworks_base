@@ -1207,6 +1207,8 @@ filegroup {
 
 // TODO(b/145644363): move this to under StubLibraries.bp or ApiDocs.bp
 metalava_framework_docs_args = "--manifest $(location core/res/AndroidManifest.xml) " +
+    "--api-lint-ignore-prefix android.app. " +
+    "--api-lint-ignore-prefix android.os.custom. " +
     "--ignore-classes-on-classpath " +
     "--hide-package com.android.server " +
     "--error UnhiddenSystemApi " +
