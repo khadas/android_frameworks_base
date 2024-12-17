@@ -1103,6 +1103,7 @@ public class UriGrantsManagerService extends IUriGrantsManager.Stub implements
             if ("com.android.settings.files".equals(grantUri.uri.getAuthority())
                     //-----------------------rk code----------
                     || "com.android.rk.fileprovider".equals(grantUri.uri.getAuthority())
+                    || "com.rockchips.mediacenter.fileprovider".equals(grantUri.uri.getAuthority())
                     //----------------------------------------
                     || "com.android.settings.module_licenses".equals(grantUri.uri.getAuthority())) {
                 // Exempted authority for
