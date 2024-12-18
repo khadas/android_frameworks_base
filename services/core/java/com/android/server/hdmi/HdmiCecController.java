@@ -746,6 +746,14 @@ final class HdmiCecController {
                     }
                     if (errorCode == SendMessageResult.SUCCESS) {
                         break;
+                    //-----------------------rk code----------
+                    } else if("box".equals(android.os.SystemProperties.get("ro.target.product","tablet"))){
+                        /* If send msg failed, we need delay before retransmission */
+                        try {
+                           Thread.sleep(300);
+                        } catch (InterruptedException ignore) {
+                        }
+                    //----------------------------------------
                     }
                 } while (retransmissionCount++ < HdmiConfig.RETRANSMISSION_COUNT);
 
