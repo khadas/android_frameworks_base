@@ -410,6 +410,13 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
         try {
             String iso3Language = new String(message.getParams(), 0, 3, "US-ASCII");
             Locale currentLocale = mService.getContext().getResources().getConfiguration().locale;
+            /* android recognizes all chinese as zho */
+            //-----------------------rk code----------
+            if (iso3Language.equals("chi")) {
+                Slog.i(TAG, "android set all chinese zho");
+                iso3Language = "zho";
+            }
+            //----------------------------------------
             String curIso3Language = mService.localeToMenuLanguage(currentLocale);
             HdmiLogger.debug("handleSetMenuLanguage " + iso3Language + " cur:" + curIso3Language);
             if (curIso3Language.equals(iso3Language)) {
