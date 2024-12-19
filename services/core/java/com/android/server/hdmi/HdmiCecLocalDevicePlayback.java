@@ -268,6 +268,10 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
                 @HdmiControlManager.PowerControlMode
                 String powerControlMode = mService.getHdmiCecConfig().getStringValue(
                         HdmiControlManager.CEC_SETTING_NAME_POWER_CONTROL_MODE);
+                //-----------------------rk code----------
+                /* cec cts specification requires that standby message must be broadcast */
+                mService.sendCecCommand(HdmiCecMessageBuilder.buildStandby(getDeviceInfo().getLogicalAddress(), Constants.ADDR_BROADCAST));
+                //----------------------------------------
                 switch (powerControlMode) {
                     case HdmiControlManager.POWER_CONTROL_MODE_TV:
                         mService.sendCecCommand(
@@ -569,6 +573,16 @@ public class HdmiCecLocalDevicePlayback extends HdmiCecLocalDeviceSource {
         }
         return Constants.ADDR_TV;
     }
+    //-----------------------rk code----------
+    @ServiceThreadOnly
+    protected void sendStandby(int deviceId) {
+        assertRunOnServiceThread();
+
+        /* cec cts specification requires that standby message must be broadcast */
+        int targetAddress = Constants.ADDR_BROADCAST;
+        mService.sendCecCommand(HdmiCecMessageBuilder.buildStandby(getDeviceInfo().getLogicalAddress(), targetAddress));
+    }
+    //----------------------------------------
 
     @Override
     @ServiceThreadOnly
