@@ -832,9 +832,15 @@ public class HdmiControlService extends SystemService {
                 new HdmiCecConfig.SettingChangeListener() {
                     @Override
                     public void onChange(String setting) {
-                        if (isTvDeviceEnabled()) {
+                        //-----------------------rk code----------
+                        if (isTvDeviceEnabled() && !"box".equals(SystemProperties.get("ro.target.product","tablet"))) {
                             mCecController.enableWakeupByOtp(tv().getAutoWakeup());
+                        } else {
+                            mCecController.enableWakeupByOtp( getHdmiCecConfig().getIntValue(
+                                             HdmiControlManager.CEC_SETTING_NAME_TV_WAKE_ON_ONE_TOUCH_PLAY)
+                                           == HdmiControlManager.TV_WAKE_ON_ONE_TOUCH_PLAY_ENABLED);
                         }
+                        //----------------------------------------
                     }
                 }, mServiceThreadExecutor);
 
@@ -1108,9 +1114,13 @@ public class HdmiControlService extends SystemService {
         updatePowerStatusOnInitializeCecComplete();
         mWakeUpMessageReceived = false;
 
-        if (isTvDeviceEnabled()) {
+        //-----------------rk code-----------------------
+        if (isTvDeviceEnabled() && !"box".equals(SystemProperties.get("ro.target.product","tablet"))) {
             mCecController.enableWakeupByOtp(tv().getAutoWakeup());
+        } else {
+            mCecController.enableWakeupByOtp(true);
         }
+        //----------------------------------------
         int reason = -1;
         switch (initiatedBy) {
             case INITIATED_BY_BOOT_UP:
