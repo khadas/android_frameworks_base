@@ -336,9 +336,6 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
             } else if (headset == BIT_DP_AUDIO_1 && mDp1Registered) {
                 Slog.d(TAG, "dp_1 plug");
                 outDevice = AudioManager.DEVICE_OUT_SPDIF_1;
-            } else if (headset == BIT_HDMIIN_AUDIO) {
-                Slog.d(TAG, "hdmiin_0 plug");
-                inDevice = AudioManager.DEVICE_IN_HDMI;
             } else if (headset == BIT_HDMIIN_AUDIO_1) {
                 Slog.d(TAG, "hdmiin_1 plug");
                 inDevice = AudioManager.DEVICE_IN_HDMI_1;
