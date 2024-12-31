@@ -4294,6 +4294,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         boolean isWakeKey = (policyFlags & WindowManagerPolicy.FLAG_WAKE) != 0
                 || event.isWakeKey();
 
+        //-----------------------rk code----------
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+        if(isBox)
+           isWakeKey=false;
+        //----------------------------------------
+
         if (!mSystemBooted) {
             // If we have not yet booted, don't let key events do anything.
             // Exception: Wake and power key events are forwarded to PowerManager to allow it to
@@ -4338,9 +4344,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // Basic policy based on interactive state.
         int result;
-	//-----------------------rk code----------
-	boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
-	//----------------------------------------
         if (interactive || (isInjected && !isWakeKey)) {
             // When the device is interactive or the key is injected pass the
             // key to the application.
@@ -4919,7 +4922,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     @Override
     public int interceptMotionBeforeQueueingNonInteractive(int displayId, long whenNanos,
             int policyFlags) {
-        if ((policyFlags & FLAG_WAKE) != 0) {
+        //-----------------------rk code----------
+        boolean isBox = "box".equals(SystemProperties.get("ro.target.product"));
+        //----------------------------------------
+        if ((policyFlags & FLAG_WAKE) != 0 && !isBox) {
             if (wakeUp(whenNanos / 1000000, mAllowTheaterModeWakeFromMotion,
                     PowerManager.WAKE_REASON_WAKE_MOTION, "android.policy:MOTION")) {
                 return 0;
@@ -4933,7 +4939,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // If we have not passed the action up and we are in theater mode without dreaming,
         // there will be no dream to intercept the touch and wake into ambient.  The device should
         // wake up in this case.
-        if (isTheaterModeEnabled() && (policyFlags & FLAG_WAKE) != 0) {
+        if (isTheaterModeEnabled() && (policyFlags & FLAG_WAKE) != 0 && !isBox) {
             wakeUp(whenNanos / 1000000, mAllowTheaterModeWakeFromMotionWhenNotDreaming,
                     PowerManager.WAKE_REASON_WAKE_MOTION, "android.policy:MOTION");
         }
