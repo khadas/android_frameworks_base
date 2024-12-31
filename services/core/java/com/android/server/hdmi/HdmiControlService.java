@@ -2948,6 +2948,12 @@ public class HdmiControlService extends SystemService {
     @VisibleForTesting
     void setHdmiCecVolumeControlEnabledInternal(
             @HdmiControlManager.VolumeControl int hdmiCecVolumeControl) {
+        //-----------------------rk code----------
+        if("box".equals(SystemProperties.get("ro.target.product","tablet"))
+            && "true".equals(SystemProperties.get("persist.sys.disable_cec_vol_ctrl","true"))){
+            hdmiCecVolumeControl = 0;
+        }
+        //----------------------------------------
         mHdmiCecVolumeControl = hdmiCecVolumeControl;
         announceHdmiCecVolumeControlFeatureChange(hdmiCecVolumeControl);
         runOnServiceThread(this::checkAndUpdateAbsoluteVolumeBehavior);
