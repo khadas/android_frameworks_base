@@ -8705,6 +8705,8 @@ public class AudioService extends IAudioService.Stub
                             index = (mIndexMax + 5)/10;
                         } else if (device == AudioSystem.DEVICE_OUT_HEARING_AID) {
                             index = (mIndexMax + 5)/10;
+                        } else if (isTablet() && isSyncAjustVolumeDevice(device) && mStreamType == AudioSystem.STREAM_MUSIC) {
+                            index = (getIndex(AudioSystem.DEVICE_OUT_SPEAKER) + 5)/10;
                         } else {
                             index = (mIndexMap.valueAt(i) + 5)/10;
                         }
