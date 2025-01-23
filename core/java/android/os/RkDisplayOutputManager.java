@@ -719,7 +719,7 @@ public class RkDisplayOutputManager {
         try {
             return mService.getBcsh(display);
         } catch (Exception e) {
-            Log.e(TAG, "Error get brightness :" + e);
+            Log.e(TAG, "Error get Bcsh :" + e);
             int[] bcsh = new int[4];
 			bcsh[0]=bcsh[1]=bcsh[2]=bcsh[3]=50;
             return bcsh;
@@ -1143,12 +1143,12 @@ public class RkDisplayOutputManager {
         return ret;
     }
 
-    public int getAcmEnable() {
+    public boolean getAcmEnable() {
         try {
             return mService.getAcmEnable();
         } catch (Exception e) {
             Log.e(TAG, "Error getAcmEnable :" + e);
-            return 0;
+            return false;
         }
     }
 
@@ -1161,5 +1161,362 @@ public class RkDisplayOutputManager {
             return false;
         }
         return ret;
+    }
+
+    public int setRGain(int display, int rgain_percent)
+    {
+        if (rgain_percent < 0 || rgain_percent > 512) {
+            Log.e(TAG, "setRGain out of range " + rgain_percent);
+            return -1;
+        }
+        try {
+            mService.setRGain(display, rgain_percent);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set sw rgain :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getRGain(int display)
+    {
+        try {
+            return mService.getRGain(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get sw rgain :" + e);
+            return 256;
+        }
+    }
+
+    public int setGGain(int display, int ggain_percent)
+    {
+        if (ggain_percent < 0 || ggain_percent > 512) {
+            Log.e(TAG, "setGGain out of range " + ggain_percent);
+            return -1;
+        }
+        try {
+            mService.setGGain(display, ggain_percent);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set sw ggain :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getGGain(int display)
+    {
+        try {
+            return mService.getGGain(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get sw ggain :" + e);
+            return 256;
+        }
+    }
+
+    public int setBGain(int display, int bgain_percent)
+    {
+        if (bgain_percent < 0 || bgain_percent > 512) {
+            Log.e(TAG, "setBGain out of range " + bgain_percent);
+            return -1;
+        }
+        try {
+            mService.setBGain(display, bgain_percent);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set sw bgain :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getBGain(int display)
+    {
+        try {
+            return mService.getBGain(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get sw bgain :" + e);
+            return 256;
+        }
+    }
+
+    public int setWhiteBalance(int display, int rgain, int ggain, int bgain) {
+        try {
+            mService.setWhiteBalance(display, rgain, ggain, bgain);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set white balance :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setDciEnable(boolean enable)
+    {
+        try {
+            mService.setDciEnable(enable);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set dci enable :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public boolean getDciEnable()
+    {
+        try {
+            return mService.getDciEnable();
+        } catch (Exception e) {
+            Log.e(TAG, "Error get dci enable :" + e);
+            return false;
+        }
+    }
+
+    public boolean getSharpEnable()
+    {
+        try {
+            return mService.getSharpEnable();
+        } catch (Exception e) {
+            Log.e(TAG, "Error get sharp enable :" + e);
+            return false;
+        }
+    }
+
+    public boolean getPqEnable()
+    {
+        try {
+            return mService.getPqEnable();
+        } catch (Exception e) {
+            Log.e(TAG, "Error get pq enable :" + e);
+            return false;
+        }
+    }
+
+    public int setBCSHMode(int display, int index) {
+        try {
+            mService.setBCSHMode(display, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set bcsh mode :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setWhiteBalanceMode(int display, int index) {
+        try {
+            mService.setWhiteBalanceMode(display, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set white balance mode :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setAcmMode(int display, int index) {
+        try {
+            mService.setAcmMode(display, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set acm mode :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setDciMode(int display, int index) {
+        try {
+            mService.setDciMode(display, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set dci mode :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setSharpMode(int display, int index) {
+        try {
+            mService.setSharpMode(display, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set sharp mode :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setGammaMode(int display, int index) {
+        try {
+            mService.setGammaMode(display, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set gamma mode :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int set3DLutMode(int display, int index) {
+        try {
+            mService.set3DLutMode(display, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set 3d lut mode :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int getBCSHMode(int display) {
+        try {
+            return mService.getBCSHMode(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get bcsh mode :" + e);
+            return 0;
+        }
+    }
+
+    public int getWhiteBalanceMode(int display) {
+        try {
+            return mService.getWhiteBalanceMode(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get white balance mode :" + e);
+            return 0;
+        }
+    }
+
+    public int getAcmMode(int display) {
+        try {
+            return mService.getAcmMode(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get acm mode :" + e);
+            return 0;
+        }
+    }
+
+    public int getDciMode(int display) {
+        try {
+            return mService.getDciMode(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get dci mode :" + e);
+            return 0;
+        }
+    }
+
+
+    public int getSharpMode(int display) {
+        try {
+            return mService.getSharpMode(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get sharp mode :" + e);
+            return 0;
+        }
+    }
+
+    public int getGammaMode(int display) {
+        try {
+            return mService.getGammaMode(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get gamma mode :" + e);
+            return 0;
+        }
+    }
+
+    public int get3DLutMode(int display) {
+        try {
+            return mService.get3DLutMode(display);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get 3d lut mode :" + e);
+            return 0;
+        }
+    }
+
+    public int setPresetBcsh(int display, int path, int index, int brightness, int contrast, int saturation, int hue) {
+        try {
+            mService.setPresetBcsh(display, path, index, brightness, contrast, saturation, hue);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set preset bcsh :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setPresetWhiteBalance(int display, int path, int index, int rgain, int ggain, int bgain) {
+        try {
+            mService.setPresetWhiteBalance(display, path, index, rgain, ggain, bgain);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set preset white balance :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setPresetGamma(int display, int path, int index, int size, int[] r, int[] g, int[] b) {
+        try {
+            mService.setPresetGamma(display, path, index, size, r, g, b);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set preset gamma :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setPreset3DLut(int display, int path, int index, int size, int[] r, int[] g, int[] b) {
+        try {
+            mService.setPreset3DLut(display, path, index, size, r, g, b);
+        } catch (Exception e) {
+            Log.e(TAG, "Error set preset 3d lut :" + e);
+            return -1;
+        }
+        return 0;
+    }
+
+    public int[] getPresetBcsh(int display, int path, int index) {
+        try {
+            return mService.getPresetBcsh(display, path, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get preset bcsh :" + e);
+            return null;
+        }
+    }
+
+    public int[] getPresetWhiteBalance(int display, int path, int index) {
+        try {
+            return mService.getPresetWhiteBalance(display, path, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get preset white balance :" + e);
+            return null;
+        }
+    }
+
+    public int[] getPresetGamma(int display, int path, int index) {
+        try {
+            return mService.getPresetGamma(display, path, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get preset gamma :" + e);
+            return null;
+        }
+    }
+
+    public int[] getPreset3DLut(int display, int path, int index) {
+        try {
+            return mService.getPreset3DLut(display, path, index);
+        } catch (Exception e) {
+            Log.e(TAG, "Error get preset 3d lut :" + e);
+            return null;
+        }
+    }
+
+    public int setAiPqEnable(boolean aisd, boolean aisr, boolean aimemc, boolean aidc) {
+        int ret = 0;
+        try {
+            ret = mService.setAiPqEnable(aisd, aisr, aimemc, aidc);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setAiPqEnable :" + e);
+            return -1;
+
+        }
+        return ret;
+    }
+
+    public boolean[] getAiPqEnable() {
+        try {
+            return mService.getAiPqEnable();
+        } catch (Exception e) {
+            Log.e(TAG, "Error get aipq enable :" + e);
+            return null;
+        }
     }
 }

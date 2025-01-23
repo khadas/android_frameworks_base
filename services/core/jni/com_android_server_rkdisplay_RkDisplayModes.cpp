@@ -275,7 +275,7 @@ static jobject nativeGetCorlorModeConfigs(JNIEnv* env, jclass clazz,
                 });
     }
 
-    for (size_t i = 0; i < capaities.size(); ++i) {
+    for (size_t i = 0; i < capaities.size(); i++) {
         if (i==0)
             env->SetIntField(infoObj, gRkColorModeSupportInfo.color_capa, (int)capaities[i]);
         else
@@ -748,7 +748,7 @@ static int nativeSetAcmEnable(JNIEnv* env, jobject obj, jboolean enable)
     }
 }
 
-static int nativeGetAcmEnable(JNIEnv* env, jobject obj)
+static jboolean nativeGetAcmEnable(JNIEnv* env, jobject obj)
 {
     int ret = 0;
     if (mComposer != nullptr) {
@@ -759,7 +759,526 @@ static int nativeGetAcmEnable(JNIEnv* env, jobject obj)
                 }
         });
     }
-    return ret;
+    return (jboolean) (ret != 0);
+}
+
+static jint nativeSetDciEnable(JNIEnv* env, jobject obj, jint dpy, jboolean enable)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setDciEnable(enable);
+    return 0;
+}
+
+static jboolean nativeGetDciEnable(JNIEnv* env, jobject obj)
+{
+    int ret = 0;
+    if (mComposer != nullptr) {
+        mComposer->getDciEnable(
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = tmpValue;
+                }
+        });
+    }
+    return (jboolean) (ret != 0);
+}
+
+static jboolean nativeGetSharpEnable(JNIEnv* env, jobject obj)
+{
+    int ret = 0;
+    if (mComposer != nullptr) {
+        mComposer->getSharpEnable(
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = tmpValue;
+                }
+        });
+    }
+    return (jboolean) (ret != 0);
+}
+
+static jboolean nativeGetPqEnable(JNIEnv* env, jobject obj)
+{
+    int ret = 0;
+    if (mComposer != nullptr) {
+        mComposer->getPqEnable(
+            [&](const auto& tmpResult, const auto& tmpValue) {
+                if (tmpResult == Result::OK) {
+                    ret = tmpValue;
+                }
+        });
+    }
+    return (jboolean) (ret != 0);
+}
+
+static jint nativeSetRGain(JNIEnv* env, jobject obj, jint dpy, jint rgain)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setRGain(dpy, rgain);
+    return 0;
+}
+
+static jint nativeGetRGain(JNIEnv* env, jobject obj, jint dpy)
+{
+    int rgain = 256;
+    if (mComposer != nullptr)
+    {
+        mComposer->getRGain(dpy,
+                [&](const auto& tmpResult, const auto& tmpRGain)
+                {
+                    if (tmpResult == Result::OK) {
+                        rgain = tmpRGain;
+                    }
+                });
+    }
+    ALOGV("%s:%d rgain = %d", __FUNCTION__, __LINE__, rgain);
+    return static_cast<jint>(rgain);
+}
+
+static jint nativeSetGGain(JNIEnv* env, jobject obj, jint dpy, jint ggain)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setGGain(dpy, ggain);
+    return 0;
+}
+
+static jint nativeGetGGain(JNIEnv* env, jobject obj, jint dpy)
+{
+    int ggain = 256;
+    if (mComposer != nullptr)
+    {
+        mComposer->getGGain(dpy,
+                [&](const auto& tmpResult, const auto& tmpGGain)
+                {
+                    if (tmpResult == Result::OK) {
+                        ggain = tmpGGain;
+                    }
+                });
+    }
+    ALOGV("%s:%d ggain = %d", __FUNCTION__, __LINE__, ggain);
+    return static_cast<jint>(ggain);
+}
+
+static jint nativeSetBGain(JNIEnv* env, jobject obj, jint dpy, jint bgain)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setBGain(dpy, bgain);
+    return 0;
+}
+
+static jint nativeGetBGain(JNIEnv* env, jobject obj, jint dpy)
+{
+    int bgain = 256;
+    if (mComposer != nullptr)
+    {
+        mComposer->getBGain(dpy,
+                [&](const auto& tmpResult, const auto& tmpBGain)
+                {
+                    if (tmpResult == Result::OK) {
+                        bgain = tmpBGain;
+                    }
+                });
+    }
+    ALOGV("%s:%d bgain = %d", __FUNCTION__, __LINE__, bgain);
+    return static_cast<jint>(bgain);
+}
+
+static jint nativeSetWhiteBalance(JNIEnv* env, jobject obj, jint dpy, jint rgain, jint ggain, jint bgain)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setWhiteBalance(dpy, rgain, ggain, bgain);
+    return 0;
+}
+
+static jint nativeSetBCSHMode(JNIEnv* env, jobject obj, jint dpy, jint index)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setBCSHMode(dpy, index);
+    return 0;
+}
+
+static jint nativeSetWhiteBalanceMode(JNIEnv* env, jobject obj, jint dpy, jint index)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setWhiteBalanceMode(dpy, index);
+    return 0;
+}
+
+static jint nativeSetAcmMode(JNIEnv* env, jobject obj, jint dpy, jint index)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setAcmMode(dpy, index);
+    return 0;
+}
+
+static jint nativeSetDciMode(JNIEnv* env, jobject obj, jint dpy, jint index)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setDciMode(dpy, index);
+    return 0;
+}
+
+static jint nativeSetSharpMode(JNIEnv* env, jobject obj, jint dpy, jint index)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setSharpMode(dpy, index);
+    return 0;
+}
+
+static jint nativeSetGammaMode(JNIEnv* env, jobject obj, jint dpy, jint index)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setGammaMode(dpy, index);
+    return 0;
+}
+
+static jint nativeSet3DLutMode(JNIEnv* env, jobject obj, jint dpy, jint index)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->set3DLutMode(dpy, index);
+    return 0;
+}
+
+static jint nativeGetBCSHMode(JNIEnv* env, jobject obj, jint dpy)
+{
+    int index = 0;
+    if (mComposer != nullptr)
+    {
+        mComposer->getBCSHMode(dpy,
+                [&](const auto& tmpResult, const auto& tmpIndex)
+                {
+                    if (tmpResult == Result::OK) {
+                        index = tmpIndex;
+                    }
+                });
+    }
+    ALOGV("%s:%d index = %d", __FUNCTION__, __LINE__, index);
+    return static_cast<jint>(index);
+}
+
+static jint nativeGetWhiteBalanceMode(JNIEnv* env, jobject obj, jint dpy)
+{
+    int index = 0;
+    if (mComposer != nullptr)
+    {
+        mComposer->getWhiteBalanceMode(dpy,
+                [&](const auto& tmpResult, const auto& tmpIndex)
+                {
+                    if (tmpResult == Result::OK) {
+                        index = tmpIndex;
+                    }
+                });
+    }
+    ALOGV("%s:%d index = %d", __FUNCTION__, __LINE__, index);
+    return static_cast<jint>(index);
+}
+
+static jint nativeGetAcmMode(JNIEnv* env, jobject obj, jint dpy)
+{
+    int index = 0;
+    if (mComposer != nullptr)
+    {
+        mComposer->getAcmMode(dpy,
+                [&](const auto& tmpResult, const auto& tmpIndex)
+                {
+                    if (tmpResult == Result::OK) {
+                        index = tmpIndex;
+                    }
+                });
+    }
+    ALOGV("%s:%d index = %d", __FUNCTION__, __LINE__, index);
+    return static_cast<jint>(index);
+}
+
+static jint nativeGetDciMode(JNIEnv* env, jobject obj, jint dpy)
+{
+    int index = 0;
+    if (mComposer != nullptr)
+    {
+        mComposer->getDciMode(dpy,
+                [&](const auto& tmpResult, const auto& tmpIndex)
+                {
+                    if (tmpResult == Result::OK) {
+                        index = tmpIndex;
+                    }
+                });
+    }
+    ALOGV("%s:%d index = %d", __FUNCTION__, __LINE__, index);
+    return static_cast<jint>(index);
+}
+
+static jint nativeGetSharpMode(JNIEnv* env, jobject obj, jint dpy)
+{
+    int index = 0;
+    if (mComposer != nullptr)
+    {
+        mComposer->getSharpMode(dpy,
+                [&](const auto& tmpResult, const auto& tmpIndex)
+                {
+                    if (tmpResult == Result::OK) {
+                        index = tmpIndex;
+                    }
+                });
+    }
+    ALOGV("%s:%d index = %d", __FUNCTION__, __LINE__, index);
+    return static_cast<jint>(index);
+}
+
+static jint nativeGetGammaMode(JNIEnv* env, jobject obj, jint dpy)
+{
+    int index = 0;
+    if (mComposer != nullptr)
+    {
+        mComposer->getGammaMode(dpy,
+                [&](const auto& tmpResult, const auto& tmpIndex)
+                {
+                    if (tmpResult == Result::OK) {
+                        index = tmpIndex;
+                    }
+                });
+    }
+    ALOGV("%s:%d index = %d", __FUNCTION__, __LINE__, index);
+    return static_cast<jint>(index);
+}
+
+static jint nativeGet3DLutMode(JNIEnv* env, jobject obj, jint dpy)
+{
+    int index = 0;
+    if (mComposer != nullptr)
+    {
+        mComposer->get3DLutMode(dpy,
+                [&](const auto& tmpResult, const auto& tmpIndex)
+                {
+                    if (tmpResult == Result::OK) {
+                        index = tmpIndex;
+                    }
+                });
+    }
+    ALOGV("%s:%d index = %d", __FUNCTION__, __LINE__, index);
+    return static_cast<jint>(index);
+}
+
+static jint nativeSetPresetBcsh(JNIEnv* env, jobject obj, jint dpy, jint path, jint index,
+	jint brightness, jint contrast, jint saturation, jint hue)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setPresetBcsh(dpy, path, index, brightness, contrast, saturation, hue);
+    return 0;
+}
+
+static jint nativeSetPresetWhiteBalance(JNIEnv* env, jobject obj, jint dpy, jint path, jint index,
+	jint rgain, jint ggain, jint bgain)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setPresetWhiteBalance(dpy, path, index, rgain, ggain, bgain);
+    return 0;
+}
+
+static jint nativeSetPresetGamma(JNIEnv* env, jobject obj, jint dpy, jint path, jint index,
+	jint size, jintArray r, jintArray g, jintArray b)
+{
+    std::vector<uint16_t> hidlRed;
+    std::vector<uint16_t> hidlGreen;
+    std::vector<uint16_t> hidlBlue;
+
+    jint* jr_data = env->GetIntArrayElements(r, /* isCopy */ NULL);
+    jint* jg_data = env->GetIntArrayElements(g, /* isCopy */ NULL);
+    jint* jb_data = env->GetIntArrayElements(b, /* isCopy */ NULL);
+
+    for (int i=0;i<size;i++) {
+        hidlRed.push_back((uint16_t)jr_data[i]);
+    }
+    for (int i=0;i<size;i++) {
+        hidlGreen.push_back((uint16_t)jg_data[i]);
+    }
+    for (int i=0;i<size;i++) {
+        hidlBlue.push_back((uint16_t)jb_data[i]);
+    }
+    if (mComposer != nullptr)
+    {
+        mComposer->setPresetGamma(dpy, path, index, size, hidlRed, hidlGreen, hidlBlue);
+    }
+    env->ReleaseIntArrayElements(r, jr_data, 0);
+    env->ReleaseIntArrayElements(g, jg_data, 0);
+    env->ReleaseIntArrayElements(b, jb_data, 0);
+    return 0;
+}
+
+static jint nativeSetPreset3DLut(JNIEnv* env, jobject obj, jint dpy, jint path, jint index,
+	jint size, jintArray r, jintArray g, jintArray b)
+{
+    std::vector<uint16_t> hidlRed;
+    std::vector<uint16_t> hidlGreen;
+    std::vector<uint16_t> hidlBlue;
+
+    jint* jr_data = env->GetIntArrayElements(r, /* isCopy */ NULL);
+    jint* jg_data = env->GetIntArrayElements(g, /* isCopy */ NULL);
+    jint* jb_data = env->GetIntArrayElements(b, /* isCopy */ NULL);
+
+    for (int i=0;i<size;i++) {
+        hidlRed.push_back((uint16_t)jr_data[i]);
+    }
+    for (int i=0;i<size;i++) {
+        hidlGreen.push_back((uint16_t)jg_data[i]);
+    }
+    for (int i=0;i<size;i++) {
+        hidlBlue.push_back((uint16_t)jb_data[i]);
+    }
+    if (mComposer != nullptr)
+    {
+        mComposer->setPreset3DLut(dpy, path, index, size, hidlRed, hidlGreen, hidlBlue);
+    }
+    env->ReleaseIntArrayElements(r, jr_data, 0);
+    env->ReleaseIntArrayElements(g, jg_data, 0);
+    env->ReleaseIntArrayElements(b, jb_data, 0);
+	return 0;
+}
+
+static jintArray nativeGetPresetBcsh(JNIEnv* env, jobject obj, jint dpy, jint path, jint index)
+{
+    jintArray jBcshArray = env->NewIntArray(4);
+    hidl_vec<uint32_t> hidlBcsh;
+    jint *mBcsh = new jint[4];
+
+    if (mComposer != nullptr)
+    {
+        mComposer->getPresetBcsh(dpy, path, index,
+                [&](const auto& tmpResult, const auto& tmpBcshs)
+                {
+                    if (tmpResult == Result::OK) {
+                        hidlBcsh = tmpBcshs;
+                    }
+                });
+    }
+    mBcsh[0] = hidlBcsh[0];
+    mBcsh[1] = hidlBcsh[1];
+    mBcsh[2] = hidlBcsh[2];
+    mBcsh[3] = hidlBcsh[3];
+    ALOGV("bcsh %d %d %d %d", mBcsh[0], mBcsh[1], mBcsh[2], mBcsh[3]);
+    env->SetIntArrayRegion(jBcshArray, 0, 4, mBcsh);
+    return jBcshArray;
+}
+
+static jintArray nativeGetPresetWhiteBalance(JNIEnv* env, jobject obj, jint dpy, jint path, jint index)
+{
+    jintArray jrgbArray = env->NewIntArray(3);
+    hidl_vec<uint32_t> hidlRgb;
+    jint *mRgb = new jint[3];
+
+    if (mComposer != nullptr)
+    {
+        mComposer->getPresetWhiteBalance(dpy, path, index,
+                [&](const auto& tmpResult, const auto& tmpRgb)
+                {
+                    if (tmpResult == Result::OK) {
+                        hidlRgb = tmpRgb;
+                    }
+                });
+    }
+    mRgb[0] = hidlRgb[0];
+    mRgb[1] = hidlRgb[1];
+    mRgb[2] = hidlRgb[2];
+    ALOGV("rgb gain %d %d %d", mRgb[0], mRgb[1], mRgb[2]);
+    env->SetIntArrayRegion(jrgbArray, 0, 3, mRgb);
+    return jrgbArray;
+}
+
+static jintArray nativeGetPresetGamma(JNIEnv* env, jobject obj, jint dpy, jint path, jint index)
+{
+    jintArray jgammaArray = env->NewIntArray(1024 * 3);
+    hidl_vec<uint16_t> hidlgamma;
+    jint *mGamma = new jint[1024 * 3];
+
+    if (mComposer != nullptr)
+    {
+        mComposer->getPresetGamma(dpy, path, index,
+                [&](const auto& tmpResult, const auto& tempGamma)
+                {
+                    if (tmpResult == Result::OK) {
+                        hidlgamma = tempGamma;
+                    }
+                });
+    }
+
+    for (int i = 0; i < 1024 * 3; i++) {
+        mGamma[i] = hidlgamma[i];
+    }
+    env->SetIntArrayRegion(jgammaArray, 0, 1024 * 3, mGamma);
+    return jgammaArray;
+}
+
+static jintArray nativeGetPreset3DLut(JNIEnv* env, jobject obj, jint dpy, jint path, jint index)
+{
+    jintArray j3dlutArray = env->NewIntArray(4913 * 3);
+    hidl_vec<uint16_t> hidl3dlut;
+    jint *m3DLut = new jint[4913 * 3];
+
+    if (mComposer != nullptr)
+    {
+        mComposer->getPreset3DLut(dpy, path, index,
+                [&](const auto& tmpResult, const auto& temp3DLut)
+                {
+                    if (tmpResult == Result::OK) {
+                        hidl3dlut = temp3DLut;
+                    }
+                });
+    }
+    for (int i = 0; i < 4913 * 3; i++) {
+        m3DLut[i] = hidl3dlut[i];
+    }
+    env->SetIntArrayRegion(j3dlutArray, 0, 4913 * 3, m3DLut);
+    return j3dlutArray;
+}
+
+static int nativeSetAiPqEnable(JNIEnv* env, jobject obj, jboolean aisd, jboolean aisr, jboolean aimemc, jboolean aidc)
+{
+    Result ret = Result::UNKNOWN;
+    if (mComposer != nullptr)
+        ret = mComposer->setAiPqEnable(aisd == JNI_TRUE ? 1 : 0, aisr == JNI_TRUE ? 1 : 0,
+            aimemc == JNI_TRUE ? 1 : 0, aidc == JNI_TRUE ? 1 : 0);
+    if (ret == Result::OK) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
+static jbooleanArray nativeGetAiPqEnable(JNIEnv* env, jobject obj)
+{
+    jbooleanArray boolArray = env->NewBooleanArray(4);
+    hidl_vec<bool> hidlRet;
+    jboolean *mRet = new jboolean[4];
+
+    if (mComposer != nullptr)
+    {
+        mComposer->getAiPqEnable(
+                [&](const auto& tmpResult, const auto& tmpRet)
+                {
+                    if (tmpResult == Result::OK) {
+                        hidlRet = tmpRet;
+                    }
+                });
+    }
+    mRet[0] = hidlRet[0];
+    mRet[1] = hidlRet[1];
+    mRet[2] = hidlRet[2];
+    mRet[3] = hidlRet[3];
+    env->SetBooleanArrayRegion(boolArray, 0, 4, mRet);
+    return boolArray;
 }
 
 // ----------------------------------------------------------------------------
@@ -816,20 +1335,55 @@ static const JNINativeMethod sRkDrmModeMethods[] = {
     {"nativeGetModeState", "(Ljava/lang/String;)Ljava/lang/String;", (void*)nativeGetModeState},
     {"nativeSetModeState", "(Ljava/lang/String;Ljava/lang/String;)I", (void*)nativeSetModeState},
     {"nativeGetHdrResolutionSupported", "(ILjava/lang/String;)I", (void*)nativeGetHdrResolutionSupported},
-    {"nativeSetPqEnable", "(Z)I", (void*)nativeSetPqEnable},
     {"nativeSetSWBrightness", "(II)I", (void*)nativeSetSWBrightness},
     {"nativeGetSWBrightness", "(I)I", (void*)nativeGetSWBrightness},
     {"nativeSetSWContrast", "(II)I", (void*)nativeSetSWContrast},
     {"nativeGetSWContrast", "(I)I", (void*)nativeGetSWContrast},
     {"nativeSetSWSaturation", "(II)I", (void*)nativeSetSWSaturation},
     {"nativeGetSWSaturation", "(I)I", (void*)nativeGetSWSaturation},
-    {"nativeSetSharpEnable", "(Z)I", (void*)nativeSetSharpEnable},
     {"nativeSetSharpness", "(II)I", (void*)nativeSetSharpness},
     {"nativeGetSharpness", "(I)I", (void*)nativeGetSharpness},
     {"nativeSetSWHue", "(II)I", (void*)nativeSetSWHue},
     {"nativeGetSWHue", "(I)I", (void*)nativeGetSWHue},
     {"nativeSetAcmEnable", "(Z)I", (void*)nativeSetAcmEnable},
-    {"nativeGetAcmEnable", "()I", (void*)nativeGetAcmEnable},
+    {"nativeGetAcmEnable", "()Z", (void*)nativeGetAcmEnable},
+    {"nativeSetDciEnable", "(Z)I", (void*)nativeSetDciEnable},
+    {"nativeGetDciEnable", "()Z", (void*)nativeGetDciEnable},
+    {"nativeSetSharpEnable", "(Z)I", (void*)nativeSetSharpEnable},
+    {"nativeGetSharpEnable", "()Z", (void*)nativeGetSharpEnable},
+    {"nativeSetPqEnable", "(Z)I", (void*)nativeSetPqEnable},
+    {"nativeGetPqEnable", "()Z", (void*)nativeGetPqEnable},
+    {"nativeSetRGain", "(II)I", (void*)nativeSetRGain},
+    {"nativeGetRGain", "(I)I", (void*)nativeGetRGain},
+    {"nativeSetGGain", "(II)I", (void*)nativeSetGGain},
+    {"nativeGetGGain", "(I)I", (void*)nativeGetGGain},
+    {"nativeSetBGain", "(II)I", (void*)nativeSetBGain},
+    {"nativeGetBGain", "(I)I", (void*)nativeGetBGain},
+    {"nativeSetWhiteBalance", "(IIII)I", (void*)nativeSetWhiteBalance},
+    {"nativeSetBCSHMode", "(II)I", (void*)nativeSetBCSHMode},
+    {"nativeSetWhiteBalanceMode", "(II)I", (void*)nativeSetWhiteBalanceMode},
+    {"nativeSetAcmMode", "(II)I", (void*)nativeSetAcmMode},
+    {"nativeSetDciMode", "(II)I", (void*)nativeSetDciMode},
+    {"nativeSetSharpMode", "(II)I", (void*)nativeSetSharpMode},
+    {"nativeSetGammaMode", "(II)I", (void*)nativeSetGammaMode},
+    {"nativeSet3DLutMode", "(II)I", (void*)nativeSet3DLutMode},
+    {"nativeGetBCSHMode", "(I)I", (void*)nativeGetBCSHMode},
+    {"nativeGetWhiteBalanceMode", "(I)I", (void*)nativeGetWhiteBalanceMode},
+    {"nativeGetAcmMode", "(I)I", (void*)nativeGetAcmMode},
+    {"nativeGetDciMode", "(I)I", (void*)nativeGetDciMode},
+    {"nativeGetSharpMode", "(I)I", (void*)nativeGetSharpMode},
+    {"nativeGetGammaMode", "(I)I", (void*)nativeGetGammaMode},
+    {"nativeGet3DLutMode", "(I)I", (void*)nativeGet3DLutMode},
+    {"nativeSetPresetBcsh", "(IIIIIII)I", (void*)nativeSetPresetBcsh},
+    {"nativeSetPresetWhiteBalance", "(IIIIII)I", (void*)nativeSetPresetWhiteBalance},
+    {"nativeSetPresetGamma", "(IIII[I[I[I)I", (void*)nativeSetPresetGamma},
+    {"nativeSetPreset3DLut", "(IIII[I[I[I)I", (void*)nativeSetPreset3DLut},
+    {"nativeGetPresetBcsh", "(III)[I", (void*)nativeGetPresetBcsh},
+    {"nativeGetPresetWhiteBalance", "(III)[I", (void*)nativeGetPresetWhiteBalance},
+    {"nativeGetPresetGamma", "(III)[I", (void*)nativeGetPresetGamma},
+    {"nativeGetPreset3DLut", "(III)[I", (void*)nativeGetPreset3DLut},
+    {"nativeSetAiPqEnable", "(ZZZZ)I", (void*)nativeSetAiPqEnable},
+    {"nativeGetAiPqEnable", "()[Z", (void*)nativeGetAiPqEnable},
 };
 
 #define FIND_CLASS(var, className) \

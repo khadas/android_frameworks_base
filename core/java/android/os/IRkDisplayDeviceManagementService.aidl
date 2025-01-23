@@ -262,7 +262,7 @@ interface IRkDisplayDeviceManagementService
 
     int setAcmEnable(boolean enable);
 
-    int getAcmEnable();
+    boolean getAcmEnable();
 
     /**
      * 设置HDR Vivid模式
@@ -302,4 +302,142 @@ interface IRkDisplayDeviceManagementService
      * return: boolean true为成功，false为失败
     */
     boolean setHDRVividCapacity(String capacity);
+
+    void setRGain(int display, int rgain);
+    /**
+     * get rgain
+    */
+    int getRGain(int display);
+    /**
+     * set ggain
+    */
+    void setGGain(int display, int ggain);
+    /**
+     * get ggain
+    */
+    int getGGain(int display);
+    /**
+     * set bgain
+    */
+    void setBGain(int display, int bgain);
+    /**
+     * get bgain
+    */
+    int getBGain(int display);
+    /**
+     * set white balance
+    */
+    int setWhiteBalance(int display, int rgain, int ggain, int bgain);
+    /**
+     * set dci enable
+    */
+    int setDciEnable(boolean enable);
+    /**
+     * get dci enable
+    */
+    boolean getDciEnable();
+    /**
+     * get sharp enable
+    */
+    boolean getSharpEnable();
+    /**
+     * get pq enable
+     */
+    boolean getPqEnable();
+    /**
+     * set bcsh mode
+    */
+    int setBCSHMode(int display, int index);
+    /**
+     * set white balance mode
+    */
+    int setWhiteBalanceMode(int display, int index);
+    /**
+     * set acm mode
+    */
+    int setAcmMode(int display, int index);
+    /**
+     * set dci mode
+    */
+    int setDciMode(int display, int index);
+    /**
+     * set sharp mode
+    */
+    int setSharpMode(int display, int index);
+    /**
+     * set gamma mode
+    */
+    int setGammaMode(int display, int index);
+    /**
+     * set 3d lut mode
+    */
+    int set3DLutMode(int display, int index);
+    /**
+     * get bcsh mode
+    */
+    int getBCSHMode(int display);
+    /**
+     * get white balance mode
+    */
+    int getWhiteBalanceMode(int display);
+    /**
+     * get acm mode
+    */
+    int getAcmMode(int display);
+    /**
+     * get dci mode
+    */
+    int getDciMode(int display);
+    /**
+     * get sharp mode
+    */
+    int getSharpMode(int display);
+    /**
+     * get gamma mode
+    */
+    int getGammaMode(int display);
+    /**
+     * get 3d lut mode
+    */
+    int get3DLutMode(int display);
+    /**
+     * set preset bcsh
+    */
+    int setPresetBcsh(int display, int path, int index, int brightness, int contrast, int saturation, int hue);
+    /**
+     * set preset white balance
+    */
+    int setPresetWhiteBalance(int display, int path, int index, int rgain, int ggain, int bgain);
+    /**
+     * set preset gamma
+    */
+    int setPresetGamma(int display, int path, int index, int size, in int[] r, in int[] g, in int[] b);
+    /**
+     * set preset 3d lut
+    */
+    int setPreset3DLut(int display, int path, int index, int size, in int[] r, in int[] g, in int[] b);
+    /**
+     * get preset bcsh
+    */
+    int[] getPresetBcsh(int display, int path, int index);
+    /**
+     * get preset white balance
+    */
+    int[] getPresetWhiteBalance(int display, int path, int index);
+    /**
+     * get preset gamma
+    */
+    int[] getPresetGamma(int display, int path, int index);
+    /**
+     * get preset 3d lut
+    */
+    int[] getPreset3DLut(int display, int path, int index);
+    /**
+     * set aipq enable
+    */
+    int setAiPqEnable(boolean aisd, boolean aisr, boolean aimemc, boolean aidc);
+    /**
+     * get aipq enable
+    */
+    boolean[] getAiPqEnable();
 }

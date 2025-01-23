@@ -47,20 +47,55 @@ public class RkDisplayModes {
     private static native String nativeGetModeState(String mode);
     private static native int nativeSetModeState(String mode, String state);
     private static native int nativeGetHdrResolutionSupported(int dpy, String hdrMode);
-    private static native int nativeSetPqEnable(boolean enable);
     private static native int nativeSetSWBrightness(int display, int brightness);
     private static native int nativeGetSWBrightness(int display);
     private static native int nativeSetSWContrast(int display, int contrast);
     private static native int nativeGetSWContrast(int display);
     private static native int nativeSetSWSaturation(int display, int saturation);
     private static native int nativeGetSWSaturation(int display);
-    private static native int nativeSetSharpEnable(boolean enable);
     private static native int nativeSetSharpness(int display, int sharpness);
     private static native int nativeGetSharpness(int display);
     private static native int nativeSetSWHue(int display, int hue);
     private static native int nativeGetSWHue(int display);
     private static native int nativeSetAcmEnable(boolean enable);
-    private static native int nativeGetAcmEnable();
+    private static native boolean nativeGetAcmEnable();
+    private static native int nativeSetDciEnable(boolean enable);
+    private static native boolean nativeGetDciEnable();
+    private static native int nativeSetSharpEnable(boolean enable);
+    private static native boolean nativeGetSharpEnable();
+    private static native int nativeSetPqEnable(boolean enable);
+    private static native boolean nativeGetPqEnable();
+    private static native int nativeSetRGain(int display, int rgain);
+    private static native int nativeGetRGain(int display);
+    private static native int nativeSetGGain(int display, int ggain);
+    private static native int nativeGetGGain(int display);
+    private static native int nativeSetBGain(int display, int bgain);
+    private static native int nativeGetBGain(int display);
+    private static native int nativeSetWhiteBalance(int display, int rgain, int ggain, int bgain);
+    private static native int nativeSetBCSHMode(int display, int index);
+    private static native int nativeSetWhiteBalanceMode(int display, int index);
+    private static native int nativeSetAcmMode(int display, int index);
+    private static native int nativeSetDciMode(int display, int index);
+    private static native int nativeSetSharpMode(int display, int index);
+    private static native int nativeSetGammaMode(int display, int index);
+    private static native int nativeSet3DLutMode(int display, int index);
+    private static native int nativeGetBCSHMode(int display);
+    private static native int nativeGetWhiteBalanceMode(int display);
+    private static native int nativeGetAcmMode(int display);
+    private static native int nativeGetDciMode(int display);
+    private static native int nativeGetSharpMode(int display);
+    private static native int nativeGetGammaMode(int display);
+    private static native int nativeGet3DLutMode(int display);
+    private static native int nativeSetPresetBcsh(int display, int path, int index, int brightness, int contrast, int saturation, int hue);
+    private static native int nativeSetPresetWhiteBalance(int display, int path, int index, int rgain, int ggain, int bgain);
+    private static native int nativeSetPresetGamma(int display, int path, int index, int size, int[] r, int[] g, int[] b);
+    private static native int nativeSetPreset3DLut(int display, int path, int index, int size, int[] r, int[] g, int[] b);
+    private static native int[] nativeGetPresetBcsh(int display, int path, int index);
+    private static native int[] nativeGetPresetWhiteBalance(int display, int path, int index);
+    private static native int[] nativeGetPresetGamma(int display, int path, int index);
+    private static native int[] nativeGetPreset3DLut(int display, int path, int index);
+    private static native int nativeSetAiPqEnable(boolean aisd, boolean aisr, boolean aimemc, boolean aidc);
+    private static native boolean[] nativeGetAiPqEnable();
 
     private static RkDisplayModes.RkPhysicalDisplayInfo mDisplayInfos[];
     private static List<String> mWhiteList;
@@ -931,7 +966,7 @@ public class RkDisplayModes {
         return nativeSetAcmEnable(enable);
     }
 
-    public int getAcmEnable() {
+    public boolean getAcmEnable() {
         return nativeGetAcmEnable();
     }
 
@@ -964,4 +999,153 @@ public class RkDisplayModes {
         return nativeSetModeState(PROP_VIVID_HDR_CAPACITY, capacity) == 0 ? true : false;
     }
 
+    public int setRGain(int display, int rgain)
+    {
+        return nativeSetRGain(display, rgain);
+    }
+
+    public int getRGain(int display)
+    {
+        return nativeGetRGain(display);
+    }
+
+    public int setGGain(int display, int ggain)
+    {
+        return nativeSetGGain(display, ggain);
+    }
+
+    public int getGGain(int display)
+    {
+        return nativeGetGGain(display);
+    }
+
+    public int setBGain(int display, int bgain)
+    {
+        return nativeSetBGain(display, bgain);
+    }
+
+    public int getBGain(int display)
+    {
+        return nativeGetBGain(display);
+    }
+
+    public int setWhiteBalance(int display, int rgain, int ggain, int bgain) {
+        return nativeSetWhiteBalance(display, rgain, ggain, bgain);
+    }
+
+    public int setDciEnable(boolean enable)
+    {
+        return nativeSetDciEnable(enable);
+    }
+
+    public boolean getDciEnable()
+    {
+        return nativeGetDciEnable();
+    }
+
+    public boolean getSharpEnable()
+    {
+        return nativeGetSharpEnable();
+    }
+
+    public boolean getPqEnable()
+    {
+        return nativeGetPqEnable();
+    }
+
+    public int setBCSHMode(int display, int index) {
+        return nativeSetBCSHMode(display, index);
+    }
+
+    public int setWhiteBalanceMode(int display, int index) {
+        return nativeSetWhiteBalanceMode(display, index);
+    }
+
+    public int setAcmMode(int display, int index) {
+        return nativeSetAcmMode(display, index);
+    }
+
+    public int setDciMode(int display, int index) {
+        return nativeSetDciMode(display, index);
+    }
+
+    public int setSharpMode(int display, int index) {
+        return nativeSetSharpMode(display, index);
+    }
+
+    public int setGammaMode(int display, int index) {
+        return nativeSetGammaMode(display, index);
+    }
+
+    public int set3DLutMode(int display, int index) {
+        return nativeSet3DLutMode(display, index);
+    }
+
+    public int getBCSHMode(int display) {
+        return nativeGetBCSHMode(display);
+    }
+
+    public int getWhiteBalanceMode(int display) {
+        return nativeGetWhiteBalanceMode(display);
+    }
+
+    public int getAcmMode(int display) {
+        return nativeGetAcmMode(display);
+    }
+
+    public int getDciMode(int display) {
+        return nativeGetDciMode(display);
+    }
+
+    public int getSharpMode(int display) {
+        return nativeGetSharpMode(display);
+    }
+
+    public int getGammaMode(int display) {
+        return nativeGetGammaMode(display);
+    }
+
+    public int get3DLutMode(int display) {
+        return nativeGet3DLutMode(display);
+    }
+
+    public int setPresetBcsh(int display, int path, int index, int brightness, int contrast, int saturation, int hue) {
+        return nativeSetPresetBcsh(display, path, index, brightness, contrast, saturation, hue);
+    }
+
+    public int setPresetWhiteBalance(int display, int path, int index, int rgain, int ggain, int bgain) {
+        return nativeSetPresetWhiteBalance(display, path, index, rgain, ggain, bgain);
+    }
+
+    public int setPresetGamma(int display, int path, int index, int size, int[] r, int[] g, int[] b) {
+        return nativeSetPresetGamma(display, path, index, size, r, g, b);
+    }
+
+    public int setPreset3DLut(int display, int path, int index, int size, int[] r, int[] g, int[] b) {
+        return nativeSetPreset3DLut(display, path, index, size, r, g, b);
+    }
+
+    public int[] getPresetBcsh(int display, int path, int index) {
+        return nativeGetPresetBcsh(display, path, index);
+    }
+
+    public int[] getPresetWhiteBalance(int display, int path, int index) {
+        return nativeGetPresetWhiteBalance(display, path, index);
+    }
+
+    public int[] getPresetGamma(int display, int path, int index) {
+        return nativeGetPresetGamma(display, path, index);
+    }
+
+    public int[] getPreset3DLut(int display, int path, int index) {
+        return nativeGetPreset3DLut(display, path, index);
+    }
+
+    public int setAiPqEnable(boolean aisd, boolean aisr, boolean aimemc, boolean aidc) {
+        return nativeSetAiPqEnable(aisd, aisr, aimemc, aidc);
+    }
+
+    public boolean[] getAiPqEnable() {
+        return nativeGetAiPqEnable();
+    }
 }

@@ -320,7 +320,7 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
         return mdrmModes.setAcmEnable(enable);
     }
 
-    public int getAcmEnable() {
+    public boolean getAcmEnable() {
         return mdrmModes.getAcmEnable();
     }
 
@@ -346,5 +346,145 @@ class RkDisplayDeviceManagementService extends IRkDisplayDeviceManagementService
 
     public boolean setHDRVividCapacity(String capacity) {
         return mdrmModes.setHDRVividCapacity(capacity);
+    }
+
+    public void setRGain(int display, int rgain) {
+        mdrmModes.setRGain(display, rgain);
+    }
+
+    public int getRGain(int display) {
+        return mdrmModes.getRGain(display);
+    }
+
+    public void setGGain(int display, int ggain) {
+        mdrmModes.setGGain(display, ggain);
+    }
+
+    public int getGGain(int display) {
+        return mdrmModes.getGGain(display);
+    }
+
+    public void setBGain(int display, int bgain) {
+        mdrmModes.setBGain(display, bgain);
+    }
+
+    public int getBGain(int display) {
+        return mdrmModes.getBGain(display);
+    }
+
+    public int setWhiteBalance(int display, int rgain, int ggain, int bgain) {
+        return mdrmModes.setWhiteBalance(display, rgain, ggain, bgain);
+    }
+
+    public int setDciEnable(boolean enable) {
+        return mdrmModes.setDciEnable(enable);
+    }
+
+    public boolean getDciEnable() {
+        return mdrmModes.getDciEnable();
+    }
+
+    public boolean getSharpEnable() {
+        return mdrmModes.getSharpEnable();
+    }
+
+    public boolean getPqEnable() {
+        return mdrmModes.getPqEnable();
+    }
+
+    public int setBCSHMode(int display, int index) {
+        return mdrmModes.setBCSHMode(display, index);
+    }
+
+    public int setWhiteBalanceMode(int display, int index) {
+        return mdrmModes.setWhiteBalanceMode(display, index);
+    }
+
+    public int setAcmMode(int display, int index) {
+        return mdrmModes.setAcmMode(display, index);
+    }
+
+    public int setDciMode(int display, int index) {
+        return mdrmModes.setDciMode(display, index);
+    }
+
+    public int setSharpMode(int display, int index) {
+        return mdrmModes.setSharpMode(display, index);
+    }
+
+    public int setGammaMode(int display, int index) {
+        return mdrmModes.setGammaMode(display, index);
+    }
+
+    public int set3DLutMode(int display, int index) {
+        return mdrmModes.set3DLutMode(display, index);
+    }
+
+    public int getBCSHMode(int display) {
+        return mdrmModes.getBCSHMode(display);
+    }
+
+    public int getWhiteBalanceMode(int display) {
+        return mdrmModes.getWhiteBalanceMode(display);
+    }
+
+    public int getAcmMode(int display) {
+        return mdrmModes.getAcmMode(display);
+    }
+
+    public int getDciMode(int display) {
+        return mdrmModes.getDciMode(display);
+    }
+
+    public int getSharpMode(int display) {
+        return mdrmModes.getSharpMode(display);
+    }
+
+    public int getGammaMode(int display) {
+        return mdrmModes.getGammaMode(display);
+    }
+
+    public int get3DLutMode(int display) {
+        return mdrmModes.get3DLutMode(display);
+    }
+
+    public int setPresetBcsh(int display, int path, int index, int brightness, int contrast, int saturation, int hue) {
+        return mdrmModes.setPresetBcsh(display, path, index, brightness, contrast, saturation, hue);
+    }
+
+    public int setPresetWhiteBalance(int display, int path, int index, int rgain, int ggain, int bgain) {
+        return mdrmModes.setPresetWhiteBalance(display, path, index, rgain, ggain, bgain);
+    }
+
+    public int setPresetGamma(int display, int path, int index, int size, int[] r, int[] g, int[] b) {
+        return mdrmModes.setPresetGamma(display, path, index, size, r, g, b);
+    }
+
+    public int setPreset3DLut(int display, int path, int index, int size, int[] r, int[] g, int[] b) {
+        return mdrmModes.setPreset3DLut(display, path, index, size, r, g, b);
+    }
+
+    public int[] getPresetBcsh(int display, int path, int index) {
+        return mdrmModes.getPresetBcsh(display, path, index);
+    }
+
+    public int[] getPresetWhiteBalance(int display, int path, int index) {
+        return mdrmModes.getPresetWhiteBalance(display, path, index);
+    }
+
+    public int[] getPresetGamma(int display, int path, int index) {
+        return mdrmModes.getPresetGamma(display, path, index);
+    }
+
+    public int[] getPreset3DLut(int display, int path, int index) {
+        return mdrmModes.getPreset3DLut(display, path, index);
+    }
+    
+    public int setAiPqEnable(boolean aisd, boolean aisr, boolean aimemc, boolean aidc) {
+        return mdrmModes.setAiPqEnable(aisd, aisr, aimemc, aidc);
+    }
+
+    public boolean[] getAiPqEnable() {
+        return mdrmModes.getAiPqEnable();
     }
 }
