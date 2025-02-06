@@ -172,9 +172,14 @@ public class AudioPreviewThread implements Runnable {
         // discard 500ms audio data
         int preReadCount = 1 + (mSampleRate * 2 * 2) / 2 / bufSize;
         while (mGo && preReadCount-- >= 0) {
-            readBytes = mRecorder.read(inBytes, 0, bufSize);
-            if (readBytes < 0) {
-                Log.e(TAG, "before ramp read err: " + readBytes);
+            try {
+                readBytes = mRecorder.read(inBytes, 0, bufSize);
+                if (readBytes < 0) {
+                    Log.e(TAG, "before ramp read err: " + readBytes);
+                    mGo = false;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error reading from mRecorder while discarding: " + e.getMessage());
                 mGo = false;
             }
         }
@@ -190,9 +195,14 @@ public class AudioPreviewThread implements Runnable {
 
         while (mGo) {
             mTracker.write(inBytes, 0, readBytes);
-            readBytes = mRecorder.read(inBytes, 0, bufSize);
-            if (readBytes < 0) {
-                Log.e(TAG, "after ramp read err: " + readBytes);
+            try {
+                readBytes = mRecorder.read(inBytes, 0, bufSize);
+                if (readBytes < 0) {
+                    Log.e(TAG, "after ramp read err: " + readBytes);
+                    mGo = false;
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error reading from mRecorder: " + e.getMessage());
                 mGo = false;
             }
         }
@@ -234,14 +244,26 @@ public class AudioPreviewThread implements Runnable {
     private void startAudioRecording() {
         stopAudioRecording();
         createRecorder();
-        mRecorder.startRecording();
+        try {
+            mRecorder.startRecording();
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting recorder: " + e.getMessage());
+        }
     }
 
     private void stopAudioRecording() {
         if (mRecorder != null) {
             Log.d(TAG, "stopAudioRecording in");
-            mRecorder.stop();
-            mRecorder.release();
+            try {
+                mRecorder.stop();
+            }  catch (Exception e) {
+                 Log.e(TAG, "Error stop recorder: " + e.getMessage());
+            }
+            try {
+                mRecorder.release();
+            } catch (Exception e) {
+                Log.e(TAG, "Error release recorder: " + e.getMessage());
+            }
             mRecorder = null;
             Log.d(TAG, "stopAudioRecording out");
         }
