@@ -15,7 +15,7 @@
   -->
 <resources>
     <integer name="avatar_picker_columns">3</integer>
-    <dimen name="avatar_size_in_picker">112dp</dimen>
+    <dimen name="avatar_size_in_picker">96dp</dimen>
     <dimen name="avatar_picker_padding">8dp</dimen>
     <dimen name="avatar_picker_margin">3dp</dimen>
 </resources>

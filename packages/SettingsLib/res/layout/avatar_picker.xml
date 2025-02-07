@@ -28,7 +28,9 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent"
         android:gravity="center_horizontal"
-        style="@style/SudContentFrame">
+        style="@style/SudContentFrame"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp">
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/avatar_grid"
             android:layout_width="wrap_content"
