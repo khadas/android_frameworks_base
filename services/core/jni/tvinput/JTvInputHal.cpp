@@ -770,6 +770,13 @@ status_t JTvInputHal::BufferProducerThread::configPreviewBuff() {
         ALOGE("%s native_window_set_buffers_format failed.", __FUNCTION__);
         return err;
     }
+    ALOGW("%s set HAL_DATASPACE_BT709 | HAL_DATASPACE_RANGE_LIMITED", __FUNCTION__);
+    err = native_window_set_buffers_data_space(anw.get(),
+        (android_dataspace_t)(HAL_DATASPACE_BT709 | HAL_DATASPACE_RANGE_LIMITED));
+    if (err != NO_ERROR) {
+        ALOGE("%s native_window_set_buffers_data_space failed.", __FUNCTION__);
+        return err;
+    }
     err = native_window_set_scaling_mode(anw.get(), NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW);
     if (err != NO_ERROR) {
         ALOGE("%s native_window_set_scaling_mode failed.", __FUNCTION__);
