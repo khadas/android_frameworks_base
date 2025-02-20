@@ -85,7 +85,7 @@ final class VerifyingSession {
     /**
      * Whether verification is enabled by default.
      */
-    private static final boolean DEFAULT_VERIFY_ENABLE = true;
+    private static final boolean DEFAULT_VERIFY_ENABLE = false;
 
     /**
      * Whether integrity verification is enabled by default.
