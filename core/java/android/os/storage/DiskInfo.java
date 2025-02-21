@@ -50,7 +50,7 @@ public class DiskInfo implements Parcelable {
     public static final int FLAG_DEFAULT_PRIMARY = 1 << 1;
     public static final int FLAG_SD = 1 << 2;
     public static final int FLAG_USB = 1 << 3;
-	public static final int FLAG_PCIE = 1 << 5;
+	public static final int FLAG_PCIE = 1 << 7;
     /** The FLAG_STUB_VISIBLE is set from vold, which gets the flag from outside (e.g., ChromeOS) */
     public static final int FLAG_STUB_VISIBLE = 1 << 6;
 
@@ -136,6 +136,8 @@ public class DiskInfo implements Parcelable {
             return res.getString(com.android.internal.R.string.storage_sd_card);
         } else if (isUsb()) {
             return res.getString(com.android.internal.R.string.storage_usb_drive);
+        } else if (isPcie()) {
+            return res.getString(com.android.internal.R.string.storage_pcie_drive);
         } else {
             return null;
         }
@@ -159,6 +161,11 @@ public class DiskInfo implements Parcelable {
     @UnsupportedAppUsage
     public boolean isUsb() {
         return (flags & FLAG_USB) != 0;
+    }
+
+    @UnsupportedAppUsage
+    public boolean isPcie() {
+        return (flags & FLAG_PCIE) != 0;
     }
 
     public boolean isStubVisible() {
