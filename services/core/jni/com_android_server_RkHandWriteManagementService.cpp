@@ -29,6 +29,7 @@
 #include <android/hardware_buffer_jni.h>
 #include <android/hardware_buffer.h>
 #include <android/native_window.h>
+#include <ui/DisplayState.h>
 #include <ui/GraphicBuffer.h>
 
 namespace android {
@@ -46,6 +47,8 @@ private:
     int mSurfaceHeight;
     sp<GraphicBuffer> mOutGraphicBuffer;
     sp<SurfaceControl> mSurfaceControl;
+    sp<SurfaceControl> mMirrorControl;
+    sp<SurfaceControl> mParentControl;
 };
 
 JRkHandWrite* mHandWrite = nullptr;
@@ -78,6 +81,44 @@ int JRkHandWrite::Init(int left, int top, int screenWidth, int screenHeight, int
     mSurfaceControl = composerClient->createSurface(
             String8("rk_handwrite_win"), mSurfaceWidth, mSurfaceHeight,
             PIXEL_FORMAT_RGBA_8888);
+    mMirrorControl = composerClient->mirrorSurface(mSurfaceControl.get());
+    mParentControl = composerClient->createSurface(String8("MirrorParent"),
+            0, 0, PIXEL_FORMAT_RGBA_8888,
+            ISurfaceComposerClient::eFXSurfaceContainer,
+            nullptr);
+    const std::vector<PhysicalDisplayId> ids = SurfaceComposerClient::getPhysicalDisplayIds();
+    const size_t size = ids.size();
+    if (size > 1) {
+        for (size_t i = 0; i < size; i++) {
+            sp<IBinder> token = SurfaceComposerClient::getPhysicalDisplayToken(ids[i]);
+            if (i != 0 && token != nullptr) {
+                ui::DisplayState displayState;
+                auto err = SurfaceComposerClient::getDisplayState(token, &displayState);
+                if (err != NO_ERROR) {
+                    ALOGE("get displayt state fail...");
+                }
+                ALOGD("i:%zu,layerStack.id:%d", i, displayState.layerStack.id);
+                SurfaceComposerClient::Transaction{}
+                        .setLayer(mParentControl, std::numeric_limits<int32_t>::max())
+                        .setLayerStack(mParentControl, displayState.layerStack)
+                        .show(mParentControl)
+                        .apply();
+                SurfaceComposerClient::Transaction{}
+                        .reparent(mMirrorControl, mParentControl)
+                        .setLayer(mMirrorControl, std::numeric_limits<int32_t>::max())
+                        .setLayerStack(mMirrorControl, displayState.layerStack)
+                        /*
+                        If the resolutions of the main and secondary screens are not same,
+                        the parent element of the secondary screen needs to be scaled once. For example,
+                        if the main screen has a 4K resolution and the secondary screen has a 1080p resolution.
+                        */
+                        //.setGeometry(mMirrorControl, Rect(0,0,3840,2160),Rect(0,0,1920,1080),0)
+                        .setPosition(mMirrorControl, 0, 0)
+                        .show(mMirrorControl)
+                        .apply();
+            }
+        }
+    }
     // Double screen or more
     SurfaceComposerClient::Transaction t;
     if (layerStack > 0) {
@@ -158,6 +199,18 @@ void JRkHandWrite::Exit() {
         mSurfaceControl = NULL;
     } else {
         ALOGE("%s mSurfaceControl error.", __FUNCTION__);
+    }
+    if (mMirrorControl != NULL) {
+        ALOGD("%s mMirrorControl release", __FUNCTION__);
+        mMirrorControl = NULL;
+    } else {
+        ALOGE("%s mMirrorControl error.", __FUNCTION__);
+    }
+    if (mParentControl != NULL) {
+        ALOGD("%s mParentControl release", __FUNCTION__);
+        mParentControl = NULL;
+    } else {
+        ALOGE("%s mParentControl error.", __FUNCTION__);
     }
 }
 
