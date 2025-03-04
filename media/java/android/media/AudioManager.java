@@ -161,6 +161,15 @@ public class AudioManager {
     public static final String EXTRA_RINGER_MODE = "android.media.EXTRA_RINGER_MODE";
 
     /**
+     * @hide flag contain show ui for car ui.
+     */
+    //-----rk-code---------
+    public static final String EXTRA_SET_VOLUME_FLAG =
+        "android.media.EXTRA_SET_VOLUME_FLAG";
+    //--------------------
+
+
+    /**
      * Broadcast intent action indicating that the vibrate setting has
      * changed. Includes the vibrate type and its new setting.
      *

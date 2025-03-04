@@ -4827,6 +4827,15 @@ public class AudioService extends IAudioService.Stub
             flags &= ~AudioManager.FLAG_SHOW_UI;
         }
         mVolumeController.postVolumeChanged(streamType, flags);
+
+        //-----rk-code---------
+        if (isPlatformAutomotive()) {
+            VolumeStreamState streamState = mStreamStates[streamType];
+            streamState.mVolumeChanged.putExtra(AudioManager.EXTRA_SET_VOLUME_FLAG, flags);
+            sendBroadcastToAll(streamState.mVolumeChanged, null);
+            streamState.mVolumeChanged.putExtra(AudioManager.EXTRA_SET_VOLUME_FLAG, 0);
+        }
+        //--------------------
     }
 
     // Don't show volume UI when:
@@ -11643,6 +11652,11 @@ public class AudioService extends IAudioService.Stub
             if (isMute) {
                 return false;
             }
+            //-----rk-code-----//
+            if (isPlatformAutomotive()) {
+                return false;
+            }
+            //----------------//
             boolean suppress = false;
             // Intended behavior:
             // 1/ if the stream is not the default UI stream, do not suppress (as it is not involved
