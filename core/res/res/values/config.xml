@@ -393,7 +393,7 @@
     </string-array>
 
     <!-- Regex of wired ethernet ifaces -->
-    <string translatable="false" name="config_ethernet_iface_regex">eth\\d</string>
+    <string translatable="false" name="config_ethernet_iface_regex">eth\\d|usb\\d</string>
 
     <!-- Configuration of Ethernet interfaces in the following format:
          <interface name|mac address>;[Network Capabilities];[IP config];[Override Transport]
