@@ -2848,7 +2848,14 @@ public final class ViewRootImpl implements ViewParent,
     }
 
     private void controlInsetsForCompatibility(WindowManager.LayoutParams params) {
-        final int sysUiVis = params.systemUiVisibility | params.subtreeSystemUiVisibility;
+        /* -----rk-code----- */
+        int fullScreenFlags = 0;
+        boolean isHideStatusBarAndNavBar = android.os.SystemProperties.getBoolean("persist.sys.hide_statusbar_navigationbar", false);
+        if (isHideStatusBarAndNavBar) {
+            fullScreenFlags = SYSTEM_UI_FLAG_FULLSCREEN | SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        }
+        final int sysUiVis = params.systemUiVisibility | params.subtreeSystemUiVisibility | fullScreenFlags;
+        /* ----------------- */
         final int flags = params.flags;
         final boolean matchParent = params.width == MATCH_PARENT && params.height == MATCH_PARENT;
         final boolean nonAttachedAppWindow = params.type >= FIRST_APPLICATION_WINDOW
@@ -2873,6 +2880,12 @@ public final class ViewRootImpl implements ViewParent,
         }
         if (typesToHide != 0) {
             getInsetsController().hide(typesToHide);
+            /* -----rk-code----- */
+            if (isHideStatusBarAndNavBar) {
+                getInsetsController().setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+            /* ----------------- */
         }
         if (typesToShow != 0) {
             getInsetsController().show(typesToShow);
