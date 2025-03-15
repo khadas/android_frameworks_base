@@ -42,6 +42,9 @@ public class AudioPreviewThread implements Runnable {
     private Context mContext;
     private final AudioManager mAudioManager;
 
+    //sessionid for APS to recognize AudioPreviewThread
+    public static final int HDMIIN_SESSION_ID = 32761;
+
     public AudioPreviewThread(@NonNull Context context) {
         if (context == null) {
             throw new IllegalArgumentException("Illegal null Context argument");
@@ -124,6 +127,7 @@ public class AudioPreviewThread implements Runnable {
                                 .setEncoding(mAudioEncoding)
                                 .build())
                         .setAudioSource(MediaRecorder.AudioSource.DEFAULT)
+                        .setSessionId(HDMIIN_SESSION_ID)
                         .setBufferSizeInBytes(bufSize)
                         .build();
         if (preferDevice != null) {
