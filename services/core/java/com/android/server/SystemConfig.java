@@ -287,7 +287,9 @@ public class SystemConfig {
     // Package names that are exempted from private API blacklisting
     final ArraySet<String> mHiddenApiPackageWhitelist = new ArraySet<>();
 
-    final ArraySet<String> mWakeupAalarmalignWhitelist = new ArraySet<>();
+    //------rk-code---------------------------------
+    final ArraySet<String> mWakeupAlarmAlignWhitelist = new ArraySet<>();
+    //----------------------------------------------
 
     // The list of carrier applications which should be disabled until used.
     // This function suppresses update notifications for these pre-installed apps.
@@ -435,7 +437,9 @@ public class SystemConfig {
         return mHiddenApiPackageWhitelist;
     }
 
-    public ArraySet<String> getWakeupAalarmalignWwhitelist() { return mWakeupAalarmalignWhitelist; }
+    //------rk-code---------------------------------
+    public ArraySet<String> getWakeupAlarmAlignWhitelist() { return mWakeupAlarmAlignWhitelist; }
+    //----------------------------------------------
 
     public ArraySet<ComponentName> getDefaultVrComponents() {
         return mDefaultVrComponents;
@@ -1257,16 +1261,18 @@ public class SystemConfig {
                         }
                         XmlUtils.skipCurrentTag(parser);
                     } break;
+                    //------rk-code---------------------------------
                     case "wakeup-alarmalign-whitelist": {
                         String pkgname = parser.getAttributeValue(null, "package");
                         if (pkgname == null) {
                             Slog.w(TAG, "<" + name + "> without package in "
                                     + permFile + " at " + parser.getPositionDescription());
                         } else {
-                            mWakeupAalarmalignWhitelist.add(pkgname);
+                            mWakeupAlarmAlignWhitelist.add(pkgname);
                         }
                         XmlUtils.skipCurrentTag(parser);
                     } break;
+                    //----------------------------------------------
                     case "allow-association": {
                         if (allowAssociations) {
                             String target = parser.getAttributeValue(null, "target");

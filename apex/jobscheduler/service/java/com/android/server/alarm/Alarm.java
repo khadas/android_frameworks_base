@@ -27,6 +27,7 @@ import android.app.AlarmManager;
 import android.app.IAlarmListener;
 import android.app.PendingIntent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.os.WorkSource;
 import android.util.IndentingPrintWriter;
 import android.util.TimeUtils;
@@ -329,6 +330,9 @@ class Alarm {
         if (isRtc) {
             ipw.print(sdf.format(new Date(origWhen)));
         } else {
+            long rtcTime = System.currentTimeMillis() - SystemClock.elapsedRealtime() + origWhen;
+            ipw.print(sdf.format(new Date(rtcTime)));
+            ipw.print("=");
             TimeUtils.formatDuration(origWhen, nowELAPSED, ipw);
         }
         ipw.print(" window=");

@@ -43,5 +43,13 @@ interface IAlarmManager {
     AlarmManager.AlarmClockInfo getNextAlarmClock(int userId);
     boolean canScheduleExactAlarms(String packageName);
     boolean hasScheduleExactAlarm(String packageName, int userId);
+    //------rk-code---------------------------------
+    void setHeartBeatAlignEnable(String enable);
+    void setHeartBeatAlignInterval(String interval);
+    String[] getWakeupAlarmAlignWhitelistPkg();
+    void addWakeupAlarmAlignWhitelistPkg(String packageName);
+    void removeWakeupAlarmAlignWhitelistPkg(String packageName);
+    //----------------------------------------------
+    @EnforcePermission("DUMP")
     int getConfigVersion();
 }

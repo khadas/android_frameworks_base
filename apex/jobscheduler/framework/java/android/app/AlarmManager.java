@@ -1564,6 +1564,63 @@ public class AlarmManager {
         }
     }
 
+    //------rk-code---------------------------------
+    /**
+     * @hide
+     */
+    public void setHeartBeatAlignEnable(String enable) {
+        try {
+            mService.setHeartBeatAlignEnable(enable);
+        } catch (RemoteException ex) {
+            throw ex.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * @hide
+     */
+    public void setHeartBeatAlignInterval(String interval) {
+        try {
+            mService.setHeartBeatAlignInterval(interval);
+        } catch (RemoteException ex) {
+            throw ex.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * @hide
+     */
+    public String[] getWakeupAlarmAlignWhitelistPkg() {
+        try {
+            return mService.getWakeupAlarmAlignWhitelistPkg();
+        } catch (RemoteException ex) {
+            throw ex.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * @hide
+     */
+    public void addWakeupAlarmAlignWhitelistPkg(String packageName) {
+        try {
+            mService.addWakeupAlarmAlignWhitelistPkg(packageName);
+        } catch (RemoteException ex) {
+            throw ex.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * @hide
+     */
+    public void removeWakeupAlarmAlignWhitelistPkg(String packageName) {
+        try {
+            mService.removeWakeupAlarmAlignWhitelistPkg(packageName);
+        } catch (RemoteException ex) {
+            throw ex.rethrowFromSystemServer();
+        }
+    }
+    //----------------------------------------------
+
     /**
      * An immutable description of a scheduled "alarm clock" event.
      *

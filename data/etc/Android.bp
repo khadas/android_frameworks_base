@@ -60,12 +60,6 @@ prebuilt_etc {
     src: "preinstalled-packages-asl-files.xml",
 }
 
-prebuilt_etc {
-    name: "wakeup-alarmalign-whitelist.xml",
-    sub_dir: "sysconfig",
-    src: "wakeup-alarmalign-whitelist.xml",
-}
-
 // Privapp permission whitelist files
 
 prebuilt_etc {
@@ -193,3 +187,11 @@ filegroup {
     name: "services.core.protolog.json",
     srcs: ["services.core.protolog.json"],
 }
+
+//------rk-code---------------------------------
+prebuilt_etc {
+    name: "wakeup-alarmalign-whitelist.xml",
+    sub_dir: "sysconfig",
+    src: "wakeup-alarmalign-whitelist.xml",
+}
+//----------------------------------------------

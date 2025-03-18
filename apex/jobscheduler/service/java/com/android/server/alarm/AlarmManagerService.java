@@ -178,6 +178,7 @@ import libcore.util.EmptyArray;
 
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -204,7 +205,6 @@ public class AlarmManagerService extends SystemService {
     private static final int ELAPSED_REALTIME_WAKEUP_MASK = 1 << ELAPSED_REALTIME_WAKEUP;
     private static final int REMOVAL_HISTORY_SIZE_PER_UID = 10;
     static final int TIME_CHANGED_MASK = 1 << 16;
-    static final int FLAG_WHITELIST = 1 << 7;
     static final int IS_WAKEUP_MASK = RTC_WAKEUP_MASK | ELAPSED_REALTIME_WAKEUP_MASK;
 
     static final String TAG = "AlarmManager";
@@ -219,7 +219,6 @@ public class AlarmManagerService extends SystemService {
     static final boolean DEBUG_TARE = localLOGV || false;
     static final boolean RECORD_ALARMS_IN_HISTORY = true;
     static final boolean RECORD_DEVICE_IDLE_ALARMS = false;
-    static final String LAZYBATCHING_PROPERTY = "persist.sys.lazy_batching";
 
     static final int TICK_HISTORY_DEPTH = 10;
     static final long INDEFINITE_DELAY = 365 * INTERVAL_DAY;
@@ -295,9 +294,21 @@ public class AlarmManagerService extends SystemService {
     private long mNextNonWakeup;
     private long mNextWakeUpSetAt;
     private long mNextNonWakeUpSetAt;
-    static long mLastWakeup;
+    private long mLastWakeup;
     private long mLastTrigger;
-    static long WAKEUP_INTERVAL;
+
+    //------rk-code---------------------------------
+    static final int FLAG_WHITELIST = 1 << 7;
+    static int heartBeatAlignInterval = 5;
+    static boolean heartBeatAlignEnable = false;
+    static final String HEARTBEATALIGNENABLE_PROPERTY = "persist.sys.heartbeatalign_enable";
+    static final String HEARTBEATALIGNINTERVAL_PROPERTY = "persist.sys.heartbeatalign_interval";
+
+    ArraySet<String> mWakeupAlarmAlignWhitelist = new ArraySet<>();
+
+    SimpleDateFormat sdfss = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    SimpleDateFormat sdftt = new SimpleDateFormat("HH:mm:ss.SSS");
+    //----------------------------------------------
 
     private long mLastTickSet;
     private long mLastTickReceived;
@@ -697,8 +708,13 @@ public class AlarmManagerService extends SystemService {
         static final String KEY_MIN_INTERVAL = "min_interval";
         @VisibleForTesting
         static final String KEY_MAX_INTERVAL = "max_interval";
+        //------rk-code---------------------------------
         @VisibleForTesting
-        static final String KEY_WAKEUP_INTERVAL = "wakeup_interval";
+        static final String KEY_HEARTBEATALIGN_ENABLE = "heartBeatAlignEnable";
+        @VisibleForTesting
+        static final String KEY_HEARTBEATALIGN_INTERVAL = "heartBeatAlignInterval";
+        //----------------------------------------------
+
         @VisibleForTesting
         static final String KEY_MIN_WINDOW = "min_window";
         @VisibleForTesting
@@ -724,9 +740,6 @@ public class AlarmManagerService extends SystemService {
                 KEY_PREFIX_STANDBY_QUOTA + "restricted";
         private static final String KEY_APP_STANDBY_RESTRICTED_WINDOW =
                 "app_standby_restricted_window";
-
-        @VisibleForTesting
-        static final String KEY_LAZY_BATCHING = "lazy_batching";
 
         private static final String KEY_TIME_TICK_ALLOWED_WHILE_IDLE =
                 "time_tick_allowed_while_idle";
@@ -764,7 +777,6 @@ public class AlarmManagerService extends SystemService {
         private static final long DEFAULT_MIN_FUTURITY = 5 * 1000;
         private static final long DEFAULT_MIN_INTERVAL = 60 * 1000;
         private static final long DEFAULT_MAX_INTERVAL = 365 * INTERVAL_DAY;
-        private static final long DEFAULT_WAKEUP_INTERVAL = 10 * 60 * 1000;
         private static final long DEFAULT_MIN_WINDOW = 10 * 60 * 1000;
         private static final long DEFAULT_ALLOW_WHILE_IDLE_WHITELIST_DURATION = 10 * 1000;
         private static final long DEFAULT_LISTENER_TIMEOUT = 5 * 1000;
@@ -783,7 +795,6 @@ public class AlarmManagerService extends SystemService {
         private static final int DEFAULT_APP_STANDBY_RESTRICTED_QUOTA = 1;
         private static final long DEFAULT_APP_STANDBY_RESTRICTED_WINDOW = INTERVAL_DAY;
 
-        private final boolean DEFAULT_LAZY_BATCHING = SystemProperties.getBoolean(LAZYBATCHING_PROPERTY, true);
         private static final boolean DEFAULT_TIME_TICK_ALLOWED_WHILE_IDLE = true;
 
         /**
@@ -834,7 +845,6 @@ public class AlarmManagerService extends SystemService {
         public int APP_STANDBY_RESTRICTED_QUOTA = DEFAULT_APP_STANDBY_RESTRICTED_QUOTA;
         public long APP_STANDBY_RESTRICTED_WINDOW = DEFAULT_APP_STANDBY_RESTRICTED_WINDOW;
 
-        public boolean LAZY_BATCHING = DEFAULT_LAZY_BATCHING;
         public boolean TIME_TICK_ALLOWED_WHILE_IDLE = DEFAULT_TIME_TICK_ALLOWED_WHILE_IDLE;
 
         public int ALLOW_WHILE_IDLE_QUOTA = DEFAULT_ALLOW_WHILE_IDLE_QUOTA;
@@ -980,10 +990,6 @@ public class AlarmManagerService extends SystemService {
                             MAX_INTERVAL = properties.getLong(
                                     KEY_MAX_INTERVAL, DEFAULT_MAX_INTERVAL);
                             break;
-                        case KEY_WAKEUP_INTERVAL:
-                            WAKEUP_INTERVAL = properties.getLong(
-                                    KEY_WAKEUP_INTERVAL, DEFAULT_WAKEUP_INTERVAL);
-                            break;
                         case KEY_ALLOW_WHILE_IDLE_QUOTA:
                             ALLOW_WHILE_IDLE_QUOTA = properties.getInt(KEY_ALLOW_WHILE_IDLE_QUOTA,
                                     DEFAULT_ALLOW_WHILE_IDLE_QUOTA);
@@ -1054,14 +1060,6 @@ public class AlarmManagerService extends SystemService {
                         case KEY_APP_STANDBY_WINDOW:
                         case KEY_APP_STANDBY_RESTRICTED_WINDOW:
                             updateStandbyWindowsLocked();
-                            break;
-                        case KEY_LAZY_BATCHING:
-                            final boolean oldLazyBatching = LAZY_BATCHING;
-                            LAZY_BATCHING = properties.getBoolean(
-                                    KEY_LAZY_BATCHING, DEFAULT_LAZY_BATCHING);
-                            if (oldLazyBatching != LAZY_BATCHING) {
-                                migrateAlarmsToNewStoreLocked();
-                            }
                             break;
                         case KEY_TIME_TICK_ALLOWED_WHILE_IDLE:
                             TIME_TICK_ALLOWED_WHILE_IDLE = properties.getBoolean(
@@ -1184,15 +1182,6 @@ public class AlarmManagerService extends SystemService {
             }
         }
 
-        private void migrateAlarmsToNewStoreLocked() {
-            final AlarmStore newStore = LAZY_BATCHING ? new LazyAlarmStore()
-                    : new BatchingAlarmStore();
-            final ArrayList<Alarm> allAlarms = mAlarmStore.remove((unused) -> true);
-            newStore.addAll(allAlarms);
-            mAlarmStore = newStore;
-            mAlarmStore.setAlarmClockRemovalListener(mAlarmClockUpdater);
-        }
-
         private void updateDeviceIdleFuzzBoundaries() {
             final DeviceConfig.Properties properties = DeviceConfig.getProperties(
                     DeviceConfig.NAMESPACE_ALARM_MANAGER,
@@ -1278,10 +1267,15 @@ public class AlarmManagerService extends SystemService {
             TimeUtils.formatDuration(MAX_INTERVAL, pw);
             pw.println();
 
-            pw.print(KEY_WAKEUP_INTERVAL);
+            //------rk-code---------------------------------
+            pw.print(KEY_HEARTBEATALIGN_INTERVAL);
             pw.print("=");
-            TimeUtils.formatDuration(WAKEUP_INTERVAL, pw);
+            TimeUtils.formatDuration(heartBeatAlignInterval, pw);
             pw.println();
+
+            pw.print(KEY_HEARTBEATALIGN_ENABLE, heartBeatAlignEnable);
+            pw.println();
+            //----------------------------------------------
 
             pw.print(KEY_MIN_WINDOW);
             pw.print("=");
@@ -1333,9 +1327,6 @@ public class AlarmManagerService extends SystemService {
             pw.print(KEY_APP_STANDBY_RESTRICTED_WINDOW);
             pw.print("=");
             TimeUtils.formatDuration(APP_STANDBY_RESTRICTED_WINDOW, pw);
-            pw.println();
-
-            pw.print(KEY_LAZY_BATCHING, LAZY_BATCHING);
             pw.println();
 
             pw.print(KEY_TIME_TICK_ALLOWED_WHILE_IDLE, TIME_TICK_ALLOWED_WHILE_IDLE);
@@ -1497,10 +1488,15 @@ public class AlarmManagerService extends SystemService {
     AlarmManagerService(Context context, Injector injector) {
         super(context);
         mInjector = injector;
-        mEconomyManagerInternal = LocalServices.getService(EconomyManagerInternal.class);
-        if (SystemConfig.getInstance().getWakeupAalarmalignWwhitelist() != null) {
-            Slog.d(TAG, "mWakeupWhiteList=" + SystemConfig.getInstance().getWakeupAalarmalignWwhitelist());
+        //------rk-code---------------------------------
+        heartBeatAlignEnable = SystemProperties.getBoolean(HEARTBEATALIGNENABLE_PROPERTY, false);
+        heartBeatAlignInterval = SystemProperties.getInt(HEARTBEATALIGNINTERVAL_PROPERTY, 5);
+        mWakeupAlarmAlignWhitelist = SystemConfig.getInstance().getWakeupAlarmAlignWhitelist();
+        if (mWakeupAlarmAlignWhitelist != null) {
+            Slog.d(TAG, "mWakeupAlarmAlignWhitelist=" + mWakeupAlarmAlignWhitelist);
         }
+        //----------------------------------------------
+        mEconomyManagerInternal = LocalServices.getService(EconomyManagerInternal.class);
     }
 
     public AlarmManagerService(Context context) {
@@ -1988,10 +1984,8 @@ public class AlarmManagerService extends SystemService {
         synchronized (mLock) {
             mHandler = new AlarmHandler();
             mConstants = new Constants(mHandler);
-            WAKEUP_INTERVAL = mConstants.DEFAULT_WAKEUP_INTERVAL;
 
-            mAlarmStore = mConstants.LAZY_BATCHING ? new LazyAlarmStore()
-                    : new BatchingAlarmStore();
+            mAlarmStore = new LazyAlarmStore();
             mAlarmStore.setAlarmClockRemovalListener(mAlarmClockUpdater);
 
             mAppWakeupHistory = new AppWakeupHistory(Constants.DEFAULT_APP_STANDBY_WINDOW);
@@ -2426,12 +2420,25 @@ public class AlarmManagerService extends SystemService {
             String listenerTag, int flags, WorkSource workSource,
             AlarmManager.AlarmClockInfo alarmClock, int callingUid, String callingPackage,
             Bundle idleOptions, int exactAllowReason) {
-        Slog.d(TAG, "setImplLocked() callingPackage=" + callingPackage);
-        if (mConstants.LAZY_BATCHING == false && (type == ELAPSED_REALTIME_WAKEUP || type == RTC_WAKEUP)
-                && SystemConfig.getInstance().getWakeupAalarmalignWwhitelist().contains(callingPackage)) {
-            Slog.d(TAG, "setImplLocked() callingPackage=" + callingPackage + " add FLAG_WHITELIST");
+        //------rk-code---------------------------------
+        boolean isWakeupAlarm = (type == RTC_WAKEUP || type == ELAPSED_REALTIME_WAKEUP);
+        Slog.d(TAG, String.format("setImplLocked() callingPackage=%s isWakeupAlarm=%b when=%d whenElapsed=%d " +
+                "windowLength=%d", callingPackage, isWakeupAlarm, when, whenElapsed, windowLength));
+        if (isWakeupAlarm && (mWakeupAlarmAlignWhitelist.contains(callingPackage)/* || windowLength == 0*/)) {
             flags |= FLAG_WHITELIST;
+            Slog.d(TAG, String.format("windowLength=%d or Whitelist, add FLAG_WHITELIST, RTC_time=%s", windowLength,
+                    sdfss.format(new Date(whenElapsed + (mInjector.getCurrentTimeMillis() - mInjector.getElapsedRealtimeMillis())))));
         }
+
+        if (heartBeatAlignEnable && (flags & FLAG_WHITELIST) == 0) {
+            long diff = adjustTriggerTimeToHeartBeatAlign(whenElapsed);
+            Slog.d(TAG, String.format("Old value: when=%d, whenElapsed=%d, diff=%d", when, whenElapsed, diff));
+            whenElapsed += diff;
+            when += diff;
+            Slog.d(TAG, String.format("New value: when=%d, whenElapsed=%d", when, whenElapsed));
+        }
+        //----------------------------------------------
+
         final Alarm a = new Alarm(type, when, whenElapsed, windowLength, interval,
                 operation, directReceiver, listenerTag, workSource, flags, alarmClock,
                 callingUid, callingPackage, idleOptions, exactAllowReason);
@@ -3093,6 +3100,33 @@ public class AlarmManagerService extends SystemService {
             return (uid > 0) ? hasScheduleExactAlarmInternal(packageName, uid) : false;
         }
 
+        //------rk-code---------------------------------
+        @Override
+        public void setHeartBeatAlignEnable(String enable) {
+            setHeartBeatAlignEnableImpl(enable);
+        }
+
+        @Override
+        public void setHeartBeatAlignInterval(String interval) {
+            setHeartBeatAlignIntervalImpl(interval);
+        }
+
+        @Override
+        public String[] getWakeupAlarmAlignWhitelistPkg() {
+            return getWakeupAlarmAlignWhitelistPkgImpl();
+        }
+
+        @Override
+        public void addWakeupAlarmAlignWhitelistPkg(String packageName) {
+            addWakeupAlarmAlignWhitelistPkgImpl(packageName);
+        }
+
+        @Override
+        public void removeWakeupAlarmAlignWhitelistPkg(String packageName) {
+            removeWakeupAlarmAlignWhitelistPkgImpl(packageName);
+        }
+        //----------------------------------------------
+
         @Override
         public boolean setTime(@CurrentTimeMillisLong long millis) {
             getContext().enforceCallingOrSelfPermission(
@@ -3209,6 +3243,102 @@ public class AlarmManagerService extends SystemService {
                 packageName, UserHandle.of(userId));
     }
 
+    //------rk-code---------------------------------
+    private boolean isHeartBeatAlignPoint(long rtcTime, int alignLength) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(rtcTime);
+        int minutes = calendar.get(Calendar.MINUTE);
+        int seconds = calendar.get(Calendar.SECOND);
+        return (seconds == 0 && (minutes % alignLength == 0));
+    }
+
+    private long adjustTriggerTimeInternal(long rtcTime, int alignLength) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(rtcTime);
+        int minutes = calendar.get(Calendar.MINUTE);
+        int seconds = calendar.get(Calendar.SECOND);
+
+        if (minutes % alignLength == 0 && seconds == 0) {
+            return rtcTime;
+        }
+        int nextAlignedMinute = ((minutes / alignLength) + 1) * alignLength;
+        if (nextAlignedMinute >= 60) {
+            calendar.add(Calendar.HOUR_OF_DAY, 1);
+            nextAlignedMinute = 0;
+        }
+        calendar.set(Calendar.MINUTE, nextAlignedMinute);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    private long adjustTriggerTimeToHeartBeatAlign(long whenElapsed) {
+        sdftt.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+        long nowRTC = mInjector.getCurrentTimeMillis();
+        long nowElapsed = mInjector.getElapsedRealtimeMillis();
+        long triggerTime = whenElapsed + (nowRTC - nowElapsed);
+        Slog.w(TAG, String.format("oldAlarm=%s interval=%s", sdfss.format(new Date(triggerTime)),
+                sdftt.format(new Date(triggerTime - nowRTC))));
+        triggerTime -= (triggerTime % 1000);
+        long adjustedRtcTime = adjustTriggerTimeInternal(triggerTime, heartBeatAlignInterval);
+
+        if (adjustedRtcTime < nowRTC + mConstants.MIN_FUTURITY) {
+            Slog.w(TAG, String.format("adjustedRtcTime=%s is adjusted to past", sdfss.format(new Date(adjustedRtcTime))));
+            if (isHeartBeatAlignPoint(nowRTC, heartBeatAlignInterval)) {
+                nowRTC += mConstants.MIN_FUTURITY;
+            }
+            nowRTC -= (nowRTC % 1000);
+            adjustedRtcTime = adjustTriggerTimeInternal(nowRTC, heartBeatAlignInterval);
+        }
+
+        nowRTC = mInjector.getCurrentTimeMillis();
+        nowElapsed = mInjector.getElapsedRealtimeMillis();
+        final long adjustedWhenElapsed = adjustedRtcTime - (nowRTC - nowElapsed);
+
+        Slog.w(TAG, String.format("newAlarm=%s interval=%s diff=%s", sdfss.format(new Date(adjustedRtcTime)),
+                sdftt.format(new Date(adjustedRtcTime - nowRTC)), sdftt.format(new Date(adjustedRtcTime - triggerTime))));
+        Slog.w(TAG, String.format("whenElapsed=%d adjustedWhenElapsed=%d diff=%s", whenElapsed, adjustedWhenElapsed,
+                sdftt.format(new Date(Math.abs(whenElapsed - adjustedWhenElapsed)))));
+        return (adjustedWhenElapsed - whenElapsed);
+    }
+
+    public void setHeartBeatAlignEnableImpl(String enable) {
+        Slog.d(TAG, "setHeartBeatAlignEnableImpl enable=" + enable);
+        if ("true".equalsIgnoreCase(enable)) {
+            heartBeatAlignEnable = true;
+        } else if ("false".equalsIgnoreCase(enable)) {
+            heartBeatAlignEnable = false;
+        }
+        SystemProperties.set(HEARTBEATALIGNENABLE_PROPERTY, Boolean.toString(heartBeatAlignEnable));
+    }
+
+    public void setHeartBeatAlignIntervalImpl(String interval) {
+        Slog.d(TAG, "setHeartBeatAlignIntervalImpl interval=" + interval);
+        heartBeatAlignInterval = Integer.parseInt(interval);
+        SystemProperties.set(HEARTBEATALIGNINTERVAL_PROPERTY, String.valueOf(heartBeatAlignInterval));
+    }
+
+    public String[] getWakeupAlarmAlignWhitelistPkgImpl() {
+        String[] stringArray = new String[mWakeupAlarmAlignWhitelist.size()];
+        int i = 0;
+        for (String s : mWakeupAlarmAlignWhitelist) {
+            stringArray[i++] = s;
+        }
+        return stringArray;
+    }
+
+    public void addWakeupAlarmAlignWhitelistPkgImpl(String packageName) {
+        Slog.d(TAG, "mWakeupAlarmAlignWhitelist add package=" + packageName);
+        mWakeupAlarmAlignWhitelist.add(packageName);
+    }
+
+    public void removeWakeupAlarmAlignWhitelistPkgImpl(String packageName) {
+        Slog.d(TAG, "mWakeupAlarmAlignWhitelist remove package=" + packageName);
+        mWakeupAlarmAlignWhitelist.remove(packageName);
+    }
+    //----------------------------------------------
+
     @NeverCompile // Avoid size overhead of debugging code.
     void dumpImpl(IndentingPrintWriter pw) {
         synchronized (mLock) {
@@ -3217,6 +3347,18 @@ public class AlarmManagerService extends SystemService {
 
             mConstants.dump(pw);
             pw.println();
+
+            //------rk-code---------------------------------
+            pw.println("Wakeup Alarm Align Whitelist:");
+            pw.increaseIndent();
+            if (!mWakeupAlarmAlignWhitelist.isEmpty()) {
+                for (String element : mWakeupAlarmAlignWhitelist) {
+                    pw.println("package: " + element);
+                }
+            }
+            pw.decreaseIndent();
+            pw.println();
+            //----------------------------------------------
 
             if (mConstants.USE_TARE_POLICY == EconomyManager.ENABLED_MODE_ON) {
                 pw.println("TARE details:");
@@ -4076,6 +4218,14 @@ public class AlarmManagerService extends SystemService {
             final long firstWakeup = mAlarmStore.getNextWakeupDeliveryTime();
             final long first = mAlarmStore.getNextDeliveryTime();
             if (firstWakeup != 0) {
+                /*
+                //------rk-code---------------------------------
+                if (heartBeatAlignEnable && firstWakeup == mLastWakeup + WAKEUP_INTERVAL) {
+                    Slog.d(TAG, "the firstWakeup == mLastWakeup + WAKEUP_INTERVAL");
+                    firstWakeup = adjustTriggerTimeToHeartBeatAlign(firstWakeup);
+                }
+                //----------------------------------------------
+                */
                 mNextWakeup = firstWakeup;
                 mNextWakeUpSetAt = nowElapsed;
                 setLocked(ELAPSED_REALTIME_WAKEUP, firstWakeup);

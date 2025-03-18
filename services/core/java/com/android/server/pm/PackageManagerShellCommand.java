@@ -32,6 +32,7 @@ import android.annotation.NonNull;
 import android.annotation.UserIdInt;
 import android.app.ActivityManager;
 import android.app.ActivityManagerInternal;
+import android.app.AlarmManager;
 import android.app.role.RoleManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -358,8 +359,22 @@ class PackageManagerShellCommand extends ShellCommand {
                     return runWaitForHandler(/* forBackgroundHandler= */ false);
                 case "wait-for-background-handler":
                     return runWaitForHandler(/* forBackgroundHandler= */ true);
+                //------rk-code---------------------------------
                 case "add-performance-package":
                     return runAddPerformancePkg();
+                case "alarm":
+                    return runHelpWakeupAlarmAlignWhitelistPkg();
+                case "set-heartBeatAlignEnable":
+                    return runSetHeartBeatAlignEnable();
+                case "set-heartBeatAlignInterval":
+                    return runSetHeartBeatAlignInterval();
+                case "get-WakeupAlarmAlignWhitelist-package":
+                    return runGetWakeupAlarmAlignWhitelistPkg();
+                case "add-WakeupAlarmAlignWhitelist-package":
+                    return runAddWakeupAlarmAlignWhitelistPkg();
+                case "remove-WakeupAlarmAlignWhitelist-package":
+                    return runRemoveWakeupAlarmAlignWhitelistPkg();
+                //----------------------------------------------
                 default: {
                     if (ART_SERVICE_COMMANDS.contains(cmd)) {
                         if (DexOptHelper.useArtService()) {
@@ -3641,6 +3656,7 @@ class PackageManagerShellCommand extends ShellCommand {
         }
     }
 
+    //------rk-code---------------------------------
     private int runAddPerformancePkg() {
         final PrintWriter err = getErrPrintWriter();
         final String pkgName = getNextArg();
@@ -3656,6 +3672,106 @@ class PackageManagerShellCommand extends ShellCommand {
             return 1;
         }
     }
+
+    private int runHelpWakeupAlarmAlignWhitelistPkg() {
+        final PrintWriter pw = getErrPrintWriter();
+        pw.println("Package WakeupAlarmAlignWhitelist messages:");
+        pw.println("Use `pm alarm` to get help.");
+        pw.println("Use `pm set-heartBeatAlignEnable <true|false>` to set heartBeatAlignEnable.");
+        pw.println("Use `pm set-heartBeatAlignInterval <interval>` to set heartBeatAlignInterval.");
+        pw.println("Use `pm get-WakeupAlarmAlignWhitelist-package` to get package.");
+        pw.println("Use `pm add-WakeupAlarmAlignWhitelist-package <pkg_name>` to add package.");
+        pw.println("Use `pm remove-WakeupAlarmAlignWhitelist-package <pkg_name>` to remove package.");
+        pw.println("Reboot will clear this temporary package.\n");
+        return 1;
+    }
+
+    private int runSetHeartBeatAlignEnable() {
+        final AlarmManager mAlarmManager = mContext.getSystemService(AlarmManager.class);
+        final PrintWriter pw = getErrPrintWriter();
+        final String enable = getNextArg();
+        if (enable == null) {
+            pw.println("Error: expected enable|disable");
+            return 1;
+        }
+        try {
+            mAlarmManager.setHeartBeatAlignEnable(enable);
+            return 0;
+        } catch (Exception e) {
+            pw.println(e.toString());
+            return 1;
+        }
+    }
+
+    private int runSetHeartBeatAlignInterval() {
+        final AlarmManager mAlarmManager = mContext.getSystemService(AlarmManager.class);
+        final PrintWriter pw = getErrPrintWriter();
+        final String interval = getNextArg();
+        if (interval == null) {
+            pw.println("Error: expected interval");
+            return 1;
+        }
+        try {
+            mAlarmManager.setHeartBeatAlignInterval(interval);
+            return 0;
+        } catch (Exception e) {
+            pw.println(e.toString());
+            return 1;
+        }
+    }
+
+    private int runGetWakeupAlarmAlignWhitelistPkg() {
+        final AlarmManager mAlarmManager = mContext.getSystemService(AlarmManager.class);
+        final PrintWriter pw = getErrPrintWriter();
+        try {
+            String[] mWakeupAlarmAlignWhitelist = mAlarmManager.getWakeupAlarmAlignWhitelistPkg();
+            if (mWakeupAlarmAlignWhitelist.length > 0) {
+                for (String element : mWakeupAlarmAlignWhitelist) {
+                    pw.println("package: " + element);
+                }
+            }
+            pw.println();
+            return 0;
+        } catch (Exception e) {
+            pw.println(e.toString());
+            return 1;
+        }
+    }
+
+    private int runAddWakeupAlarmAlignWhitelistPkg() {
+        final AlarmManager mAlarmManager = mContext.getSystemService(AlarmManager.class);
+        final PrintWriter pw = getErrPrintWriter();
+        final String pkgName = getNextArg();
+        if (pkgName == null) {
+            pw.println("Error: expected Package name");
+            return 1;
+        }
+        try {
+            mAlarmManager.addWakeupAlarmAlignWhitelistPkg(pkgName);
+            return 0;
+        } catch (Exception e) {
+            pw.println(e.toString());
+            return 1;
+        }
+    }
+
+    private int runRemoveWakeupAlarmAlignWhitelistPkg() {
+        final AlarmManager mAlarmManager = mContext.getSystemService(AlarmManager.class);
+        final PrintWriter pw = getErrPrintWriter();
+        final String pkgName = getNextArg();
+        if (pkgName == null) {
+            pw.println("Error: expected Package name");
+            return 1;
+        }
+        try {
+            mAlarmManager.removeWakeupAlarmAlignWhitelistPkg(pkgName);
+            return 0;
+        } catch (Exception e) {
+            pw.println(e.toString());
+            return 1;
+        }
+    }
+    //----------------------------------------------
 
     private int runArtServiceCommand() {
         try (var in = ParcelFileDescriptor.dup(getInFileDescriptor());
