@@ -39,6 +39,8 @@
 #define MAX_EPOLL_EVENTS 8
 #define DROPBOX_MIN_REPEAT_DURATION 5*60 //2 generate a bugreport if there is a same dropbox every 5 minutes
 #define TOMBSTONE_MIN_REPEAT_DURATION 2*60 //2 generate a bugreport if there is a same tombstone every 2 minutes
+#define TOMBSTONE_LOG_FILE    TOMBSTONE_PATH "/rklog.txt"
+#define DROPBOX_LOG_FILE    DROBOX_PATH "/rklog.txt"
 struct dropbox_info {
     unsigned int type;
     char* name;
@@ -116,7 +118,7 @@ static unsigned int gen_file_hash(char *path)
         if (fgets(buf, sizeof(buf), fd) != NULL) {
             char *tmp = buf;
             //because the pid and process-runtime value is always different, so skip caculate the hash of this line
-            if (strstr(buf, "PID") || strstr(buf, "Process-Runtime"))
+            if (strstr(buf, "PID") || strstr(buf, "Process-Runtime")|| strstr(buf, "UID"))
                 continue;
             while (*tmp)
                 hash += (hash << 5) + (*tmp++);
@@ -149,6 +151,70 @@ static long get_uptime()
     }
 
     return info.uptime;
+}
+
+// if .txt.gz
+static bool is_gzip_file(const char* path) {
+    const char* ext = strrchr(path, '.');
+    return (ext != NULL && strcmp(ext, ".gz") == 0);
+}
+
+static void extract_stack_from_file(
+    const char* path,
+    const char** keywords,
+    const int* stack_lines,
+    int num_keywords,
+    char* stack_output
+) {
+    if (is_gzip_file(path)) {
+        ALOGE("file is .gz, not deal %s", path);
+        strcpy(stack_output, "NO STACK INFO\n");
+        return;
+    }
+
+    const char *no_info = "NO STACK INFO\n";
+    FILE* file = fopen(path, "r");
+    if (!file) {
+        ALOGE("Failed to open %s", path);
+        strcpy(stack_output, no_info);
+        return;
+    }
+
+    stack_output[0] = '\0';
+    bool found_stack = false;
+    char line[1024];
+
+    for (int i = 0; i < num_keywords; i++) {
+        const char* keyword = keywords[i];
+        const int max_lines = stack_lines[i];
+
+        if (found_stack && max_lines > 1)
+            continue;
+
+        fseek(file, 0, SEEK_SET);
+        while (fgets(line, sizeof(line), file)) {
+            if (strstr(line, keyword)) {
+                //max_lines > 1 means we need to extract the call stack
+                if (max_lines > 1)
+                    found_stack = true;
+
+                strncat(stack_output, line, sizeof(line));
+                int lines_extracted = 1;
+
+                while (lines_extracted < max_lines && fgets(line, sizeof(line), file)) {
+                    strncat(stack_output, line, sizeof(line));
+                    lines_extracted++;
+                }
+                break;
+            }
+        }
+    }
+
+    fclose(file);
+
+    if (!found_stack) {
+        strncat(stack_output, no_info, sizeof(no_info));
+    }
 }
 
 static int trig_bugreport(const char * bugreport_reason, long time)
@@ -204,6 +270,44 @@ static int store_dropbox_and_trig_bugreport(struct dropbox_info* info)
     return 0;
 }
 
+static int store_dropbox_logfile(struct dropbox_info* info, char *path, char *event_name)
+{
+    //get time and hash
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+    char timestamp[64];
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm);
+
+    char stack_info[4096] = {0};
+    const char* keywords[] = {
+        "Package:",
+        "WATCHDOG TIMEOUT",
+        "FATAL EXCEPTION",
+        "at ",
+        "backtrace:",
+    };
+    const int stack_lines[] = {1, 10, 10, 10, 10};
+
+    extract_stack_from_file(
+        path,
+        keywords,
+        stack_lines,
+        sizeof(keywords)/sizeof(keywords[0]),
+        stack_info
+    );
+
+    FILE *log_fp = fopen(DROPBOX_LOG_FILE, "w");
+    if (log_fp) {
+        fprintf(log_fp, "Time: %s\n", timestamp);
+        fprintf(log_fp, "Hash: 0x%x\n", info->hash);
+        fprintf(log_fp, "%s\n", stack_info);
+        fclose(log_fp);
+        chmod(DROPBOX_LOG_FILE, 0666);
+    }
+
+    return 0;
+}
+
 static int parse_dropbox_event(struct inotify_event *event)
 {
     char path[256] = {0};
@@ -233,6 +337,7 @@ static int parse_dropbox_event(struct inotify_event *event)
         info.name = (char*)dropboxName[i];
         info.repeat_times = 1;
         info.time = get_uptime();
+        store_dropbox_logfile(&info, path, event->name);
         store_dropbox_and_trig_bugreport(&info);
     }
 
@@ -319,6 +424,44 @@ static int store_tombstone_and_trig_bugreport(struct tombstone_info* info)
     return 0;
 }
 
+static int store_tombstone_logfile(struct tombstone_info* info, char *path)
+{
+    //get time and hash
+    time_t now = time(NULL);
+    struct tm *tm = localtime(&now);
+    char timestamp[64];
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm);
+    char hash[65] = {0};
+    snprintf(hash, sizeof(hash), "%u", info->backtrace_hash);
+
+    const char* keywords[] = {
+        "Cmdline:",
+        "pid:",
+        "backtrace:",
+    };
+    const int stack_lines[] = {1,1,10};
+    char stack_info[4096] = {0};
+
+    extract_stack_from_file(
+        path,
+        keywords,
+        stack_lines,
+        sizeof(keywords)/sizeof(keywords[0]),
+        stack_info
+    );
+    // write to tombstone log file
+    FILE* log_file = fopen(TOMBSTONE_LOG_FILE, "w");
+    if (log_file) {
+        fprintf(log_file, "Time: %s\n", timestamp);
+        fprintf(log_file, "Hash: %s\n", hash);
+        fprintf(log_file, "%s\n", stack_info);
+        fclose(log_file);
+        chmod(TOMBSTONE_LOG_FILE, 0666);
+    }
+
+    return 0;
+}
+
 static int parse_tombstone_event(struct inotify_event *event)
 {
     char path[256] = {0};
@@ -336,6 +479,7 @@ static int parse_tombstone_event(struct inotify_event *event)
             return -1;
         }
         info.repeat_times = 1;
+        store_tombstone_logfile(&info, path);
         store_tombstone_and_trig_bugreport(&info);
     }
 
