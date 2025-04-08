@@ -2158,26 +2158,38 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
                 mNotificationsController.resetUserExpandedStates();
             } else if("com.android.show_upper_bar".equals(action)) {
                 if(SystemProperties.getInt("persist.sys.show_upper_bar",1) == 0){
+                    boolean isSave = intent.getBooleanExtra("isSave", true);
                     mNotificationShadeWindowController.Notification_control(true);
                     mStatusBarWindowController.status_bar_control(true);
-                    SystemProperties.set("persist.sys.show_upper_bar","1");
+                    if (isSave) {
+                        SystemProperties.set("persist.sys.show_upper_bar","1");
+                    }
                 }
             } else if("com.android.hide_upper_bar".equals(action)) {
                 if(SystemProperties.getInt("persist.sys.show_upper_bar",1) == 1){
+                    boolean isSave = intent.getBooleanExtra("isSave", true);
                     mNotificationShadeWindowController.Notification_control(false);
                     mStatusBarWindowController.status_bar_control(false);
-                    SystemProperties.set("persist.sys.show_upper_bar","0");
+                    if (isSave) {
+                        SystemProperties.set("persist.sys.show_upper_bar","0");
+                    }
                 }
             } else if("com.android.show_bottom_bar".equals(action)) {
+                boolean isSave = intent.getBooleanExtra("isSave", true);
                 NavigationBarView mNavigationBarView = mNavigationBarController.getDefaultNavigationBarView();
                 if (mNavigationBarView != null) return;
                 createNavigationBar(result);
-                SystemProperties.set("persist.sys.show_bottom_bar","1");
+                if (isSave) {
+                    SystemProperties.set("persist.sys.show_bottom_bar","1");
+                }
             } else if("com.android.hide_bottom_bar".equals(action)) {
+                boolean isSave = intent.getBooleanExtra("isSave", true);
                 NavigationBarView mNavigationBarView = mNavigationBarController.getDefaultNavigationBarView();
                 if (mNavigationBarView == null) return;
                 mNavigationBarController.removeNavigationBarView();
-                SystemProperties.set("persist.sys.show_bottom_bar","0");
+                if (isSave) {
+                    SystemProperties.set("persist.sys.show_bottom_bar","0");
+                }
             //add end
             }
             Trace.endSection();
