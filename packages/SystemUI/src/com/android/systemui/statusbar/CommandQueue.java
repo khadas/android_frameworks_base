@@ -50,6 +50,9 @@ import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
+/* -----rk-code----- */
+import android.os.SystemProperties;
+/* ----------------- */
 import android.util.Pair;
 import android.util.SparseArray;
 import android.view.KeyEvent;
@@ -1126,7 +1129,14 @@ public class CommandQueue extends IStatusBar.Stub implements
                 && mLastUpdatedImeDisplayId != INVALID_DISPLAY) {
             // Set previous NavBar's IME window status as invisible when IME
             // window switched to another display for single-session IME case.
-            sendImeInvisibleStatusForPrevNavBar();
+            /* -----rk-code----- */
+            /* If device in multi-session IME case , don't send ime Invisible Status For PrevNavBar. */
+            boolean isDisableMuImms = SystemProperties.getBoolean(
+                    "persist.fw.car.test.disable_mu_imms", true);
+            if (isDisableMuImms) {
+                sendImeInvisibleStatusForPrevNavBar();
+            }
+            /* ----------------- */
         }
         for (int i = 0; i < mCallbacks.size(); i++) {
             mCallbacks.get(i).setImeWindowStatus(displayId, token, vis, backDisposition,
