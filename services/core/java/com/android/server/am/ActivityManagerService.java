@@ -4519,6 +4519,23 @@ public class ActivityManagerService extends IActivityManager.Stub
                     app.killLocked("start timeout",
                             ApplicationExitInfo.REASON_INITIALIZATION_FAILURE, true);
                     removeLruProcessLocked(app);
+                    //-----------------------rk code----------
+                    if ("com.android.car.settings".equals(app.processName) && !"1".equals(SystemProperties.get("sys.boot_completed"))
+                        && "car".equals(SystemProperties.get("ro.target.product")) && "true".equals(SystemProperties.get("ro.fw.mu.headless_system_user"))) {
+                        Slog.w(TAG, "---com.android.car.settings fallback home start timeout, try to restart it to avoid can not bootcomplete for appUid="+app.uid+" app.info.uid="+app.info.uid+" app.userId="+app.userId);
+                        final int appUserId = app.userId;
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    mAtmInternal.startHomeActivity(appUserId, "startTimeout-restart");
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                    }
+                    //----------------------------------------
                 }
                 if (app.isolated) {
                     mBatteryStatsService.removeIsolatedUid(app.uid, app.info.uid);
