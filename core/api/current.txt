@@ -21696,6 +21696,7 @@ package android.media {
     method public void setVolume(float);
     method public void startAudioPreview();
     method public void stopAudioPreview();
+    field public static final int HDMIIN_SESSION_ID = 32761; // 0x7ff9
   }
 
   public class AudioProfile implements android.os.Parcelable {
