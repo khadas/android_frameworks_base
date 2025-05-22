@@ -22,6 +22,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioManager;
@@ -446,6 +447,16 @@ class SystemMediaRoute2Provider extends MediaRoute2Provider {
             if (streamType != AudioManager.STREAM_MUSIC) {
                 return;
             }
+	    //-----rk-code-----//
+            if(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+                int callingUserId = intent.getIntExtra("mCurrentChangeVoluemUserId", -1);
+                int myUserId = UserHandle.myUserId();
+                if(streamType == AudioManager.STREAM_MUSIC && callingUserId > 10 && callingUserId != myUserId) {
+                    Slog.d(TAG, "SystemMediaRoute2Provider skip updateVolume,because not own user,callingUserId="+callingUserId+" myUserId="+myUserId);
+                    return;
+                }
+            }
+	    //-----------------//
 
             updateVolume();
         }

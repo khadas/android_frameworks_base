@@ -342,6 +342,13 @@ public class AudioService extends IAudioService.Stub
         return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
+    //-----rk-code-----//
+    /*package*/ boolean isDynamicRoutingEnabled() {
+        return SystemProperties.getBoolean(
+            "ro.android.car.audio.audioUseDynamicRouting", false);
+    }
+    //-----------------//
+
     /** The controller for the volume UI. */
     private final VolumeController mVolumeController = new VolumeController();
 
@@ -432,7 +439,7 @@ public class AudioService extends IAudioService.Stub
     private VolumeStreamState[] mStreamStates;
     //-----rk-code-----//
     private HashMap<Integer, VolumeStreamState[]> mUserIdStreamStatesMap;
-    private int mCurrentUserId;
+    private int mCurrentUserId,mCurrentChangeVoluemUserId;
     //-----------------//
 
     /*package*/ int getVssVolumeForDevice(int stream, int device) {
@@ -1052,7 +1059,8 @@ public class AudioService extends IAudioService.Stub
 
         mDeviceBroker = new AudioDeviceBroker(mContext, this, mAudioSystem);
         //-----rk-code-----//
-        mCurrentUserId = UserHandle.MIN_SECONDARY_USER_ID;
+        mCurrentUserId = UserHandle.USER_SYSTEM;
+        mCurrentChangeVoluemUserId = -1;
         mUserIdStreamStatesMap = new HashMap<>();
         //----------------//
 
@@ -1321,7 +1329,7 @@ public class AudioService extends IAudioService.Stub
         }
 
         //-----rk-code-----//
-        if (isPlatformAutomotive()) {
+        if (isPlatformAutomotive() && isDynamicRoutingEnabled()) {
             getCurrentUserStreamSates(android.os.Process.SYSTEM_UID);
         } else {
             createStreamStates();
@@ -2202,13 +2210,21 @@ public class AudioService extends IAudioService.Stub
     //-----rk-code-----//
     private void getCurrentUserStreamSates(int uid) {
         if (isPlatformAutomotive()) {
+            // not dynamicRouting,using legacy mode
+            if(!isDynamicRoutingEnabled()){
+                return;
+            }
             synchronized (mSettingsLock) {
                 synchronized (VolumeStreamState.class) {
                     int userID = UserHandle.getUserId(uid);
                     if (userID != UserHandle.USER_SYSTEM) {
                         mCurrentUserId = userID;
                     } else {
-                        mCurrentUserId = UserHandle.MIN_SECONDARY_USER_ID;
+                        int currentFocusUid = SystemProperties.getInt("android.car.audio.currentFocusUid", -1);
+                        if(currentFocusUid >= UserHandle.MIN_SECONDARY_USER_ID)
+                            mCurrentUserId = currentFocusUid;
+                        else
+                            mCurrentUserId = UserHandle.MIN_SECONDARY_USER_ID;
                     }
                     if (DEBUG_VOL) {
                         Log.d(TAG, "get uid:" + uid + " userID:" + userID + " currentUserId: " + mCurrentUserId);
@@ -3495,6 +3511,7 @@ public class AudioService extends IAudioService.Stub
         int streamTypeAlias = mStreamVolumeAlias[streamType];
         //-----rk-code-----//
         getCurrentUserStreamSates(uid);
+        mCurrentChangeVoluemUserId = mCurrentUserId;
         //-----------------//
         VolumeStreamState streamState = mStreamStates[streamTypeAlias];
 
@@ -3784,7 +3801,13 @@ public class AudioService extends IAudioService.Stub
         Intent intent = new Intent(AudioManager.STREAM_MUTE_CHANGED_ACTION);
         intent.putExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, streamType);
         intent.putExtra(AudioManager.EXTRA_STREAM_VOLUME_MUTED, isMuted);
+        //-----rk-code----//
+        intent.putExtra("mCurrentChangeVoluemUserId", mCurrentChangeVoluemUserId);
+        //----------------//
         sendBroadcastToAll(intent, null /* options */);
+        //-----rk-code----//
+        intent.removeExtra("mCurrentChangeVoluemUserId");
+        //-----rk-code----//
     }
 
     // Called after a delay when volume down is pressed while muted
@@ -4561,14 +4584,17 @@ public class AudioService extends IAudioService.Stub
                 && (flags & AudioManager.FLAG_BLUETOOTH_ABS_VOLUME) != 0) {
             return;
         }
+
+        //-----rk-code-----//
+        getCurrentUserStreamSates(uid);
+        mCurrentChangeVoluemUserId = mCurrentUserId;
+        //----------------//
+
         // If we are being called by the system (e.g. hardware keys) check for current user
         // so we handle user restrictions correctly.
         if (uid == android.os.Process.SYSTEM_UID) {
             uid = UserHandle.getUid(getCurrentUserId(), UserHandle.getAppId(uid));
         }
-        //-----rk-code-----//
-        getCurrentUserStreamSates(uid);
-        //----------------//
         if (!checkNoteAppOp(
                 STREAM_VOLUME_OPS[streamTypeAlias], uid, callingPackage, attributionTag)) {
             return;
@@ -4788,8 +4814,22 @@ public class AudioService extends IAudioService.Stub
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         final long ident = Binder.clearCallingIdentity();
         try {
-            mContext.sendBroadcastAsUser(intent, UserHandle.ALL,
+            //-----rk-code-----//
+            if(isPlatformAutomotive()) {
+                int changeVolumeUserId =  intent.getIntExtra("mCurrentChangeVoluemUserId",-1);
+                Log.d(TAG, "---AudioService sendBroadcastToAll send intent "+intent+" mCurrentChangeVoluemUserId="+changeVolumeUserId);
+                if(changeVolumeUserId > 0 && isDynamicRoutingEnabled()){
+                    mContext.sendBroadcastAsUser(intent, UserHandle.getUserHandleForUid(changeVolumeUserId*100000),
+                        null /* receiverPermission */, options);
+                } else {
+                    mContext.sendBroadcastAsUser(intent, UserHandle.ALL,
+                        null /* receiverPermission */, options);
+                }
+            } else {
+            //------------------//
+                mContext.sendBroadcastAsUser(intent, UserHandle.ALL,
                     null /* receiverPermission */, options);
+            }
         } finally {
             Binder.restoreCallingIdentity(ident);
         }
@@ -4829,11 +4869,13 @@ public class AudioService extends IAudioService.Stub
         mVolumeController.postVolumeChanged(streamType, flags);
 
         //-----rk-code---------
-        if (isPlatformAutomotive()) {
+        if (isPlatformAutomotive() && !isDynamicRoutingEnabled()) { //only for aaos legacy mode
             VolumeStreamState streamState = mStreamStates[streamType];
             streamState.mVolumeChanged.putExtra(AudioManager.EXTRA_SET_VOLUME_FLAG, flags);
+            streamState.mVolumeChanged.putExtra("mCurrentChangeVoluemUserId", mCurrentChangeVoluemUserId);
             sendBroadcastToAll(streamState.mVolumeChanged, null);
             streamState.mVolumeChanged.putExtra(AudioManager.EXTRA_SET_VOLUME_FLAG, 0);
+            streamState.mVolumeChanged.removeExtra("mCurrentChangeVoluemUserId");
         }
         //--------------------
     }
@@ -5186,7 +5228,7 @@ public class AudioService extends IAudioService.Stub
 
         ensureValidStreamType(streamType);
         //-----rk-code-----//
-        getCurrentUserStreamSates(Binder.getCallingUid());
+        //getCurrentUserStreamSates(Binder.getCallingUid());
         //----------------//
         int device = getDeviceForStream(streamType);
         return (mStreamStates[streamType].getIndex(device) + 5) / 10;
@@ -5945,7 +5987,7 @@ public class AudioService extends IAudioService.Stub
         //-----rk-code-----//
         if (isPlatformAutomotive()) {
             getCurrentUserStreamSates(uid);
-            String userIdDevice = "CurrentUserID="  + Integer.toString(mCurrentUserId);
+            String userIdDevice = "CurrentUserID="  + (mCurrentChangeVoluemUserId > 0 ? Integer.toString(mCurrentChangeVoluemUserId):Integer.toString(mCurrentUserId));
             AudioSystem.setParameters(userIdDevice);
         }
         //----------------//
@@ -8171,7 +8213,7 @@ public class AudioService extends IAudioService.Stub
         }
 
         public boolean isMusic() {
-            return mHasValidStreamType && mPublicStreamType == AudioSystem.STREAM_MUSIC;
+            return mHasValidStreamType && mPublicStreamType == AudioSystem.STREAM_MUSIC && !isDynamicRoutingEnabled() && !SystemProperties.getBoolean("ro.fw.mu.headless_system_user", false);
         }
 
         public void applyAllVolumes(boolean userSwitch) {
@@ -8661,7 +8703,7 @@ public class AudioService extends IAudioService.Stub
             }
             //-----rk-code-----//
             if (isPlatformAutomotive()) {
-                String userIdDevice = "CurrentUserID="  + Integer.toString(mCurrentUserId);
+                String userIdDevice = "CurrentUserID="  + (mCurrentChangeVoluemUserId > 0 ? Integer.toString(mCurrentChangeVoluemUserId):Integer.toString(mCurrentUserId));
                 AudioSystem.setParameters(userIdDevice);
             }
             //----------------//
@@ -8836,9 +8878,15 @@ public class AudioService extends IAudioService.Stub
                     mVolumeChanged.putExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, oldIndex);
                     mVolumeChanged.putExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE_ALIAS,
                             mStreamVolumeAlias[mStreamType]);
+                    //-----rk-code--------//
+                    mVolumeChanged.putExtra("mCurrentChangeVoluemUserId", mCurrentChangeVoluemUserId);
+                    //--------------------//
                     AudioService.sVolumeLogger.enqueue(new VolChangedBroadcastEvent(
                             mStreamType, mStreamVolumeAlias[mStreamType], index));
                     sendBroadcastToAll(mVolumeChanged, mVolumeChangedOptions);
+                    //-----rk-code--------//
+                    mVolumeChanged.removeExtra("mCurrentChangeVoluemUserId");
+                    //--------------------//
                 }
             }
             return changed;
