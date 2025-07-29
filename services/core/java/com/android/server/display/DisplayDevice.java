@@ -68,6 +68,10 @@ abstract class DisplayDevice {
     // Do not use for any other purpose.
     DisplayDeviceInfo mDebugLastLoggedDeviceInfo;
 
+    //---------rk-code----------
+    public int mOverlayLogicalDisplayId = -1;
+    //--------------------------
+
     public DisplayDevice(DisplayAdapter displayAdapter, IBinder displayToken, String uniqueId,
             Context context) {
         mDisplayAdapter = displayAdapter;
@@ -387,6 +391,7 @@ abstract class DisplayDevice {
         pw.println("mUniqueId=" + mUniqueId);
         pw.println("mDisplayToken=" + mDisplayToken);
         pw.println("mCurrentLayerStack=" + mCurrentLayerStack);
+	pw.println("mOverlayLogicalDisplayId="+ mOverlayLogicalDisplayId);
         pw.println("mCurrentFlags=" + mCurrentFlags);
         pw.println("mCurrentOrientation=" + mCurrentOrientation);
         pw.println("mCurrentLayerStackRect=" + mCurrentLayerStackRect);

@@ -2782,6 +2782,10 @@ public final class DisplayManagerService extends SystemService {
 	//----rk-code----
 	if(!"1".equals(SystemProperties.get("service.bootanim.exit"))){
             display = mLogicalDisplayMapper.getDisplayLocked(Display.DEFAULT_DISPLAY);
+        }else if (device.mOverlayLogicalDisplayId >= 0) {
+            Slog.i(TAG, "device.mOverlayLogicalDisplayId = " + device.mOverlayLogicalDisplayId);
+            display = mLogicalDisplayMapper.getDisplayLocked(device.mOverlayLogicalDisplayId);
+            Slog.i(TAG, "display = " + display.getDisplayInfoLocked());
         }
 	//---------------
         //-------rk-code------//
@@ -4285,6 +4289,84 @@ public final class DisplayManagerService extends SystemService {
                 Binder.restoreCallingIdentity(token);
             }
         }
+
+        //---------rk-code----------
+        @Override // Binder call
+        public void overlayDisplayLayerStack(int mode, int srcDisplayId, int overlayDisplayId) {
+            final long token = Binder.clearCallingIdentity();
+            try {
+                synchronized (mSyncRoot) {
+                    if (mode == DisplayManager.MODE_RESET) {
+                        if (srcDisplayId <= Display.INVALID_DISPLAY) {
+                            mLogicalDisplayMapper.forEachLocked(logicalDisplay -> {
+                                final DisplayDevice displayDevice =
+                                        logicalDisplay.getPrimaryDisplayDeviceLocked();
+                                if (displayDevice != null) {
+                                    displayDevice.mOverlayLogicalDisplayId = -1;
+                                }
+                            });
+                            Slog.i(TAG, "mode is MODE_RESET! All Reset!");
+                        } else {
+                            final LogicalDisplay resetLogicalDisplay = mLogicalDisplayMapper.getDisplayLocked(srcDisplayId);final DisplayDevice resetDisplayDevice;
+                            if (resetLogicalDisplay != null) {
+                                resetDisplayDevice = resetLogicalDisplay.getPrimaryDisplayDeviceLocked();
+                                resetDisplayDevice.mOverlayLogicalDisplayId = -1;
+                                Slog.i(TAG, "mode is MODE_RESET! srcDisplayId(" + srcDisplayId + ") is reset!");
+                            } else {
+                                Slog.i(TAG, "mode is MODE_RESET! But srcDisplayId is null!");
+                            }
+                        }
+                        return;
+                    }
+                    LogicalDisplay srcLogicalDisplay = mLogicalDisplayMapper.getDisplayLocked(srcDisplayId);
+                    if (srcLogicalDisplay == null) {
+                        Slog.i(TAG, "srcLogicalDisplay(" + srcDisplayId + ") is null, return");
+                        return;
+                    }
+                    DisplayDevice srcDisplayDevice = srcLogicalDisplay.getPrimaryDisplayDeviceLocked();
+                    LogicalDisplay overlayLogicalDisplay = mLogicalDisplayMapper.getDisplayLocked(overlayDisplayId);
+                    if (overlayLogicalDisplay == null) {
+                        Slog.i(TAG, "overlayLogicalDisplay(" + overlayDisplayId + ") is null! Return!");
+                        return;
+                    }
+                    DisplayDevice overlayDisplayDevice = overlayLogicalDisplay.getPrimaryDisplayDeviceLocked();
+                    if (mode == DisplayManager.MODE_MIRROR) {
+                        srcDisplayDevice.mOverlayLogicalDisplayId = overlayDisplayId;
+                        Slog.i(TAG, "MODE_MIRROR srcDisplayDevice=" + srcDisplayId + " being overlayed to " + overlayDisplayId);
+                    } else if (mode == DisplayManager.MODE_SWAP) {
+                        srcDisplayDevice.mOverlayLogicalDisplayId = overlayDisplayId;
+                        overlayDisplayDevice.mOverlayLogicalDisplayId = srcDisplayId;
+                        Slog.i(TAG, "MODE_SWAP srcDisplayDevice= " + srcDisplayId + " overlayDisplayId= " + overlayDisplayId);
+                    } else {
+                        Slog.i(TAG, "mode is invalid! Do nothing!");
+                    }
+                }
+            } finally {
+                scheduleTraversalLocked(false);
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        @Override
+        public int getOverlayDisplayLayerStack(int displayId) {
+            final long token = Binder.clearCallingIdentity();
+            int overlayDisplayId = -1;
+            try {
+                synchronized (mSyncRoot) {
+                    LogicalDisplay logicalDisplay = mLogicalDisplayMapper.getDisplayLocked(displayId);
+                    if (logicalDisplay == null) {
+                        Slog.i(TAG, "getOverlayDisplayLayerStack logicalDisplay is null!!");
+                    } else {
+                        DisplayDevice displayDevice = logicalDisplay.getPrimaryDisplayDeviceLocked();
+                        overlayDisplayId = displayDevice.mOverlayLogicalDisplayId;
+                    }
+                }
+                return overlayDisplayId;
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+        //--------------------------
 
         @Override // Binder call
         public DisplayDecorationSupport getDisplayDecorationSupport(int displayId) {

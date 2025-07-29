@@ -1843,4 +1843,26 @@ public final class DisplayManager {
             }
         }
     }
+
+    //---------rk-code----------
+    public static final int MODE_RESET = 0;
+    public static final int MODE_MIRROR = 1;
+    public static final int MODE_SWAP = 2;
+
+    public void resetOverlayDisplay(int displayId) {
+        mGlobal.overlayDisplayLayerStack(MODE_RESET, displayId, -1);
+    }
+
+    public void mirrorDisplay(int targetDisplayId, int srcDisplayId) {
+        mGlobal.overlayDisplayLayerStack(MODE_MIRROR, targetDisplayId, srcDisplayId);
+    }
+
+    public void swapDisplay(int srcDisplayId, int overlayDisplayId) {
+        mGlobal.overlayDisplayLayerStack(MODE_SWAP, srcDisplayId, overlayDisplayId);
+    }
+
+    public int getOverlayDisplay(int displayId) {
+        return mGlobal.getOverlayDisplayLayerStack(displayId);
+    }
+    //--------------------------
 }

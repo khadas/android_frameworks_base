@@ -206,4 +206,12 @@ interface IDisplayManager {
 
     // Query overlay properties of the device
     OverlayProperties getOverlaySupport();
+
+    //---------rk-code----------
+    // Modify the mOverlayLogicalDisplayId property of DisplayDevice.
+    void overlayDisplayLayerStack(int mode, int srcDisplayId, int overlayDisplayId);
+
+    // Get the mOverlayLogicalDisplayId property of DisplayDevice.
+    int getOverlayDisplayLayerStack(int displayId);
+    //--------------------------
 }

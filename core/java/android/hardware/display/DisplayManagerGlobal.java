@@ -1305,4 +1305,32 @@ public final class DisplayManagerGlobal {
         }
         return "UNKNOWN";
     }
+
+    //---------rk-code----------
+    /**
+     * Modify the mOverlayLogicalDisplayId property of DisplayDevice.
+     *
+     * @hide
+     */
+    public void overlayDisplayLayerStack(int mode, int srcDisplayId, int overlayDisplayId) {
+        try {
+            mDm.overlayDisplayLayerStack(mode, srcDisplayId, overlayDisplayId);
+        } catch (RemoteException ex) {
+            throw ex.rethrowFromSystemServer();
+        }
+    }
+
+    /**
+     * Get the mOverlayLogicalDisplayId property of DisplayDevice.
+     *
+     * @hide
+     */
+    public int getOverlayDisplayLayerStack(int displayId) {
+        try {
+            return mDm.getOverlayDisplayLayerStack(displayId);
+	} catch (RemoteException ex) {
+            throw ex.rethrowFromSystemServer();
+        }
+    }
+    //--------------------------
 }
