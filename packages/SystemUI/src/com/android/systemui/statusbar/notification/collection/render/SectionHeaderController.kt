@@ -29,6 +29,10 @@ import com.android.systemui.statusbar.notification.dagger.NodeLabel
 import com.android.systemui.statusbar.notification.dagger.SectionHeaderScope
 import com.android.systemui.statusbar.notification.stack.SectionHeaderView
 import javax.inject.Inject
+//------rk-code---------
+import android.view.KeyEvent
+import com.android.systemui.util.RemoteControlUtil
+//----------------------
 
 interface SectionHeaderController {
     fun reinflateView(parent: ViewGroup)
@@ -73,6 +77,21 @@ internal class SectionHeaderNodeControllerImpl @Inject constructor(
                 as SectionHeaderView
         inflated.setHeaderText(headerTextResId)
         inflated.setOnHeaderClickListener(onHeaderClickListener)
+        //------rk-code---------
+        if (RemoteControlUtil.isSupportRemoteControl(inflated.context)) {
+            inflated.setOnKeyListener { view, p1, event ->
+                event?.let {
+                    val keyCode: Int = it.keyCode
+                    if (it.action == KeyEvent.ACTION_UP) {
+                        if (keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+                            inflated.performClick()
+                        }
+                    }
+                }
+                false
+            }
+        }
+        //----------------------
         clearAllClickListener?.let { inflated.setOnClearAllClickListener(it) }
         if (oldPos != -1) {
             parent.addView(inflated, oldPos)

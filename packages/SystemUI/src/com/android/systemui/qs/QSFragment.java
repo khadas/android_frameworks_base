@@ -79,6 +79,9 @@ import java.util.function.Consumer;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+//------rk-code---------
+import com.android.systemui.util.RemoteControlUtil;
+//----------------------
 
 public class QSFragment extends LifecycleFragment implements QS, CommandQueue.Callbacks,
         StatusBarStateController.StateListener, Dumpable {
@@ -258,6 +261,9 @@ public class QSFragment extends LifecycleFragment implements QS, CommandQueue.Ca
             setExpanded(savedInstanceState.getBoolean(EXTRA_EXPANDED));
             setListening(savedInstanceState.getBoolean(EXTRA_LISTENING));
             setEditLocation(view);
+            //------rk-code---------
+            setEditViewBackgroundAndKeyEventChain(view);
+            //----------------------
             mQSCustomizerController.restoreInstanceState(savedInstanceState);
             if (mQsExpanded) {
                 mQSPanelController.getTileLayout().restoreInstanceState(savedInstanceState);
@@ -387,6 +393,9 @@ public class QSFragment extends LifecycleFragment implements QS, CommandQueue.Ca
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         setEditLocation(getView());
+        //------rk-code---------
+        setEditViewBackgroundAndKeyEventChain(getView());
+        //----------------------
         if (newConfig.getLayoutDirection() != mLayoutDirection) {
             mLayoutDirection = newConfig.getLayoutDirection();
             if (mQSAnimator != null) {
@@ -422,6 +431,19 @@ public class QSFragment extends LifecycleFragment implements QS, CommandQueue.Ca
         int y = loc[1] + edit.getHeight() / 2;
         mQSCustomizerController.setEditLocation(x, y);
     }
+
+    //------rk-code---------
+    private void setEditViewBackgroundAndKeyEventChain(View view) {
+        if (RemoteControlUtil.isSupportRemoteControl(getContext())) {
+            View editView = view.findViewById(android.R.id.edit);
+            View settingsView = view.findViewById(R.id.settings_button_container);
+            if (editView != null && settingsView != null) {
+                editView.setNextFocusDownId(settingsView.getId());
+                settingsView.setNextFocusUpId(editView.getId());
+            }
+        }
+    }
+    //----------------------
 
     @Override
     public void setContainerController(QSContainerController controller) {

@@ -22,6 +22,9 @@ import android.view.ViewConfiguration;
 import android.view.ViewParent;
 import android.widget.ScrollView;
 
+//------rk-code---------
+import com.android.systemui.util.RemoteControlUtil;
+//----------------------
 /**
  * ScrollView that disallows intercepting for touches that can cause scrolling.
  */
@@ -36,6 +39,11 @@ public class NonInterceptingScrollView extends ScrollView {
     public NonInterceptingScrollView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+        //------rk-code---------
+        if (RemoteControlUtil.isSupportRemoteControl(getContext())) {
+            setFocusable(false);
+        }
+        //----------------------
     }
 
     public boolean isPreventingIntercept() {

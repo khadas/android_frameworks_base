@@ -4540,6 +4540,11 @@ public abstract class PackageManager {
     public static final String FEATURE_WALLET_LOCATION_BASED_SUGGESTIONS =
             "android.software.wallet_location_based_suggestions";
 
+    //------rk-code---------
+    @SdkConstant(SdkConstantType.FEATURE)
+    public static final String FEATURE_APP_FOCUS = "rockchip.software.software_remote";
+    //----------------------
+
     /** @hide */
     public static final boolean APP_ENUMERATION_ENABLED_BY_DEFAULT = true;
 

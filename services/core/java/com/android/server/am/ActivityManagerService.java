@@ -14349,6 +14349,7 @@ public class ActivityManagerService extends IActivityManager.Stub
                 //-----------------------rk code----------
                 || Intent.ACTION_HDMIIN_RK_PRIV_CMD.equals(action)
                 || "com.rockchip.rkaiservice.stop_service".equals(action)
+                || "com.android.permissioncontroller.safetycenter.REQUEST_FOCUS".equals(action)
                 //----------------------------------------
                 || AppWidgetManager.ACTION_APPWIDGET_CONFIGURE.equals(action)
                 || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)

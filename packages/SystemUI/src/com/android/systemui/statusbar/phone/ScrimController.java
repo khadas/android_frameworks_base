@@ -85,6 +85,9 @@ import javax.inject.Inject;
 
 import kotlinx.coroutines.CoroutineDispatcher;
 
+//------rk-code---------
+import com.android.systemui.util.RemoteControlUtil;
+//----------------------
 /**
  * Controls both the scrim behind the notifications and in front of the notifications (when a
  * security method gets shown).
@@ -500,6 +503,13 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         mScrimInFront.setFocusable(!state.isLowPowerState());
         mScrimBehind.setFocusable(!state.isLowPowerState());
         mNotificationsScrim.setFocusable(!state.isLowPowerState());
+        //------rk-code---------
+        if (RemoteControlUtil.isSupportRemoteControl(mScrimInFront.getContext())) {
+            mScrimInFront.setFocusable(false);
+            mScrimBehind.setFocusable(false);
+            mNotificationsScrim.setFocusable(false);
+        }
+        //----------------------
 
         mScrimInFront.setBlendWithMainColor(state.shouldBlendWithMainColor());
 

@@ -62,7 +62,9 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.inject.Inject;
-
+//------rk-code---------
+import com.android.systemui.util.RemoteControlUtil;
+//----------------------
 /** */
 @QSScope
 public class TileAdapter extends RecyclerView.Adapter<Holder> implements TileStateListener {
@@ -321,6 +323,11 @@ public class TileAdapter extends RecyclerView.Adapter<Holder> implements TileSta
                 ? View.IMPORTANT_FOR_ACCESSIBILITY_YES
                 : View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         view.setFocusableInTouchMode(selectable);
+        //------rk-code---------
+        if (RemoteControlUtil.isSupportRemoteControl(view.getContext())) {
+            view.setFocusable(false);
+        }
+        //----------------------
     }
 
     @Override
@@ -399,6 +406,11 @@ public class TileAdapter extends RecyclerView.Adapter<Holder> implements TileSta
         holder.mTileView.setOnClickListener(null);
         holder.mTileView.setFocusable(true);
         holder.mTileView.setFocusableInTouchMode(true);
+        //------rk-code---------
+        if (RemoteControlUtil.isSupportRemoteControl(holder.mTileView.getContext())) {
+            holder.mTileView.setFocusableInTouchMode(false);
+        }
+        //----------------------
 
         if (mAccessibilityAction != ACTION_NONE) {
             holder.mTileView.setClickable(selectable);

@@ -12619,6 +12619,7 @@ package android.content.pm {
     field public static final String EXTRA_VERIFICATION_ID = "android.content.pm.extra.VERIFICATION_ID";
     field public static final String EXTRA_VERIFICATION_RESULT = "android.content.pm.extra.VERIFICATION_RESULT";
     field public static final String FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS = "android.software.activities_on_secondary_displays";
+    field public static final String FEATURE_APP_FOCUS = "rockchip.software.software_remote";
     field public static final String FEATURE_APP_WIDGETS = "android.software.app_widgets";
     field public static final String FEATURE_AUDIO_LOW_LATENCY = "android.hardware.audio.low_latency";
     field public static final String FEATURE_AUDIO_OUTPUT = "android.hardware.audio.output";
