@@ -51,7 +51,7 @@ public class AudioPreviewThread implements Runnable {
         }
         mContext = context;
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        mSampleRate = 44100;
+        mSampleRate = 48000;
         mChannelCount = AudioFormat.CHANNEL_IN_STEREO;
         mAudioEncoding = AudioFormat.ENCODING_PCM_16BIT;
     }
