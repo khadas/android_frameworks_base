@@ -28,7 +28,7 @@ public class EbookSettingsManager {
     public static final int MAX_COLOR_CFG_RKCFA_VALUE = 128;
     public static final int COLOR_CFG_RKCFA_INIT_VALUE = 64;
     public static final int DEFAULT_REFRESH_FREQUENCY = 0;
-    public static final int DEFAULT_REFRESH_MODE = EbookManager.EbookRefreshMode.EPD_PART_GLR16;
+    public static final int DEFAULT_REFRESH_MODE = EbookManager.EbookRefreshMode.EPD_A2_FAST;
 
     private static EbookManager mEbookManager;
     private Context mContext;

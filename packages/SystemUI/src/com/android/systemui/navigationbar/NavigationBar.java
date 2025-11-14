@@ -292,7 +292,7 @@ public class NavigationBar extends ViewController<NavigationBarView> implements 
     private EbookDialog mEbookDialog;
     private ActivityManager mActivityManager;
     private static EbookManager mEbookManager;
-    private int mPreMode = -1;
+    private int mPreMode = EbookManager.EbookRefreshMode.EPD_PART_GLR16;
     public static boolean mIsShowEbookDialog = false;
 
     public static final String[] BLACK_EBOOK_CONFIG_APP = new String[] {
