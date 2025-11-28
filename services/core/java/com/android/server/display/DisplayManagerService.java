@@ -2456,6 +2456,7 @@ public final class DisplayManagerService extends SystemService {
         // Configure each display device.
         mLogicalDisplayMapper.forEachLocked((LogicalDisplay display) -> {
             final DisplayDevice device = display.getPrimaryDisplayDeviceLocked();
+
             if (device != null) {
                 configureDisplayLocked(t, device);
                 device.performTraversalLocked(t);
@@ -2780,7 +2781,7 @@ public final class DisplayManagerService extends SystemService {
         LogicalDisplay display = mLogicalDisplayMapper.getDisplayLocked(device);
 
 	//----rk-code----
-	if(!"1".equals(SystemProperties.get("service.bootanim.exit"))){
+	if(!"1".equals(SystemProperties.get("service.bootanim.exit")) ||(SystemProperties.getInt("sys.mirror.disable",0))==1){
             display = mLogicalDisplayMapper.getDisplayLocked(Display.DEFAULT_DISPLAY);
         }else if (device.mOverlayLogicalDisplayId >= 0) {
             Slog.i(TAG, "device.mOverlayLogicalDisplayId = " + device.mOverlayLogicalDisplayId);

@@ -589,6 +589,13 @@ public class DisplayRotation {
                 ActivityInfo.screenOrientationToString(lastOrientation), lastOrientation,
                 Surface.rotationToString(rotation), rotation);
 
+        Slog.d("dzy","display id "+displayId +" default rotation "+mDisplayRotationCoordinator.getDefaultDisplayCurrentRotation()+" mUserRotation "+mUserRotation);
+        if(!isDefaultDisplay && mDisplayRotationCoordinator.getDefaultDisplayCurrentRotation()!=mRotation){
+            Slog.d("dzy","freeze rotation "+displayId+"  "+mDisplayRotationCoordinator.getDefaultDisplayCurrentRotation());
+            SystemProperties.set("sys.mirror.disable","0");
+            rotation=mDisplayRotationCoordinator.getDefaultDisplayCurrentRotation();
+        }
+
         if (oldRotation == rotation) {
             // No change.
             return false;
@@ -596,6 +603,7 @@ public class DisplayRotation {
 
         if (isDefaultDisplay) {
             mDisplayRotationCoordinator.onDefaultDisplayRotationChanged(rotation);
+            SystemProperties.set("sys.mirror.disable","1");
         }
 
         // Preemptively cancel the running recents animation -- SysUI can't currently handle this
